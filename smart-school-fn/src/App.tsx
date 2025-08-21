@@ -1,22 +1,31 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { MainLayout } from "./components/Layouts/Main";
-import { Home } from "./pages/Home";
+import { HomePage } from "./pages/Home";
 import { About } from "./pages/About";
 import { TranslationProvider } from "./contexts/TranslationContext";
+import { RegisterPage } from "./pages/Register";
+import { LoginPage } from "./pages/Login";
+import { ResetPassword } from "./pages/ResetPassword";
+import { RequestReset } from "./pages/RequestLink";
 
 function App() {
   return (
     <TranslationProvider>
       <BrowserRouter>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<Home />} />
+        <Routes>
+          <Route element={<MainLayout><Outlet /></MainLayout>}>
+            <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<About />} />
-          </Routes>
-        </MainLayout>
+          </Route>
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ResetPassword />} />
+          <Route path="/request-link" element={<RequestReset />} />
+        </Routes>
       </BrowserRouter>
     </TranslationProvider>
-  );
+  )
 }
+
 
 export default App;
