@@ -29,7 +29,6 @@ export function Header() {
     <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 shadow-sm py-4">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link
             to="/"
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
@@ -37,12 +36,10 @@ export function Header() {
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <BookOpen className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold text-[#5e6af6] bg-clip-text ">
               Smart school
             </h1>
           </Link>
-
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
             {navigationLinks.map(({ href, label, exact = false }) => {
               const active = isActive(href, exact);
@@ -61,10 +58,7 @@ export function Header() {
               );
             })}
           </nav>
-
-          {/* Right side actions */}
           <div className="flex items-center gap-4">
-            {/* Language Selector */}
             <div className="relative">
               <button
                 onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
@@ -77,7 +71,6 @@ export function Header() {
                 </span>
               </button>
 
-              {/* Language Dropdown */}
               {showLanguageDropdown && (
                 <div
                   className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200"
@@ -102,7 +95,6 @@ export function Header() {
                 </div>
               )}
             </div>
-            {/* Login and Register Buttons */}
             <div className="hidden lg:flex items-center gap-3">
               <Link
                 to="/login"
@@ -112,13 +104,12 @@ export function Header() {
               </Link>
               <Link
                 to="/register"
-                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-md hover:opacity-90 transition-opacity"
+                className="px-4 py-2 text-sm font-medium text-white bg-[#5e6af6] rounded-md hover:opacity-90 transition-opacity"
               >
                 {t("register")}
               </Link>
             </div>
 
-            {/* Mobile menu button */}
             <button
               className="lg:hidden p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -152,7 +143,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
@@ -173,7 +163,6 @@ export function Header() {
                 </Link>
               );
             })}
-            {/* Login and Register Buttons */}
             <Link
               to="/login"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50"
@@ -183,34 +172,11 @@ export function Header() {
             </Link>
             <Link
               to="/register"
-              className="block px-3 py-2 rounded-md text-base font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90"
+              className="block px-3 py-2 rounded-md text-base font-medium text-white bg-[#5e6af6] hover:opacity-90"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {t("register")}
             </Link>
-
-            {/* Mobile Language Selector */}
-            <div className="border-t border-gray-200 pt-2 mt-2">
-              <div className="px-3 py-2 text-sm font-medium text-gray-500">
-                {t("selectLanguage")}
-              </div>
-              {languages.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => {
-                    setLanguage(lang.code);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                    language === lang.code
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {lang.name}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       )}
