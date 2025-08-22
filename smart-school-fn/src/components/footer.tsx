@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { BookOpen } from "lucide-react";
 import useLanguage from "../hooks/useLanguage";
-
+import Logo from "../assets/logo.jpg";
 export function Footer() {
   const { t } = useLanguage();
 
@@ -11,13 +10,13 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="h-5 w-5 text-white" />
+            <div className="text-center mb-4">
+              <div className="rounded-lg flex items-center justify-center">
+                <img src={Logo} alt="Logo" className="w-30 h-30 rounded-full"/>
               </div>
               <h3 className="text-xl font-bold">Smart school</h3>
             </div>
-            <p className="text-slate-400">
+            <p className="text-slate-400 text-center">
               Empowering learners worldwide with premium educational content.
             </p>
           </div>

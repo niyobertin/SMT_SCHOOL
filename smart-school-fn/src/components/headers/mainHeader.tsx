@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BookOpen, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
+import Logo from "../../assets/logo.jpg";
 
 export function Header() {
   const { t, language, setLanguage, languages } = useLanguage();
@@ -33,9 +34,7 @@ export function Header() {
             to="/"
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
+            <img src={Logo} alt="Logo" className="w-10 h-10" />
             <h1 className="text-2xl font-bold text-[#5e6af6] bg-clip-text ">
               Smart school
             </h1>
