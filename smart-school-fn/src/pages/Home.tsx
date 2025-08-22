@@ -2,6 +2,8 @@ import { Users, Star, Clock, Award, Video, Badge } from "lucide-react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import useLanguage from "../hooks/useLanguage"
+import { FeatureCard } from "../components/FeatureCard"
+
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
@@ -78,18 +80,18 @@ export const HomePage: React.FC = () => {
             </h1>
             <p className="text-xl text-slate-600 mb-8 leading-relaxed">{t("homeSubtitle")}</p>
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex flex-col sm:flex-row gap-4 font-medium justify-center"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.6 }}
             >
               <Link to="/auth/register">
-                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-3">
+                <button className="bg-[#19459d] text-white text-lg  rounded-full px-8 py-3">
                   {t("getStarted")}
                 </button>
               </Link>
               <Link to="/courses">
-                <button className="text-lg px-8 py-3 bg-transparent">
+                <button className="text-lg px-8 py-3 bg-[#30e904] text-white rounded-full">
                   {t("exploreCourses")}
                 </button>
               </Link>
@@ -108,26 +110,40 @@ export const HomePage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">{t("whyChooseUs")}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">{t("whyChooseUs")} <span className="text-[#19459d]"> Smart School?</span></h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[Video, Users, Clock, Award].map((Icon, i) => (
-              <motion.div
+            {[
+              { 
+                icon: Video, 
+                title: t("multiFormatLearning"), 
+                description: t("multiFormatDesc") 
+              },
+              { 
+                icon: Users, 
+                title: t("expertInstructors"), 
+                description: t("expertInstructorsDesc") 
+              },
+              { 
+                icon: Clock, 
+                title: t("flexibleSchedule"), 
+                description: t("flexibleScheduleDesc") 
+              },
+              { 
+                icon: Award, 
+                title: t("certifiedLearning"), 
+                description: t("certifiedLearningDesc") 
+              }
+            ].map((feature, i) => (
+              <FeatureCard
                 key={i}
-                className="text-center p-6 hover:shadow-lg transition-shadow rounded-xl"
-                variants={fadeInUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                custom={i}
-              >
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Icon className="h-8 w-8 text-blue-600" />
-                </div>
-                <h2 className="text-xl mb-2">{t("featureTitle" + i)}</h2>
-                <p className="text-slate-600">{t("featureDesc" + i)}</p>
-              </motion.div>
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+                index={i}
+                fadeInUp={fadeInUp}
+              />
             ))}
           </div>
         </div>

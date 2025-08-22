@@ -67,12 +67,12 @@ export const translations = {
 
     // Home Page
     exceledgeLearning: "Exceledge Learning Platform",
-    transformYourFuture: "Transform Your Future with Expert-Led Courses",
+    transformYourFuture: "Rwanda's Leading Exam Partner for Academic and Professional Success",
     homeSubtitle:
       "Access premium courses in multiple formats - video, audio, and PDF. Learn from industry experts and advance your career with our comprehensive learning platform.",
     getStarted: "Get Started",
     exploreCourses: "Explore Courses",
-    whyChooseUs: "Why Choose Exceledge?",
+    whyChooseUs: "Why Choose ",
     multiFormatLearning: "Multi-Format Learning",
     multiFormatDesc:
       "Learn through videos, audio lectures, and comprehensive PDF materials tailored to your learning style.",
@@ -324,12 +324,12 @@ export const translations = {
 
     // Home Page
     exceledgeLearning: "Plateforme d'Apprentissage Exceledge",
-    transformYourFuture: "Transformez Votre Avenir avec des Cours Dirigés par des Experts",
+    transformYourFuture: "Le principal partenaire d’examens au Rwanda pour la réussite académique et professionnelle",
     homeSubtitle:
       "Accédez à des cours premium en plusieurs formats - vidéo, audio et PDF. Apprenez d'experts de l'industrie et faites progresser votre carrière avec notre plateforme d'apprentissage complète.",
     getStarted: "Commencer",
     exploreCourses: "Explorer les Cours",
-    whyChooseUs: "Pourquoi Nous Choisir?",
+    whyChooseUs: "Pourquoi Nous Choisir",
     multiFormatLearning: "Apprentissage Multi-Format",
     multiFormatDesc:
       "Apprenez grâce à des vidéos, des conférences audio et des matériaux PDF complets adaptés à votre style d'apprentissage.",
@@ -586,12 +586,12 @@ export const translations = {
 
     // Home Page
     exceledgeLearning: "Urubuga rw'Uburezi Exceledge",
-    transformYourFuture: "Hindura Ejo Hazaza Hawe n'Amasomo Ayobowe n'Impuguke",
+    transformYourFuture: "Umufatanyabikorwa nyamukuru w’ibizamini mu Rwanda ku ntsinzi mu burezi no mu mwuga",
     homeSubtitle:
       "Bonera amasomo y'ubwiza mu buryo butandukanye - amashusho, amajwi, na PDF. Wige ku mpuguke z'inganda kandi uteze imbere umwuga wawe n'urubuga rwacu rw'uburezi rwuzuye.",
     getStarted: "Tangira",
     exploreCourses: "Shakisha Amasomo",
-    whyChooseUs: "Kuki Uduhitamo?",
+    whyChooseUs: "Kuki Uduhitamo",
     multiFormatLearning: "Kwiga mu Buryo Butandukanye",
     multiFormatDesc:
       "Wige binyuze mu mashusho, amasomo y'amajwi, n'ibikoresho bya PDF byuzuye byahinduwe ukurikije uburyo bwawe bwo kwiga.",
