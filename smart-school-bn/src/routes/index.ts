@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import { userRoutes } from './user.routes';
-import { authRoutes } from './auth.routes';
+import { Router } from "express";
+import authRoutes from "./auth.routes";
+import { Request, Response } from "express";
 
 const router = Router();
 
@@ -32,8 +32,7 @@ const router = Router();
  */
 
 // Mount route modules
-router.use('/users', userRoutes);
-router.use('/auth', authRoutes);
+router.use("/auth", authRoutes);
 
 // API info endpoint
 /**
@@ -69,15 +68,15 @@ router.use('/auth', authRoutes);
  *                   type: string
  *                   format: date-time
  */
-router.get('/', (req, res) => {
+router.get("/", (req: Request, res: Response) => {
   res.json({
-    name: 'Express TypeScript API',
-    version: process.env.npm_package_version || '1.0.0',
-    description: 'A well-structured Express.js API with TypeScript, Swagger documentation, and monitoring',
-    documentation: '/api-docs',
-    health: '/health',
-    timestamp: new Date().toISOString()
+    name: "Smart school API",
+    description:
+      "This is the API documentation for the Smart school application.",
+    documentation: "/api-docs",
+    health: "/health",
+    timestamp: new Date().toISOString(),
   });
 });
 
-export { router as routes };
+export default router;

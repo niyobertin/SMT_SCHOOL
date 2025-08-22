@@ -1,25 +1,23 @@
-
-
-// Request Logger Middleware
-import morgan from 'morgan';
-import { loggerStream } from '../utils/logger';
-
-// Custom morgan token for response time in milliseconds
-morgan.token('response-time-ms', (req: any, res: any) => {
-  if (!req._startTime) return '0';
-  const diff = process.hrtime(req._startTime);
-  return `${(diff[0] * 1000 + diff[1] * 1e-6).toFixed(2)}ms`;
+import morgan from "morgan";
+import { loggerStream } from "../utils/logger";
+morgan.token("response-time-ms", (req: any, res: any) => {
+  if (!req._startAt) return "0";
+  const diff = process.hrtime(req._startAt);
+  return `${(diff[0] * 1000 + diff[1] / 1e6).toFixed(2)}ms`;
+});
+morgan.format("with-response-time", (tokens, req: any, res: any) => {
+  if (!req._startAt) req._startAt = process.hrtime();
+  return [
+    tokens.method(req, res),
+    tokens.url(req, res),
+    tokens.status(req, res),
+    tokens.res(req, res, "content-length"),
+    "-",
+    tokens["response-time-ms"](req, res),
+  ].join(" ");
 });
 
-// Custom morgan format
-const morganFormat = process.env.NODE_ENV === 'production'
-  ? ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time-ms'
-  : ':method :url :status :res[content-length] - :response-time-ms';
-
-export const requestLogger = morgan(morganFormat, {
+export const requestLogger = morgan("with-response-time", {
   stream: loggerStream,
-  skip: (req) => {
-    // Skip health check and metrics endpoints
-    return req.url === '/health' || req.url === '/metrics';
-  }
+  skip: (req) => req.url === "/health" || req.url === "/metrics",
 });

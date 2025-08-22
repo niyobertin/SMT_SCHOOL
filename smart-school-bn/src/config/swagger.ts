@@ -1,194 +1,194 @@
-import { Express } from 'express';
-import swaggerJSDoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
-import { logger } from '../utils/logger';
-
-// Swagger definition using JSDoc comments (no YAML file needed)
+import { Express } from "express";
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+import { logger } from "../utils/logger";
+// Swagger definition
 const swaggerDefinition = {
-  openapi: '3.0.0',
+  openapi: "3.0.0",
   info: {
-    title: 'Express TypeScript API',
-    version: '1.0.0',
-    description: 'A well-structured Express.js API with TypeScript, Swagger documentation, and monitoring',
+    title: "Smart school API",
+    version: "1.0.0",
+    description:
+      "This is the API documentation for the Smart school application.",
     contact: {
-      name: 'API Support',
-      email: 'support@example.com'
+      name: "API Support",
+      email: "support@example.com",
     },
     license: {
-      name: 'MIT',
-      url: 'https://opensource.org/licenses/MIT'
-    }
+      name: "MIT",
+      url: "https://opensource.org/licenses/MIT",
+    },
   },
   servers: [
     {
-      url: process.env.API_BASE_URL || 'http://localhost:3000',
-      description: 'Development server'
+      url: process.env.API_BASE_URL || "http://localhost:3000",
+      description: "Development server",
     },
     {
-      url: 'https://api.yourdomain.com',
-      description: 'Production server'
-    }
+      url: "https://api.yourdomain.com",
+      description: "Production server",
+    },
   ],
   components: {
     securitySchemes: {
       bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT'
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
       },
       apiKey: {
-        type: 'apiKey',
-        in: 'header',
-        name: 'X-API-Key'
-      }
+        type: "apiKey",
+        in: "header",
+        name: "X-API-Key",
+      },
     },
     schemas: {
       Error: {
-        type: 'object',
-        required: ['status', 'message'],
+        type: "object",
+        required: ["status", "message"],
         properties: {
           status: {
-            type: 'string',
-            example: 'error'
+            type: "string",
+            example: "error",
           },
           message: {
-            type: 'string',
-            example: 'Something went wrong'
+            type: "string",
+            example: "Something went wrong",
           },
           timestamp: {
-            type: 'string',
-            format: 'date-time',
-            example: '2023-12-01T10:00:00.000Z'
+            type: "string",
+            format: "date-time",
+            example: "2023-12-01T10:00:00.000Z",
           },
           errors: {
-            type: 'array',
+            type: "array",
             items: {
-              type: 'object',
+              type: "object",
               properties: {
                 field: {
-                  type: 'string'
+                  type: "string",
                 },
                 message: {
-                  type: 'string'
-                }
-              }
-            }
-          }
-        }
+                  type: "string",
+                },
+              },
+            },
+          },
+        },
       },
       Success: {
-        type: 'object',
-        required: ['status', 'message'],
+        type: "object",
+        required: ["status", "message"],
         properties: {
           status: {
-            type: 'string',
-            example: 'success'
+            type: "string",
+            example: "success",
           },
           message: {
-            type: 'string',
-            example: 'Operation completed successfully'
+            type: "string",
+            example: "Operation completed successfully",
           },
           data: {
-            type: 'object'
+            type: "object",
           },
           timestamp: {
-            type: 'string',
-            format: 'date-time',
-            example: '2023-12-01T10:00:00.000Z'
-          }
-        }
+            type: "string",
+            format: "date-time",
+            example: "2023-12-01T10:00:00.000Z",
+          },
+        },
       },
       User: {
-        type: 'object',
-        required: ['id', 'email', 'name'],
+        type: "object",
+        required: ["id", "email", "name"],
         properties: {
           id: {
-            type: 'integer',
-            example: 1
+            type: "integer",
+            example: 1,
           },
           email: {
-            type: 'string',
-            format: 'email',
-            example: 'user@example.com'
+            type: "string",
+            format: "email",
+            example: "user@example.com",
           },
           name: {
-            type: 'string',
-            example: 'John Doe'
+            type: "string",
+            example: "John Doe",
           },
           createdAt: {
-            type: 'string',
-            format: 'date-time',
-            example: '2023-12-01T10:00:00.000Z'
+            type: "string",
+            format: "date-time",
+            example: "2023-12-01T10:00:00.000Z",
           },
           updatedAt: {
-            type: 'string',
-            format: 'date-time',
-            example: '2023-12-01T10:00:00.000Z'
-          }
-        }
+            type: "string",
+            format: "date-time",
+            example: "2023-12-01T10:00:00.000Z",
+          },
+        },
       },
       CreateUserRequest: {
-        type: 'object',
-        required: ['email', 'name', 'password'],
+        type: "object",
+        required: ["email", "name", "password"],
         properties: {
           email: {
-            type: 'string',
-            format: 'email',
-            example: 'user@example.com'
+            type: "string",
+            format: "email",
+            example: "user@example.com",
           },
           name: {
-            type: 'string',
-            example: 'John Doe'
+            type: "string",
+            example: "John Doe",
           },
           password: {
-            type: 'string',
+            type: "string",
             minLength: 6,
-            example: 'password123'
-          }
-        }
+            example: "password123",
+          },
+        },
       },
       HealthCheck: {
-        type: 'object',
+        type: "object",
         properties: {
           status: {
-            type: 'string',
-            example: 'OK'
+            type: "string",
+            example: "OK",
           },
           timestamp: {
-            type: 'string',
-            format: 'date-time'
+            type: "string",
+            format: "date-time",
           },
           uptime: {
-            type: 'number',
-            example: 12345.67
+            type: "number",
+            example: 12345.67,
           },
           version: {
-            type: 'string',
-            example: '1.0.0'
+            type: "string",
+            example: "1.0.0",
           },
           environment: {
-            type: 'string',
-            example: 'development'
-          }
-        }
-      }
-    }
+            type: "string",
+            example: "development",
+          },
+        },
+      },
+    },
   },
   security: [
     {
-      bearerAuth: []
-    }
-  ]
+      bearerAuth: [],
+    },
+  ],
 };
 
 // Options for swagger-jsdoc
 const swaggerOptions = {
   definition: swaggerDefinition,
   apis: [
-    './src/routes/*.ts',
-    './src/controllers/*.ts',
-    './src/middleware/*.ts'
-  ]
+    "./src/routes/*.ts",
+    "./src/controllers/*.ts",
+    "./src/middleware/*.ts",
+  ],
 };
 
 // Generate swagger specification
@@ -200,7 +200,7 @@ const swaggerUiOptions = {
     .swagger-ui .topbar { display: none; }
     .swagger-ui .info hgroup.main h2 { color: #3b82f6; }
   `,
-  customSiteTitle: 'Express TypeScript API Documentation',
+  customSiteTitle: "Smart school API Docs",
   swaggerOptions: {
     persistAuthorization: true,
     displayRequestDuration: true,
@@ -208,24 +208,28 @@ const swaggerUiOptions = {
     showExtensions: true,
     showCommonExtensions: true,
     defaultModelsExpandDepth: 2,
-    defaultModelExpandDepth: 2
-  }
+    defaultModelExpandDepth: 2,
+  },
 };
 
 export const swaggerSetup = (app: Express): void => {
   try {
     // Serve swagger documentation
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
-    
+    app.use(
+      "/api-docs",
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec, swaggerUiOptions)
+    );
+
     // Serve swagger JSON
-    app.get('/swagger.json', (req, res) => {
-      res.setHeader('Content-Type', 'application/json');
+    app.get("/swagger.json", (req, res) => {
+      res.setHeader("Content-Type", "application/json");
       res.send(swaggerSpec);
     });
-    
-    logger.info('Swagger documentation setup completed');
+
+    logger.info("Swagger documentation setup completed");
   } catch (error) {
-    logger.error('Failed to setup Swagger documentation:', error);
+    logger.error("Failed to setup Swagger documentation:", error);
   }
 };
 
