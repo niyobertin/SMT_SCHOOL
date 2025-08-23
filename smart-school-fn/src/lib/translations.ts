@@ -67,12 +67,13 @@ export const translations = {
 
     // Home Page
     exceledgeLearning: "Exceledge Learning Platform",
-    transformYourFuture: "Transform Your Future with Expert-Led Courses",
+    transformYourFuture:
+      "Rwanda's Leading Exam Partner for Academic and Professional Success",
     homeSubtitle:
-      "Access premium courses in multiple formats - video, audio, and PDF. Learn from industry experts and advance your career with our comprehensive learning platform.",
-    getStarted: "Get Started",
+      "To empower Rwandan by providing comprehensive and accessible study materials, enabling them to excel in job examinations and academic pursuits across all educational levels. One-stop platform for Rwandan students, professionals' study and exam resources as well as job-specific exams .",
     exploreCourses: "Explore Courses",
-    whyChooseUs: "Why Choose Exceledge?",
+    getStarted: "Get Started",
+    whyChooseUs: "Why Choose ",
     multiFormatLearning: "Multi-Format Learning",
     multiFormatDesc:
       "Learn through videos, audio lectures, and comprehensive PDF materials tailored to your learning style.",
@@ -85,11 +86,12 @@ export const translations = {
     certifiedLearning: "Certified Learning",
     certifiedLearningDesc:
       "Earn certificates upon course completion to showcase your new skills to employers and peers.",
-    featuredCourses: "Featured Courses",
+    featuredCourses: "What courses we focus on?",
     enrolledStudents: "enrolled students",
     rating: "rating",
     readyToStart: "Ready to Start Your Learning Journey?",
-    joinThousands: "Join thousands of students who have transformed their careers with Exceledge Learning Platform.",
+    joinThousands:
+      "Join thousands of students who have transformed their careers with Exceledge Learning Platform.",
 
     // Authentication
     login: "Login",
@@ -112,7 +114,8 @@ export const translations = {
     loginToAccount: "Login to Your Account",
     createNewAccount: "Create Your Account",
     resetYourPassword: "Reset Your Password",
-    enterEmailForReset: "Enter your email address and we'll send you a link to reset your password.",
+    enterEmailForReset:
+      "Enter your email address and we'll send you a link to reset your password.",
     rememberMe: "Remember me",
     or: "or",
     continueWithGoogle: "Continue with Google",
@@ -148,20 +151,28 @@ export const translations = {
 
     // Programs Page
     programs: "Programs",
+    aboutUs: "About Us",
     ourPrograms: "Our Programs",
-    programsSubtitle: "Discover comprehensive learning paths designed to advance your career and skills",
+    programsSubtitle:
+      "Discover comprehensive learning paths designed to advance your career and skills",
     webDevelopment: "Web Development",
-    webDevDesc: "Master modern web technologies including React, Node.js, and full-stack development",
+    webDevDesc:
+      "Master modern web technologies including React, Node.js, and full-stack development",
     dataScience: "Data Science",
-    dataScienceDesc: "Learn data analysis, machine learning, and AI with Python and R",
+    dataScienceDesc:
+      "Learn data analysis, machine learning, and AI with Python and R",
     digitalMarketing: "Digital Marketing",
-    digitalMarketingDesc: "Master SEO, social media marketing, and digital advertising strategies",
+    digitalMarketingDesc:
+      "Master SEO, social media marketing, and digital advertising strategies",
     cybersecurity: "Cybersecurity",
-    cybersecurityDesc: "Protect organizations with ethical hacking and security best practices",
+    cybersecurityDesc:
+      "Protect organizations with ethical hacking and security best practices",
     cloudComputing: "Cloud Computing",
-    cloudComputingDesc: "Master AWS, Azure, and Google Cloud platforms for modern infrastructure",
+    cloudComputingDesc:
+      "Master AWS, Azure, and Google Cloud platforms for modern infrastructure",
     mobileApp: "Mobile App Development",
-    mobileAppDesc: "Build native and cross-platform mobile applications for iOS and Android",
+    mobileAppDesc:
+      "Build native and cross-platform mobile applications for iOS and Android",
     coursesIncluded: "courses included",
     months: "months",
     startLearning: "Start Learning",
@@ -170,7 +181,8 @@ export const translations = {
     // Tuition Page
     tuition: "Tuition",
     pricingPlans: "Pricing Plans",
-    tuitionSubtitle: "Choose the perfect plan for your learning journey with flexible payment options",
+    tuitionSubtitle:
+      "Choose the perfect plan for your learning journey with flexible payment options",
     monthly: "Monthly",
     quarterly: "Quarterly",
     yearly: "Yearly",
@@ -210,19 +222,26 @@ export const translations = {
 
     // Career Page
     career: "Career",
-    careerSubtitle: "Launch your dream career with our comprehensive career support and job placement services",
+    careerSubtitle:
+      "Launch your dream career with our comprehensive career support and job placement services",
     jobPlacement: "Job Placement",
-    jobPlacementDesc: "95% of our graduates find employment within 6 months of completion",
+    jobPlacementDesc:
+      "95% of our graduates find employment within 6 months of completion",
     resumeReview: "Resume Review",
-    resumeReviewDesc: "Professional resume and portfolio review by industry experts",
+    resumeReviewDesc:
+      "Professional resume and portfolio review by industry experts",
     interviewPrep: "Interview Preparation",
-    interviewPrepDesc: "Mock interviews and personalized feedback to ace your job interviews",
+    interviewPrepDesc:
+      "Mock interviews and personalized feedback to ace your job interviews",
     networkingEvents: "Networking Events",
-    networkingEventsDesc: "Connect with industry professionals and potential employers",
+    networkingEventsDesc:
+      "Connect with industry professionals and potential employers",
     careerCoaching: "Career Coaching",
-    careerCoachingDesc: "One-on-one guidance from experienced career counselors",
+    careerCoachingDesc:
+      "One-on-one guidance from experienced career counselors",
     jobBoard: "Exclusive Job Board",
-    jobBoardDesc: "Access to exclusive job opportunities from our partner companies",
+    jobBoardDesc:
+      "Access to exclusive job opportunities from our partner companies",
     successStories: "Success Stories",
     graduateSuccess: "Graduate Success Rate",
     averageSalary: "Average Salary Increase",
@@ -236,7 +255,8 @@ export const translations = {
     // News Page
     news: "News",
     latestNews: "Latest News",
-    newsSubtitle: "Stay updated with the latest trends, announcements, and insights from the world of online learning",
+    newsSubtitle:
+      "Stay updated with the latest trends, announcements, and insights from the world of online learning",
     readMore: "Read More",
     publishedOn: "Published on",
     category: "Category",
@@ -260,6 +280,7 @@ export const translations = {
     // Navigation
     dashboard: "Tableau de bord",
     courses: "Cours",
+    aboutUs: "À Propos",
     profile: "Profil",
     settings: "Paramètres",
     backToDashboard: "Retour au tableau de bord",
@@ -313,7 +334,8 @@ export const translations = {
     congratulations: "Félicitations!",
     quizCompleted: "Quiz terminé",
     youveSuccessfullyPassed: "Vous avez réussi le quiz!",
-    youCanRetakeQuiz: "Vous pouvez reprendre le quiz pour améliorer votre score.",
+    youCanRetakeQuiz:
+      "Vous pouvez reprendre le quiz pour améliorer votre score.",
     correctAnswers: "Réponses correctes",
     totalQuestions: "Questions totales",
     reviewAnswers: "Réviser les réponses",
@@ -324,12 +346,13 @@ export const translations = {
 
     // Home Page
     exceledgeLearning: "Plateforme d'Apprentissage Exceledge",
-    transformYourFuture: "Transformez Votre Avenir avec des Cours Dirigés par des Experts",
+    transformYourFuture:
+      "Le principal partenaire d’examens au Rwanda pour la réussite académique et professionnelle",
     homeSubtitle:
-      "Accédez à des cours premium en plusieurs formats - vidéo, audio et PDF. Apprenez d'experts de l'industrie et faites progresser votre carrière avec notre plateforme d'apprentissage complète.",
-    getStarted: "Commencer",
+      "Autonomiser les Rwandais en leur fournissant des supports d’étude complets et accessibles, leur permettant d’exceller dans les examens professionnels et académiques à tous les niveaux d’éducation. Une plateforme unique pour les étudiants rwandais, les professionnels, avec des ressources d’étude et d’examen ainsi que des examens spécifiques aux métiers.",
     exploreCourses: "Explorer les Cours",
-    whyChooseUs: "Pourquoi Nous Choisir?",
+    getStarted: "Commencer",
+    whyChooseUs: "Pourquoi Nous Choisir",
     multiFormatLearning: "Apprentissage Multi-Format",
     multiFormatDesc:
       "Apprenez grâce à des vidéos, des conférences audio et des matériaux PDF complets adaptés à votre style d'apprentissage.",
@@ -342,7 +365,7 @@ export const translations = {
     certifiedLearning: "Apprentissage Certifié",
     certifiedLearningDesc:
       "Obtenez des certificats à la fin du cours pour présenter vos nouvelles compétences aux employeurs et pairs.",
-    featuredCourses: "Cours en Vedette",
+    featuredCourses: "Sur quels cours nous concentrons-nous?",
     enrolledStudents: "étudiants inscrits",
     rating: "note",
     readyToStart: "Prêt à Commencer Votre Parcours d'Apprentissage?",
@@ -411,17 +434,23 @@ export const translations = {
     programsSubtitle:
       "Découvrez des parcours d'apprentissage complets conçus pour faire progresser votre carrière et vos compétences",
     webDevelopment: "Développement Web",
-    webDevDesc: "Maîtrisez les technologies web modernes incluant React, Node.js et le développement full-stack",
+    webDevDesc:
+      "Maîtrisez les technologies web modernes incluant React, Node.js et le développement full-stack",
     dataScience: "Science des Données",
-    dataScienceDesc: "Apprenez l'analyse de données, l'apprentissage automatique et l'IA avec Python et R",
+    dataScienceDesc:
+      "Apprenez l'analyse de données, l'apprentissage automatique et l'IA avec Python et R",
     digitalMarketing: "Marketing Digital",
-    digitalMarketingDesc: "Maîtrisez le SEO, le marketing des médias sociaux et les stratégies de publicité numérique",
+    digitalMarketingDesc:
+      "Maîtrisez le SEO, le marketing des médias sociaux et les stratégies de publicité numérique",
     cybersecurity: "Cybersécurité",
-    cybersecurityDesc: "Protégez les organisations avec le piratage éthique et les meilleures pratiques de sécurité",
+    cybersecurityDesc:
+      "Protégez les organisations avec le piratage éthique et les meilleures pratiques de sécurité",
     cloudComputing: "Informatique en Nuage",
-    cloudComputingDesc: "Maîtrisez les plateformes AWS, Azure et Google Cloud pour l'infrastructure moderne",
+    cloudComputingDesc:
+      "Maîtrisez les plateformes AWS, Azure et Google Cloud pour l'infrastructure moderne",
     mobileApp: "Développement d'Applications Mobiles",
-    mobileAppDesc: "Créez des applications mobiles natives et multiplateformes pour iOS et Android",
+    mobileAppDesc:
+      "Créez des applications mobiles natives et multiplateformes pour iOS et Android",
     coursesIncluded: "cours inclus",
     months: "mois",
     startLearning: "Commencer l'Apprentissage",
@@ -474,17 +503,23 @@ export const translations = {
     careerSubtitle:
       "Lancez la carrière de vos rêves avec notre support de carrière complet et nos services de placement",
     jobPlacement: "Placement Professionnel",
-    jobPlacementDesc: "95% de nos diplômés trouvent un emploi dans les 6 mois suivant l'obtention du diplôme",
+    jobPlacementDesc:
+      "95% de nos diplômés trouvent un emploi dans les 6 mois suivant l'obtention du diplôme",
     resumeReview: "Révision de CV",
-    resumeReviewDesc: "Révision professionnelle de CV et portfolio par des experts de l'industrie",
+    resumeReviewDesc:
+      "Révision professionnelle de CV et portfolio par des experts de l'industrie",
     interviewPrep: "Préparation d'Entretien",
-    interviewPrepDesc: "Entretiens simulés et commentaires personnalisés pour réussir vos entretiens d'embauche",
+    interviewPrepDesc:
+      "Entretiens simulés et commentaires personnalisés pour réussir vos entretiens d'embauche",
     networkingEvents: "Événements de Réseautage",
-    networkingEventsDesc: "Connectez-vous avec des professionnels de l'industrie et des employeurs potentiels",
+    networkingEventsDesc:
+      "Connectez-vous avec des professionnels de l'industrie et des employeurs potentiels",
     careerCoaching: "Coaching de Carrière",
-    careerCoachingDesc: "Guidance individuelle de conseillers en carrière expérimentés",
+    careerCoachingDesc:
+      "Guidance individuelle de conseillers en carrière expérimentés",
     jobBoard: "Tableau d'Emploi Exclusif",
-    jobBoardDesc: "Accès à des opportunités d'emploi exclusives de nos entreprises partenaires",
+    jobBoardDesc:
+      "Accès à des opportunités d'emploi exclusives de nos entreprises partenaires",
     successStories: "Histoires de Succès",
     graduateSuccess: "Taux de Succès des Diplômés",
     averageSalary: "Augmentation Moyenne de Salaire",
@@ -498,7 +533,8 @@ export const translations = {
     // News Page
     news: "Actualités",
     latestNews: "Dernières Actualités",
-    newsSubtitle: "Restez informé des dernières tendances, annonces et insights du monde de l'apprentissage en ligne",
+    newsSubtitle:
+      "Restez informé des dernières tendances, annonces et insights du monde de l'apprentissage en ligne",
     readMore: "Lire Plus",
     publishedOn: "Publié le",
     category: "Catégorie",
@@ -520,30 +556,31 @@ export const translations = {
   },
   rw: {
     // Navigation
-    dashboard: "Ikibaho",
+    dashboard: "Imbonerahamwe",
     courses: "Amasomo",
+    aboutUs: "Abo Turibo",
     profile: "Umwirondoro",
     settings: "Amagenamiterere",
-    backToDashboard: "Subira ku kibaho",
-    exitQuiz: "Sohoka mu kibazo",
-    share: "Sangira",
+    backToDashboard: "Subira ku Imbonerahamwe",
+    ExitQuiz: "Sohoka mu isuzuma",
+    share: "Sangiza",
     home: "Ahabanza",
-    selectLanguage: "Hitamo ururimi",
+    SelectLanguage: "Hitamo ururimi",
 
     // Dashboard
-    welcomeBack: "Murakaza neza",
-    courseProgress: "Iterambere ry'isomo",
-    recentLessons: "Amasomo ya vuba",
-    upcomingTests: "Ibizamini bizaza",
-    continueWatching: "Komeza urebe",
+    WelcomeBack: "Murakaza neza",
+    CourseProgress: "Reba Aho ugeze wiga",
+    RecentLessons: "Amasomo Mashya",
+    UpcomingTests: "Ibizamini bizaza",
+    ContinueWatching: "Komeza urebe",
     viewAll: "Reba byose",
-    completed: "Byarangiye",
-    inProgress: "Biragenda",
-    notStarted: "Ntibatangiye",
+    completed: "Ibyarangiye",
+    InProgress: "Ibikiri gukorwa",
+    notStarted: "Nturatangira ",
 
     // Course Detail
     courseOverview: "Incamake y'isomo",
-    instructor: "Umwarimu",
+    instructor: "Umwigisha",
     lessons: "Amasomo",
     enrollNow: "Iyandikishe ubu",
     startCourse: "Tangira isomo",
@@ -555,59 +592,61 @@ export const translations = {
     students: "Abanyeshuri",
     duration: "Igihe",
     level: "Urwego",
-    downloadSyllabus: "Kuramo gahunda",
+    downloadSyllabus: "Kurura gahunda",
     progress: "Iterambere",
-    lastUpdated: "Byavuguruye",
-    off: "kugabanuka",
+    lastUpdated: "Ibyavuguruye",
+    off: "Gufunga",
 
     // Quiz
-    quiz: "Ikibazo",
+    quiz: "Isuzuma",
     question: "Ikibazo",
     of: "kuri",
     timeRemaining: "Igihe gisigaye",
     nextQuestion: "Ikibazo gikurikira",
-    previousQuestion: "Ikibazo cyabanjirije",
-    submitQuiz: "Kohereza ikibazo",
+    previousQuestion: "Ikibazo cyabanje",
+    submitQuiz: "Soza Ikizamini",
     score: "Amanota",
     correct: "Nibyo",
     incorrect: "Sibyo",
-    complete: "Byarangiye",
-    congratulations: "Murakomeye!",
-    quizCompleted: "Ikibazo cyarangiye",
-    youveSuccessfullyPassed: "Mwaratsinze ikibazo!",
-    youCanRetakeQuiz: "Mushobora kongera mukore ikibazo kugira ngo muzamure amanota.",
+    complete: "Ibyarangiye",
+    congratulations: "Komerezaho, Mwakoze neza",
+    quizCompleted: "Ikizamini cyarangiye",
+    youveSuccessfullyPassed: "Mwatsinze Neza",
+    youCanRetakeQuiz: "Subiramo Ikizamini.",
     correctAnswers: "Ibisubizo by'ukuri",
     totalQuestions: "Ibibazo byose",
     reviewAnswers: "Subiramo ibisubizo",
-    retakeQuiz: "Ongera ukore ikibazo",
+    retakeQuiz: "Ongera ukore Ikizamini",
     backToResults: "Subira ku bisubizo",
-    quizReview: "Isubiramo ry'ikibazo",
+    quizReview: "Subiramo Ikizamini",
     explanation: "Ibisobanuro:",
 
     // Home Page
-    exceledgeLearning: "Urubuga rw'Uburezi Exceledge",
-    transformYourFuture: "Hindura Ejo Hazaza Hawe n'Amasomo Ayobowe n'Impuguke",
+    SmartSchoolLearning: "Urubuga Rwo Kwigiraho",
+    transformYourFuture: "Tegura Ejo Hazaza Hawe",
     homeSubtitle:
-      "Bonera amasomo y'ubwiza mu buryo butandukanye - amashusho, amajwi, na PDF. Wige ku mpuguke z'inganda kandi uteze imbere umwuga wawe n'urubuga rwacu rw'uburezi rwuzuye.",
-    getStarted: "Tangira",
-    exploreCourses: "Shakisha Amasomo",
-    whyChooseUs: "Kuki Uduhitamo?",
+      "Guhesha Abanyarwanda ubushobozi bwo kubona ibitabo n’ibikoresho by’amasomo byuzuye kandi byoroshye kugeraho, bibafasha gutsinda neza mu bizamini by’akazi no mu masomo ku nzego zose z’uburezi. Urubuga rumwe rukomatanyije rwo gufasha abanyeshuri b’Abanyarwanda, abahanga mu mwuga, hamwe n’ibikoresho by’amasomo n’ibizami bijyanye n’imirimo.",
+    getStarted: "Tangirira hano",
+    exploreCourses: "Sura Amasomo",
+    whyChooseUs: "Kuki Ugomba Kuduhitamo?",
     multiFormatLearning: "Kwiga mu Buryo Butandukanye",
     multiFormatDesc:
-      "Wige binyuze mu mashusho, amasomo y'amajwi, n'ibikoresho bya PDF byuzuye byahinduwe ukurikije uburyo bwawe bwo kwiga.",
+      "Wige binyuze mu mashusho, amasomo y'amajwi, n'ibitabo byuzuye byateguwe bikurikije uburyo bwiza kdi bworoshye bwo kwiga no kwitegurira Kujya mukazi.",
     expertInstructors: "Abarimu b'Impuguke",
-    expertInstructorsDesc: "Wige ku mpuguke z'inganda zifite imyaka myinshi y'uburambe bw'ukuri n'amateka yemezwa.",
-    flexibleSchedule: "Gahunda Yoroshye",
+    expertInstructorsDesc:
+      "Wigane n’impuguke kuri buri rwego kugira ngo ubashe Kwihugura ndetse No Kugira Ubumenyi bwihariye.",
+    flexibleSchedule: "Wakwiha Gahunda Yo Kwiga no Kwihugura",
     flexibleScheduleDesc:
       "Wige ku gipimo cyawe hamwe no kubona ibikoresho by'amasomo 24/7 no kubona ubuzima bwose amasomo waguze.",
     certifiedLearning: "Uburezi Bwemejwe",
     certifiedLearningDesc:
       "Bonera impamyabumenyi nyuma yo kurangiza amasomo kugira ngo werekane ubuhanga bwawe bushya ku bakoresha n'abo mufatanyabikorwa.",
-    featuredCourses: "Amasomo Akomeye",
+    featuredCourses: "Ni ayahe masomo twibandaho?",
     enrolledStudents: "abanyeshuri biyandikishije",
     rating: "amanota",
     readyToStart: "Witeguye Gutangira Urugendo Rwawe rwo Kwiga?",
-    joinThousands: "Jya mu bihumbi by'abanyeshuri bahinduye imyuga yabo hamwe n'Urubuga rw'Uburezi Exceledge.",
+    joinThousands:
+      "Jya mu bihumbi by'abanyeshuri bahinduye imyuga yabo hamwe n'Urubuga rw'Uburezi Exceledge.",
 
     // Authentication
     login: "Kwinjira",
@@ -638,20 +677,20 @@ export const translations = {
     continueWithFacebook: "Komeza na Facebook",
 
     // Common
-    loading: "Birapakurura...",
-    error: "Ikosa",
+    loading: "Biracyaza...",
+    error: "Harimo Ikosa Subiramo",
     retry: "Ongera ugerageze",
-    cancel: "Kuraguza",
+    cancel: "Kureka",
     save: "Bika",
     edit: "Hindura",
     delete: "Siba",
     by: "na",
 
     // Contact Page
-    contactUs: "Tudusangire",
-    getInTouch: "Tudusangire",
+    contactUs: "Duhamagare",
+    getInTouch: "Ganira Natwe",
     contactSubtitle:
-      "Ufite ibibazo? Twifuza kugira icyo tuvugana. Dukohereze ubutumwa kandi tuzasubiza vuba bishoboka.",
+      "Ufite ibibazo? Twifuza kugira icyo tugufasha.Twoherereze ubutumwa kandi turagusubiza vuba bishoboka.",
     name: "Izina",
     subject: "Ingingo",
     message: "Ubutumwa",
@@ -668,19 +707,26 @@ export const translations = {
     // Programs Page
     programs: "Gahunda",
     ourPrograms: "Gahunda Zacu",
-    programsSubtitle: "Menya inzira z'uburezi zuzuye zagenewe guteza imbere umwuga wawe n'ubuhanga bwawe",
+    programsSubtitle:
+      "Menya Gahunda Zihariye zagenewe Gufasha abantu Mu kihugura no Kwitegure Ibizamini By’Akazi",
     webDevelopment: "Iterambere rya Urubuga",
-    webDevDesc: "Menya tekinoroji zigezweho z'urubuga harimo React, Node.js n'iterambere ryuzuye",
+    webDevDesc:
+      "Menya tekinoroji zigezweho z'urubuga harimo React, Node.js n'iterambere ryuzuye",
     dataScience: "Ubumenyi bw'Amakuru",
-    dataScienceDesc: "Wige isesengura ry'amakuru, kwiga kw'imashini, na AI hamwe na Python na R",
+    dataScienceDesc:
+      "Wige isesengura ry'amakuru, kwiga kw'imashini, na AI hamwe na Python na R",
     digitalMarketing: "Kwamamaza mu Buryo bwa Digitale",
-    digitalMarketingDesc: "Menya SEO, kwamamaza kuri media nyafurika, n'ingamba zo kwamamaza kuri digitale",
+    digitalMarketingDesc:
+      "Menya SEO, kwamamaza kuri media nyafurika, n'ingamba zo kwamamaza kuri digitale",
     cybersecurity: "Umutekano wa Cyber",
-    cybersecurityDesc: "Kurinda amashyirahamwe hamwe no guhakana mu buryo bwiza n'amahame meza y'umutekano",
+    cybersecurityDesc:
+      "Kurinda amashyirahamwe hamwe no guhakana mu buryo bwiza n'amahame meza y'umutekano",
     cloudComputing: "Ikoranabuhanga ry'Ibicu",
-    cloudComputingDesc: "Menya AWS, Azure, na Google Cloud kugira ngo ukore ibikorwa bigezweho",
+    cloudComputingDesc:
+      "Menya AWS, Azure, na Google Cloud kugira ngo ukore ibikorwa bigezweho",
     mobileApp: "Iterambere ry'Porogaramu z'Igendanwa",
-    mobileAppDesc: "Kora porogaramu z'igendanwa kavukire na cross-platform kuri iOS na Android",
+    mobileAppDesc:
+      "Kora porogaramu z'igendanwa kavukire na cross-platform kuri iOS na Android",
     coursesIncluded: "amasomo arimo",
     months: "amezi",
     startLearning: "Tangira Kwiga",
@@ -689,7 +735,9 @@ export const translations = {
     // Tuition Page
     tuition: "Amafaranga y'Ishuri",
     pricingPlans: "Gahunda z'Ibiciro",
-    tuitionSubtitle: "Hitamo gahunda nziza y'urugendo rwawe rwo kwiga hamwe n'amahitamo yo kwishyura yoroshye",
+    tuitionSubtitle:
+      "Hitamo Ifatabuguzi rikoroheye ubashe kwiga ndetse no kwihugura Kumasomo ushaka",
+    Daily: "Buri Munsi",
     monthly: "Buri kwezi",
     quarterly: "Buri gihembwe",
     yearly: "Buri mwaka",
@@ -697,19 +745,19 @@ export const translations = {
     mostPopular: "Ikunzwe Cyane",
     bestValue: "Agaciro Gakomeye",
     basicPlan: "Gahunda y'Ibanze",
-    proPlan: "Gahunda ya Pro",
-    premiumPlan: "Gahunda ya Premium",
+    proPlan: "Gahunda ya yisumbuye",
+    premiumPlan: "Gahunda ya ihebuje",
     enterprisePlan: "Gahunda y'Ubucuruzi",
     accessToCourses: "Kubona amasomo y'ibanze",
     limitedSupport: "Ubufasha bwa imeli",
-    basicCertificates: "Impamyabumenyi z'ibanze",
+    basicCertificates: "Icyemezo cyishimwe kurwego rw’ibanze",
     allCourses: "Kubona amasomo yose",
     prioritySupport: "Ubufasha bw'ibanze",
-    advancedCertificates: "Impamyabumenyi z'imbere",
-    personalMentor: "Umujyanama bwite",
-    unlimitedAccess: "Kubona bidafite imipaka",
-    premiumSupport: "Ubufasha bwa premium 24/7",
-    verifiedCertificates: "Impamyabumenyi zemejwe",
+    advancedCertificates: "Icyemezo cy’ishimwe kurwego rwisumbuye",
+    personalMentor: "Ubujyanama bwite",
+    unlimitedAccess: "Ryoherwa no Kwiga Bitagira Imipaka",
+    premiumSupport: "Ubufasha bwo Kurwego rwisumbuye 24/7",
+    verifiedCertificates: "Ibyemezo Byishimwe Byemejwe",
     careerServices: "Serivisi zo gushaka akazi",
     customLearning: "Inzira zo kwiga zihariye",
     teamManagement: "Gucunga itsinda",
@@ -732,16 +780,19 @@ export const translations = {
     careerSubtitle:
       "Tangira umwuga w'inzozi zawe hamwe n'ubufasha bwacu bwuzuye bw'umwuga na serivisi zo gushaka akazi",
     jobPlacement: "Gushyira mu Kazi",
-    jobPlacementDesc: "95% by'abarangije amashuri bacu babona akazi mu mezi 6 nyuma yo kurangiza",
-    resumeReview: "Gusuzuma CV",
-    resumeReviewDesc: "Gusuzuma CV n'ibikoresho byawe n'impuguke z'inganda",
-    interviewPrep: "Gwitegura Ikiganiro",
+    jobPlacementDesc:
+      "95% by'abarangije amashuri bacu babona akazi mu mezi 6 nyuma yo kurangiza",
+    resumeReview: "Gusuzuma Umwirondoro",
+    resumeReviewDesc: "Gusuzuma Umwirondoro",
+    interviewPrep: "Gwitegura Ikizamini muburyo bwikiganiro",
     interviewPrepDesc:
       "Ikiganiro cyo kwigerageza n'ibitekerezo byihariye kugira ngo utsinze ikiganiro cyawe cyo gushaka akazi",
     networkingEvents: "Ibirori byo Guhurirana",
-    networkingEventsDesc: "Hura n'impuguke z'inganda n'abakoresha bashoboka",
+    networkingEventsDesc:
+      "Hura n'impuguke Muri buri rwego n'abakoresha bashoboka",
     careerCoaching: "Ubuyobozi bw'Umwuga",
-    careerCoachingDesc: "Ubuyobozi bw'umuntu ku giti cye bw'abajyanama b'umwuga bafite uburambe",
+    careerCoachingDesc:
+      "Ubuyobozi bw'umuntu ku giti cye bw'abajyanama b'umwuga bafite uburambe",
     jobBoard: "Ikibaho cy'Akazi Cyihariye",
     jobBoardDesc: "Kubona amahirwe y'akazi yihariye y'amasosiyete dufatanyije",
     successStories: "Inkuru z'Intsinzi",
@@ -751,13 +802,14 @@ export const translations = {
     placementRate: "95%",
     salaryIncrease: "40%",
     companies: "500+",
-    getCareerSupport: "Bonera Ubufasha bw'Umwuga",
+    getCareerSupport: "Bona Ubufasha bw'Umwuga",
     bookConsultation: "Tanga Inama",
 
     // News Page
     news: "Amakuru",
     latestNews: "Amakuru Mashya",
-    newsSubtitle: "Komeza ukurikirana ibintu bishya, amatangazo, n'ubushishozi bw'isi y'uburezi bwa interineti",
+    newsSubtitle:
+      "Komeza ukurikirana ibintu bishya, amatangazo, n'ubushishozi bw'isi y'uburezi bwa interineti",
     readMore: "Soma Byinshi",
     publishedOn: "Byatangajwe ku",
     category: "Icyiciro",
@@ -767,17 +819,17 @@ export const translations = {
     allCategories: "Ibyiciro Byose",
     technology: "Ikoranabuhanga",
     education: "Uburezi",
-    industry: "Inganda",
+    industry: "Icyiciro cy’umurimo",
     announcements: "Amatangazo",
     tips: "Inama n'Ubuhanga",
     featured: "Byagaragajwe",
-    recent: "Vuba",
+    recent: "Ibya Vuba",
     trending: "Bikurikirana",
     loadMore: "Shakisha Byinshi",
     noArticles: "Nta nyandiko zabonetse",
     backToNews: "Subira ku Makuru",
   },
-} as const
+} as const;
 
-export type Language = keyof typeof translations
-export type TranslationKey = keyof typeof translations.en
+export type Language = keyof typeof translations;
+export type TranslationKey = keyof typeof translations.en;

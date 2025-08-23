@@ -3,17 +3,22 @@ import { MainLayout } from "./components/Layouts/Main";
 import { HomePage } from "./pages/Home";
 import { About } from "./pages/About";
 import { TranslationProvider } from "./contexts/TranslationContext";
-import { RegisterPage } from "./pages/Register";
-import { LoginPage } from "./pages/Login";
-import { ResetPassword } from "./pages/ResetPassword";
-import { RequestReset } from "./pages/RequestLink";
-
+import { RegisterPage } from "./pages/auth/Register";
+import { LoginPage } from "./pages/auth/Login";
+import { ResetPassword } from "./pages/auth/ResetPassword";
+import { RequestReset } from "./pages/auth/RequestLink";
 function App() {
   return (
     <TranslationProvider>
       <BrowserRouter>
         <Routes>
-          <Route element={<MainLayout><Outlet /></MainLayout>}>
+          <Route
+            element={
+              <MainLayout>
+                <Outlet />
+              </MainLayout>
+            }
+          >
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<About />} />
           </Route>
@@ -24,8 +29,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </TranslationProvider>
-  )
+  );
 }
-
 
 export default App;
