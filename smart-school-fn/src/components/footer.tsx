@@ -8,20 +8,18 @@ export function Footer() {
     <footer className="bg-slate-900 text-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
           <div>
             <div className="text-center mb-4">
               <div className="rounded-lg flex items-center justify-center">
-                <img src={Logo} alt="Logo" className="w-30 h-30 rounded-full"/>
+                <img src={Logo} alt="Logo" className="w-20 h-20 rounded-full" />
               </div>
-              <h3 className="text-xl font-bold">Smart school</h3>
+              <h3 className="text-xl font-bold">Smart school Rwanda</h3>
             </div>
             <p className="text-slate-400 text-center">
-              Empowering learners worldwide with premium educational content.
+              {/* Empowering learners worldwide with premium educational content. */}
             </p>
           </div>
 
-          {/* Platform */}
           <div>
             <h4 className="font-semibold mb-4">Platform</h4>
             <ul className="space-y-2 text-slate-400">
@@ -43,7 +41,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  to="/pricing"
+                  to="/tuition"
                   className="hover:text-white transition-colors"
                 >
                   Pricing
@@ -52,7 +50,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
           <div>
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-slate-400">
@@ -76,8 +73,6 @@ export function Footer() {
               </li>
             </ul>
           </div>
-
-          {/* Legal */}
           <div>
             <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-slate-400">
@@ -108,8 +103,6 @@ export function Footer() {
             </ul>
           </div>
         </div>
-
-        {/* Bottom */}
         <div className="border-t border-slate-800 mt-8 pt-8 text-center text-slate-400">
           <p>
             &copy; {new Date().getFullYear()} Smart school Learning Platform.

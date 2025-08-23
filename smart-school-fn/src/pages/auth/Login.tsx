@@ -1,68 +1,57 @@
-import React, { useState } from "react"
-import { BookOpen, Eye, EyeOff, Mail, Phone } from "lucide-react"
-import { Link } from "react-router-dom" 
-import useLanguage from "../hooks/useLanguage";
-import { LanguageSwitcher } from "../components/common/LanguageSwitcher";
-
-const countryCodes = [
-  { code: '+1', name: 'US' },
-  { code: '+44', name: 'UK' },
-  { code: '+33', name: 'FR' },
-  { code: '+49', name: 'DE' },
-  { code: '+212', name: 'MA' },
-  // Add more country codes as needed
-]
+import React, { useState } from "react";
+import { Eye, EyeOff, Mail, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
+import useLanguage from "../../hooks/useLanguage";
+import { countryCodes } from "../../constants/countryCodes";
+import { AuthHeader } from "../../components/headers/authHeader";
 
 export const LoginPage = () => {
-  const { t } = useLanguage()
-  const [showPassword, setShowPassword] = useState(false)
-  const [loginWithPhone, setLoginWithPhone] = useState(false)
-  const [selectedCountryCode, setSelectedCountryCode] = useState('+1')
-  const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false)
-  
+  const { t } = useLanguage();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginWithPhone, setLoginWithPhone] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
+  const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
     password: "",
     rememberMe: false,
-  })
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (loginWithPhone && !formData.phone) {
-      alert('Please enter your phone number')
-      return
+      alert("Please enter your phone number");
+      return;
     }
     if (!loginWithPhone && !formData.email) {
-      alert('Please enter your email')
-      return
+      alert("Please enter your email");
+      return;
     }
-    
-    const loginData = loginWithPhone 
-      ? { phone: `${selectedCountryCode}${formData.phone}`, password: formData.password }
-      : { email: formData.email, password: formData.password }
-      
-    console.log("Login attempt:", loginData)
-  }
+
+    const loginData = loginWithPhone
+      ? {
+          phone: `${selectedCountryCode}${formData.phone}`,
+          password: formData.password,
+        }
+      : { email: formData.email, password: formData.password };
+
+    console.log("Login attempt:", loginData);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-            <BookOpen className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Smart School
-          </h1>
-        </Link>
-        <LanguageSwitcher />
-      </div>
+      <AuthHeader />
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">{t("loginToAccount")}</h2>
-          <p className="text-slate-600 mt-2">Welcome back! Please enter your details.</p>
+          <h2 className="text-2xl font-bold text-slate-900">
+            {t("loginToAccount")}
+          </h2>
+          <p className="text-slate-600 mt-2">
+            Welcome back! Please enter your details.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,7 +60,11 @@ export const LoginPage = () => {
             <button
               type="button"
               onClick={() => setLoginWithPhone(false)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${!loginWithPhone ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                !loginWithPhone
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <Mail className="h-5 w-5" />
               <span>Email</span>
@@ -79,7 +72,11 @@ export const LoginPage = () => {
             <button
               type="button"
               onClick={() => setLoginWithPhone(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${loginWithPhone ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                loginWithPhone
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
             >
               <Phone className="h-5 w-5" />
               <span>Phone</span>
@@ -97,7 +94,9 @@ export const LoginPage = () => {
                 type="email"
                 placeholder="Enter your email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -110,12 +109,24 @@ export const LoginPage = () => {
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => setShowCountryCodeDropdown(!showCountryCodeDropdown)}
+                    onClick={() =>
+                      setShowCountryCodeDropdown(!showCountryCodeDropdown)
+                    }
                     className="h-10 px-3 border rounded-lg text-sm flex items-center gap-1 min-w-[80px]"
                   >
                     {selectedCountryCode}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
                   {showCountryCodeDropdown && (
@@ -141,7 +152,10 @@ export const LoginPage = () => {
                   placeholder="123 456 7890"
                   value={formData.phone}
                   onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })
+                    setFormData({
+                      ...formData,
+                      phone: e.target.value.replace(/\D/g, ""),
+                    })
                   }
                   className="flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -160,7 +174,9 @@ export const LoginPage = () => {
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 className="w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -169,7 +185,11 @@ export const LoginPage = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
@@ -180,12 +200,17 @@ export const LoginPage = () => {
               <input
                 type="checkbox"
                 checked={formData.rememberMe}
-                onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, rememberMe: e.target.checked })
+                }
                 className="h-4 w-4 rounded border-slate-300"
               />
               {t("rememberMe")}
             </label>
-            <Link to="/request-link" className="text-sm text-blue-600 hover:text-blue-800">
+            <Link
+              to="/request-link"
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
               {t("forgotPassword")}?
             </Link>
           </div>
@@ -193,7 +218,7 @@ export const LoginPage = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-2 rounded-lg font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition"
+            className="w-full py-2 rounded-lg font-medium text-white bg-blue-800 transition"
           >
             {t("signIn")}
           </button>
@@ -238,12 +263,15 @@ export const LoginPage = () => {
         <div className="mt-6 text-center">
           <p className="text-sm text-slate-600">
             {t("dontHaveAccount")}{" "}
-            <Link to="/register" className="text-blue-600 hover:text-blue-800 font-medium transition">
+            <Link
+              to="/register"
+              className="text-blue-600 hover:text-blue-800 font-medium transition"
+            >
               {t("signUp")}
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

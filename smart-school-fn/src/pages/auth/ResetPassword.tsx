@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Lock, CheckCircle, Eye, EyeOff, BookOpen } from "lucide-react";
-import { Link } from "react-router-dom"; 
-import { LanguageSwitcher } from "../components/common/LanguageSwitcher";
+import { Lock, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AuthHeader } from "../../components/headers/authHeader";
 
 export const ResetPassword = () => {
   const [formData, setFormData] = useState({
@@ -23,17 +23,7 @@ export const ResetPassword = () => {
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
-         <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                <Link to="/" className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                    <BookOpen className="h-5 w-5 text-white" />
-                  </div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Smart School
-                  </h1>
-                </Link>
-                <LanguageSwitcher />
-              </div>
+      <AuthHeader />
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6">
         <div className="flex justify-center mb-4">
           <div className="bg-green-100 p-3 rounded-full">
@@ -69,7 +59,7 @@ export const ResetPassword = () => {
               )}
             </button>
           </div>
-          
+
           <div className="relative">
             <input
               type={showConfirmPassword ? "text" : "password"}
@@ -107,7 +97,7 @@ export const ResetPassword = () => {
 
           <button
             type="submit"
-            className="w-full py-2 rounded-lg text-white font-medium bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="w-full py-2 rounded-lg text-white font-medium bg-blue-800 cursor-pointer "
           >
             Reset Password
           </button>
