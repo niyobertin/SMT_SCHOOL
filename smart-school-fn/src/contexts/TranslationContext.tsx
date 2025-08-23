@@ -1,22 +1,30 @@
-import { createContext, useContext, useState } from 'react';
-import type { ReactNode } from 'react';
-import { translations } from '../lib/translations';
+import { createContext, useContext, useState } from "react";
+import type { ReactNode } from "react";
+import { translations } from "../lib/translations";
 
 type Language = keyof typeof translations;
 
 type TranslationContextType = {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: keyof typeof translations['en']) => string;
+  t: (key: keyof (typeof translations)["en"]) => string;
 };
 
-const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
+const TranslationContext = createContext<TranslationContextType | undefined>(
+  undefined
+);
 
-export const TranslationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
+export const TranslationProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const [language, setLanguage] = useState<Language>("en");
 
-  const t = (key: keyof typeof translations['en']): string => {
-    return translations[language][key] || translations['en'][key] || String(key);
+  const t = (key: keyof (typeof translations)["en"]): string => {
+    return (
+      (translations[language] as (typeof translations)["en"])[key] ||
+      translations["en"][key] ||
+      String(key)
+    );
   };
 
   return (
@@ -26,10 +34,11 @@ export const TranslationProvider: React.FC<{ children: ReactNode }> = ({ childre
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTranslation = (): TranslationContextType => {
   const context = useContext(TranslationContext);
   if (context === undefined) {
-    throw new Error('useTranslation must be used within a TranslationProvider');
+    throw new Error("useTranslation must be used within a TranslationProvider");
   }
   return context;
 };
