@@ -3,7 +3,6 @@ import { Eye, EyeOff, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import useLanguage from "../../hooks/useLanguage";
 import { countryCodes } from "../../constants/countryCodes";
-import { AuthHeader } from "../../components/headers/authHeader";
 export const RegisterPage = () => {
   const { t } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
@@ -35,11 +34,8 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      {/* Header */}
-      <AuthHeader />
-      {/* Card */}
-      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-6">
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-6 ">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-slate-900">
             {t("createNewAccount")}

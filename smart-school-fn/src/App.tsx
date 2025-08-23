@@ -21,11 +21,11 @@ function App() {
           >
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<About />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ResetPassword />} />
+            <Route path="/request-link" element={<RequestReset />} />
           </Route>
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ResetPassword />} />
-          <Route path="/request-link" element={<RequestReset />} />
         </Routes>
       </BrowserRouter>
     </TranslationProvider>

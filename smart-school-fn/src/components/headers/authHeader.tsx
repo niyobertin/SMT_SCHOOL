@@ -3,7 +3,7 @@ import { LanguageSwitcher } from "../common/LanguageSwitcher";
 import Logo from "../../assets/logo.jpg";
 export const AuthHeader = () => {
   return (
-    <header className="absolute top-4 left-4 right-4">
+    <header className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-md shadow-md py-4 z-10">
       <div className="flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link
           to="/"

@@ -3,7 +3,6 @@ import { Eye, EyeOff, Mail, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import useLanguage from "../../hooks/useLanguage";
 import { countryCodes } from "../../constants/countryCodes";
-import { AuthHeader } from "../../components/headers/authHeader";
 
 export const LoginPage = () => {
   const { t } = useLanguage();
@@ -42,8 +41,6 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <AuthHeader />
-
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-slate-900">
