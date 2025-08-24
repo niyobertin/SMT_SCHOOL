@@ -1,46 +1,142 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Phone } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { loginUser, clearError } from "../../redux/features/auth";
 import useLanguage from "../../hooks/useLanguage";
 import { countryCodes } from "../../constants/countryCodes";
+import type { AppDispatch, RootState } from "../../redux/stores";
+import { Toast } from "primereact/toast";
+import { useRef } from "react";
+import type { SubmitHandler } from "react-hook-form";
+
+const loginSchema: yup.ObjectSchema<FormData> = yup.object({
+  identifier: yup.string().required("Email or phone is required"),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+    .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .matches(/\d/, "Password must contain at least one number")
+    .matches(
+      /[@$!%*?&]/,
+      "Password must contain at least one special character (@, $, !, %, *, ?, &)"
+    ),
+  loginWithPhone: yup.boolean().required(),
+  selectedCountryCode: yup.string().nullable(),
+});
+
+type FormData = {
+  identifier: string;
+  password: string;
+  loginWithPhone: boolean;
+  selectedCountryCode?: string | null;
+};
 
 export const LoginPage = () => {
   const { t } = useLanguage();
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { loading, error, isAuthenticated } = useSelector(
+    (state: RootState) => state.auth
+  );
+
   const [showPassword, setShowPassword] = useState(false);
+  const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false);
   const [loginWithPhone, setLoginWithPhone] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
-  const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    phone: "",
-    password: "",
-    rememberMe: false,
+  const toast = useRef<Toast>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    reset,
+    trigger,
+  } = useForm<FormData>({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      identifier: "",
+      password: "",
+      loginWithPhone: false,
+      selectedCountryCode: "+250",
+    },
+    mode: "onChange",
   });
+  useEffect(() => {
+    setValue("loginWithPhone", loginWithPhone);
+    setValue("selectedCountryCode", selectedCountryCode);
+  }, [loginWithPhone, selectedCountryCode, setValue]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loginWithPhone && !formData.phone) {
-      alert("Please enter your phone number");
-      return;
+  useEffect(() => {
+    if (isAuthenticated) {
+      reset();
+      navigate("/dashboard");
     }
-    if (!loginWithPhone && !formData.email) {
-      alert("Please enter your email");
-      return;
+  }, [isAuthenticated, navigate, reset]);
+  useEffect(() => {
+    if (error) {
+      dispatch(clearError());
     }
+  }, [loginWithPhone, dispatch, error, trigger]);
 
-    const loginData = loginWithPhone
-      ? {
-          phone: `${selectedCountryCode}${formData.phone}`,
-          password: formData.password,
-        }
-      : { email: formData.email, password: formData.password };
+  useEffect(() => {
+    if (error && toast.current) {
+      toast.current.show({
+        severity: "error",
+        summary: "Login Failed",
+        detail: error,
+        life: 3000,
+      });
+    }
+  }, [error]);
 
-    console.log("Login attempt:", loginData);
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    const loginData = {
+      identifier: data.loginWithPhone
+        ? `${data.selectedCountryCode}${data.identifier}`
+        : data.identifier,
+      password: data.password,
+    };
+
+    try {
+      await dispatch(loginUser(loginData)).unwrap();
+
+      // Show success toast
+      if (toast.current) {
+        toast.current.show({
+          severity: "success",
+          summary: "Login Successful",
+          detail: "You have successfully logged in!",
+          life: 3000,
+        });
+      }
+
+      // Navigate to dashboard after a brief delay to show the toast
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    } catch (err) {
+      console.error("Login failed:", err);
+      // Error toast is handled by the useEffect above
+    }
+  };
+
+  const toggleLoginMethod = (usePhone: boolean) => {
+    setLoginWithPhone(usePhone);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      {/* Toast component */}
+      <Toast ref={toast} position="top-right" />
+
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-slate-900">
@@ -51,12 +147,11 @@ export const LoginPage = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Login Method Toggle */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="flex items-center justify-center gap-4 mb-4">
             <button
               type="button"
-              onClick={() => setLoginWithPhone(false)}
+              onClick={() => toggleLoginMethod(false)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                 !loginWithPhone
                   ? "bg-blue-100 text-blue-700"
@@ -68,7 +163,7 @@ export const LoginPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => setLoginWithPhone(true)}
+              onClick={() => toggleLoginMethod(true)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                 loginWithPhone
                   ? "bg-blue-100 text-blue-700"
@@ -82,23 +177,29 @@ export const LoginPage = () => {
 
           {/* Email/Phone Input */}
           {!loginWithPhone ? (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <label htmlFor="email" className="block text-sm font-medium">
                 {t("email")}
               </label>
               <input
-                id="email"
+                id="identifier"
                 type="email"
                 placeholder="Enter your email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                {...register("identifier")}
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  errors.identifier
+                    ? "border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
               />
+              {errors.identifier && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.identifier.message}
+                </p>
+              )}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               <label htmlFor="phone" className="block text-sm font-medium">
                 {t("phone")}
               </label>
@@ -109,7 +210,11 @@ export const LoginPage = () => {
                     onClick={() =>
                       setShowCountryCodeDropdown(!showCountryCodeDropdown)
                     }
-                    className="h-10 px-3 border rounded-lg text-sm flex items-center gap-1 min-w-[80px]"
+                    className={`h-10 px-3 border rounded-lg text-sm flex items-center gap-1 min-w-[80px] ${
+                      errors.selectedCountryCode
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
                   >
                     {selectedCountryCode}
                     <svg
@@ -135,6 +240,7 @@ export const LoginPage = () => {
                           onClick={() => {
                             setSelectedCountryCode(country.code);
                             setShowCountryCodeDropdown(false);
+                            setValue("selectedCountryCode", country.code);
                           }}
                         >
                           {country.code} ({country.name})
@@ -143,25 +249,35 @@ export const LoginPage = () => {
                     </div>
                   )}
                 </div>
-                <input
-                  id="phone"
-                  type="tel"
-                  placeholder="123 456 7890"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      phone: e.target.value.replace(/\D/g, ""),
-                    })
-                  }
-                  className="flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="flex-1">
+                  <input
+                    id="phone"
+                    type="tel"
+                    placeholder="123 456 7890"
+                    {...register("identifier")}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                      errors.identifier
+                        ? "border-red-500 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                    }`}
+                  />
+                  {errors.identifier && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.identifier.message}
+                    </p>
+                  )}
+                </div>
               </div>
+              {errors.selectedCountryCode && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.selectedCountryCode.message}
+                </p>
+              )}
             </div>
           )}
 
           {/* Password Field */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             <label htmlFor="password" className="block text-sm font-medium">
               {t("password")}
             </label>
@@ -170,12 +286,12 @@ export const LoginPage = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                {...register("password")}
+                className={`w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 ${
+                  errors.password
+                    ? "border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                }`}
               />
               <button
                 type="button"
@@ -189,35 +305,22 @@ export const LoginPage = () => {
                 )}
               </button>
             </div>
-          </div>
-
-          {/* Remember me & Forgot password */}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={formData.rememberMe}
-                onChange={(e) =>
-                  setFormData({ ...formData, rememberMe: e.target.checked })
-                }
-                className="h-4 w-4 rounded border-slate-300"
-              />
-              {t("rememberMe")}
-            </label>
-            <Link
-              to="/request-link"
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              {t("forgotPassword")}?
-            </Link>
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-2 rounded-lg font-medium text-white bg-blue-800 transition"
+            disabled={loading}
+            className={`w-full py-2 rounded-lg font-medium text-white transition ${
+              loading ? "bg-blue-400" : "bg-blue-800 hover:bg-blue-700"
+            }`}
           >
-            {t("signIn")}
+            {loading ? "Signing in..." : t("signIn")}
           </button>
 
           {/* Divider */}
@@ -249,25 +352,23 @@ export const LoginPage = () => {
               type="button"
               className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition"
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.99 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.99 22 12z" />
               </svg>
               Facebook
             </button>
           </div>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-slate-600">
-            {t("dontHaveAccount")}{" "}
-            <Link
-              to="/register"
-              className="text-blue-600 hover:text-blue-800 font-medium transition"
-            >
-              {t("signUp")}
-            </Link>
-          </p>
-        </div>
+        <p className="mt-6 text-center text-sm text-slate-600">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   );
