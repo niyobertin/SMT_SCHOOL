@@ -20,7 +20,7 @@ model User {
   avatar               String?
   isActive             Boolean   @default(true)
   isVerified           Boolean   @default(false)
-  verificationToken    String?
+  verificationCode    Int?
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
   createdAt            DateTime  @default(now())

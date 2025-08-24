@@ -1,21 +1,59 @@
 import { body } from "express-validator";
 
-// Login validation
+
 export const loginValidation = [
-    body("email")
-      .isEmail()
-      .normalizeEmail()
-      .withMessage("Please provide a valid email address"),
-    body("password").notEmpty().withMessage("Password is required"),
-  ];
+  body("identifier")
+    .notEmpty()
+    .withMessage("Email or phone number is required"),
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required"),
+];
+
+export const registerValidation = [
+    body().custom((value, { req }) => {
+      if (!req.body.email && !req.body.phoneNumber) {
+        throw new Error("Either email or phone number is required");
+      }
+      return true;
+    }),
   
-  // Register validation
-  export const registerValidation = [
-    body("email").isEmail().withMessage("Valid email is required"),
-    body("phoneNumber").notEmpty().withMessage("Phone number is required"),
+    body("email")
+      .optional()
+      .isEmail()
+      .withMessage("Valid email is required"),
+  
+    body("phoneNumber")
+      .optional()
+      .notEmpty()
+      .withMessage("Phone number cannot be empty"),
     body("username").notEmpty().withMessage("Username is required"),
     body("firstName").notEmpty().withMessage("First name is required"),
     body("lastName").notEmpty().withMessage("Last name is required"),
-    body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters"),
-    body("role").isIn(["ADMIN", "TEACHER", "STUDENT"]).withMessage("Invalid role"),
+    body("password")
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters"),
+    body("role")
+      .isIn(["ADMIN", "TEACHER", "STUDENT"])
+      .withMessage("Invalid role"),
+  ];
+  
+
+export const resetPasswordValidation = [
+    body("password")
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters"),
+  
+    body("confirmPassword")
+      .custom((value, { req }) => {
+        if (value !== req.body.password) {
+          throw new Error("Passwords do not match");
+        }
+        return true;
+      }),
+  ];
+export const forgotPasswordValidation = [
+    body("identifier")
+    .notEmpty()
+    .withMessage("Email or phone number is required"),
   ];

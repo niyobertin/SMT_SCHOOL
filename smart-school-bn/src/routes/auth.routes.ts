@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { validateRequest } from "../middleware/validation";
-import { createUser } from "../controller/user.controller";
-import { loginValidation, registerValidation } from "../schema/authSchema";
+import { createUser, verifyUser, login, requestResetPassword, resetPassword, getProfile } from "../controller/user.controller";
+import { forgotPasswordValidation, loginValidation, registerValidation, resetPasswordValidation } from "../schema/authSchema";
+import { authenticate } from "../middleware/auth";
 
 const authRoutes = Router();
 
@@ -20,13 +21,13 @@ const authRoutes = Router();
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - identifier
  *               - password
  *             properties:
- *               email:
+ *               identifier:
  *                 type: string
- *                 format: email
- *                 example: "user@example.com"
+ *                 format: email|phoneNumber
+ *                 example: "user@example.com | +250788123456" 
  *               password:
  *                 type: string
  *                 example: "password123"
@@ -205,9 +206,146 @@ const authRoutes = Router();
  *               $ref: '#/components/schemas/Error'
  */
 
-authRoutes.post("/login", loginValidation, validateRequest); // attach login handler
+/**
+ * @swagger
+ * /api/auth/verify:
+ *   post:
+ *     summary: Verify user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - verificationCode
+ *             properties:
+ *               verificationCode:
+ *                 type: integer
+ *                 example: 123456
+ *     responses:
+ *       200:
+ *         description: User verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Invalid verification code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /api/auth/request-reset-password:
+ *   post:
+ *     summary: Request reset password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - identifier
+ *             properties:
+ *               identifier:
+ *                 type: string
+ *                 format: email|phoneNumber
+ *                 example: "user@example.com | +250788123456"
+ *     responses:
+ *       200:
+ *         description: Reset password token sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       401:
+ *         description: Invalid identifier
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *     summary: Reset password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *               - confirmPassword
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 example: "password123"
+ *               confirmPassword:
+ *                 type: string
+ *                 example: "password123"
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       401:
+ *         description: Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
+authRoutes.post("/verify", verifyUser);
+authRoutes.post("/login", loginValidation, validateRequest, login); // attach login handler
 authRoutes.post("/register", registerValidation, validateRequest, createUser);
-// authRoutes.get("/profile", authenticate, getProfile);
+authRoutes.post("/request-reset-password", forgotPasswordValidation, validateRequest, requestResetPassword);
+authRoutes.post("/reset-password", resetPasswordValidation, validateRequest, resetPassword);
+authRoutes.get("/profile", authenticate, getProfile);
 // authRoutes.post("/logout", authenticate, logout);
 
 export default authRoutes;
