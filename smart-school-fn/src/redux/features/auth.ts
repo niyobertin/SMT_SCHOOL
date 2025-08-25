@@ -5,6 +5,7 @@ import api from '../../redux/api/api';
 interface AuthState {
   user: any | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
@@ -12,8 +13,9 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
+  token: localStorage.getItem('accessToken'),
+  refreshToken: localStorage.getItem('refreshToken'),
+  isAuthenticated: !!localStorage.getItem('accessToken'),
   loading: false,
   error: null,
 };
@@ -28,7 +30,9 @@ export const loginUser = createAsyncThunk(
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      localStorage.setItem('refreshToken', response.data.data.refreshToken);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
@@ -41,9 +45,11 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
-      localStorage.removeItem('token');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       state.user = null;
       state.token = null;
+      state.refreshToken = null;
       state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
@@ -61,8 +67,10 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.user = action.payload.data.user;
+        state.token = action.payload.data.accessToken;
+        state.refreshToken = action.payload.data.refreshToken;
+        state.error = null; 
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

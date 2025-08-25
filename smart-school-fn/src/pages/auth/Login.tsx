@@ -41,7 +41,7 @@ export const LoginPage = () => {
   const { t } = useLanguage();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector(
+  const { loading, error } = useSelector(
     (state: RootState) => state.auth
   );
 
@@ -57,7 +57,6 @@ export const LoginPage = () => {
     handleSubmit,
     formState: { errors },
     setValue,
-    reset,
     trigger,
   } = useForm<FormData>({
     resolver: yupResolver(loginSchema),
@@ -74,12 +73,6 @@ export const LoginPage = () => {
     setValue("selectedCountryCode", selectedCountryCode);
   }, [loginWithPhone, selectedCountryCode, setValue]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      reset();
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, navigate, reset]);
   useEffect(() => {
     if (error) {
       dispatch(clearError());
@@ -104,11 +97,9 @@ export const LoginPage = () => {
         : data.identifier,
       password: data.password,
     };
-
     try {
-      await dispatch(loginUser(loginData)).unwrap();
-
-      // Show success toast
+      const response = await dispatch(loginUser(loginData)).unwrap();
+      console.log(response);
       if (toast.current) {
         toast.current.show({
           severity: "success",
@@ -118,13 +109,16 @@ export const LoginPage = () => {
         });
       }
 
-      // Navigate to dashboard after a brief delay to show the toast
       setTimeout(() => {
         navigate("/dashboard");
-      }, 1000);
+      }, 3000);
     } catch (err) {
-      console.error("Login failed:", err);
-      // Error toast is handled by the useEffect above
+      toast.current?.show({
+        severity: "error",
+        summary: "Login Failed",
+        detail: "Invalid credentials",
+        life: 3000,
+      });
     }
   };
 
@@ -134,7 +128,6 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      {/* Toast component */}
       <Toast ref={toast} position="top-right" />
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
@@ -175,7 +168,6 @@ export const LoginPage = () => {
             </button>
           </div>
 
-          {/* Email/Phone Input */}
           {!loginWithPhone ? (
             <div className="space-y-1">
               <label htmlFor="email" className="block text-sm font-medium">
