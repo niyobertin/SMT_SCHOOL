@@ -77,7 +77,6 @@ export const RegisterPage = () => {
     register,
     handleSubmit,
     setValue,
-    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(registerSchema),

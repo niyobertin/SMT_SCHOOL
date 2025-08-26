@@ -15,6 +15,7 @@ export default function VerifyOtp() {
   const email = searchParams.get('email');
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+  console.log(activeInput);
 
   useEffect(() => {
     if (error && toast.current) {
