@@ -12,10 +12,9 @@ export function Header() {
 
   const navigationLinks = [
     { href: "/", label: t("home"), exact: true },
+    { href: "/about", label: t("aboutUs") },
     { href: "/courses", label: t("courses") },
-    { href: "/programs", label: t("programs") },
     { href: "/tuition", label: t("tuition") },
-    { href: "/career", label: t("career") },
     { href: "/news", label: t("news") },
     { href: "/contact", label: t("contactUs") },
   ];

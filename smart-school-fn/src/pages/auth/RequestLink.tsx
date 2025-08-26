@@ -1,30 +1,97 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Mail, Phone } from "lucide-react";
 import { AuthHeader } from "../../components/headers/authHeader";
 import { countryCodes } from "../../constants/countryCodes";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { useDispatch, useSelector } from "react-redux";
+import { requestResetLink } from "../../redux/features/auth";
+import { Toast } from "primereact/toast";
+import { useRef } from "react";
+import type { RootState, AppDispatch } from "../../redux/stores";
+
+const emailSchema = yup.object().shape({
+  email: yup.string().email("Invalid email").required("Email is required"),
+});
+
+const phoneSchema = yup.object().shape({
+  countryCode: yup.string().required("Country code is required"),
+  phone: yup
+    .string()
+    .matches(/^\d+$/, "Phone must contain only numbers")
+    .min(6, "Too short")
+    .required("Phone number is required"),
+});
+
+type FormData = {
+  email?: string;
+  countryCode?: string;
+  phone?: string;
+};
 
 export const RequestReset = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const [method, setMethod] = useState<"email" | "phone">("email");
-  const [formData, setFormData] = useState({
-    email: "",
-    countryCode: "+1",
-    phone: "",
+  const toast = useRef<Toast>(null);
+  const { loading} = useSelector(
+    (state: RootState) => state.auth
+  );
+  const schema = (method === "email" ? emailSchema : phoneSchema) as yup.ObjectSchema<FormData>;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<FormData>({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      email: "",
+      countryCode: "+250",
+      phone: "",
+    },
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const onSubmit = async (data: FormData) => {
+    try {
+      let identifier: string;
+      
+      if (data.email) {
+        identifier = data.email;
+      } else if (data.countryCode && data.phone) {
+        identifier = data.countryCode + data.phone;
+      } else {
+        return;
+      }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Reset request:", { method, formData });
-    // 🔑 Call API to request reset (email or phone)
+      await dispatch(requestResetLink(identifier)).unwrap();
+      if (toast.current) {
+        toast.current.show({
+          severity: "success",
+          summary: "Reset Link Sent",
+          detail: data.email 
+            ? "A reset link has been sent to your email." 
+            : "A reset link has been sent to your phone.",
+          life: 3000,
+        });
+      }
+    } catch (err) {
+      if (toast.current) {
+        toast.current.show({
+          severity: "error",
+          summary: "Error",
+          detail: "Failed to send reset link. Please try again." + err,
+          life: 3000,
+        });
+      }
+    }
+    reset();
   };
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
+      <Toast ref={toast} position="top-right"/>
       <AuthHeader />
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6">
         <h2 className="text-2xl font-bold text-center mb-2">
@@ -62,48 +129,61 @@ export const RequestReset = () => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {method === "email" ? (
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div>
+              <input
+                type="email"
+                {...register("email")}
+                placeholder="Enter your email"
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.email.message as string}
+                </p>
+              )}
+            </div>
           ) : (
             <div className="flex gap-2">
-              <select
-                name="countryCode"
-                value={formData.countryCode}
-                onChange={handleChange}
-                className="w-28 border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {countryCodes.map((code) => (
-                  <option key={code.code} value={code.code}>
-                    {code.name} ({code.code})
-                  </option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Phone number"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div>
+                <select
+                  {...register("countryCode")}
+                  className="w-28 border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {countryCodes.map((code) => (
+                    <option key={code.code} value={code.code}>
+                      {code.name} ({code.code})
+                    </option>
+                  ))}
+                </select>
+                {errors.countryCode && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.countryCode.message as string}
+                  </p>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="tel"
+                  {...register("phone")}
+                  placeholder="Phone number"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.phone.message as string}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full py-2 rounded-lg text-white font-medium bg-blue-800 cursor-pointer "
+            className="w-full py-2 rounded-lg text-white font-medium bg-blue-800 cursor-pointer"
           >
-            Send Reset Link
+            {loading ? "Loading..." : "Send Reset Link"}
           </button>
         </form>
 

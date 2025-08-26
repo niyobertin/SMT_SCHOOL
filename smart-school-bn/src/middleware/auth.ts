@@ -1,38 +1,61 @@
-
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import { PrismaClient } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
-export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
+
+const prisma = new PrismaClient();
+
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      res.status(401).json({
-        status: 'error',
-        message: 'Access denied. No token provided.',
-        timestamp: new Date().toISOString()
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. please provide a valid token or login.'
       });
-      return;
     }
-  
-    try {
-      // Here you would verify the JWT token
-      // For demo purposes, we'll just check if it's not empty
-      if (token === 'demo-token') {
-        (req as any).user = { id: 1, email: 'demo@example.com' };
-        next();
-      } else {
-        throw new Error('Invalid token');
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        phoneNumber: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true
       }
-    } catch (error) {
-      logger.warn('Authentication failed:', {
-        error: (error as Error).message,
-        ip: req.ip,
-        url: req.originalUrl
-      });
-      
-      res.status(401).json({
-        status: 'error',
-        message: 'Invalid token.',
-        timestamp: new Date().toISOString()
+    });
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token or user not active'
       });
     }
+    // @ts-ignore
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+};
+
+export const authorize = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // @ts-ignore
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Insufficient permissions.'
+      });
+    }
+    next();
   };
+};

@@ -251,6 +251,7 @@ export const translations = {
     companies: "500+",
     getCareerSupport: "Get Career Support",
     bookConsultation: "Book Consultation",
+    username:"Username",
 
     // News Page
     news: "News",
@@ -529,6 +530,7 @@ export const translations = {
     companies: "500+",
     getCareerSupport: "Obtenir un Support de Carrière",
     bookConsultation: "Réserver une Consultation",
+    username: "Nom d'utilisateur",
 
     // News Page
     news: "Actualités",
@@ -596,6 +598,7 @@ export const translations = {
     progress: "Iterambere",
     lastUpdated: "Ibyavuguruye",
     off: "Gufunga",
+    username: "Umwirondoro",
 
     // Quiz
     quiz: "Isuzuma",

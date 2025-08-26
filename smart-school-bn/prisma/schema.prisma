@@ -1,0 +1,393 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id                   String    @id @default(cuid())
+  email                String?   @unique
+  phoneNumber          String?   @unique
+  username             String    @unique
+  firstName            String
+  lastName             String
+  password             String
+  role                 UserRole  @default(STUDENT)
+  avatar               String?
+  isActive             Boolean   @default(true)
+  isVerified           Boolean   @default(false)
+  verificationCode    Int?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  lastLogin            DateTime?
+
+  // Relations
+  courses      Course[]
+  enrollments  Enrollment[]
+  payments     Payment[]
+  testAttempts TestAttempt[]
+  userProgress UserProgress[]
+  certificates Certificate[]
+  reviews      Review[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+// Course Management
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  slug        String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courses Course[]
+
+  @@map("categories")
+}
+
+model Course {
+  id               String       @id @default(cuid())
+  title            String
+  slug             String       @unique
+  description      String
+  shortDescription String?
+  thumbnail        String?
+  price            Decimal      @db.Decimal(10, 2)
+  discountPrice    Decimal?     @db.Decimal(10, 2)
+  language         String       @default("en")
+  level            CourseLevel  @default(BEGINNER)
+  duration         Int? // in minutes
+  status           CourseStatus @default(DRAFT)
+  isPublished      Boolean      @default(false)
+  isFeatured       Boolean      @default(false)
+  tags             String[]
+  requirements     String[]
+  objectives       String[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  publishedAt      DateTime?
+
+  // Relations
+  instructorId String
+  instructor   User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
+
+  lessons      Lesson[]
+  enrollments  Enrollment[]
+  reviews      Review[]
+  tests        Test[]
+  certificates Certificate[]
+
+  @@map("courses")
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  order       Int
+  duration    Int? // in minutes
+  isPreview   Boolean  @default(false)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  content      LessonContent[]
+  userProgress UserProgress[]
+
+  @@map("lessons")
+}
+
+model LessonContent {
+  id        String      @id @default(cuid())
+  type      ContentType
+  title     String?
+  fileUrl   String?
+  fileName  String?
+  fileSize  Int?
+  duration  Int? // for video/audio in seconds
+  order     Int
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_content")
+}
+
+enum ContentType {
+  VIDEO
+  AUDIO
+  PDF
+  TEXT
+  IMAGE
+}
+
+// Enrollment & Payment
+model Enrollment {
+  id                String           @id @default(cuid())
+  enrollmentDate    DateTime         @default(now())
+  completionDate    DateTime?
+  progress          Float            @default(0) // percentage
+  status            EnrollmentStatus @default(ACTIVE)
+  certificateIssued Boolean          @default(false)
+
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  SUSPENDED
+  CANCELLED
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  status          PaymentStatus @default(PENDING)
+  paymentMethod   String
+  stripePaymentId String?
+  paypalPaymentId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// Testing System
+model Test {
+  id                 String   @id @default(cuid())
+  title              String
+  description        String?
+  instructions       String?
+  duration           Int? // in minutes
+  passingScore       Float    @default(70)
+  maxAttempts        Int      @default(3)
+  isActive           Boolean  @default(true)
+  showResults        Boolean  @default(true)
+  randomizeQuestions Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  questions    Question[]
+  testAttempts TestAttempt[]
+
+  @@map("tests")
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  question    String
+  type        QuestionType @default(MULTIPLE_CHOICE)
+  points      Float        @default(1)
+  explanation String?
+  order       Int
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  options QuestionOption[]
+  answers Answer[]
+
+  @@map("questions")
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  FILL_BLANK
+}
+
+model QuestionOption {
+  id        String   @id @default(cuid())
+  option    String
+  isCorrect Boolean  @default(false)
+  order     Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_options")
+}
+
+model TestAttempt {
+  id             String            @id @default(cuid())
+  startTime      DateTime          @default(now())
+  endTime        DateTime?
+  score          Float?
+  totalQuestions Int
+  correctAnswers Int               @default(0)
+  status         TestAttemptStatus @default(IN_PROGRESS)
+  timeSpent      Int? // in minutes
+  isPassed       Boolean           @default(false)
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  answers Answer[]
+
+  @@map("test_attempts")
+}
+
+enum TestAttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  TIME_UP
+}
+
+model Answer {
+  id              String   @id @default(cuid())
+  answerText      String?
+  selectedOptions String[] // for multiple choice
+  isCorrect       Boolean?
+  points          Float    @default(0)
+  createdAt       DateTime @default(now())
+
+  // Relations
+  testAttemptId String
+  testAttempt   TestAttempt @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+// Progress Tracking
+model UserProgress {
+  id           String    @id @default(cuid())
+  isCompleted  Boolean   @default(false)
+  completedAt  DateTime?
+  timeSpent    Int       @default(0) // in seconds
+  lastAccessed DateTime  @default(now())
+  bookmarkTime Int? // for video/audio content in seconds
+
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("user_progress")
+}
+
+// Reviews & Ratings
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int // 1-5 stars
+  comment   String?
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("reviews")
+}
+
+// Certificates
+model Certificate {
+  id                String    @id @default(cuid())
+  certificateNumber String    @unique
+  issuedAt          DateTime  @default(now())
+  validUntil        DateTime?
+  downloadCount     Int       @default(0)
+
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+  @@map("certificates")
+}
+
+// System Configuration
+model SystemSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}

@@ -1,399 +1,549 @@
-import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
+import { Request, Response, NextFunction } from "express";
+import { logger } from "../utils/logger";
+import { PrismaClient, User } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
+import { comparePassword, hashPassword } from "../utils/hashPassword";
+import { sendSmsTo } from "../utils/sendSms";
+import { sendEmail } from "../utils/sendEmail";
+import { generateToken, refreshToken } from "../utils/tokens";
+import jwt from "jsonwebtoken";
 
-// Mock user data for demonstration
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+const prisma = new PrismaClient();
 
-let users: User[] = [
-  {
-    id: 1,
-    email: 'john@example.com',
-    name: 'John Doe',
-    createdAt: new Date('2023-01-01'),
-    updatedAt: new Date('2023-01-01')
-  },
-  {
-    id: 2,
-    email: 'jane@example.com',
-    name: 'Jane Smith',
-    createdAt: new Date('2023-01-02'),
-    updatedAt: new Date('2023-01-02')
-  }
-];
-
-/**
- * @swagger
- * /api/users:
- *   get:
- *     summary: Get all users
- *     tags: [Users]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Page number for pagination
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 10
- *         description: Number of users per page
- *     responses:
- *       200:
- *         description: Successfully retrieved users
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         users:
- *                           type: array
- *                           items:
- *                             $ref: '#/components/schemas/User'
- *                         pagination:
- *                           type: object
- *                           properties:
- *                             page:
- *                               type: integer
- *                             limit:
- *                               type: integer
- *                             total:
- *                               type: integer
- *                             totalPages:
- *                               type: integer
- *       400:
- *         description: Bad request
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-export const getUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: startIndex,
+      include: {
+        courses: true,
+        enrollments: true,
+        reviews: true,
+        testAttempts: true,
+        certificates: true,
+        userProgress: true,
+      },
+    });
 
     const paginatedUsers = users.slice(startIndex, endIndex);
     const total = users.length;
     const totalPages = Math.ceil(total / limit);
 
-    logger.info('Users retrieved successfully', {
+    logger.info("Users retrieved successfully", {
       page,
       limit,
       total,
-      resultCount: paginatedUsers.length
+      resultCount: paginatedUsers.length,
     });
 
     res.status(200).json({
-      status: 'success',
-      message: 'Users retrieved successfully',
+      status: "success",
+      message: "Users retrieved successfully",
       data: {
         users: paginatedUsers,
         pagination: {
           page,
           limit,
           total,
-          totalPages
-        }
+          totalPages,
+        },
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * @swagger
- * /api/users/{id}:
- *   get:
- *     summary: Get user by ID
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: User ID
- *     responses:
- *       200:
- *         description: Successfully retrieved user
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/User'
- *       404:
- *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-export const getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getUserById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const id = parseInt(req.params.id);
-    const user = users.find(u => u.id === id);
+    const id = req.params.id;
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        courses: true,
+        enrollments: true,
+        reviews: true,
+        testAttempts: true,
+        certificates: true,
+        userProgress: true,
+      },
+    });
 
     if (!user) {
-      logger.warn('User not found', { userId: id });
+      logger.warn("User not found", { userId: id });
       res.status(404).json({
-        status: 'error',
-        message: 'User not found',
-        timestamp: new Date().toISOString()
+        status: "error",
+        message: "User not found",
       });
       return;
     }
 
-    logger.info('User retrieved successfully', { userId: id });
-
     res.status(200).json({
-      status: 'success',
-      message: 'User retrieved successfully',
+      status: "success",
+      message: "User retrieved successfully",
       data: user,
-      timestamp: new Date().toISOString()
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * @swagger
- * /api/users:
- *   post:
- *     summary: Create a new user
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateUserRequest'
- *     responses:
- *       201:
- *         description: User created successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/User'
- *       400:
- *         description: Bad request - validation failed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       409:
- *         description: Conflict - user already exists
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const { email, name, password } = req.body;
+    // @ts-ignore
+    const id = req.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        phoneNumber: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+        lastLogin: true,
+        courses: true,
+        enrollments: true,
+        reviews: true,
+        testAttempts: true,
+        certificates: true,
+        userProgress: true,
+      },
+    });
 
-    // Check if user already exists
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
-      logger.warn('User creation failed - email already exists', { email });
-      res.status(409).json({
-        status: 'error',
-        message: 'User with this email already exists',
-        timestamp: new Date().toISOString()
+    if (!user) {
+      logger.warn("User not found", { userId: id });
+      res.status(404).json({
+        status: "error",
+        message: "User not found",
       });
       return;
     }
 
-    // Create new user
-    const newUser: User = {
-      id: users.length + 1,
-      email,
-      name,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    res.status(200).json({
+      status: "success",
+      message: "Profile retrieved successfully",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+export const createUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userData = req.body;
+    if (userData.email) {
+      const existingEmail = await prisma.user.findUnique({
+        where: { email: userData.email },
+      });
+      if (existingEmail) {
+        res.status(409).json({
+          status: "error",
+          message: "User with this email already exists",
+        });
+        return;
+      }
+    }
 
-    users.push(newUser);
+    if (userData.phoneNumber) {
+      const existingPhone = await prisma.user.findUnique({
+        where: { phoneNumber: userData.phoneNumber },
+      });
+      if (existingPhone) {
+        res.status(409).json({
+          status: "error",
+          message: "User with this phone number already exists",
+        });
+        return;
+      }
+    }
 
-    logger.info('User created successfully', { userId: newUser.id, email: newUser.email });
+    if (userData.username) {
+      const existingUsername = await prisma.user.findUnique({
+        where: { username: userData.username },
+      });
+      if (existingUsername) {
+        res.status(409).json({
+          status: "error",
+          message: "User with this username already exists",
+        });
+        return;
+      }
+    }
+
+    const hashedPassword = await hashPassword(userData.password);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000);
+
+    if (userData.email) {
+      await sendEmail({
+        to: userData.email,
+        subject: "Verification Code",
+        text: `Here is your verification code: ${verificationCode}`,
+        html: `<p>Hello ${userData.username}, Thank you for signing up to Smart School</p>
+               <p>You can verify your account with this code:</p>
+               <h2>${verificationCode}</h2>
+               <p>Best regards, </p>
+               <p>Smart School Team</p>`,
+      });
+    } else if (userData.phoneNumber) {
+      await sendSmsTo(
+        userData.phoneNumber,
+        `Your verification code is ${verificationCode}. Thank you for signing up to Smart School`
+      );
+    }
+    const newUser: User = await prisma.user.create({
+      data: { 
+        id: uuidv4(),
+        ...userData,
+        password: hashedPassword,
+        verificationCode
+      },
+    });
+
+    const { password, ...userWithoutPassword } = newUser;
 
     res.status(201).json({
-      status: 'success',
-      message: 'User created successfully',
-      data: newUser,
-      timestamp: new Date().toISOString()
+      status: "success",
+      message: "User created successfully. Please verify your account.",
+      data: userWithoutPassword,
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * @swagger
- * /api/users/{id}:
- *   put:
- *     summary: Update user by ID
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: User ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 example: "John Updated"
- *               email:
- *                 type: string
- *                 format: email
- *                 example: "john.updated@example.com"
- *     responses:
- *       200:
- *         description: User updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/Success'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/User'
- *       404:
- *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-export const updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const verifyUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const id = parseInt(req.params.id);
-    const { name, email } = req.body;
-
-    const userIndex = users.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      logger.warn('User update failed - user not found', { userId: id });
+    const { verificationCode } = req.body;
+    const user = await prisma.user.findFirst({
+      where: { verificationCode },
+    });
+    if (!user) {
       res.status(404).json({
-        status: 'error',
-        message: 'User not found',
-        timestamp: new Date().toISOString()
+        status: "error",
+        message: "Invalid verification code. Check your email or phone number for verification code.",
       });
       return;
     }
-
-    // Update user
-    users[userIndex] = {
-      ...users[userIndex],
-      ...(name && { name }),
-      ...(email && { email }),
-      updatedAt: new Date()
-    };
-
-    logger.info('User updated successfully', { userId: id });
-
+    user.isVerified = true;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: user,
+    });
     res.status(200).json({
-      status: 'success',
-      message: 'User updated successfully',
-      data: users[userIndex],
-      timestamp: new Date().toISOString()
+      status: "success",
+      message: "User verified successfully",
     });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * @swagger
- * /api/users/{id}:
- *   delete:
- *     summary: Delete user by ID
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: User ID
- *     responses:
- *       200:
- *         description: User deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Success'
- *       404:
- *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-export const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const id = parseInt(req.params.id);
-    const userIndex = users.findIndex(u => u.id === id);
-
-    if (userIndex === -1) {
-      logger.warn('User deletion failed - user not found', { userId: id });
+    const userData = req.body;
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: userData.identifier },
+          { phoneNumber: userData.identifier },
+        ],
+      },
+    });
+    if (!user) {
       res.status(404).json({
-        status: 'error',
-        message: 'User not found',
-        timestamp: new Date().toISOString()
+        status: "error",
+        message: "Invalid credentials",
       });
       return;
     }
-
-    // Delete user
-    users.splice(userIndex, 1);
-
-    logger.info('User deleted successfully', { userId: id });
-
+    if (!user.isActive) {
+      res.status(401).json({
+        status: "error",
+        message: "Your account is not active. Please contact the admin for assistance.",
+      });
+      return;
+    }
+    if(!user.isVerified) {
+      res.status(401).json({
+        status: "error",
+        message: "Your account is not verified.Check your email or phone number for verification code.",
+      });
+      return;
+    }
+    const isPasswordValid = await comparePassword(userData.password, user.password);
+    if (!isPasswordValid) {
+      res.status(401).json({
+        status: "error",
+        message: "Invalid credentials",
+      });
+      return;
+    }
+    const token = generateToken(user);
+    const { password, verificationCode, ...userWithoutPassword } = user;
     res.status(200).json({
-      status: 'success',
-      message: 'User deleted successfully',
-      timestamp: new Date().toISOString()
+      status: "success",
+      message: "User logged in successfully",
+      data: {
+        accessToken: token,
+        refreshToken: refreshToken(user),
+        user: userWithoutPassword,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
+
+export const requestResetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { identifier } = req.body;
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { phoneNumber: identifier },
+        ],
+      },
+    });
+    if (!user) {
+      res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+      return;
+    }
+    const resetPasswordToken = jwt.sign({
+      userId: user.id,
+    }, process.env.JWT_SECRET as string, { expiresIn: "20m" });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetPasswordToken,
+        resetPasswordExpires: new Date(Date.now() + 20 * 60 * 1000)
+       },
+    });
+    if (user.email) {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset Password",
+        text: `Here is your reset password token: ${resetPasswordToken}`,
+        html: `<p>Hello ${user.username},</p>
+                <p>We are here to help you reset your password.</p>
+                <p>Click on the link below to reset your password:</p>
+                <a href="${process.env.FRONTEND_URL}/reset-password?token=${resetPasswordToken}">Reset Password</a>
+                <p>Or copy and paste the link below :</p>
+                <p>${process.env.FRONTEND_URL}/reset-password?token=${resetPasswordToken}</p>
+                <p>This link will expire in 20 minutes.Make sure to use it within that time.</p>
+                <p>Best regards, </p>
+                <p>Smart School Team</p>`,
+      });
+    } else if (user.phoneNumber) {
+      await sendSmsTo(
+        user.phoneNumber,
+        `Your reset password link is ${process.env.FRONTEND_URL}/reset-password?token=${resetPasswordToken}. 
+        This link will expire in 20 minutes.Make sure to use it within that time. 
+        Thank you for signing up to Smart School`
+      );
+    }
+    res.status(200).json({
+      status: "success",
+      message: "Reset password token sent successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { password, confirmPassword } = req.body;
+    const token = req.query.token as string;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+    if (!user) {
+      res.status(404).json({
+        status: "error",
+        message: "Invalid reset token",
+      });
+      return;
+    }
+    if ( user.resetPasswordExpires && user.resetPasswordExpires < new Date()) {
+      res.status(401).json({
+        status: "error",
+        message: "Reset token has expired",
+      });
+      return;
+    }
+    if (password !== confirmPassword) {
+      res.status(400).json({
+        status: "error",
+        message: "Passwords do not match",
+      });
+      return;
+    }
+    const hashedPassword = await hashPassword(password);
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: user,
+    });
+    res.status(200).json({
+      status: "success",
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+// export const updateUser = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const id = parseInt(req.params.id);
+//     const { name, email } = req.body;
+
+//     const userIndex = users.findIndex((u) => u.id === id);
+//     if (userIndex === -1) {
+//       logger.warn("User update failed - user not found", { userId: id });
+//       res.status(404).json({
+//         status: "error",
+//         message: "User not found",
+//         timestamp: new Date().toISOString(),
+//       });
+//       return;
+//     }
+
+//     // Update user
+//     users[userIndex] = {
+//       ...users[userIndex],
+//       ...(name && { name }),
+//       ...(email && { email }),
+//       updatedAt: new Date(),
+//     };
+
+//     logger.info("User updated successfully", { userId: id });
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "User updated successfully",
+//       data: users[userIndex],
+//       timestamp: new Date().toISOString(),
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+// /**
+//  * @swagger
+//  * /api/users/{id}:
+//  *   delete:
+//  *     summary: Delete user by ID
+//  *     tags: [Users]
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         schema:
+//  *           type: integer
+//  *         description: User ID
+//  *     responses:
+//  *       200:
+//  *         description: User deleted successfully
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               $ref: '#/components/schemas/Success'
+//  *       404:
+//  *         description: User not found
+//  *         content:
+//  *           application/json:
+//  *             schema:
+//  *               $ref: '#/components/schemas/Error'
+//  */
+// export const deleteUser = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const id = parseInt(req.params.id);
+//     const userIndex = users.findIndex((u) => u.id === id);
+
+//     if (userIndex === -1) {
+//       logger.warn("User deletion failed - user not found", { userId: id });
+//       res.status(404).json({
+//         status: "error",
+//         message: "User not found",
+//         timestamp: new Date().toISOString(),
+//       });
+//       return;
+//     }
+
+//     // Delete user
+//     users.splice(userIndex, 1);
+
+//     logger.info("User deleted successfully", { userId: id });
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "User deleted successfully",
+//       timestamp: new Date().toISOString(),
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };

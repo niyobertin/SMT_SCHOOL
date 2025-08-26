@@ -7,6 +7,8 @@ import { RegisterPage } from "./pages/auth/Register";
 import { LoginPage } from "./pages/auth/Login";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import { RequestReset } from "./pages/auth/RequestLink";
+import VerifyOtp from "./pages/auth/VerifyOtp";
+
 function App() {
   return (
     <TranslationProvider>
@@ -23,8 +25,9 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/forgot-password" element={<ResetPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/request-link" element={<RequestReset />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
           </Route>
         </Routes>
       </BrowserRouter>
