@@ -27,11 +27,12 @@ const registerSchema: yup.ObjectSchema<FormData> = yup.object({
         schema
           .matches(/^[0-9]+$/, "Phone must be digits only")
           .min(7, "Phone number too short")
-          .required("Phone is required"),
+          .nullable(),
       otherwise: schema =>
         schema
           .email("Invalid email format")
-          .required("Email is required"),
+          .nullable(),
+
     }),
   password: yup
     .string()
@@ -119,8 +120,8 @@ export const RegisterPage = () => {
       await registerSchema.validate(data, { abortEarly: false });
       
       const registerData = {
-        email: data.loginWithPhone ? "" : data.identifier!,
-        phoneNumber: data.loginWithPhone ? `${data.selectedCountryCode}${data.identifier}` : "",
+        email: data.loginWithPhone ? null : data.identifier!,
+        phoneNumber: data.loginWithPhone ? `${data.selectedCountryCode}${data.identifier}` : null,
         username: data.username,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -137,8 +138,9 @@ export const RegisterPage = () => {
         detail: response.message,
         life: 3000,
       });
-
-      navigate("/login");
+      setTimeout(() => {
+        navigate("/verify-otp");
+      }, 3000);
     } catch (error: any) {
       if (error.inner) {
         error.inner.forEach((validationError: any) => {
@@ -149,13 +151,7 @@ export const RegisterPage = () => {
             life: 3000,
           });
         });
-      }      
-      toast.current?.show({
-        severity: "error",
-        summary: "Registration Failed",
-        detail: error.message || "Something went wrong",
-        life: 3000,
-      });
+      }     
     }
   };
 

@@ -26,8 +26,8 @@ interface LoginCredentials {
 }
 
 interface UserRegister {
-  email: string;
-  phoneNumber: string;
+  email?: string | null;
+  phoneNumber?: string | null;
   username: string;
   firstName: string;
   lastName: string;
@@ -61,6 +61,42 @@ export const registerUser = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Register failed');
+    }
+  }
+);
+
+export const verifyUser = createAsyncThunk(
+  'auth/verifyUser',
+  async (verificationCode: number, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/auth/verify', { verificationCode });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Verify user failed');
+    }
+  }
+);
+
+export const requestResetLink = createAsyncThunk(
+  'auth/requestResetLink',
+  async (identifier: string, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/auth/request-reset-password', { identifier });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Request reset link failed');
+    }
+  }
+);
+
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async (passwordData: { password: string,confirmPassword: string,token: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/auth/reset-password?token=${passwordData.token}`, passwordData);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Reset password failed');
     }
   }
 );
@@ -111,6 +147,42 @@ const authSlice = createSlice({
         state.error = null; 
       })
       .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(requestResetLink.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(requestResetLink.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(requestResetLink.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(verifyUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyUser.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(verifyUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

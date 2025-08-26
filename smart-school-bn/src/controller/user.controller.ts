@@ -252,7 +252,7 @@ export const verifyUser = async (
     if (!user) {
       res.status(404).json({
         status: "error",
-        message: "User not found",
+        message: "Invalid verification code. Check your email or phone number for verification code.",
       });
       return;
     }
@@ -367,7 +367,7 @@ export const requestResetPassword = async (
         subject: "Reset Password",
         text: `Here is your reset password token: ${resetPasswordToken}`,
         html: `<p>Hello ${user.username},</p>
-                <p>Thank you for signing up to Smart School</p>
+                <p>We are here to help you reset your password.</p>
                 <p>Click on the link below to reset your password:</p>
                 <a href="${process.env.FRONTEND_URL}/reset-password?token=${resetPasswordToken}">Reset Password</a>
                 <p>Or copy and paste the link below :</p>

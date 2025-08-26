@@ -302,6 +302,9 @@ export const LoginPage = () => {
                 {errors.password.message}
               </p>
             )}
+            <Link to="/request-link" className="text-blue-700 hover:underline text-sm flex justify-end">
+              {t("forgotPassword")}
+            </Link>
           </div>
 
           {/* Submit Button */}
