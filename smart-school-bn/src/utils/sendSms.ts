@@ -1,25 +1,36 @@
-import axios from "axios";
+import africastalking from "africastalking";
 
-export const sendSmsTo = async (to: string, message: string) => {
+const africastalkingClient = africastalking({
+  apiKey: process.env.AT_API_KEY as string,   
+  username: process.env.AT_USERNAME || "sandbox", 
+});
+
+const sms = africastalkingClient.SMS;
+
+interface SmsResponse {
+  SMSMessageData: {
+    Message: string;
+    Recipients: Array<{
+      status: string;
+      number: string;
+      messageId: string;
+      cost: string;
+    }>;
+  };
+}
+
+export const sendSmsTo = async (to: string, message: string): Promise<SmsResponse> => {
   try {
-    const response = await axios.post(
-      "https://api.sms.to/sms/send",
-      {
-        to,        // recipient phone number (E.164 format, e.g. +2507XXXXXXX)
-        message,   // SMS content
-        sender_id: process.env.SMS_TO_SENDER || "SMTSchool", 
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.SMS_TO_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    return response.data;
+    const response = (await sms.send({
+      to: [to], 
+      message,
+      from: process.env.AT_SENDER_ID || "AFRICASTKNG", 
+    })) as unknown as SmsResponse;
+    
+    console.log("Africa's Talking SMS response:", response);
+    return response;
   } catch (error: any) {
-    console.error("SMS.to error:", error.response?.data || error.message);
+    console.error("Africa's Talking SMS error:", error);
     throw new Error("Failed to send SMS");
   }
 };
