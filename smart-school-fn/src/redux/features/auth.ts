@@ -25,6 +25,18 @@ interface LoginCredentials {
   password: string;
 }
 
+interface UserRegister {
+  email: string;
+  phoneNumber: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  role: string;
+  avatar: string;
+  isActive: boolean;
+}
+
 export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials: LoginCredentials, { rejectWithValue }) => {
@@ -36,6 +48,19 @@ export const loginUser = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Login failed');
+    }
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  'auth/register',
+  async (userData: UserRegister, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/auth/register', userData);
+      console.log(response.data);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Register failed');
     }
   }
 );
@@ -73,6 +98,19 @@ const authSlice = createSlice({
         state.error = null; 
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.user = action.payload.user;  
+        state.error = null; 
+      })
+      .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

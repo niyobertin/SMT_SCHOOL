@@ -21,12 +21,14 @@ export const registerValidation = [
     body("email")
       .optional()
       .isEmail()
+      .optional({ nullable: true, checkFalsy: true })
       .withMessage("Valid email is required"),
   
-    body("phoneNumber")
-      .optional()
-      .notEmpty()
-      .withMessage("Phone number cannot be empty"),
+      body("phoneNumber")
+      .optional({ nullable: true, checkFalsy: true })
+      .isMobilePhone("any")
+      .withMessage("Invalid phone number"),
+    
     body("username").notEmpty().withMessage("Username is required"),
     body("firstName").notEmpty().withMessage("First name is required"),
     body("lastName").notEmpty().withMessage("Last name is required"),
