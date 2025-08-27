@@ -17,10 +17,10 @@ export const HomePage: React.FC = () => {
         style={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "bottom",
           backgroundRepeat: "no-repeat",
         }}
-        className="relative py-20 lg:py-32 h-screen flex items-center"
+        className="relative py-20 lg:py-32 h-[60vh] flex items-center"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true }}
