@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
 import { Request, Response } from "express";
+import categoryRoutes from "./category.routes";
 
 const router = Router();
 
@@ -33,6 +34,7 @@ const router = Router();
 
 // Mount route modules
 router.use("/auth", authRoutes);
+router.use("/categories", categoryRoutes);
 
 // API info endpoint
 /**
