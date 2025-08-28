@@ -68,11 +68,8 @@ model Course {
   description      String
   shortDescription String?
   thumbnail        String?
-  price            Decimal      @db.Decimal(10, 2)
-  discountPrice    Decimal?     @db.Decimal(10, 2)
   language         String       @default("en")
   level            CourseLevel  @default(BEGINNER)
-  duration         Int? // in minutes
   status           CourseStatus @default(DRAFT)
   isPublished      Boolean      @default(false)
   isFeatured       Boolean      @default(false)
@@ -116,7 +113,6 @@ model Lesson {
   title       String
   description String?
   order       Int
-  duration    Int? // in minutes
   isPreview   Boolean  @default(false)
   isPublished Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -139,7 +135,6 @@ model LessonContent {
   fileUrl   String?
   fileName  String?
   fileSize  Int?
-  duration  Int? // for video/audio in seconds
   order     Int
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -187,7 +182,7 @@ enum EnrollmentStatus {
 
 model Payment {
   id              String        @id @default(cuid())
-  amount          Decimal       @db.Decimal(10, 2)
+  amount          Float
   currency        String        @default("USD")
   status          PaymentStatus @default(PENDING)
   paymentMethod   String
