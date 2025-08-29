@@ -3,7 +3,7 @@ import authRoutes from "./auth.routes";
 import { Request, Response } from "express";
 import categoryRoutes from "./category.routes";
 import courseRouters from "./course.route";
-
+import lessonRoutes from "./lesson.routes";
 const router = Router();
 
 /**
@@ -37,6 +37,7 @@ const router = Router();
 router.use("/auth", authRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/courses", courseRouters);
+router.use("/lessons", lessonRoutes);
 
 // API info endpoint
 /**

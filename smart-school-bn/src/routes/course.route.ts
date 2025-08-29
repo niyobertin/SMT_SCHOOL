@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { createCourse, deleteCourse, getCouses, getCourseById, updateCourse } from "../controller/course.controller";
 import { authenticate, authorize } from "../middleware/auth";
+import { courseValidation, updateCourseValidation } from "../schema/courseSchema";
+import { validateRequest } from "../middleware/validation";
 
 const courseRouters = Router();
 
@@ -690,10 +692,10 @@ const courseRouters = Router();
  *                   type: string
  *                   example: "An unexpected error occurred"
  */
-courseRouters.post("/:categoryId",authenticate, authorize("ADMIN","INSTRUCTOR"), createCourse);
+courseRouters.post("/:categoryId",authenticate, authorize("ADMIN","INSTRUCTOR"),courseValidation, validateRequest, createCourse);
 courseRouters.get("/", getCouses);
 courseRouters.get("/:id", getCourseById);
-courseRouters.patch("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), updateCourse);
+courseRouters.patch("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), updateCourseValidation, validateRequest, updateCourse);
 courseRouters.delete("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), deleteCourse);
 
 export default courseRouters;
