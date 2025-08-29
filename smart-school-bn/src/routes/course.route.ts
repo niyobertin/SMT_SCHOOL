@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { createCourse, deleteCourse, getCouses, getCourseById, updateCourse } from "../controller/course.controller";
+import { authenticate, authorize } from "../middleware/auth";
 
 const courseRouters = Router();
 
 /**
  * @swagger
- * /api/courses:
+ * /api/courses/{categoryId}:
  *   post:
  *     summary: Create a new course
  *     description: Create a new course in the system.
@@ -469,6 +470,58 @@ const courseRouters = Router();
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "Introduction to Web Development"
+ *               slug:
+ *                 type: string
+ *                 example: "introduction-to-web-development"
+ *               description:
+ *                 type: string
+ *                 example: "Learn the basics of web development"
+ *               shortDescription:
+ *                 type: string
+ *                 example: "Beginner web development course"
+ *               thumbnail:
+ *                 type: string
+ *                 example: "https://example.com/web-dev-thumbnail.jpg"
+ *               language:
+ *                 type: string
+ *                 example: "English"
+ *               level:
+ *                 type: string
+ *                 example: "BEGINNER"
+ *               status:
+ *                 type: string
+ *                 example: "PUBLISHED"
+ *               isPublished:
+ *                 type: boolean
+ *                 example: true
+ *               isFeatured:
+ *                 type: boolean
+ *                 example: true
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["web"]
+ *               requirements:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Basic computer skills"]
+ *               objectives:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Learn HTML, CSS, and JavaScript"]
  *     responses:
  *       200:
  *         description: Course updated successfully
@@ -512,10 +565,10 @@ const courseRouters = Router();
  *                           example: "English"
  *                         level:
  *                           type: string
- *                           example: "Beginner"
+ *                           example: "BEGINNER"
  *                         status:
  *                           type: string
- *                           example: "Published"
+ *                           example: "PUBLISHED"
  *                         isPublished:
  *                           type: boolean
  *                           example: true
@@ -580,7 +633,7 @@ const courseRouters = Router();
 
 /**
  * @swagger
- * /courses/{id}:
+ * /api/courses/{id}:
  *   delete:
  *     summary: Delete a course by ID
  *     description: Delete a specific course by its ID.
@@ -637,10 +690,10 @@ const courseRouters = Router();
  *                   type: string
  *                   example: "An unexpected error occurred"
  */
-courseRouters.post("/", createCourse);
+courseRouters.post("/:categoryId",authenticate, authorize("ADMIN","INSTRUCTOR"), createCourse);
 courseRouters.get("/", getCouses);
 courseRouters.get("/:id", getCourseById);
-courseRouters.put("/:id", updateCourse);
-courseRouters.delete("/:id", deleteCourse);
+courseRouters.patch("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), updateCourse);
+courseRouters.delete("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), deleteCourse);
 
 export default courseRouters;

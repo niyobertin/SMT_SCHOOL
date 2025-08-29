@@ -12,7 +12,7 @@ export const createCourse = async (
     try {
         const courseData = req.body;
         //@ts-ignore
-        const userId = req.user.id;
+        const userId = req.user?.id;
         const categoryId = req.params.categoryId;
         const category = await prisma.category.findUnique({
             where: { id: categoryId },
@@ -44,7 +44,11 @@ export const createCourse = async (
                         id: userId,
                     },
                 },
-                categoryId: categoryId,
+                category: {
+                    connect: {
+                        id: categoryId,
+                    },
+                },
                 status: courseData.status,
                 isPublished: courseData.isPublished,
                 isFeatured: courseData.isFeatured,
@@ -77,7 +81,18 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
         const courses = await prisma.course.findMany({
             orderBy: { createdAt: "desc" },
             include: {
-                instructor: true,
+                instructor: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatar: true,
+                        role: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        phoneNumber: true
+                    },
+                },
                 category: true,
                 lessons: true,
                 enrollments: true,
@@ -120,7 +135,18 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
         const course = await prisma.course.findUnique({
             where: { id },
             include: {
-                instructor: true,
+                instructor: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatar: true,
+                        role: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        phoneNumber: true
+                    },
+                },
                 category: true,
                 lessons: true,
                 enrollments: true,

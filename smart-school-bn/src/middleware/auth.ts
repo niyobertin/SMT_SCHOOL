@@ -36,7 +36,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         message: 'Invalid token or user not active'
       });
     }
-    // @ts-ignore
+    //@ts-ignore
     req.user = user;
     next();
   } catch (error) {
