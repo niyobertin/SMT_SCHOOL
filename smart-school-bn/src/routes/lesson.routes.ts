@@ -164,7 +164,27 @@ const lessonRouter = Router();
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Lesson'
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   order:
+ *                     type: integer
+ *                   course:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       order:
+ *                         type: integer
  *       401:
  *         description: Unauthorized
  *         content:
