@@ -10,8 +10,8 @@ import { RequestReset } from "./pages/auth/RequestLink";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Tuition from "./pages/Tuition";
 import { CourseCategories } from "./pages/cources/category";
-import { LessonsByCategory } from "./pages/cources/Lessons";
 import { ContactPage } from "./pages/contactUs";
+import { LessonsPage } from "./pages/cources/LessonPage";
 
 function App() {
   return (
@@ -34,9 +34,9 @@ function App() {
             <Route path="/request-link" element={<RequestReset />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/courses" element={<CourseCategories />} />
-            <Route path="/courses/:slug" element={<LessonsByCategory />} />
+            <Route path="/courses/:slug" element={<LessonsPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            
+
           </Route>
         </Routes>
       </BrowserRouter>
