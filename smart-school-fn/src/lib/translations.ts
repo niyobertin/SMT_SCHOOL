@@ -152,7 +152,7 @@ export const translations = {
     // Programs Page
     programs: "Programs",
     aboutUs: "About Us",
-    ourPrograms: "Our Programs",
+    ourPrograms: "Browse by course category",
     programsSubtitle:
       "Discover comprehensive learning paths designed to advance your career and skills",
     webDevelopment: "Web Development",
@@ -431,7 +431,7 @@ export const translations = {
 
     // Programs Page
     programs: "Programmes",
-    ourPrograms: "Nos Programmes",
+    ourPrograms: "Parcourir par catégorie de cours",
     programsSubtitle:
       "Découvrez des parcours d'apprentissage complets conçus pour faire progresser votre carrière et vos compétences",
     webDevelopment: "Développement Web",
@@ -709,7 +709,7 @@ export const translations = {
 
     // Programs Page
     programs: "Gahunda",
-    ourPrograms: "Gahunda Zacu",
+    ourPrograms: "Shakisha hakurikijwe icyiciro cy’amasomo",
     programsSubtitle:
       "Menya Gahunda Zihariye zagenewe Gufasha abantu Mu kihugura no Kwitegure Ibizamini By’Akazi",
     webDevelopment: "Iterambere rya Urubuga",
@@ -740,11 +740,11 @@ export const translations = {
     pricingPlans: "Gahunda z'Ibiciro",
     tuitionSubtitle:
       "Hitamo Ifatabuguzi rikoroheye ubashe kwiga ndetse no kwihugura Kumasomo ushaka",
-    Daily: "Buri Munsi",
-    monthly: "Buri kwezi",
-    quarterly: "Buri gihembwe",
-    yearly: "Buri mwaka",
-    weekly: "Buri cyumweru",
+    Daily: "Umunsi",
+    monthly: "Ukwezi",
+    quarterly: "Igembwe",
+    yearly: "Umwaka",
+    weekly: "Icyumweru",
     mostPopular: "Ikunzwe Cyane",
     bestValue: "Agaciro Gakomeye",
     basicPlan: "Gahunda y'Ibanze",

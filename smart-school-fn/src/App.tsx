@@ -8,6 +8,10 @@ import { LoginPage } from "./pages/auth/Login";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import { RequestReset } from "./pages/auth/RequestLink";
 import VerifyOtp from "./pages/auth/VerifyOtp";
+import Tuition from "./pages/Tuition";
+import { CourseCategories } from "./pages/cources/category";
+import { LessonsByCategory } from "./pages/cources/Lessons";
+import { ContactPage } from "./pages/contactUs";
 
 function App() {
   return (
@@ -23,11 +27,16 @@ function App() {
           >
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<About />} />
+            <Route path="/tuition" element={<Tuition />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/request-link" element={<RequestReset />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/courses" element={<CourseCategories />} />
+            <Route path="/courses/:slug" element={<LessonsByCategory />} />
+            <Route path="/contact" element={<ContactPage />} />
+            
           </Route>
         </Routes>
       </BrowserRouter>
