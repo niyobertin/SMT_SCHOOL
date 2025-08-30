@@ -52,14 +52,6 @@ export const CourseCategories = () => {
   ]
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([])
-
-  // Handle filter toggle
-  const handleFilterChange = (slug: string) => {
-    setSelectedFilters((prev) =>
-      prev.includes(slug) ? prev.filter((f) => f !== slug) : [...prev, slug]
-    )
-  }
 
   // Apply search & filter
   const filteredCategories = categories.filter((cat) => {
@@ -67,10 +59,7 @@ export const CourseCategories = () => {
       cat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cat.description.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesFilter =
-      selectedFilters.length === 0 || selectedFilters.includes(cat.slug)
-
-    return matchesSearch && matchesFilter
+    return matchesSearch
   })
 
   return (
