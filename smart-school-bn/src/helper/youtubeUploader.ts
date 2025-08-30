@@ -1,6 +1,9 @@
 import fs from "fs";
+import path from "path";
 import dotenv from "dotenv";
 import { google } from "googleapis";
+import open from "open";
+import logger from "../utils/logger";
 
 dotenv.config();
 
@@ -13,74 +16,63 @@ interface UploadOptions {
 }
 
 class YouTubeUploader {
-  private oAuth2Client;
+  public oAuth2Client;
+  private tokenPath: string;
 
   constructor() {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    const clientId = process.env.GOOGLE_CLIENT_ID!;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET!;
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI!;
 
-    if (!clientId || !clientSecret || !redirectUri) {
-      throw new Error("Missing Google OAuth environment variables");
-    }
+    this.oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    this.tokenPath = path.join(process.cwd(), "youtube_token.json");
 
-    this.oAuth2Client = new google.auth.OAuth2(
-      clientId,
-      clientSecret,
-      redirectUri
-    );
-
-    this.loadTokensFromEnv();
+    this.loadTokens();
   }
 
-  /** Load tokens from environment variables */
-  private loadTokensFromEnv() {
-    if (process.env.GOOGLE_REFRESH_TOKEN) {
-      this.oAuth2Client.setCredentials({
-        access_token: process.env.GOOGLE_ACCESS_TOKEN,
-        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-        expiry_date: process.env.GOOGLE_TOKEN_EXPIRY
-          ? Number(process.env.GOOGLE_TOKEN_EXPIRY)
-          : undefined,
-      });
+  /** Load tokens from file if they exist */
+  private loadTokens() {
+    if (fs.existsSync(this.tokenPath)) {
+      const tokens = JSON.parse(fs.readFileSync(this.tokenPath, "utf-8"));
+      this.oAuth2Client.setCredentials(tokens);
 
-      // Auto-update tokens (useful if refresh happens)
       this.oAuth2Client.on("tokens", (tokens) => {
-        console.log("🔄 Tokens refreshed.");
-        if (tokens.refresh_token) {
-          console.log("⚠️ New refresh token issued. Update your .env!");
-        }
-        if (tokens.expiry_date) {
-          console.log("New expiry:", tokens.expiry_date);
+        if (tokens.access_token) {
+          logger.info("🔄 Tokens refreshed, saving...");
+          fs.writeFileSync(this.tokenPath, JSON.stringify(tokens, null, 2));
         }
       });
     }
   }
 
-  /** Get the URL for manual authorization (first time only) */
+  /** Get Google auth URL for first-time login */
   getAuthUrl(): string {
-    const SCOPES = ["https://www.googleapis.com/auth/youtube.upload"];
     return this.oAuth2Client.generateAuthUrl({
       access_type: "offline",
-      scope: SCOPES,
+      prompt: "consent",
+      scope: ["https://www.googleapis.com/auth/youtube.upload"],
     });
   }
 
-  /** Exchange authorization code for tokens (first time only) */
-  async getAndPrintTokens(code: string): Promise<void> {
+  /** Exchange code for tokens and save */
+  async exchangeCodeForToken(code: string) {
     const { tokens } = await this.oAuth2Client.getToken(code);
-    console.log("✅ Paste these values in your .env file:\n");
-    console.log("GOOGLE_ACCESS_TOKEN=", tokens.access_token);
-    console.log("GOOGLE_REFRESH_TOKEN=", tokens.refresh_token);
-    console.log("GOOGLE_TOKEN_EXPIRY=", tokens.expiry_date);
+    this.oAuth2Client.setCredentials(tokens);
+    fs.writeFileSync(this.tokenPath, JSON.stringify(tokens, null, 2));
+    logger.info("✅ Tokens saved to youtube_token.json");
   }
 
-  /** Uploads video and returns YouTube URL */
+  /** Upload video */
   async uploadVideo(options: UploadOptions): Promise<string> {
-    const youtube = google.youtube({
-      version: "v3",
-      auth: this.oAuth2Client,
-    });
+    if (!this.oAuth2Client.credentials.refresh_token && !this.oAuth2Client.credentials.access_token) {
+      logger.info("⚠️ No token found. Visit the following URL to authorize:");
+      const authUrl = this.getAuthUrl();
+      logger.info(authUrl);
+      await open(authUrl);
+      throw new Error("Authorization required. Complete the OAuth flow via /oauth2callback.");
+    }
+
+    const youtube = google.youtube({ version: "v3", auth: this.oAuth2Client });
 
     const res = await youtube.videos.insert({
       part: ["snippet", "status"],
@@ -89,7 +81,7 @@ class YouTubeUploader {
           title: options.title,
           description: options.description || "",
           tags: options.tags || [],
-          categoryId: "22", // People & Blogs
+          categoryId: "22",
         },
         status: {
           privacyStatus: options.privacyStatus || "unlisted",
@@ -101,9 +93,7 @@ class YouTubeUploader {
     });
 
     const videoId = res.data.id;
-    if (!videoId) {
-      throw new Error("Failed to upload video: No video ID returned.");
-    }
+    if (!videoId) throw new Error("Failed to upload video: No video ID returned.");
 
     return `https://youtu.be/${videoId}`;
   }

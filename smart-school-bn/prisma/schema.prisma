@@ -130,7 +130,6 @@ model Lesson {
 
 model LessonContent {
   id         String      @id @default(cuid())
-  type       ContentType
   title      String?
   textBody   String?  
 
@@ -150,15 +149,6 @@ model LessonContent {
 
   @@map("lesson_content")
 }
-
-enum ContentType {
-  VIDEO
-  AUDIO
-  PDF
-  TEXT
-  IMAGE
-}
-
 
 // Enrollment & Payment
 model Enrollment {

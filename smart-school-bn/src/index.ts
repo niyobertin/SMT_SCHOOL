@@ -13,6 +13,7 @@ import { rateLimiter } from "./middleware/rateLimiter";
 import { healthCheck } from "./middleware/healthCheck";
 import { swaggerSetup } from "./config/swagger";
 import router from "./routes";
+import YouTubeUploader from "./helper/youtubeUploader";
 // Load environment variables
 dotenv.config();
 
@@ -50,6 +51,21 @@ swaggerSetup(app);
 
 // API routes
 app.use("/api", router);
+const uploader = new YouTubeUploader();
+
+// OAuth callback endpoint
+app.get("/oauth2callback", async (req, res) => {
+  const code = req.query.code as string;
+  if (!code) return res.status(400).send("No code received.");
+
+  try {
+    await uploader.exchangeCodeForToken(code);
+    res.send("✅ YouTube authentication successful! You can close this tab.");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("❌ Error exchanging code.");
+  }
+});
 
 // 404 handler
 app.use("*", (req, res) => {
