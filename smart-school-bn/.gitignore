@@ -10,7 +10,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
-.youtube_token.json
+youtube_token.json
 
 # Compiled output
 dist/
