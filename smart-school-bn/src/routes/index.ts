@@ -1,7 +1,10 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
 import { Request, Response } from "express";
-
+import categoryRoutes from "./category.routes";
+import courseRouters from "./course.route";
+import lessonRoutes from "./lesson.routes";
+import lessonContentRoutes from "./lessonContent.routes";
 const router = Router();
 
 /**
@@ -33,6 +36,10 @@ const router = Router();
 
 // Mount route modules
 router.use("/auth", authRoutes);
+router.use("/categories", categoryRoutes);
+router.use("/courses", courseRouters);
+router.use("/lessons", lessonRoutes);
+router.use("/lesson-content", lessonContentRoutes);
 
 // API info endpoint
 /**

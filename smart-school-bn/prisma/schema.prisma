@@ -68,11 +68,8 @@ model Course {
   description      String
   shortDescription String?
   thumbnail        String?
-  price            Decimal      @db.Decimal(10, 2)
-  discountPrice    Decimal?     @db.Decimal(10, 2)
   language         String       @default("en")
   level            CourseLevel  @default(BEGINNER)
-  duration         Int? // in minutes
   status           CourseStatus @default(DRAFT)
   isPublished      Boolean      @default(false)
   isFeatured       Boolean      @default(false)
@@ -116,7 +113,6 @@ model Lesson {
   title       String
   description String?
   order       Int
-  duration    Int? // in minutes
   isPreview   Boolean  @default(false)
   isPublished Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -133,30 +129,25 @@ model Lesson {
 }
 
 model LessonContent {
-  id        String      @id @default(cuid())
-  type      ContentType
-  title     String?
-  fileUrl   String?
-  fileName  String?
-  fileSize  Int?
-  duration  Int? // for video/audio in seconds
-  order     Int
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id         String      @id @default(cuid())
+  title      String?
+  textBody   String?  
+
+  videoUrl   String?
+  audioUrl   String?
+  pdfUrl     String?
+  imageUrl   String?
+
+  fileName   String?      
+  order      Int
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   // Relations
-  lessonId String
-  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId   String
+  lesson     Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("lesson_content")
-}
-
-enum ContentType {
-  VIDEO
-  AUDIO
-  PDF
-  TEXT
-  IMAGE
 }
 
 // Enrollment & Payment
@@ -164,9 +155,9 @@ model Enrollment {
   id                String           @id @default(cuid())
   enrollmentDate    DateTime         @default(now())
   completionDate    DateTime?
-  progress          Float            @default(0) // percentage
+  progress          Float            @default(0)
   status            EnrollmentStatus @default(ACTIVE)
-  certificateIssued Boolean          @default(false)
+ enrollementPeriod Int @default(30)
 
   // Relations
   userId   String
@@ -187,7 +178,7 @@ enum EnrollmentStatus {
 
 model Payment {
   id              String        @id @default(cuid())
-  amount          Decimal       @db.Decimal(10, 2)
+  amount          Float
   currency        String        @default("USD")
   status          PaymentStatus @default(PENDING)
   paymentMethod   String

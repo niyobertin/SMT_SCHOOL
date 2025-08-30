@@ -36,7 +36,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         message: 'Invalid token or user not active'
       });
     }
-    // @ts-ignore
+    //@ts-ignore
     req.user = user;
     next();
   } catch (error) {
@@ -53,7 +53,7 @@ export const authorize = (...roles: string[]) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Insufficient permissions.'
+        message: 'Access denied. You do not have permissions to perform this action.'
       });
     }
     next();
