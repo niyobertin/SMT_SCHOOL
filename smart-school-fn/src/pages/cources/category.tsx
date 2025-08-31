@@ -1,132 +1,165 @@
-import { useState } from "react"
-import { ArrowRight, CheckCircle, Search } from "lucide-react"
-import useLanguage from "../../hooks/useLanguage"
+import { useState, useEffect } from "react"
+import { ArrowRight, CheckCircle, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { Link } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
+import { fetchCategories, setSearch, setPage } from "../../redux/features/courses/category"
+import useLanguage from "../../hooks/useLanguage"
+import type { AppDispatch, RootState } from "../../redux/stores"
 
 export const CourseCategories = () => {
   const { t } = useLanguage()
-
-  const categories = [
-    {
-      id: "1",
-      slug: "web-development",
-      title: t("webDevelopment"),
-      description: t("webDevDesc"),
-      lessons: [
-        "HTML, CSS, JavaScript Fundamentals",
-        "React & Next.js Development",
-        "Node.js & Express Backend",
-        "Database Design & Management",
-        "API Development & Integration",
-        "Deployment & DevOps Basics",
-      ],
-    },
-    {
-      id: "2",
-      slug: "data-science",
-      title: t("dataScience"),
-      description: t("dataScienceDesc"),
-      lessons: [
-        "Python Programming Mastery",
-        "Data Analysis with Pandas",
-        "Machine Learning Algorithms",
-        "Deep Learning & Neural Networks",
-        "Data Visualization",
-        "Real-world Project Portfolio",
-      ],
-    },
-    {
-      id: "3",
-      slug: "digital-marketing",
-      title: t("digitalMarketing"),
-      description: t("digitalMarketingDesc"),
-      lessons: [
-        "SEO & Content Marketing",
-        "Social Media Strategy",
-        "Google Ads & Facebook Ads",
-        "Email Marketing Automation",
-        "Analytics & Performance Tracking",
-        "Brand Building & Strategy",
-      ],
-    },
-  ]
+  const dispatch = useDispatch<AppDispatch>()
+  const { 
+    items: categories, 
+    loading, 
+    error, 
+    search,
+    page,
+    totalPages,
+    total
+  } = useSelector((state: RootState) => state.categories)
 
   const [searchTerm, setSearchTerm] = useState("")
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== search) {
+        dispatch(setSearch(searchTerm));
+        dispatch(fetchCategories({ page: 1, search: searchTerm }));
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm, dispatch, search]);
 
-  // Apply search & filter
-  const filteredCategories = categories.filter((cat) => {
-    const matchesSearch =
-      cat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cat.description.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    dispatch(fetchCategories({ page, search: searchTerm }));
+  }, [page, dispatch]);
 
-    return matchesSearch
-  })
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      dispatch(setPage(newPage))
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  if (loading && !categories.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-slate-50">
-    <div className="min-h-screen py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900">{t("ourPrograms")}</h1>
-        <p className="text-lg text-gray-600 mt-4">{t("programsSubtitle")}</p>
-      </div>
-
-      <div className="flex gap-8">
-        <div className="flex-1">
-        <div className="relative w-full lg:w-1/3 py-8">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-            type="text"
-            placeholder="Search course categories..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border border-gray-300 bg-white rounded-lg pl-10 pr-4 py-2 shadow-sm focus:outline-none"
-            />
+    <div className="bg-slate-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-5xl mx-auto text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900">{t("ourPrograms")}</h1>
+          <p className="text-lg text-gray-600 mt-4">
+            Showing {categories.length} of {total} categories
+          </p>
         </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCategories.map((cat) => {
-              const firstFour = cat.lessons.slice(0, 4)
-              const remaining = cat.lessons.length - 4
+        <div className="flex gap-8">
+          <div className="flex-1">
+            <div className="relative w-full lg:w-1/3 mb-8">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full border border-gray-300 bg-white rounded-lg pl-10 pr-4 py-2 shadow-sm focus:outline-none"
+              />
+            </div>
 
-              return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {categories.map((category) => (
                 <div
-                  key={cat.id}
+                  key={category.id}
                   className="bg-white shadow-md rounded-xl p-6 hover:shadow-lg transition-all"
                 >
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">{cat.title}</h2>
-                  <p className="text-gray-600 text-sm mb-4">{cat.description}</p>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">{category.name}</h2>
+                  <p className="text-gray-600 text-sm mb-4">{category.description}</p>
 
-                  <ul className="space-y-2 mb-4">
-                    {firstFour.map((lesson, idx) => (
-                      <li key={idx} className="flex items-center text-sm text-gray-700">
-                        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                        {lesson}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {remaining > 0 && (
-                    <p className="text-sm text-gray-500 mb-4">+{remaining} More</p>
+                  {category.courses?.length > 0 && (
+                    <ul className="space-y-2 mb-4">
+                      {category.courses.slice(0, 4).map((course: any, idx: number) => (
+                        <li key={idx} className="flex items-start">
+                          <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm text-gray-700">{course.title}</span>
+                        </li>
+                      ))}
+                      {category.courses.length > 4 && (
+                        <li className="text-sm text-gray-500">
+                          + {category.courses.length - 4} more courses
+                        </li>
+                      )}
+                    </ul>
                   )}
 
-                  <Link
-                    to={`/courses/${cat.slug}`}
-                    className="w-full flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                  >
-                    {t("exploreCourses")}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
+                  <div className="flex justify-between items-center mt-4">
+                    <Link
+                      to={`/courses/category/${category.id}`}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                    >
+                      View Courses
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Link>
+                  </div>
                 </div>
-              )
-            })}
-          </div>
+              ))}
+            </div>
 
-          {filteredCategories.length === 0 && (
-            <p className="text-center text-gray-500 mt-10">No results</p>
-          )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-12 space-x-2">
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  className="px-4 py-2 border rounded-md disabled:opacity-50"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum = page - 2 + i;
+                  if (pageNum < 1) pageNum = i + 1;
+                  if (pageNum > totalPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-4 py-2 border rounded-md ${
+                        page === pageNum ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 border rounded-md disabled:opacity-50"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </div>
   )
 }
