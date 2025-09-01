@@ -172,6 +172,66 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
     }
 };
 
+export const getCourseByCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const categoryId = req.params.categoryId;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const query = req.query.q as string || "";
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const courses = await prisma.course.findMany({
+            where: { category: { id: categoryId }, title: { contains: query, mode: "insensitive" } },
+            take: limit,
+            skip: startIndex,
+            include: {
+                instructor: {
+                    select: {
+                        id: true,
+                        username: true,
+                        avatar: true,
+                        role: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        phoneNumber: true
+                    },
+                },
+                category: true,
+                lessons: true,
+                enrollments: true,
+                reviews: true,
+                tests: true,
+                certificates: true,
+            },
+        });
+        const total = courses.length;
+        const totalPages = Math.ceil(total / limit);
+        if (!courses) {
+            res.status(404).json({
+                status: "error",
+                message: "Courses not found",
+            });
+            return;
+        }
+        res.status(200).json({
+            status: "success",
+            message: "Courses retrieved successfully",
+            data: {
+                courses,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages,
+                },
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const updateCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const id = req.params.id;

@@ -434,8 +434,8 @@ const lessonContentRouter = Router();
  *                   type: string
  */
 lessonContentRouter.post("/:lessonId",authenticate, authorize("ADMIN","INSTRUCTOR"), uploadFile, createLessonContent);
-lessonContentRouter.get("/:lessonId",authenticate, getLessonContent);
-lessonContentRouter.get("/get-lesson-content-by-id/:lessonContentId",authenticate, getLessonContentById);
+lessonContentRouter.get("/:lessonId", getLessonContent);
+lessonContentRouter.get("/get-lesson-content-by-id/:lessonContentId", getLessonContentById);
 lessonContentRouter.patch ("/:lessonContentId",authenticate, authorize("ADMIN","INSTRUCTOR"), uploadFile, updateLessonContent);
 lessonContentRouter.delete("/:lessonContentId",authenticate, authorize("ADMIN","INSTRUCTOR"), deleteLessonContent);
 

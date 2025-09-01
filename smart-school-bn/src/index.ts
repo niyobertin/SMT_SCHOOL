@@ -14,7 +14,6 @@ import { healthCheck } from "./middleware/healthCheck";
 import { swaggerSetup } from "./config/swagger";
 import router from "./routes";
 import YouTubeUploader from "./helper/youtubeUploader";
-// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -60,10 +59,10 @@ app.get("/oauth2callback", async (req, res) => {
 
   try {
     await uploader.exchangeCodeForToken(code);
-    res.send("✅ YouTube authentication successful! You can close this tab.");
+    res.send("YouTube authentication successful! You can close this tab.");
   } catch (err) {
     console.error(err);
-    res.status(500).send("❌ Error exchanging code.");
+    res.status(500).send("Error exchanging code.");
   }
 });
 

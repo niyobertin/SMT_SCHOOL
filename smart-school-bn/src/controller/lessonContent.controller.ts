@@ -94,7 +94,20 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
     const limit = req.query.limit ? Number(req.query.limit) : 10;
     const query = req.query.q as string || "";
     const skip = (page - 1) * limit;
-    const lessonContent = await prisma.lessonContent.findMany({ where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" } }, skip, take: limit });
+    const lessonContent = await prisma.lessonContent.findMany({ where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" }},
+      include: {
+        lesson: {
+          select: {
+            course: {
+              select: {
+                requirements: true,
+                objectives: true,
+              },
+            },
+          },
+        },
+      },
+     skip, take: limit });
     const total = await prisma.lessonContent.count({ where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" } } });
     const totalPages = Math.ceil(total / limit);
     res.status(200).json({
