@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { MainLayout } from "./components/Layouts/Main";
 import { HomePage } from "./pages/Home";
 import { About } from "./pages/About";
@@ -11,7 +11,9 @@ import VerifyOtp from "./pages/auth/VerifyOtp";
 import Tuition from "./pages/Tuition";
 import { CourseCategories } from "./pages/cources/category";
 import { ContactPage } from "./pages/contactUs";
-import { LessonsPage } from "./pages/cources/LessonPage";
+import CoursesPage from "./pages/cources";
+import CourseLessonsPage from "./pages/courses/CourseLessonsPage";
+import LessonContentPage from "./pages/courses/LessonContentPage";
 
 function App() {
   return (
@@ -33,10 +35,16 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/request-link" element={<RequestReset />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
-            <Route path="/courses" element={<CourseCategories />} />
-            <Route path="/courses/:slug" element={<LessonsPage />} />
+            
+            {/* Updated course routes */}
+            <Route path="/courses" element={<Navigate to="/courses/all" replace />} />
+            <Route path="/courses/all" element={<CoursesPage />} />
+            <Route path="/courses/categories" element={<CourseCategories />} />
+            <Route path="/courses/category/:categoryId" element={<CoursesPage />} />
+            <Route path="/courses/:courseId/lessons" element={<CourseLessonsPage />} />
+            <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
+            
             <Route path="/contact" element={<ContactPage />} />
-
           </Route>
         </Routes>
       </BrowserRouter>

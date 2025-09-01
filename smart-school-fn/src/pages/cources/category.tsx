@@ -118,7 +118,6 @@ export const CourseCategories = () => {
                 </div>
               ))}
             </div>
-
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center mt-12 space-x-2">

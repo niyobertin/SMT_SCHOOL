@@ -32,12 +32,12 @@ const initialState: CategoryState = {
 };
 
 export const fetchCategories = createAsyncThunk(
-  'courses/fetchCourses',
+  'categories/fetchCategories',
   async ({
     page = 1,
-    limit = 10,
+    limit = 100,
     search = '',
-  }: { page?: number; limit?: number; search?: string }) => {
+  }: { page?: number; limit?: number; search?: string } = {}) => {
     const response = await api.get(
       `/categories?page=${page}&limit=${limit}${search ? `&q=${encodeURIComponent(search)}` : ''}`
     );
@@ -46,12 +46,12 @@ export const fetchCategories = createAsyncThunk(
 );
 
 const categoriesSlice = createSlice({
-  name: 'courses',
+  name: 'categories',
   initialState,
   reducers: {
     setSearch: (state, action) => {
       state.search = action.payload;
-      state.page = 1; 
+      state.page = 1;
     },
     setPage: (state, action) => {
       state.page = action.payload;

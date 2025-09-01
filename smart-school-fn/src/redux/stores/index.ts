@@ -1,20 +1,26 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "../features/auth";
 import categoriesReducer from "../features/courses/category";
+import coursesReducer from "../features/courses/courseSlice";
+import lessonsReducer from "../features/lessons/lessonSlice";
+import lessonContentReducer from "../features/lessons/lessonContentSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     categories: categoriesReducer,
+    courses: coursesReducer,
+    lessons: lessonsReducer,
+    lessonContent: lessonContentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
+      serializableCheck: process.env.NODE_ENV === 'production' ? {
         ignoredActionPaths: ["payload.error"],
         ignoredPaths: ["auth.error"],
-      },
+      } : false,
     }),
 });
 
-export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;
