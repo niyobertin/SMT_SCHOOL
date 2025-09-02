@@ -50,11 +50,11 @@ export const createLessonContent = async (
 
     const audioFile = files?.["fileAudio"]?.[0];
     if (audioFile) {
-      audioUrl = await uploadBufferToCloudinary(audioFile.buffer, audioFile.mimetype);
+      audioUrl = await uploadBufferToCloudinary(audioFile.buffer, audioFile.mimetype, audioFile.originalname);
     }
     const pdfFile = files?.["filePDF"]?.[0];
     if (pdfFile) {
-      pdfUrl = await uploadBufferToCloudinary(pdfFile.buffer, pdfFile.mimetype);
+      pdfUrl = await uploadBufferToCloudinary(pdfFile.buffer, pdfFile.mimetype, pdfFile.originalname);
     }
 
     const imageFile = files?.["fileImage"]?.[0];
@@ -148,20 +148,14 @@ export const updateLessonContent = async (req: Request, res: Response, next: Nex
       const { lessonContentId } = req.params;
       const { title, textBody, order, fileName } = req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      
-      // Check if lesson content exists
       const existingContent = await prisma.lessonContent.findUnique({ 
         where: { id: lessonContentId } 
       });
       if (!existingContent) {
         return res.status(404).json({ status: "error", message: "Lesson content not found" });
       }
-  
-      // Handle file uploads
       let updateData: any = { title, textBody, order: order ? Number(order) : 0, fileName };
       const uploader = new YouTubeUploader();
-  
-      // Handle video upload
       const videoFile = files?.["fileVideo"]?.[0];
       if (videoFile) {
         const tempPath = path.join(tmpDir, `${Date.now()}-${videoFile.originalname}`);
@@ -173,8 +167,6 @@ export const updateLessonContent = async (req: Request, res: Response, next: Nex
         });
         fs.unlinkSync(tempPath);
       }
-  
-      // Handle other file types
       const fileHandlers = {
         fileAudio: 'audioUrl',
         filePDF: 'pdfUrl',
@@ -184,11 +176,9 @@ export const updateLessonContent = async (req: Request, res: Response, next: Nex
       for (const [field, urlField] of Object.entries(fileHandlers)) {
         const file = files?.[field]?.[0];
         if (file) {
-          updateData[urlField] = await uploadBufferToCloudinary(file.buffer, file.mimetype);
+          updateData[urlField] = await uploadBufferToCloudinary(file.buffer, file.mimetype, file.originalname);
         }
       }
-  
-      // Update the lesson content
       const updatedLessonContent = await prisma.lessonContent.update({
         where: { id: lessonContentId },
         data: updateData,
