@@ -29,14 +29,11 @@ const LessonContentPage = () => {
 
   const isPdf = (url: string) => {
     if (!url) return false;
-    // Check if it's a Cloudinary URL that serves PDFs
     return url.includes('cloudinary.com') && url.includes('raw/upload');
   };
 
   const getPdfUrl = (url: string) => {
     if (!url) return '';
-    
-    // If it's a Cloudinary URL, return it as is since it's already a direct link
     if (url.includes('cloudinary.com')) {
       return url;
     }
@@ -60,7 +57,6 @@ const LessonContentPage = () => {
   };
 
   const getYouTubeEmbedUrl = (url: string) => {
-    // Extract video ID from various YouTube URL formats
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     const videoId = (match && match[2].length === 11) ? match[2] : null;
@@ -72,10 +68,8 @@ const LessonContentPage = () => {
 
     return (
       <div className="space-y-6">
-        {/* Title */}
         <h1 className="text-2xl font-bold">{currentContent.title}</h1>
         
-        {/* Video */}
         {currentContent.videoUrl && (
           <div className="w-full max-w-4xl mx-auto">
             <h2 className="text-xl font-semibold mb-2">Video Content</h2>
@@ -105,7 +99,6 @@ const LessonContentPage = () => {
           </div>
         )}
 
-        {/* Audio */}
         {currentContent.audioUrl && isAudio(currentContent.audioUrl) && (
           <div className="w-full max-w-2xl mx-auto">
             <h2 className="text-xl font-semibold mb-2">Audio Content</h2>
@@ -119,10 +112,8 @@ const LessonContentPage = () => {
           </div>
         )}
 
-        {/* PDF */}
         {currentContent.pdfUrl && isPdf(currentContent.pdfUrl) && renderPdfViewer(currentContent.pdfUrl)}
 
-        {/* Text Content */}
         {currentContent.textBody && (
           <div className="prose max-w-none">
             <h2 className="text-xl font-semibold mb-2">Text Content</h2>
@@ -130,7 +121,6 @@ const LessonContentPage = () => {
           </div>
         )}
 
-        {/* Created At */}
         {currentContent.createdAt && (
           <div className="text-sm text-gray-500 mt-4">
             Created on: {new Date(currentContent.createdAt).toLocaleDateString()}
@@ -145,8 +135,7 @@ const LessonContentPage = () => {
     
     return (
       <div className="w-full h-full">
-        <h2 className="text-xl font-semibold mb-4">PDF Document</h2>
-        <div className="border rounded-lg overflow-hidden bg-gray-50 h-[70vh]">
+        <div className="border rounded-lg overflow-hidden h-screen">
           <object
             data={pdfUrl}
             type="application/pdf"
@@ -208,7 +197,7 @@ const LessonContentPage = () => {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <div className="w-1/4 p-4 border-r overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4">Lesson Content</h2>
+        <h2 className="text-lg font-semibold mb-4">Table of Content</h2>
         {contents.map((content, index) => (
           <button
             key={content.id || index}
