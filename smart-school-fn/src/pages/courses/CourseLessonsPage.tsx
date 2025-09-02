@@ -119,7 +119,7 @@ const CourseLessonsPage = () => {
             <ArrowLeft className="h-5 w-5 mr-1" />
             Back to Courses
           </button>
-            
+          
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{course?.title}</h1>
