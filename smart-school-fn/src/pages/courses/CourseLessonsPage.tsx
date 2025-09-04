@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate} from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowLeft, Clock, PlayCircle, BookOpen, Award } from 'lucide-react';
+import { ArrowLeft, Clock, PlayCircle, BookOpen, Award, XCircle } from 'lucide-react';
 import { fetchLessons } from '../../redux/features/lessons/lessonSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
 
@@ -109,96 +109,123 @@ const CourseLessonsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="h-5 w-5 mr-1" />
-            Back to Courses
-          </button>
-          
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{course?.title}</h1>
-              <p className="text-gray-600">{course?.shortDescription || course?.description}</p>
-            </div>
-            <button
-              onClick={handleTakeTest}
-              className="mt-4 md:mt-0 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center justify-center space-x-2"
-            >
-              <Award className="h-5 w-5" />
-              <span>Take Test</span>
-            </button>
-          </div>
-          
-          <div className="mt-4 flex items-center text-sm text-gray-500">
-            <span className="flex items-center mr-4">
-              <Clock className="h-4 w-4 mr-1" />
-              {lessons.length} {lessons.length === 1 ? 'Lesson' : 'Lessons'}
-            </span>
-            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-              {course?.level}
-            </span>
-          </div>
-        </div>
+      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" /> Back to courses
+        </button>
 
-        {/* Lessons List */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
-          {lessons.map((lesson, index) => (
-            <div key={lesson.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                  {index + 1}
-                </div>
-                <div className="ml-4 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900">{lesson.title}</h3>
-                    {lesson.isPreview && (
-                      <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                        Preview
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-sm text-gray-500">{lesson.description}</p>
-                  
-                  {/* Lesson Content */}
-                  {lesson.content.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {lesson.content.map((content) => (
-                        <div key={content.id} className="flex items-center text-sm text-gray-600">
-                          <PlayCircle className="h-4 w-4 mr-2 text-blue-600" />
-                          <span>{content.title || 'Lesson Content'}</span>
-                          {content.videoUrl && (
-                            <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">
-                              Video
-                            </span>
-                          )}
-                          {content.pdfUrl && (
-                            <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">
-                              PDF
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="ml-4 flex flex-col space-y-2">
-                  <button
-                    onClick={() => handleStartLearning(lesson.id)}
-                    className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    <BookOpen className="h-3.5 w-3.5 mr-1" />
-                    Start Learning
-                  </button>
-                </div>
+        {loading ? (
+          <HeaderSkeleton />
+        ) : error ? (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <XCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="mb-8">
+            <div className="relative rounded-lg overflow-hidden mb-6">
+              {course?.thumbnail ? (
+                <img
+                  src={course.thumbnail}
+                  alt={course.title}
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                  <BookOpen className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{course?.title}</h1>
+            <p className="text-gray-600 mb-4">{course?.description}</p>
+            
+            <div className="flex items-center space-x-4 text-sm text-gray-500 mb-6">
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 mr-1" />
+                <span>{course?.duration || 'N/A'} hours</span>
+              </div>
+              <div className="flex items-center">
+                <Award className="w-4 h-4 mr-1" />
+                <span>{course?.level || 'All Levels'}</span>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Course Test</h2>
+              <p className="text-gray-600 mb-4">Test your knowledge of this course by taking the final test.</p>
+              <button
+                onClick={() => navigate(`/courses/${courseId}/test`)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Take Test
+              </button>
+            </div>
+
+            <h2 className="text-xl font-semibold mb-4">Lessons</h2>
+            <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
+              {lessons.map((lesson, index) => (
+                <div key={lesson.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                      {index + 1}
+                    </div>
+                    <div className="ml-4 flex-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-medium text-gray-900">{lesson.title}</h3>
+                        {lesson.isPreview && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                            Preview
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">{lesson.description}</p>
+                      
+                      {/* Lesson Content */}
+                      {lesson.content.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {lesson.content.map((content) => (
+                            <div key={content.id} className="flex items-center text-sm text-gray-600">
+                              <PlayCircle className="h-4 w-4 mr-2 text-blue-600" />
+                              <span>{content.title || 'Lesson Content'}</span>
+                              {content.videoUrl && (
+                                <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                  Video
+                                </span>
+                              )}
+                              {content.pdfUrl && (
+                                <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                  PDF
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4 flex flex-col space-y-2">
+                      <button
+                        onClick={() => handleStartLearning(lesson.id)}
+                        className="inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        <BookOpen className="h-3.5 w-3.5 mr-1" />
+                        Start Learning
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
