@@ -8,7 +8,8 @@ import {
   submitAnswer, 
   submitTest,
   getTestById,
-  getTestQuestions
+  getTestQuestions,
+  getTestByCourseId
 } from '../controller/test.controller';
 
 const router = express.Router();
@@ -92,6 +93,47 @@ router.post(
   authenticate,
   authorize('INSTRUCTOR',"ADMIN"),
   catchAsync(createTest)
+);
+
+/**
+ * @swagger
+ * /api/tests/{courseId}/tests:
+ *   get:
+ *     summary: Get tests by course ID
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the course to get tests for
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Tests retrieved successfully
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  '/:courseId/tests',
+  authenticate,
+  catchAsync(getTestByCourseId)
 );
 
 /**

@@ -6,6 +6,44 @@ import { NotFoundError } from "../utils/errors";
 
 const prisma = new PrismaClient();
 
+export const getTestByCourseId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { courseId } = req.params;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    const test = await prisma.test.findMany({
+      where: { courseId },
+      skip,
+      take: limit,
+      include: {
+        questions: true,
+      },
+    });
+
+    if (!test) {
+      throw new NotFoundError('Test not found');
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: test,
+      pagination: {
+        page,
+        limit,
+        total: test.length,
+        totalPages: Math.ceil(test.length / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 // Test Management Endpoints
 export const createTest = async (
   req: Request,
@@ -274,16 +312,16 @@ export const startTestAttempt = async (
       },
     });
 
-    if (!test || test.course.enrollments.length === 0) {
-      res.status(403).json({
-        status: "error",
-        message: "You are not enrolled in this course",
-      });
-      return;
-    }
+    // if (!test || test.course.enrollments.length === 0) {
+    //   res.status(403).json({
+    //     status: "error",
+    //     message: "You are not enrolled in this course",
+    //   });
+    //   return;
+    // }
 
     // Check attempt limits
-    if (test.maxAttempts) {
+    if (test?.maxAttempts) {
       const attempts = await prisma.testAttempt.count({
         where: {
           testId,
@@ -313,7 +351,7 @@ export const startTestAttempt = async (
           },
         },
       },
-      orderBy: test.randomizeQuestions 
+      orderBy: test?.randomizeQuestions 
         ? { id: 'asc' } // We'll randomize in memory to maintain consistent ordering
         : { order: 'asc' },
     });
@@ -327,7 +365,7 @@ export const startTestAttempt = async (
     }
 
     // Randomize questions if needed
-    const randomizedQuestions = test.randomizeQuestions
+    const randomizedQuestions = test?.randomizeQuestions
       ? questions.sort(() => Math.random() - 0.5)
       : questions;
 
@@ -346,7 +384,7 @@ export const startTestAttempt = async (
     });
 
     // Calculate end time if duration is set
-    const endTime = test.duration
+    const endTime = test?.duration
       ? new Date(Date.now() + test.duration * 60 * 1000)
       : null;
 
@@ -355,13 +393,13 @@ export const startTestAttempt = async (
       data: {
         attemptId: testAttempt.id,
         test: {
-          id: test.id,
-          title: test.title,
-          description: test.description,
-          instructions: test.instructions,
-          duration: test.duration,
-          passingScore: test.passingScore,
-          showResults: test.showResults,
+          id: test?.id,
+          title: test?.title,
+          description: test?.description,
+          instructions: test?.instructions,
+          duration: test?.duration,
+          passingScore: test?.passingScore,
+          showResults: test?.showResults,
         },
         questions: randomizedQuestions.map(q => ({
           id: q.id,
@@ -373,7 +411,7 @@ export const startTestAttempt = async (
         })),
         startTime: testAttempt.startTime,
         endTime,
-        timeRemaining: test.duration ? test.duration * 60 : null, // in seconds
+        timeRemaining: test?.duration ? test.duration * 60 : null, // in seconds
       },
     });
   } catch (error) {

@@ -14,7 +14,8 @@ import { ContactPage } from "./pages/contactUs";
 import CoursesPage from "./pages/cources";
 import CourseLessonsPage from "./pages/courses/CourseLessonsPage";
 import LessonContentPage from "./pages/courses/LessonContentPage";
-import TestPage from "./pages/cources/test";
+import { TestPage } from "./pages/test/TestPage";
+
 
 function App() {
   return (
@@ -43,7 +44,7 @@ function App() {
             <Route path="/courses/categories" element={<CourseCategories />} />
             <Route path="/courses/category/:categoryId" element={<CoursesPage />} />
             <Route path="/courses/:courseId/lessons" element={<CourseLessonsPage />} />
-            <Route path="/courses/:courseId/test" element={<TestPage />} />
+            <Route path="/test/:testId" element={<TestPage />} />
             <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
             
             <Route path="/contact" element={<ContactPage />} />
