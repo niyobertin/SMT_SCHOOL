@@ -309,6 +309,7 @@ model Answer {
   id              String   @id @default(cuid())
   answerText      String?
   selectedOptions String[] // for multiple choice
+  userAnswer      String[] // for multiple choice
   isCorrect       Boolean?
   points          Float    @default(0)
   createdAt       DateTime @default(now())

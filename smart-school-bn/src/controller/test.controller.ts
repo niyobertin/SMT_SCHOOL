@@ -435,8 +435,7 @@ export const submitAnswer = async (
     const testAttempt = await prisma.testAttempt.findFirst({
       where: {
         id: attemptId,
-        userId,
-        status: 'IN_PROGRESS',
+        userId
       },
       include: {
         test: {
@@ -455,7 +454,13 @@ export const submitAnswer = async (
     if (!testAttempt) {
       res.status(404).json({
         status: "error",
-        message: "Test attempt not found or already submitted",
+        message: "Test attempt not found ",
+      });
+      return;
+    } else if (testAttempt.status === 'COMPLETED') {
+      res.status(400).json({
+        status: "error",
+        message: "Test attempt already completed",
       });
       return;
     }
@@ -468,6 +473,11 @@ export const submitAnswer = async (
       });
       return;
     }
+
+    // Get the selected option texts
+    const selectedOptionTexts = question.options
+      .filter(opt => selectedOptions?.includes(opt.id))
+      .map(opt => opt.option);
 
     // Check if answer already exists
     const existingAnswer = await prisma.answer.findFirst({
@@ -505,6 +515,7 @@ export const submitAnswer = async (
         id: uuidv4(),
         answerText: answerText || null,
         selectedOptions: selectedOptions || [],
+        userAnswer: selectedOptionTexts || [],
         isCorrect,
         points,
         testAttempt: {
@@ -517,6 +528,7 @@ export const submitAnswer = async (
       update: {
         answerText: answerText || null,
         selectedOptions: selectedOptions || [],
+        userAnswer: selectedOptionTexts || [],
         isCorrect,
         points,
       },
@@ -564,13 +576,11 @@ export const submitTest = async (
     const { attemptId } = req.params;
     // @ts-ignore
     const userId = req.user?.id;
-
     // 1. Validate test attempt
     const testAttempt = await prisma.testAttempt.findFirst({
       where: {
         id: attemptId,
-        userId,
-        status: 'IN_PROGRESS',
+        userId
       },
       include: {
         test: {
@@ -587,19 +597,20 @@ export const submitTest = async (
     });
 
     if (!testAttempt) {
-      throw new NotFoundError('Test attempt not found or already submitted');
-    }
+      throw new NotFoundError('Test attempt not found ');
+    } 
 
     // 2. Calculate final score
     const questions = await prisma.question.findMany({
       where: { testId: testAttempt.testId },
     });
 
+    const totalScoreForQuestions = questions.reduce((sum, q) => sum + (q.points || 0), 0);
     const totalQuestions = questions.length;
     const answeredQuestions = testAttempt.answers.length;
     const correctAnswers = testAttempt.answers.filter(a => a.isCorrect).length;
     const totalPoints = testAttempt.answers.reduce((sum, a) => sum + (a.points || 0), 0);
-    const score = (totalPoints / totalQuestions) * 100;
+    const score = (totalPoints / totalScoreForQuestions) * 100;
     const isPassed = score >= testAttempt.test.passingScore;
 
     // 3. Update test attempt
@@ -632,7 +643,7 @@ export const submitTest = async (
         answeredQuestions,
         correctAnswers,
         pointsEarned: totalPoints,
-        totalPoints: totalQuestions, // Assuming 1 point per question
+        totalPoints: totalScoreForQuestions,
         timeSpent: Math.floor((now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60),
         submittedAt: now.toISOString()
       },
@@ -661,7 +672,7 @@ export const submitTest = async (
         type: a.question.type,
         isCorrect: a.isCorrect,
         points: a.points,
-        userAnswer: a.answerText || a.selectedOptions,
+        userAnswer: a.answerText || a.userAnswer,
         correctAnswers: a.question.options.map(opt => ({
           id: opt.id,
           option: opt.option

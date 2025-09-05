@@ -18,7 +18,7 @@ export function TestPage() {
   );
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [showInstructions, setShowInstructions] = useState(true);
+
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [testStarted, setTestStarted] = useState(false);
 
@@ -28,7 +28,6 @@ export function TestPage() {
       // Reset state when testId changes
       setCurrentQuestionIndex(0);
       setAnswers({});
-      setShowInstructions(true);
       setTestStarted(false);
       
       // Load test data
@@ -46,7 +45,6 @@ export function TestPage() {
       try {
         // Start the test attempt and wait for it to complete
         await dispatch(startTestAttempt(testId));
-        setShowInstructions(false);
         setTestStarted(true);
       } catch (error) {
         console.error('Failed to start test attempt:', error);
@@ -87,8 +85,6 @@ export function TestPage() {
 
   // Handle test submission
   const handleSubmit = async () => {
-    console.log('Submitting test...', { testAttempt, testId });
-    
     if (!testAttempt?.id) {
       console.error('No test attempt ID found. Cannot submit test.');
       return;
@@ -100,12 +96,9 @@ export function TestPage() {
     }
     
     try {
-      console.log('Dispatching submitTestAttempt with attempt ID:', testAttempt.id);
       const result = await dispatch(submitTestAttempt(testAttempt.id));
-      console.log('Test submission result:', result);
       
       if (submitTestAttempt.fulfilled.match(result)) {
-        console.log('Test submitted successfully, navigating to results');
         navigate(`/test/${testId}/results`);
       } else {
         console.error('Failed to submit test:', result.error);
@@ -196,9 +189,10 @@ export function TestPage() {
           onAnswerSelect={(answerId) => handleAnswerSelect(currentQuestion.id, answerId)}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          onSubmit={handleSubmit}
           isLastQuestion={currentQuestionIndex === questions.length - 1}
           timeRemaining={timeRemaining}
+          onSubmit={handleSubmit}
+          testAttemptId={testAttempt?.id}
         />
       </div>
     );

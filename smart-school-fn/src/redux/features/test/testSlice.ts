@@ -141,10 +141,7 @@ export const startTestAttempt = createAsyncThunk(
   'test/startTestAttempt',
   async (testId: string, { rejectWithValue }) => {
     try {
-      console.log('Starting test attempt for test ID:', testId);
       const response = await api.post(`/tests/${testId}/start`);
-      console.log('Test attempt started:', response.data);
-      
       const responseData = response.data.data || response.data;
     
       const processedQuestions = Array.isArray(responseData.questions) 
@@ -161,18 +158,15 @@ export const startTestAttempt = createAsyncThunk(
         : [];
       
       const testAttempt = {
-        id: responseData.id,
+        id: responseData.attemptId,
         startTime: responseData.startTime,
         endTime: responseData.endTime,
         test: responseData.test,
         questions: processedQuestions,
         timeRemaining: responseData.timeRemaining || 0
-      };
-      
-      console.log('Processed test attempt:', testAttempt);
+      }
       return testAttempt;
     } catch (error: any) {
-      console.error('Error in startTestAttempt:', error);
       return rejectWithValue({
         message: error.response?.data?.message || 'Failed to start test attempt',
         status: error.response?.status
@@ -182,7 +176,7 @@ export const startTestAttempt = createAsyncThunk(
 );
 
 export const submitTestAnswer = createAsyncThunk(
-  'test/submitAnswer',
+  'test/submitTestAnswer',
   async (
     { attemptId, questionId, answer }: { attemptId: string; questionId: string; answer: any },
     { rejectWithValue }
@@ -223,6 +217,46 @@ export const fetchTestsByCourseId = createAsyncThunk(
   }
 );
 
+// Submit answer to a question
+export const submitAnswer = createAsyncThunk(
+  'test/submitAnswer',
+  async (
+    { attemptId, questionId, selectedOptions, answerText = '' }: 
+    { attemptId: string; questionId: string; selectedOptions: string[]; answerText?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.put(`/tests/test-attempts/${attemptId}/answer`, {
+        questionId,
+        answerText,
+        selectedOptions
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Failed to submit answer',
+        details: error.response?.data
+      });
+    }
+  }
+);
+
+// Submit the entire test
+export const submitTest = createAsyncThunk(
+  'test/submitTest',
+  async (attemptId: string, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/tests/test-attempts/${attemptId}/submit`);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Failed to submit test',
+        details: error.response?.data
+      });
+    }
+  }
+);
+
 const testSlice = createSlice({
   name: 'test',
   initialState,
@@ -234,7 +268,9 @@ const testSlice = createSlice({
       const { questionId, answer } = action.payload;
       state.answers[questionId] = answer;
     },
-    resetTest: () => initialState,
+    resetTest: () => {
+      return { ...initialState };
+    },
     updateTimeRemaining: (state, action: PayloadAction<number>) => {
       state.timeRemaining = action.payload;
     },
@@ -337,7 +373,7 @@ const testSlice = createSlice({
     });
     builder.addCase(submitTestAttempt.fulfilled, (state, action) => {
       state.isSubmitting = false;
-      state.results = action.payload;
+      state.results = action.payload.data;
       state.testAttempt = {
         ...state.testAttempt,
         status: 'COMPLETED',
@@ -366,6 +402,44 @@ const testSlice = createSlice({
       .addCase(fetchTestsByCourseId.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      });
+
+    // Handle submitAnswer
+    builder
+      .addCase(submitAnswer.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(submitAnswer.fulfilled, (state, action) => {
+        state.loading = false;
+        const { questionId, answer } = action.payload.data;
+        if (questionId && answer) {
+          state.answers[questionId] = answer;
+        }
+      })
+      .addCase(submitAnswer.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as any)?.message || 'Failed to submit answer';
+      });
+
+    // Handle submitTest
+    builder
+      .addCase(submitTest.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(submitTest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.results = action.payload.data;
+        state.testAttempt = {
+          ...state.testAttempt,
+          status: 'COMPLETED',
+          ...action.payload.data
+        };
+      })
+      .addCase(submitTest.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as any)?.message || 'Failed to submit test';
       });
   },
 });

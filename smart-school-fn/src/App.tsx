@@ -15,6 +15,7 @@ import CoursesPage from "./pages/cources";
 import CourseLessonsPage from "./pages/courses/CourseLessonsPage";
 import LessonContentPage from "./pages/courses/LessonContentPage";
 import { TestPage } from "./pages/test/TestPage";
+import { TestResults } from "./pages/test/TestResults";
 
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
             <Route path="/courses/category/:categoryId" element={<CoursesPage />} />
             <Route path="/courses/:courseId/lessons" element={<CourseLessonsPage />} />
             <Route path="/test/:testId" element={<TestPage />} />
+            <Route path="/test/:testId/results" element={<TestResults />} />
             <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
             
             <Route path="/contact" element={<ContactPage />} />
