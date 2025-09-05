@@ -5,6 +5,7 @@ import categoryRoutes from "./category.routes";
 import courseRouters from "./course.route";
 import lessonRoutes from "./lesson.routes";
 import lessonContentRoutes from "./lessonContent.routes";
+import testRoutes from "./test.routes";
 const router = Router();
 
 /**
@@ -16,6 +17,8 @@ const router = Router();
  *     description: Authentication endpoints
  *   - name: Health
  *     description: Health check endpoints
+ *   - name: Tests
+ *     description: Test management and taking endpoints
  */
 
 // Health check route (already handled in main app)
@@ -40,6 +43,7 @@ router.use("/categories", categoryRoutes);
 router.use("/courses", courseRouters);
 router.use("/lessons", lessonRoutes);
 router.use("/lesson-content", lessonContentRoutes);
+router.use("/tests", testRoutes); // Mount test routes under /tests
 
 // API info endpoint
 /**

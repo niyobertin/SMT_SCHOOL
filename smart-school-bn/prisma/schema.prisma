@@ -33,8 +33,10 @@ model User {
   payments     Payment[]
   testAttempts TestAttempt[]
   userProgress UserProgress[]
+  userCourseProgress UserCourseProgress[]
   certificates Certificate[]
   reviews      Review[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -91,6 +93,8 @@ model Course {
   reviews      Review[]
   tests        Test[]
   certificates Certificate[]
+  notifications Notification[]
+  userCourseProgress UserCourseProgress[]
 
   @@map("courses")
 }
@@ -207,13 +211,13 @@ model Test {
   id                 String   @id @default(cuid())
   title              String
   description        String?
-  instructions       String?
-  duration           Int? // in minutes
+  instructions       String[]
+  duration           Int? 
   passingScore       Float    @default(70)
-  maxAttempts        Int      @default(3)
+  maxAttempts        Int?      @default(10)
   isActive           Boolean  @default(true)
   showResults        Boolean  @default(true)
-  randomizeQuestions Boolean  @default(false)
+  randomizeQuestions Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -223,6 +227,7 @@ model Test {
 
   questions    Question[]
   testAttempts TestAttempt[]
+  notifications Notification[]
 
   @@map("tests")
 }
@@ -288,6 +293,7 @@ model TestAttempt {
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
 
   answers Answer[]
+  notifications Notification[]
 
   @@map("test_attempts")
 }
@@ -303,6 +309,7 @@ model Answer {
   id              String   @id @default(cuid())
   answerText      String?
   selectedOptions String[] // for multiple choice
+  userAnswer      String[] // for multiple choice
   isCorrect       Boolean?
   points          Float    @default(0)
   createdAt       DateTime @default(now())
@@ -333,6 +340,23 @@ model UserProgress {
 
   @@unique([userId, lessonId])
   @@map("user_progress")
+}
+
+model UserCourseProgress {
+  id           String    @id @default(cuid())
+  isCompleted  Boolean   @default(false)
+  completedAt  DateTime?
+  lastAccessed DateTime  @default(now())
+  completedTests String[] @default([])
+
+  // Relations
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("user_course_progress")
 }
 
 // Reviews & Ratings
@@ -370,6 +394,54 @@ model Certificate {
 
   @@unique([userId, courseId])
   @@map("certificates")
+}
+
+// Notification System
+model Notification {
+  id          String           @id @default(cuid())
+  title       String
+  message     String
+  type        NotificationType
+  status      NotificationStatus @default(UNREAD)
+  metadata    Json?            // For storing additional data like courseId, testId, etc.
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relations
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Optional relations for different notification types
+  courseId    String?
+  course      Course?          @relation(fields: [courseId], references: [id])
+  
+  testId      String?
+  test        Test?            @relation(fields: [testId], references: [id])
+
+  @@index([userId, status])
+  @@map("notifications")
+  TestAttempt TestAttempt[]
+}
+
+enum NotificationType {
+  COURSE_ENROLLMENT
+  COURSE_COMPLETION
+  TEST_GRADED
+  TEST_REMINDER
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  SYSTEM_ALERT
+  COURSE_UPDATE
+  NEW_COURSE
+  PROMOTIONAL
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+  DELETED
 }
 
 // System Configuration

@@ -12,7 +12,7 @@ export const generateToken = (user: User): string => {
         role: user.role,
         isActive: user.isActive,
         isVerified: user.isVerified,
-    }, process.env.JWT_SECRET as string, { expiresIn: "1h" });
+    }, process.env.JWT_SECRET as string, { expiresIn: '30days'});
 }
 
 export const refreshToken = (user: User): string => {
@@ -26,5 +26,5 @@ export const refreshToken = (user: User): string => {
         role: user.role,
         isActive: user.isActive,
         isVerified: user.isVerified,
-    }, process.env.JWT_SECRET as string, { expiresIn: "7d" });
+    }, process.env.JWT_SECRET as string, { expiresIn: '30days' });
 }
