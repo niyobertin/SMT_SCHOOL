@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate} from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowLeft, Clock, PlayCircle, BookOpen, Award, XCircle, List, FileText } from 'lucide-react';
+import { ArrowLeft, Clock, PlayCircle, Award, XCircle, List, FileText } from 'lucide-react';
 import { fetchLessons } from '../../redux/features/lessons/lessonSlice';
 import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
