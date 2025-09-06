@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "tsc",
+    "build": "tsc && npm run prisma:deploy",
     "start": "node dist/index.js",
     "start:dev": "ts-node src/index.ts",
     "test": "jest",
@@ -13,7 +13,10 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "prisma:create": "prisma migrate dev --name ",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:reset": "prisma migrate reset",
+    "prisma:seed": "prisma db seed"
   },
   "dependencies": {
     "@prisma/client": "^6.14.0",
