@@ -16,13 +16,16 @@ import CourseLessonsPage from "./pages/courses/CourseLessonsPage";
 import LessonContentPage from "./pages/courses/LessonContentPage";
 import { TestPage } from "./pages/test/TestPage";
 import { TestResults } from "./pages/test/TestResults";
-
+import { Dashboard } from "./Dashboards/Dashboard";
+import { Lessons } from "./Dashboards/sections/Lessons";
 
 function App() {
   return (
     <TranslationProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/dashboard/*" element={<Dashboard />} />
+          <Route path="/lessons/*" element={<Lessons />} />
           <Route
             element={
               <MainLayout>
