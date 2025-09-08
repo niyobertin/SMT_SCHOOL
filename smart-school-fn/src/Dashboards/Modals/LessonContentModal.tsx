@@ -70,7 +70,7 @@ export const LessonContentModal = ({
            <div>
             <label className="block mb-1 text-sm font-medium">Text Body</label>
             <Editor
-              apiKey={import.meta.env.VITE_TINYMCE_API}
+              apiKey={import.meta.env.VITE_TINYMCE || "rsdp3ewieqfweiwaea2dk4m6ekr8j1shedct4qe5lalxdl3w"}
               value={formData.textBody}
               onEditorChange={handleEditorChange}
               init={{
