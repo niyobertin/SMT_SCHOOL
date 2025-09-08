@@ -74,10 +74,7 @@ const initialState: CoursesState = {
 
 export const fetchCourses = createAsyncThunk(
   'courses/fetchCourses',
-  async ({ page = 1, q = '', categoryId = null }: { page?: number; q?: string; categoryId?: string | null }, { getState }) => {
-    const state = getState() as RootState;
-    const { limit } = state.courses;
-    
+  async ({ page = 1, q = '', limit = 10, categoryId = null }: { page?: number; q?: string; limit?: number; categoryId?: string | null }) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),

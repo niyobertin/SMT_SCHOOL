@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useRoutes, Outlet } from "react-router-dom";
 import { MainLayout } from "./components/Layouts/Main";
 import { HomePage } from "./pages/Home";
 import { About } from "./pages/About";
@@ -16,14 +16,20 @@ import CourseLessonsPage from "./pages/courses/CourseLessonsPage";
 import LessonContentPage from "./pages/courses/LessonContentPage";
 import { TestPage } from "./pages/test/TestPage";
 import { TestResults } from "./pages/test/TestResults";
-import { Dashboard } from "./Dashboards/Dashboard";
+import { dashboardRoutes } from "./routes";
+
+// Create a component that uses useRoutes
+const DashboardRoutes = () => {
+  const element = useRoutes(dashboardRoutes);
+  return element;
+};
 
 function App() {
   return (
     <TranslationProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/dashboard/*" element={<Dashboard />} />
+          <Route path="/dashboard/*" element={<DashboardRoutes />} />
           <Route
             element={
               <MainLayout>

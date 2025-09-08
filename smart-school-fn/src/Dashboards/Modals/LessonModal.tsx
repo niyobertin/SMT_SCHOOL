@@ -6,6 +6,9 @@ interface LessonModalProps {
   onSave: (lesson: any) => void;
   initialData?: any; 
   courses: string[];
+  coursesLoading: boolean;
+  coursesError: string | null;
+  loading: boolean;
 }
 
 export const LessonModal = ({
@@ -14,9 +17,12 @@ export const LessonModal = ({
   onSave,
   initialData,
   courses,
+  coursesLoading,
+  coursesError,
+  loading,
 }: LessonModalProps) => {
   const [lesson, setLesson] = useState({
-    name: "",
+    title: "",
     description: "",
     order: "",
     course: "",
@@ -25,13 +31,13 @@ export const LessonModal = ({
   useEffect(() => {
     if (initialData) {
       setLesson({
-        name: initialData.name || "",
+        title: initialData.title || "",
         description: initialData.description || "",
         order: initialData.order?.toString() || "",
         course: initialData.course || "",
       });
     } else {
-      setLesson({ name: "", description: "", order: "", course: "" });
+      setLesson({ title: "", description: "", order: "", course: "" });
     }
   }, [initialData, isOpen]);
 
@@ -61,11 +67,11 @@ export const LessonModal = ({
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1 text-sm">Lesson Name</label>
+            <label className="block mb-1 text-sm">Lesson Title</label>
             <input
               type="text"
-              name="name"
-              value={lesson.name}
+              name="title"
+              value={lesson.title}
               onChange={handleChange}
               className="w-full border rounded-lg px-3 py-2"
               required
@@ -103,12 +109,12 @@ export const LessonModal = ({
               className="w-full border rounded-lg px-3 py-2"
               required
             >
-              <option value="">-- Select a course --</option>
-              {courses.map((c, idx) => (
+              <option value="">{coursesLoading ? "Loading..." : "Select a course"}</option>
+              { !coursesLoading && !coursesError ? courses.map((c, idx) => (
                 <option key={idx} value={c}>
                   {c}
                 </option>
-              ))}
+              )) : <option value="">No courses available</option>}
             </select>
           </div>
 
@@ -124,7 +130,7 @@ export const LessonModal = ({
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              {initialData ? "Update" : "Save"}
+              {initialData ? (loading ? "Loading..." : "Update") : (loading ? "Loading..." : "Save")}
             </button>
           </div>
         </form>

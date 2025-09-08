@@ -9,7 +9,9 @@ interface Category {
 }
 
 interface CourseFormProps {
+  open: boolean;
   onClose: () => void;
+  onSuccess: () => void;
 }
 
 yup.setLocale({
@@ -36,7 +38,7 @@ const courseSchema = yup.object().shape({
   categoryId: yup.string().required('Please select a category or add a new one'),
 });
 
-export const CourseForm = ({ onClose }: CourseFormProps) => {
+export const CourseForm = ({ open, onClose, onSuccess }: CourseFormProps) => {
   const [categories, setCategories] = useState<Category[]>([
     { id: "1", name: "Programming" },
     { id: "2", name: "Design" },
@@ -66,12 +68,12 @@ export const CourseForm = ({ onClose }: CourseFormProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    setIsVisible(true);
+    setIsVisible(open);
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, []);
+  }, [open]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -129,6 +131,7 @@ export const CourseForm = ({ onClose }: CourseFormProps) => {
       // If validation passes, submit the form
       console.log('Form submitted:', courseData);
       // Add your form submission logic here
+      onSuccess();
       
     } catch (error) {
       console.log('Validation error caught:', error);
@@ -179,7 +182,7 @@ export const CourseForm = ({ onClose }: CourseFormProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-40 bg-gray-700/70 backdrop-blur-sm"
             onClick={handleClose}
           />
           
