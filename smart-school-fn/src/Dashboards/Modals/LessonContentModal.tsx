@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Editor } from "@tinymce/tinymce-react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+
 type LessonContentModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -36,7 +38,6 @@ export const LessonContentModal = ({
     setFormData({ ...formData, textBody: content });
   };
 
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -66,29 +67,41 @@ export const LessonContentModal = ({
             />
           </div>
 
-           {/* TinyMCE Rich Text Editor */}
-           <div>
+          {/* React Quill Rich Text Editor */}
+          <div>
             <label className="block mb-1 text-sm font-medium">Text Body</label>
-            <Editor
-              apiKey={import.meta.env.VITE_TINYMCE || "rsdp3ewieqfweiwaea2dk4m6ekr8j1shedct4qe5lalxdl3w"}
+            <ReactQuill
               value={formData.textBody}
-              onEditorChange={handleEditorChange}
-              init={{
-                height: 300,
-                menubar: true,
-                plugins: [
-                  'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                  'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                  'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
+              onChange={handleEditorChange}
+              className="bg-white rounded-lg"
+              theme="snow"
+              modules={{
+                toolbar: [
+                  [{ header: [1, 2, 3, false] }],
+                  ["bold", "italic", "underline", "strike"],
+                  [{ color: [] }, { background: [] }],
+                  [{ list: "ordered" }, { list: "bullet" }],
+                  ["blockquote", "code-block"],
+                  ["link", "image", "video"],
+                  ["clean"],
                 ],
-                toolbar: 'undo redo | blocks | ' +
-                'bold italic backcolor | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | emoticons ' +
-                'removeformat | help | link image media table | code fullscreen',
-                content_style:
-                  "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
               }}
-
+              formats={[
+                "header",
+                "bold",
+                "italic",
+                "underline",
+                "strike",
+                "color",
+                "background",
+                "list",
+                "bullet",
+                "blockquote",
+                "code-block",
+                "link",
+                "image",
+                "video",
+              ]}
             />
           </div>
 
@@ -131,10 +144,17 @@ export const LessonContentModal = ({
 
           {/* Buttons */}
           <div className="flex justify-end gap-2 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+            >
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
               Save
             </button>
           </div>
