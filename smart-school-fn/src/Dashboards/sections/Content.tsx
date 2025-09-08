@@ -3,7 +3,6 @@ import { Plus, Search, Edit, Trash2, Eye, BookOpen, FileText, Video, ListChecks 
 import { LessonContentModal } from '../Modals/LessonContentModal';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { useParams } from 'react-router-dom';
-import { Skeleton } from '../../components/ui/Skeleton';
 import { 
   fetchLessonContent, 
   clearLessonContent, 
@@ -88,21 +87,12 @@ export const LessonContent = () => {
   
   // Skeleton loading component
   const renderSkeleton = () => (
-    <div className="space-y-4 p-4">
+    <div className="space-y-2 p-4">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center">
-            <Skeleton className="h-10 w-10 rounded-md mr-4" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          </div>
-          <div className="flex space-x-2">
-            <Skeleton className="h-8 w-8 rounded" />
-            <Skeleton className="h-8 w-8 rounded" />
-            <Skeleton className="h-8 w-8 rounded" />
-          </div>
+        <div key={i} className="">
+             <div className="h-6 bg-gray-200 rounded w-full mb-2"></div>
+             <div className="h-6 bg-gray-200 rounded w-full mb-2"></div> 
+             <div className="h-6 bg-gray-200 rounded w-full mb-2"></div> 
         </div>
       ))}
     </div>
@@ -242,11 +232,12 @@ export const LessonContent = () => {
                       <h3 className="text-sm font-medium text-gray-900">{item.title}</h3>
                       <div className="flex items-center mt-1">
                      
-                        {item.type === 'test' && item.passingScore !== undefined && (
+                        {viewMode === 'tests' && item.passingScore !== undefined && (
                           <>
-                            <span className="mx-2 text-gray-300">•</span>
-                            <span className="text-xs text-gray-500">
-                              {item.passingScore}% passing
+                          <span className="h-4 mb-2">Test time: {item.duration > 60 ? `${item.duration / 60}h` : `${item.duration}min` } </span>
+                            <span className="mx-2 text-gray-600">Passing Score:</span>
+                            <span className="text-lds text-gray-600">
+                              {item.passingScore}%
                             </span>
                           </>
                         )}
