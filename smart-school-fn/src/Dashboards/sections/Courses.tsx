@@ -1,4 +1,4 @@
-import { Plus, MoreVertical, X } from "lucide-react";
+import { Plus, MoreVertical } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CourseForm } from "../Modals/CourseForm";
@@ -44,19 +44,9 @@ export const CoursesSection = ({ setActiveSection }: CoursesSectionProps) => {
       {/* CourseForm Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50 h-full">  
-          <div className="bg-white rounded-xl w-full max-w-2xl overflow-y-auto relative">
-            <div className="sticky top-0 bg-white p-4 border-b border-gray-200 flex justify-between items-center">
-              <button 
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <X size={24} />
-              </button>
-            </div>
             <div className="p-6">
               <CourseForm onClose={handleCloseModal} />
             </div>
-          </div>
         </div>
       )}
 
@@ -111,15 +101,6 @@ export const CoursesSection = ({ setActiveSection }: CoursesSectionProps) => {
               </p>
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <span>10 lessons</span>
-                <button 
-                  className="flex items-center gap-1 border border-gray-100 px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Handle add lesson click
-                  }}
-                >
-                  <Plus size={16} /> Add Lesson
-                </button>
               </div>
             </div>
           </div>

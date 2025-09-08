@@ -14,3 +14,256 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Draft.js Editor Styles */
+.rdw-dropdown-wrapper {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  margin: 0 2px;
+  height: 30px;
+}
+
+.rdw-dropdown-optionwrapper {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  overflow: auto;
+  z-index: 100;
+}
+
+.rdw-dropdown-optionwrapper:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rdw-dropdownoption-default {
+  padding: 6px 12px;
+  border-bottom: 1px solid #f1f1f1;
+  min-width: 100px;
+}
+
+.rdw-dropdownoption-active,
+.rdw-dropdownoption-highlighted {
+  background-color: #f1f5f9;
+}
+
+.rdw-dropdownoption-highlighted {
+  background-color: #f8fafc;
+}
+
+.rdw-option-wrapper {
+  min-width: 30px;
+  height: 30px;
+  margin: 0 2px;
+  border-radius: 0.375rem;
+}
+
+.rdw-option-wrapper:hover {
+  box-shadow: 0 0 0 2px #e2e8f0;
+}
+
+.rdw-option-active {
+  box-shadow: 0 0 0 2px #94a3b8;
+}
+
+/* Fix for dropdown arrow */
+.rdw-dropdown-carettoopen {
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  border-top-color: #64748b;
+}
+
+.rdw-dropdown-carettoclose {
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  border-bottom-color: #64748b;
+}
+
+/* Make sure dropdowns appear above other content */
+.rdw-dropdown-wrapper,
+.rdw-dropdown-optionwrapper {
+  z-index: 1000;
+  position: relative;
+}
+
+.rdw-dropdown-optionwrapper {
+  position: absolute;
+  margin-top: 4px;
+}
+
+/* Font size and family dropdowns */
+.rdw-fontsize-dropdown,
+.rdw-fontfamily-dropdown {
+  min-width: 100px;
+}
+
+/* Emoji picker */
+.rdw-emoji-modal {
+  left: -100px;
+  position: absolute;
+  z-index: 1000;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 0.375rem;
+  padding: 8px;
+}
+
+.rdw-emoji-icon {
+  margin: 2px;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.rdw-emoji-icon:hover {
+  background-color: #f1f5f9;
+}
+
+/* Draft.js Editor Overrides */
+.rdw-editor-toolbar {
+  margin: 0 !important;
+  padding: 8px !important;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-bottom: none !important;
+}
+
+.rdw-editor-main {
+  min-height: 300px;
+  padding: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-top: none !important;
+  border-radius: 0 0 0.5rem 0.5rem !important;
+}
+
+/* Dropdown Styles */
+.rdw-dropdown-wrapper {
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.25rem !important;
+  height: 32px !important;
+  min-width: 100px !important;
+  margin: 0 2px !important;
+}
+
+.rdw-dropdown-wrapper:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #bfdbfe !important;
+}
+
+.rdw-dropdown-optionwrapper {
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.25rem !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  max-height: 300px !important;
+  overflow: auto !important;
+  z-index: 100 !important;
+  min-width: 150px !important;
+}
+
+.rdw-dropdown-optionwrapper:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.rdw-dropdownoption-active,
+.rdw-dropdownoption-highlighted {
+  background-color: #f1f5f9 !important;
+}
+
+.rdw-dropdownoption-active {
+  background-color: #e2e8f0 !important;
+}
+
+/* Toolbar Buttons */
+.rdw-option-wrapper {
+  min-width: 32px !important;
+  height: 32px !important;
+  border-radius: 0.25rem !important;
+  margin: 0 2px !important;
+  padding: 6px !important;
+}
+
+.rdw-option-wrapper:hover {
+  box-shadow: 0 0 0 1px #e2e8f0 !important;
+  background-color: #f8fafc !important;
+}
+
+.rdw-option-active,
+.rdw-option-wrapper:active {
+  box-shadow: 0 0 0 1px #bfdbfe !important;
+  background-color: #eff6ff !important;
+}
+
+/* Dropdown Caret */
+.rdw-dropdown-carettoopen {
+  border-top-color: #64748b !important;
+  top: 14px !important;
+}
+
+.rdw-dropdown-carettoclose {
+  border-bottom-color: #64748b !important;
+  top: 12px !important;
+}
+
+/* Emoji Picker */
+.rdw-emoji-modal {
+  left: -100px !important;
+  position: absolute !important;
+  z-index: 1000 !important;
+  background: white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 0.375rem !important;
+  padding: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Make sure dropdowns appear above other content */
+.rdw-dropdown-optionwrapper {
+  position: absolute !important;
+  margin-top: 4px !important;
+}
+
+/* Fix for toolbar items alignment */
+.rdw-inline-wrapper,
+.rdw-list-wrapper,
+.rdw-text-align-wrapper,
+.rdw-link-wrapper,
+.rdw-emoji-wrapper,
+.rdw-image-wrapper,
+.rdw-remove-wrapper {
+  margin-bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Fix for dropdown selected value */
+.rdw-dropdown-selectedtext {
+  color: #1e293b !important;
+  font-size: 14px !important;
+  padding: 0 6px !important;
+}
+
+/* Fix for editor focus */
+.rdw-editor-wrapper:focus-within .rdw-editor-toolbar {
+  border-color: #93c5fd !important;
+  box-shadow: 0 0 0 1px #93c5fd !important;
+}
+
+/* Fix for editor content */
+.rdw-editor-main {
+  color: #1e293b !important;
+  line-height: 1.5 !important;
+}
+
+/* Fix for placeholder text */
+.public-DraftEditorPlaceholder-root {
+  color: #94a3b8 !important;
+  padding: 16px !important;
+}

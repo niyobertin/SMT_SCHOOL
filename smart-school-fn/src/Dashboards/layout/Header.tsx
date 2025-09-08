@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
         <div className="flex items-center gap-4">
           <button className="p-2 text-gray-400 hover:text-gray-600 relative">
             <Bell size={20} />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs">10</span>
           </button>
           <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
             <span className="text-white text-sm font-semibold">AD</span>
