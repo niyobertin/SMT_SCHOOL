@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { LessonModal } from "../Modals/LessonModal";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchLessons } from "../../redux/features/lessons/lessonSlice";
+import { createLesson, fetchLessons } from "../../redux/features/lessons/lessonSlice";
 import type { AppDispatch, RootState } from "../../redux/stores";
+import { Toast } from "primereact/toast";
 
 interface LessonsProps {}
 
@@ -18,10 +19,6 @@ export const Lessons = ({}: LessonsProps) => {
   const loading = useSelector((state: RootState) => state.lessons.loading);
   const error = useSelector((state: RootState) => state.lessons.error);
 
-  const courses = useSelector((state: RootState) => state.courses);
-  const coursesLoading = useSelector((state: RootState) => state.courses.loading);
-  const coursesError = useSelector((state: RootState) => state.courses.error);
-
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
@@ -30,6 +27,8 @@ export const Lessons = ({}: LessonsProps) => {
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const toast = useRef<Toast>(null);
+  const [lessonLoading, setLessonLoading] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -44,7 +43,6 @@ export const Lessons = ({}: LessonsProps) => {
 
   const confirmDelete = () => {
     if (deleteId) {
-      // TODO: Implement delete lesson action
       console.log('Deleting lesson:', deleteId);
       setIsDeleteModalOpen(false);
     }
@@ -56,19 +54,27 @@ export const Lessons = ({}: LessonsProps) => {
 
   const handleSaveLesson = async (lessonData: any) => {
     try {
-      // Add your save logic here
-      console.log('Saving lesson:', lessonData);
-      // Example: await saveLesson({ ...lessonData, courseId });
-      
-      // Close the modal and reset the form
+      setLessonLoading(true);
+      await dispatch(createLesson({ ...lessonData, courseId })).unwrap();
+      dispatch(fetchLessons(courseId!));
+      setLessonLoading(false);
+      toast.current?.show({
+        severity: "success",
+        summary: "Lesson Created",
+        detail: "Lesson created successfully!",
+        life: 3000,
+      });
       setIsModalOpen(false);
       setEditingLesson(null);
-      
-      // Refresh the lessons list
-      // fetchLessons();
     } catch (error) {
       console.error('Error saving lesson:', error);
-      // Handle error (e.g., show error message)
+      setLessonLoading(false);
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Failed to create lesson.",
+        life: 3000,
+      });
     }
   };
 
@@ -218,6 +224,7 @@ export const Lessons = ({}: LessonsProps) => {
               )}
             </tbody>
           </table>
+          
         </div>
 
         {/* Pagination */}
@@ -253,10 +260,7 @@ export const Lessons = ({}: LessonsProps) => {
         }}
         initialData={editingLesson}
         onSave={handleSaveLesson}
-        courses={courses.items.map((course) => course.title)}
-        coursesError={coursesError}
-        coursesLoading={coursesLoading}
-        loading={loading}
+        loading={lessonLoading}
       />
 
       {/* Delete Confirmation Modal */}
@@ -267,6 +271,7 @@ export const Lessons = ({}: LessonsProps) => {
         title="Delete Lesson"
         message="Are you sure you want to delete this lesson? This action cannot be undone."
       />
+      <Toast ref={toast} position="top-right"/>
     </div>
   );
 };

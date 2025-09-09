@@ -5,9 +5,6 @@ interface LessonModalProps {
   onClose: () => void;
   onSave: (lesson: any) => void;
   initialData?: any; 
-  courses: string[];
-  coursesLoading: boolean;
-  coursesError: string | null;
   loading: boolean;
 }
 
@@ -16,16 +13,12 @@ export const LessonModal = ({
   onClose,
   onSave,
   initialData,
-  courses,
-  coursesLoading,
-  coursesError,
   loading,
 }: LessonModalProps) => {
   const [lesson, setLesson] = useState({
     title: "",
     description: "",
     order: "",
-    course: "",
   });
 
   useEffect(() => {
@@ -34,10 +27,9 @@ export const LessonModal = ({
         title: initialData.title || "",
         description: initialData.description || "",
         order: initialData.order?.toString() || "",
-        course: initialData.course || "",
       });
     } else {
-      setLesson({ title: "", description: "", order: "", course: "" });
+      setLesson({ title: "", description: "", order: "" });
     }
   }, [initialData, isOpen]);
 
@@ -99,25 +91,6 @@ export const LessonModal = ({
               className="w-full border rounded-lg px-3 py-2"
             />
           </div>
-
-          <div>
-            <label className="block mb-1 text-sm">Course</label>
-            <select
-              name="course"
-              value={lesson.course}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-              required
-            >
-              <option value="">{coursesLoading ? "Loading..." : "Select a course"}</option>
-              { !coursesLoading && !coursesError ? courses.map((c, idx) => (
-                <option key={idx} value={c}>
-                  {c}
-                </option>
-              )) : <option value="">No courses available</option>}
-            </select>
-          </div>
-
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"

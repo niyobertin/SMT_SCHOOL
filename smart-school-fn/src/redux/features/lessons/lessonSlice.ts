@@ -91,6 +91,21 @@ export const fetchLessons = createAsyncThunk(
   }
 );
 
+export const createLesson = createAsyncThunk(
+  'lessons/createLesson',
+  async (lessonData: any, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/lessons/${lessonData.courseId}`, lessonData);
+      return response.data.data;
+    } catch (error:any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to create lesson');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
 const lessonSlice = createSlice({
   name: 'lessons',
   initialState,
