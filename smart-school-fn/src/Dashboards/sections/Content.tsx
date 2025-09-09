@@ -127,6 +127,7 @@ export const LessonContent = () => {
 
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
   const [editingContent, setEditingContent] = useState<Lesson | null>(null);
+  const [createcContentLoading, setCreatecContentLoading] = useState(false);
 
   const handleOpenContentModal = (lesson?: Lesson) => {
     if (lesson) {
@@ -149,10 +150,11 @@ export const LessonContent = () => {
 
       dispatch(setCurrentContent({ ...editingContent, ...contentData }));
     } else {
-      // Create new lesson
       if (lessonId) {
-        dispatch(createLessonContent({ ...contentData, lessonId }));
+        setCreatecContentLoading(true);
+        dispatch(createLessonContent({ ...contentData, lessonId })); 
         dispatch(fetchLessonContent(lessonId));
+        setCreatecContentLoading(false);
       }
     }
     setIsContentModalOpen(false);
@@ -274,6 +276,7 @@ export const LessonContent = () => {
         onClose={handleCloseContentModal}
         onSave={handleSaveContent}
         initialData={editingContent}
+        isLoading={createcContentLoading}
       />
     </div>
   );

@@ -90,17 +90,17 @@ export const CourseCategories = () => {
                   <h2 className="text-xl font-bold text-gray-900 mb-2">{category.name}</h2>
                   <p className="text-gray-600 text-sm mb-4">{category.description}</p>
 
-                  {category.courses?.length > 0 && (
+                  { category?.courses && category?.courses?.length   > 0 && (
                     <ul className="space-y-2 mb-4">
-                      {category.courses.slice(0, 4).map((course: any, idx: number) => (
+                      {category?.courses?.slice(0, 4).map((course: any, idx: number) => (
                         <li key={idx} className="flex items-start">
                           <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                           <span className="text-sm text-gray-700">{course.title}</span>
                         </li>
                       ))}
-                      {category.courses.length > 4 && (
+                      {category?.courses?.length > 4 && (
                         <li className="text-sm text-gray-500">
-                          + {category.courses.length - 4} more courses
+                          + {category?.courses?.length - 4} more courses
                         </li>
                       )}
                     </ul>
