@@ -1,12 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api/api';
 
-interface Category {
+export interface Category {
   id: string;
   name: string;
   description: string;
-  courses: string[];
   slug: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  courses?: string[];
 }
 
 interface CategoryState {
@@ -18,6 +21,8 @@ interface CategoryState {
   search: string;
   loading: boolean;
   error: string | null;
+  createStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  createError: string | null;
 }
 
 const initialState: CategoryState = {
@@ -29,6 +34,8 @@ const initialState: CategoryState = {
   search: '',
   loading: false,
   error: null,
+  createStatus: 'idle',
+  createError: null,
 };
 
 export const fetchCategories = createAsyncThunk(
@@ -45,6 +52,21 @@ export const fetchCategories = createAsyncThunk(
   }
 );
 
+export const createCategory = createAsyncThunk(
+  'categories/createCategory',
+  async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'slug' | 'courses'>, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/categories', categoryData);
+      return response.data.data;
+    } catch (error:any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to create category');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
 const categoriesSlice = createSlice({
   name: 'categories',
   initialState,
@@ -56,9 +78,14 @@ const categoriesSlice = createSlice({
     setPage: (state, action) => {
       state.page = action.payload;
     },
+    resetCreateStatus: (state) => {
+      state.createStatus = 'idle';
+      state.createError = null;
+    }
   },
   extraReducers: (builder) => {
     builder
+      // Fetch Categories
       .addCase(fetchCategories.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -74,9 +101,32 @@ const categoriesSlice = createSlice({
       .addCase(fetchCategories.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch categories';
+      })
+      // Create Category
+      .addCase(createCategory.pending, (state) => {
+        state.createStatus = 'loading';
+        state.createError = null;
+      })
+      .addCase(createCategory.fulfilled, (state, action) => {
+        state.createStatus = 'succeeded';
+        state.items.unshift(action.payload);
+        state.total += 1;
+      })
+      .addCase(createCategory.rejected, (state, action) => {
+        state.createStatus = 'failed';
+        state.createError = action.payload as string;
       });
   },
 });
 
-export const { setSearch, setPage } = categoriesSlice.actions;
+export const { setSearch, setPage, resetCreateStatus } = categoriesSlice.actions;
+
+export const selectCategories = (state: { categories: CategoryState }) => ({
+  items: state.categories.items,
+  loading: state.categories.loading,
+  error: state.categories.error,
+  createStatus: state.categories.createStatus,
+  createError: state.categories.createError,
+});
+
 export default categoriesSlice.reducer;

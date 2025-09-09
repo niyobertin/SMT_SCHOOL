@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { RootState } from '../../stores';
 import api from '../../api/api';
 
-interface Course {
+export interface Course {
   id: string;
   title: string;
   slug: string;
@@ -58,6 +58,8 @@ interface CoursesState {
   total: number;
   totalPages: number;
   categoryFilter: string | null;
+  createStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  createError: string | null;
 }
 
 const initialState: CoursesState = {
@@ -70,6 +72,8 @@ const initialState: CoursesState = {
   total: 0,
   totalPages: 1,
   categoryFilter: null,
+  createStatus: 'idle',
+  createError: null,
 };
 
 export const fetchCourses = createAsyncThunk(
@@ -84,6 +88,28 @@ export const fetchCourses = createAsyncThunk(
 
     const response = await api.get(`/courses?${params}`);    
     return response.data;
+  }
+);
+
+export const createCourse = createAsyncThunk(
+  'courses/createCourse',
+  async (courseData: FormData, { rejectWithValue }) => {
+    try {
+      const categoryId = courseData.get('categoryId') as string;
+      courseData.delete('categoryId');
+      const response = await api.post(`/courses/${categoryId}`, courseData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return response.data.data;
+    } catch (error:any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to create course');
+      }
+      return rejectWithValue('Network error occurred');
+    }
   }
 );
 
@@ -107,9 +133,14 @@ const coursesSlice = createSlice({
       state.categoryFilter = null;
       state.page = 1;
     },
+    resetCreateStatus: (state) => {
+      state.createStatus = 'idle';
+      state.createError = null;
+    }
   },
   extraReducers: (builder) => {
     builder
+      // Fetch Courses
       .addCase(fetchCourses.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -123,11 +154,25 @@ const coursesSlice = createSlice({
       .addCase(fetchCourses.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch courses';
+      })
+      // Create Course
+      .addCase(createCourse.pending, (state) => {
+        state.createStatus = 'loading';
+        state.createError = null;
+      })
+      .addCase(createCourse.fulfilled, (state, action) => {
+        state.createStatus = 'succeeded';
+        state.items.unshift(action.payload);
+        state.total += 1;
+      })
+      .addCase(createCourse.rejected, (state, action) => {
+        state.createStatus = 'failed';
+        state.createError = action.payload as string;
       });
   },
 });
 
-export const { setSearch, setPage, setCategoryFilter, clearFilters } = coursesSlice.actions;
+export const { setSearch, setPage, setCategoryFilter, clearFilters, resetCreateStatus } = coursesSlice.actions;
 
 export const selectCourses = (state: RootState) => state.courses;
 
