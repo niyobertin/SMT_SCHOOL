@@ -6,7 +6,8 @@ import { useParams } from 'react-router-dom';
 import { 
   fetchLessonContent, 
   clearLessonContent, 
-  setCurrentContent 
+  setCurrentContent, 
+  createLessonContent
 } from '../../redux/features/lessons/lessonContentSlice';
 import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
 
@@ -142,23 +143,17 @@ export const LessonContent = () => {
   };
 
   const handleSaveContent = (contentData: any) => {
+    console.log("contentData",contentData);
     if (editingContent) {
       // Update existing lesson
+
       dispatch(setCurrentContent({ ...editingContent, ...contentData }));
     } else {
       // Create new lesson
-      const newLesson: Lesson = {
-        id: Math.random().toString(36).substr(2, 9),
-        title: contentData.title,
-        course: contentData.course || { id: '1', title: 'Default Course' },
-        type: contentData.type as 'video' || 'document',
-        duration: contentData.duration || '00:00',
-        order: contentData.order || 1,
-        isPublished: contentData.isPublished || false,
-        createdAt: new Date().toISOString(),
-        description: contentData.textBody
-      };
-      dispatch(setCurrentContent(newLesson));
+      if (lessonId) {
+        dispatch(createLessonContent({ ...contentData, lessonId }));
+        dispatch(fetchLessonContent(lessonId));
+      }
     }
     setIsContentModalOpen(false);
   };

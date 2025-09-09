@@ -7,6 +7,7 @@ type LessonContentModalProps = {
   onClose: () => void;
   onSave: (content: any) => void;
   initialData?: any;
+  isLoading?: boolean;
 };
 
 export const LessonContentModal = ({
@@ -14,6 +15,7 @@ export const LessonContentModal = ({
   onClose,
   onSave,
   initialData,
+  isLoading,
 }: LessonContentModalProps) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -155,7 +157,7 @@ export const LessonContentModal = ({
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              Save
+              {isLoading ? "Loading..." : "Save"}
             </button>
           </div>
         </form>
