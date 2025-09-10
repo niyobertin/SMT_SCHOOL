@@ -9,4 +9,5 @@ export const uploadFile = upload.fields([
   { name: "fileAudio", maxCount: 1 },
   { name: "filePDF", maxCount: 1 },
   { name: "fileImage", maxCount: 1 },
+  { name: "thumbnail", maxCount: 1 },
 ]);

@@ -33,6 +33,7 @@ interface LessonContentState {
     total: number;
     totalPages: number;
   };
+  success: boolean; 
 }
 
 const initialState: LessonContentState = {
@@ -47,7 +48,9 @@ const initialState: LessonContentState = {
     total: 0,
     totalPages: 1,
   },
+  success: false,
 };
+
 
 export const fetchLessonContent = createAsyncThunk(
   'lessonContent/fetchLessonContent',
@@ -65,14 +68,56 @@ export const fetchLessonContent = createAsyncThunk(
 
 export const createLessonContent = createAsyncThunk(
   'lessonContent/createLessonContent',
-  async (lessonContent: any, { rejectWithValue }) => {
+  async (lessonContent: FormData, { rejectWithValue }) => {
     try {
-      const lessonId = lessonContent.lessonId;
-      const response = await api.post(`/lesson-content/${lessonId}`, lessonContent);
+      console.log("This is the response",lessonContent);
+      const lessonId = lessonContent.get('lessonId');
+      lessonContent.delete('lessonId');
+      const response = await api.post(`/lesson-content/${lessonId}`, lessonContent, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      
       return response.data.data;
     } catch (error:any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message || 'Failed to create lesson content');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
+export const updateLessonContent = createAsyncThunk(
+  'lessonContent/updateLessonContent',
+  async (contentData: FormData, { rejectWithValue }) => {
+    try {
+      const response = await api.patch(`/lesson-content/${contentData.get('id')}`, contentData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to update lesson content');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
+export const deleteLessonContent = createAsyncThunk(
+  'lessonContent/deleteLessonContent',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await api.delete(`/lesson-content/${id}`);
+      return id;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to delete lesson content');
       }
       return rejectWithValue('Network error occurred');
     }
@@ -102,10 +147,14 @@ const lessonContentSlice = createSlice({
         total: 0,
         totalPages: 1,
       };
+      state.success = false; // reset success
+      state.loading = false; // reset loading
+      state.error = null; // reset error
     },
   },
   extraReducers: (builder) => {
     builder
+      // Fetch lesson content
       .addCase(fetchLessonContent.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -118,7 +167,6 @@ const lessonContentSlice = createSlice({
           total: action.payload.pagination.total,
           totalPages: action.payload.pagination.totalPages,
         };
-        // Set first content as current if none is set
         if (action.payload.lessonContent.length > 0 && !state.currentContent) {
           state.currentContent = action.payload.lessonContent[0];
         }
@@ -126,6 +174,66 @@ const lessonContentSlice = createSlice({
       .addCase(fetchLessonContent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch lesson content';
+      })
+
+      // Create lesson content
+      .addCase(createLessonContent.pending, (state) => {
+        state.loading = true;
+        state.success = false;
+        state.error = null;
+      })
+      .addCase(createLessonContent.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items.push(action.payload); // add new content to items
+        state.currentContent = action.payload; // set newly created as current
+        state.success = true; // mark success
+      })
+      .addCase(createLessonContent.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to create lesson content';
+        state.success = false;
+      })
+
+      // Update lesson content
+      .addCase(updateLessonContent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateLessonContent.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedContentIndex = state.items.findIndex((content) => content.id === action.payload.id);
+        if (updatedContentIndex !== -1) {
+          state.items[updatedContentIndex] = action.payload;
+        }
+        state.currentContent = action.payload; // update current content
+        state.success = true; // mark success
+      })
+      .addCase(updateLessonContent.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to update lesson content';
+        state.success = false;
+      })
+
+      // Delete lesson content
+      .addCase(deleteLessonContent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteLessonContent.fulfilled, (state, action) => {
+        state.loading = false;
+        const deletedContentIndex = state.items.findIndex((content) => content.id === action.payload);
+        if (deletedContentIndex !== -1) {
+          state.items.splice(deletedContentIndex, 1);
+        }
+        if (state.currentContent && state.currentContent.id === action.payload) {
+          state.currentContent = null;
+        }
+        state.success = true; // mark success
+      })
+      .addCase(deleteLessonContent.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Failed to delete lesson content';
+        state.success = false;
       });
   },
 });

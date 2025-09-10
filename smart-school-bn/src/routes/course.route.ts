@@ -3,6 +3,7 @@ import { createCourse, deleteCourse, getCouses, getCourseById, updateCourse, get
 import { authenticate, authorize } from "../middleware/auth";
 import { courseValidation, updateCourseValidation } from "../schema/courseSchema";
 import { validateRequest } from "../middleware/validation";
+import { uploadFile } from "../middleware/uploadFile";
 
 const courseRouters = Router();
 
@@ -834,7 +835,7 @@ const courseRouters = Router();
  *                   type: string
  *                   example: "An unexpected error occurred"
  */
-courseRouters.post("/:categoryId",authenticate, authorize("ADMIN","INSTRUCTOR"),courseValidation, validateRequest, createCourse);
+courseRouters.post("/:categoryId",authenticate, authorize("ADMIN","INSTRUCTOR"),uploadFile,courseValidation, validateRequest, createCourse);
 courseRouters.get("/", getCouses);
 courseRouters.get("/:id", getCourseById);
 courseRouters.get("/category/:categoryId", getCourseByCategory);

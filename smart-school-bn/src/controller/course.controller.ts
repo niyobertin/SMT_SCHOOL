@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
+import { uploadBufferToCloudinary } from "../config/cloudinary";
 const prisma = new PrismaClient();
 
 export const createCourse = async (
@@ -14,6 +15,8 @@ export const createCourse = async (
         //@ts-ignore
         const userId = req.user?.id;
         const categoryId = req.params.categoryId;
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
         const category = await prisma.category.findUnique({
             where: { id: categoryId },
         });
@@ -34,6 +37,8 @@ export const createCourse = async (
             });
             return;
         }
+        const thumbnailFile = files?.["thumbnail"]?.[0];
+       const thumbnail = await uploadBufferToCloudinary(thumbnailFile.buffer, thumbnailFile.mimetype, thumbnailFile.originalname);
         const course = await prisma.course.create({
             data: {
                 ...courseData,
@@ -49,9 +54,10 @@ export const createCourse = async (
                         id: categoryId,
                     },
                 },
+                thumbnail,
                 status: courseData.status,
-                isPublished: courseData.isPublished,
-                isFeatured: courseData.isFeatured,
+                isPublished: Boolean(courseData.isPublished),
+                isFeatured: Boolean(courseData.isFeatured),
                 tags: courseData.tags,
                 requirements: courseData.requirements,
                 objectives: courseData.objectives,

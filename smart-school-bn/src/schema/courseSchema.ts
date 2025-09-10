@@ -4,7 +4,7 @@ export const courseValidation = [
     body("title").notEmpty().withMessage("Title is required"),
     body("description").notEmpty().withMessage("Description is required"),
     body("shortDescription").notEmpty().withMessage("Short description is required"),
-    body("thumbnail").notEmpty().withMessage("Thumbnail is required"),
+    body("thumbnail").optional(),
     body("language").notEmpty().withMessage("Language is required"),
     body("level").notEmpty().withMessage("Level is required"),
     body("status").notEmpty().withMessage("Status is required"),
