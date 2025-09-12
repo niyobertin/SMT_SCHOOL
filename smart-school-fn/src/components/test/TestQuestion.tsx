@@ -3,21 +3,21 @@ import { useDispatch, useSelector } from "react-redux";
 import { submitAnswer, submitTest } from "../../redux/features/test/testSlice";
 import type { RootState, AppDispatch } from "../../redux/stores";
 
-interface Question {
-  id: string;
-  question: string;
-  type: string;
-  points: number;
-  options: Array<{
-    id: string;
-    option: any;
-    order: number;
-  }>;
-  order: number;
-}
+// interface Question {
+//   id: string;
+//   question: string;
+//   type: string;
+//   points: number;
+//   options: Array<{
+//     id: string;
+//     option: any;
+//     order: number;
+//   }>;
+//   order: number;
+// }
 
 interface TestQuestionProps {
-  question: Question;
+  question: any;
   totalQuestions: number;
   currentQuestion: number;
   selectedAnswer: string | null;
@@ -154,8 +154,8 @@ export function TestQuestion({
         <div className="space-y-3 mt-6">
           {question.options
             .slice()
-            .sort((a, b) => (a.order || 0) - (b.order || 0))
-            .map((option) => (
+            .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+            .map((option: any) => (
               <div key={option.id} className="flex items-center">
                 <input
                   id={`option-${option.id}`}
