@@ -5,6 +5,7 @@ import coursesReducer from "../features/courses/courseSlice";
 import lessonsReducer from "../features/lessons/lessonSlice";
 import lessonContentReducer from "../features/lessons/lessonContentSlice";
 import testReducer from "../features/test/testSlice";
+import manageTestReducer from "../features/test/manageTestslice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     lessons: lessonsReducer,
     lessonContent: lessonContentReducer,
     test: testReducer,
+    manageTest: manageTestReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

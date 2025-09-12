@@ -47,6 +47,7 @@ interface Pagination {
 
 interface TestState {
   tests: Test[];
+  questions: Question[];
   currentTest: Test | null;
   loading: boolean;
   error: string | null;
@@ -56,6 +57,7 @@ interface TestState {
 
 const initialState: TestState = {
   tests: [],
+  questions: [],
   currentTest: null,
   loading: false,
   error: null,
@@ -146,6 +148,18 @@ export const updateQuestion = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update question');
+    }
+  }
+);
+
+export const fetchQuestionsByTestId = createAsyncThunk(
+  'tests/fetchQuestionsByTestId',
+  async (testId: string, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/tests/${testId}/questions`);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch questions');
     }
   }
 );
@@ -267,6 +281,20 @@ const testSlice = createSlice({
           q => q.id !== action.payload
         );
       }
+    });
+
+    // Fetch Questions By Test ID
+    builder.addCase(fetchQuestionsByTestId.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchQuestionsByTestId.fulfilled, (state, action) => {
+      state.loading = false;
+      state.currentTest = action.payload;
+    });
+    builder.addCase(fetchQuestionsByTestId.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
     });
   },
 });

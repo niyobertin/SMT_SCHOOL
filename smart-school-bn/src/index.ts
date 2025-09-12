@@ -32,8 +32,8 @@ app.use(
 // Compression middleware
 app.use(compression());
 
-// Rate limiting
-app.use(rateLimiter);
+// // Rate limiting
+// app.use(rateLimiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));

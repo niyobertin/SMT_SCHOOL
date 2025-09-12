@@ -839,7 +839,7 @@ courseRouters.post("/:categoryId",authenticate, authorize("ADMIN","INSTRUCTOR"),
 courseRouters.get("/", getCouses);
 courseRouters.get("/:id", getCourseById);
 courseRouters.get("/category/:categoryId", getCourseByCategory);
-courseRouters.patch("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), updateCourseValidation, validateRequest, updateCourse);
+courseRouters.patch("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), uploadFile,updateCourseValidation, validateRequest, updateCourse);
 courseRouters.delete("/:id", authenticate, authorize("ADMIN","INSTRUCTOR"), deleteCourse);
 
 export default courseRouters;

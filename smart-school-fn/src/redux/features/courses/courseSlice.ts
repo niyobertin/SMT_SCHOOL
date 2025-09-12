@@ -113,6 +113,40 @@ export const createCourse = createAsyncThunk(
   }
 );
 
+export const updateCourse = createAsyncThunk(
+  'courses/updateCourse',
+  async ({courseId, courseData}: {courseId: string, courseData: FormData}, { rejectWithValue }) => {
+    try {
+      const response = await api.patch(`/courses/${courseId}`, courseData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.data;
+    } catch (error:any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to update course');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
+export const deleteCourse = createAsyncThunk(
+  'courses/deleteCourse',
+  async (courseId: string, { rejectWithValue }) => {
+    try {
+      const response = await api.delete(`/courses/${courseId}`);
+      return response.data.data;
+    } catch (error:any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to delete course');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
 const coursesSlice = createSlice({
   name: 'courses',
   initialState,
@@ -166,6 +200,33 @@ const coursesSlice = createSlice({
         state.total += 1;
       })
       .addCase(createCourse.rejected, (state, action) => {
+        state.createStatus = 'failed';
+        state.createError = action.payload as string;
+      })
+      // Update Course
+      .addCase(updateCourse.pending, (state) => {
+        state.createStatus = 'loading';
+        state.createError = null;
+      })
+      .addCase(updateCourse.fulfilled, (state, action) => {
+        state.createStatus = 'succeeded';
+        state.items.unshift(action.payload);
+        state.total += 1;
+      })
+      .addCase(updateCourse.rejected, (state, action) => {
+        state.createStatus = 'failed';
+        state.createError = action.payload as string;
+      })
+      // Delete Course
+      .addCase(deleteCourse.pending, (state) => {
+        state.createStatus = 'loading';
+        state.createError = null;
+      })
+      .addCase(deleteCourse.fulfilled, (state, action) => {
+        state.createStatus = 'succeeded';
+        state.items.unshift(action.payload);
+      })
+      .addCase(deleteCourse.rejected, (state, action) => {
         state.createStatus = 'failed';
         state.createError = action.payload as string;
       });

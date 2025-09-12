@@ -4,7 +4,7 @@ export const courseSchema = yup.object().shape({
     title: yup.string().required(),
     description: yup.string().required(),
     shortDescription: yup.string().required().max(200),
-    thumbnail: yup.string(),
+    thumbnail: yup.string().nullable(),
     language: yup.string().required(),
     level: yup.string().oneOf(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT']).required(),
     status: yup.string().oneOf(['DRAFT', 'PUBLISHED', 'ARCHIVED']).required(),

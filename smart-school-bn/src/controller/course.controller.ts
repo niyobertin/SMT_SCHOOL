@@ -242,6 +242,7 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
     try {
         const id = req.params.id;
         const courseData = req.body;
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         const course = await prisma.course.findUnique({
             where: { id },
         });
@@ -252,9 +253,24 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
             });
             return;
         }
+        let thumbnail: string | undefined;
+        const thumbnailFile = files?.thumbnail?.[0];
+        if (thumbnailFile) {
+          thumbnail = await uploadBufferToCloudinary(
+            thumbnailFile.buffer,
+            thumbnailFile.mimetype,
+            thumbnailFile.originalname
+          );
+        }
+    
         const updatedCourse = await prisma.course.update({
             where: { id },
-            data: courseData,
+            data: {
+                ...courseData,
+                isPublished: Boolean(courseData.isPublished),
+                isFeatured: Boolean(courseData.isFeatured),
+                ...(thumbnail && { thumbnail })
+            },
         });
         res.status(200).json({
             status: "success",

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, Trash2, Eye, BookOpen, FileText, Video, ListChecks, Edit } from 'lucide-react';
+import { Plus, Search, Trash2, Eye, BookOpen, FileText, Video, ListChecks, Edit, Inbox } from 'lucide-react';
 import { LessonContentModal } from '../Modals/LessonContentModal';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { useParams } from 'react-router-dom';
@@ -10,7 +10,6 @@ import {
   deleteLessonContent, // Add delete thunk
   updateLessonContent // Add update thunk
 } from '../../redux/features/lessons/lessonContentSlice';
-import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 
@@ -29,12 +28,10 @@ interface Lesson {
   description?: string;
 }
 
-type ViewMode = 'lessons' | 'tests';
+
 
 export const LessonContent = () => {
   const { lessonId } = useParams<{ lessonId?: string }>();
-  const { courseId } = useParams<{ courseId?: string }>();
-  const [viewMode, setViewMode] = useState<ViewMode>('lessons');
   const [searchTerm, setSearchTerm] = useState('');
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
   const [editingContent, setEditingContent] = useState<Lesson | null>(null);
@@ -49,23 +46,17 @@ export const LessonContent = () => {
     success: createSuccess,
   } = useAppSelector((state) => state.lessonContent);
 
-  const { tests, loading: testsLoading, error: testsError } = useAppSelector((state) => state.test);
 
-  const loading = viewMode === 'lessons' ? lessonsLoading : testsLoading;
-  const error = viewMode === 'lessons' ? lessonsError : testsError;
+  const loading = lessonsLoading;
+  const error = lessonsError;
 
   // Fetch data
   useEffect(() => {
-    if (viewMode === 'lessons') {
-      if (lessonId) dispatch(fetchLessonContent(lessonId));
-    } else {
-      if (courseId) dispatch(fetchTestsByCourseId(courseId));
-    }
-
+    if (lessonId) dispatch(fetchLessonContent(lessonId));
     return () => {
-      if (viewMode === 'lessons') dispatch(clearLessonContent());
+      dispatch(clearLessonContent());
     };
-  }, [viewMode, lessonId, courseId, dispatch]);
+  }, [lessonId, dispatch]);
 
   // Close modal after success
   useEffect(() => {
@@ -172,7 +163,7 @@ export const LessonContent = () => {
     });
   };
 
-  const filteredItems = (viewMode === 'lessons' ? lessonContents : tests).filter(item =>
+  const filteredItems = lessonContents.filter(item =>
     item?.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -206,7 +197,7 @@ export const LessonContent = () => {
             <Trash2 className="h-5 w-5 text-red-400" />
           </div>
           <div className="ml-3">
-            <p className="text-sm text-red-700">Error loading {viewMode}: {error}</p>
+            <p className="text-sm text-red-700">Error loading lessons: {error}</p>
             <button onClick={() => window.location.reload()} className="mt-2 text-sm font-medium text-red-700 hover:text-red-600">
               Try again
             </button>
@@ -220,11 +211,7 @@ export const LessonContent = () => {
     <div className="p-6">
       <ConfirmDialog />
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Content</h1>
-        <div className="flex space-x-2">
-          <button onClick={() => setViewMode('lessons')} className={`px-4 py-2 rounded-md ${viewMode === 'lessons' ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Lessons</button>
-          <button onClick={() => setViewMode('tests')} className={`px-4 py-2 rounded-md ${viewMode === 'tests' ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}>Tests</button>
-        </div>
+        <h1 className="text-2xl font-bold">Lesson Content</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow">
@@ -236,13 +223,13 @@ export const LessonContent = () => {
             <input type="text" placeholder="Search content..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
           </div>
           <button onClick={() => handleOpenContentModal()} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" /> Add {viewMode === 'lessons' ? 'Lesson content' : 'Test'}
+            <Plus className="h-4 w-4 mr-2" /> Add Lesson content
           </button>
         </div>
 
         {loading ? renderSkeleton() : (
           <ul className="divide-y divide-gray-200">
-            {filteredItems.map(item => (
+            {filteredItems.length > 0 ? filteredItems.map(item => (
               <li key={item.id} className="hover:bg-gray-50">
                 <div className="px-4 py-4 flex items-center justify-between">
                   <div className="flex items-center">
@@ -266,9 +253,17 @@ export const LessonContent = () => {
                   </div>
                 </div>
               </li>
-            ))}
+            )) :(<div className="flex flex-col items-center justify-center py-10 text-gray-500">
+              <div className="bg-gray-100 p-4 rounded-full mb-4">
+                <Inbox className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-lg font-semibold">No content found</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Try adding some content to see it here.
+              </p>
+            </div>)}
           </ul>
-        )}
+        ) }
       </div>
 
       <Toast ref={toast} position="top-right"/>

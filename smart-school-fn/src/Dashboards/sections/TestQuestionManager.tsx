@@ -1,47 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, Save, X, Play, BookOpen, Award, Clock, Users, Trash } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Clock, Users, Trash, Loader2 } from 'lucide-react';
 import { fetchCourses } from "../../redux/features/courses/courseSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
-import type { Test, Question as QuestionType } from "../../redux/features/test/testSlice";
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { addQuestion, createTest, deleteTest } from '../../redux/features/test/manageTestslice';
 import { Toast } from 'primereact/toast';
 
-// Define the Option type that matches the Question type from the slice
-interface Option {
-  option: string;
-  isCorrect?: boolean;
-}
-
-// Extend the Question type to include the options with isCorrect
-interface Question extends Omit<QuestionType, 'options'> {
-  options: Option[];
-  explanation?: string;
-  correctAnswer?: string;
-}
-
-// Define the Course type
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  tests?: Test[];
-}
 
 const TestQuestionManager = () => {
-  const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [currentTest, setCurrentTest] = useState<any | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState('courses');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
-  const [isCreatingTest, setIsCreatingTest] = useState(false);
+  const [creatingQuestionLoading, setCreatingQuestionLoading] = useState(false);
   const [creatingTestLoading, setCreatingTestLoading] = useState(false);
   const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
-  const [demoCurrentQuestion, setDemoCurrentQuestion] = useState(0);
-  const [demoAnswers, setDemoAnswers] = useState<Record<number, any>>({});
   const dispatch = useDispatch<AppDispatch>();
   const toast = useRef<Toast>(null);
 
@@ -74,14 +49,17 @@ const TestQuestionManager = () => {
   }
 
   const { items: courses, loading, error } = useSelector((state: RootState) => state.courses);
-  const { tests, loading: testsLoading, error: testsError } = useSelector((state: RootState) => state.test);
+  const { tests } = useSelector((state: RootState) => state.test);
+  const { questions, loading: questionsLoading } = useSelector((state: RootState) => state.test);
 
   useEffect(() => {
     dispatch(fetchCourses({
       page: 1,
-      limit: 10
+      limit: 10000
     }));
   }, [dispatch]);
+
+  
 
   useEffect(() => {
     if (selectedCourseId) {
@@ -93,7 +71,6 @@ const TestQuestionManager = () => {
 
   const startCreatingTest = (courseId : string) => {
     setCurrentTest({ ...defaultTest, courseId, id: Date.now().toString() });
-    setIsCreatingTest(true);
     setActiveTab('test-editor');
   };
 
@@ -111,7 +88,6 @@ const TestQuestionManager = () => {
         life: 3000,
       });
   
-      setIsCreatingTest(false);
       setActiveTab('tests');
     } catch (error) {
       console.error("Error creating test:", error);
@@ -128,7 +104,6 @@ const TestQuestionManager = () => {
   
 
   const startCreatingQuestion = () => {
-
     setCurrentQuestion({ ...defaultQuestion, id: Date.now().toString() });
     setSelectedTestId(currentTest?.id);
     setIsCreatingQuestion(true);
@@ -170,7 +145,7 @@ const TestQuestionManager = () => {
         if (!prev) return null;
         return {
           ...prev,
-          options: prev.options.filter((_: any, i: number) => i !== index).map((opt: any, idx: number) => ({
+          options: prev.options.filter((_: any, i: number) => i !== index).map((opt: any, _idx: number) => ({
             ...opt,
           }))
         };
@@ -178,99 +153,84 @@ const TestQuestionManager = () => {
     }
   };
 
-  const saveQuestion = () => {
-    if (!currentQuestion || !currentQuestion.question.trim() || !currentQuestion.options.some((opt: any) => opt.option.trim())) {
-      return;
-    }
-    
-    // Find the correct answer from options
-    const correctAnswer = currentQuestion.options.find((opt: any) => opt.isCorrect)?.option || '';
-    
-    // Prepare the question in the required format
-    const newQuestion = {
-      question: currentQuestion.question,
-      type: currentQuestion.type,
-      points: currentQuestion.points,
-      explanation: currentQuestion.explanation || '',
-      options: currentQuestion.options.map((opt: any) => ({
-        option: opt.option,
-        isCorrect: opt.isCorrect || false
-      })),
-      correctAnswer: correctAnswer
-    };
-    
-    // working on this under progress
-    console.log("newQuestion ===> ",newQuestion);
-    dispatch(addQuestion({ questionData: newQuestion, testId: selectedTestId! }));
-    setIsCreatingQuestion(false);
-    setCurrentQuestion(null);
-    setSelectedTestId(null);
-  };
-
-  const removeQuestion = (index: number) => {
-    setCurrentTest((prev: any) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        questions: prev.questions.filter((_:any, i: number) => i !== index)
-      };
-    });
-  };
-
-  const startDemo = (test: any) => {
-    setCurrentTest(test);
-    setDemoMode(true);
-    setDemoCurrentQuestion(0);
-    setDemoAnswers({});
-  };
-
-  const selectDemoAnswer = (questionIndex: number, answer: any) => {
-    setDemoAnswers((prev: any) => ({
-      ...prev,
-      [questionIndex]: answer
-    }));
-  };
-
-  const nextDemoQuestion = () => {
-    if (demoCurrentQuestion < (currentTest?.questions.length || 0) - 1) {
-      setDemoCurrentQuestion((prev: number) => prev + 1);
-    }
-  };
-
-  const prevDemoQuestion = () => {
-    if (demoCurrentQuestion > 0) {
-      setDemoCurrentQuestion((prev: number) => prev - 1);
-    }
-  };
-
-  const finishDemo = () => {
-    setDemoMode(false);
-    setCurrentTest(null);
-    setDemoCurrentQuestion(0);
-    setDemoAnswers({});
-  };
-
-  const calculateDemoScore = () => {
-    let correct = 0;
-    (currentTest?.questions || []).forEach((question: any, index: number) => {
-      if (demoAnswers[index] === question.correctAnswer) {
-        correct++;
+  const saveQuestion = async () => {
+    setCreatingQuestionLoading(true);
+    try {
+      if (
+        !currentQuestion ||
+        !currentQuestion.question.trim() ||
+        !currentQuestion.options.some((opt: any) => opt.option.trim())
+      ) {
+        toast.current?.show({
+          severity: "warn",
+          summary: "Validation Error",
+          detail: "Please fill out the question and at least one option.",
+          life: 3000,
+        });
+        return;
       }
-    });
-    return Math.round((correct / (currentTest?.questions.length || 0)) * 100);
+  
+      const correctAnswer =
+        currentQuestion.options.find((opt: any) => opt.isCorrect)?.option || "";
+  
+      const newQuestion: any = {
+        question: currentQuestion.question,
+        type: currentQuestion.type,
+        points: currentQuestion.points,
+        explanation: currentQuestion.explanation || "",
+        options: currentQuestion.options.map((opt: any) => ({
+          option: opt.option,
+          isCorrect: opt.isCorrect || false,
+        })),
+        correctAnswer,
+      };
+  
+      setCreatingQuestionLoading(true);
+      await dispatch(
+        addQuestion({ questionData: newQuestion, testId: selectedTestId! })
+      ).unwrap();
+      setCreatingQuestionLoading(false);
+      toast.current?.show({
+        severity: "success",
+        summary: "Question Added",
+        detail: "The question has been added successfully.",
+        life: 3000,
+      });
+  
+      setCurrentQuestion(null);
+      setSelectedTestId(null);
+      setIsCreatingQuestion(false);
+    } catch (error) {
+      console.error(error);
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Something went wrong while saving the question.",
+        life: 3000,
+      });
+    } 
   };
-   
+  
+  // const removeQuestion = (index: number) => {
+  //   setCurrentTest((prev: any) => {
+  //     if (!prev) return null;
+  //     return {
+  //       ...prev,
+  //       questions: prev.questions.filter((_:any, i: number) => i !== index)
+  //     };
+  //   });
+  // };   
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
       <div className="pb-4">
-        <p className="text-gray-600">Create, manage, and demo your tests and questions</p>
+        <p className="text-gray-600">Create, manage and edit your tests and questions</p>
       </div>
 
       {/* Navigation Tabs */}
       <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
         {[
           { key: 'courses', label: 'Courses', icon: BookOpen },
-          { key: 'tests', label: 'Tests', icon: Award },
+          // { key: 'tests', label: '', icon: Award },
           { key: 'test-editor', label: 'Test Editor', icon: Edit }
         ].map(({ key, label, icon: Icon }) => (
           <button
@@ -293,8 +253,8 @@ const TestQuestionManager = () => {
         <div className="space-y-4">
           <h2 className="text-2xl font-bold mb-4">Available Courses</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {loading && <p>Loading courses...</p>}
-            {error && <p>Error loading courses: {error}</p>}
+            {loading && <p className='text-center'>Loading courses...</p>}
+            {error && <p className='text-center'>Error loading courses: {error}</p>}
             {(courses || []).map(course => (
               <div key={course.id} className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                 <h3 className="font-semibold text-lg mb-2">{course.title}</h3>
@@ -345,7 +305,6 @@ const TestQuestionManager = () => {
             {(tests || []).map(test => {
               const course = (courses || []).find(c => c.id === test.courseId);
               return (
-                <div>
                 <div key={test.id} className="bg-white border rounded-lg p-4 shadow-sm">
                   <h3 className="font-semibold text-lg mb-2">{test.title}</h3>
                   <p className="text-gray-600 mb-2">{test.description}</p>
@@ -391,12 +350,9 @@ const TestQuestionManager = () => {
 
                   </div>
                 </div>
-                </div>
               );
             })}
-            
           </div>
-          
         </div>
       )}
 
@@ -550,7 +506,15 @@ const TestQuestionManager = () => {
               {/* Questions Section */}
               <div className="bg-white border rounded-lg p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold">Questions {(currentTest?.questions || []).length}</h3>
+                <div className="flex items-center justify-between">
+                    {questions.length > 0 && (
+                      <>
+                        <h3 className="text-xl font-semibold">
+                          Questions ({questions.length})
+                        </h3>
+                      </>
+                    )}
+                  </div>
                   <button
                     onClick={startCreatingQuestion}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -559,9 +523,21 @@ const TestQuestionManager = () => {
                     Add Question
                   </button>
                 </div>
-                {(currentTest?.questions || []).map((question:any, index:any) => (
+                {questionsLoading && (
+                  <div className="flex justify-center items-center h-full">
+                    <Loader2 size={20} className="animate-spin" />
+                  </div>
+                )}
+                {!questionsLoading && questions.length === 0 && (
+                  <div className="flex justify-center items-center h-full">
+                    <p>No questions found</p>
+                  </div>
+                )}
+                {questions.map((question:any, index:any) => (
                   <div key={index} className="flex items-center gap-2 mb-2">
                    <p><span className="font-bold">{index + 1}.</span> {question.question}</p>
+                   <p>({question.points} points)</p>
+                   {question.options}
                   </div>
                 ))}
 
@@ -691,7 +667,7 @@ const TestQuestionManager = () => {
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                           >
                             <Save size={16} />
-                            Save Question
+                            { creatingQuestionLoading ? 'Saving...' : isCreatingQuestion ? 'Save Question' : 'Update Question'}
                           </button>
                         </div>
                       </div>
@@ -699,10 +675,9 @@ const TestQuestionManager = () => {
                   </div>
                 )}
               </div>
-
-              
             </>
           )}
+          <Toast ref={toast} position="top-right" />
         </div>
       )}
     </div>
