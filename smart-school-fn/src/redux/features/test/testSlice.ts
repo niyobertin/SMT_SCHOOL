@@ -8,7 +8,6 @@ export interface Question {
   type: string;
   points: number;
   options: Array<{
-    id: string;
     option: string;
     order: number;
   }>;

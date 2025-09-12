@@ -97,7 +97,7 @@ export const LessonContentModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-700/70 backdrop-blur-sm z-50 overflow-auto p-4">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl h-[750px] overflow-y-auto">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl h-[600px] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">
           {initialData ? "Edit Lesson Content" : "Add Lesson Content"}
         </h2>

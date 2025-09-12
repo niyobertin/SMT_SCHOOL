@@ -12,12 +12,14 @@ import {
   Settings,
   HelpCircle,
   Home,
+  FileQuestion,
 } from "lucide-react";
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { id: "users", label: "User Management", icon: Users, path: "/dashboard/users" },
   { id: "subscriptions", label: "Subscription Management", icon: CreditCard, path: "/dashboard/subscriptions" },
+  { id: "tests", label: "Test Management", icon: FileQuestion, path: "/dashboard/tests" },
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
   { id: "analytics", label: "Analytics & Reports", icon: BarChart3, path: "/dashboard/analytics" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
