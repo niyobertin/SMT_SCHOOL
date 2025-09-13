@@ -3,19 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { submitAnswer, submitTest } from "../../redux/features/test/testSlice";
 import type { RootState, AppDispatch } from "../../redux/stores";
 
-// interface Question {
-//   id: string;
-//   question: string;
-//   type: string;
-//   points: number;
-//   options: Array<{
-//     id: string;
-//     option: any;
-//     order: number;
-//   }>;
-//   order: number;
-// }
-
 interface TestQuestionProps {
   question: any;
   totalQuestions: number;

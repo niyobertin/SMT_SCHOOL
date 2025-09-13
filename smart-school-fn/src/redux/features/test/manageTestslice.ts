@@ -92,7 +92,7 @@ export const fetchTestById = createAsyncThunk(
 
 export const createTest = createAsyncThunk(
   'tests/create',
-  async ({testData, courseId}: {testData: Test, courseId:string}, { rejectWithValue }) => {
+  async ({ testData, courseId }: { testData: Test, courseId: string }, { rejectWithValue }) => {
     try {
       const response = await api.post(`/tests/${courseId}/tests`, testData);
       return response.data;
@@ -129,7 +129,7 @@ export const deleteTest = createAsyncThunk(
 
 export const addQuestion = createAsyncThunk(
   'tests/addQuestion',
-  async ({questionData, testId}: {questionData: Question, testId:string}, { rejectWithValue }) => {
+  async ({ questionData, testId }: { questionData: Question, testId: string }, { rejectWithValue }) => {
     try {
       const response = await api.post(`/tests/${testId}/questions`, questionData);
       return response.data;
@@ -157,7 +157,7 @@ export const fetchQuestionsByTestId = createAsyncThunk(
   async (testId: string, { rejectWithValue }) => {
     try {
       const response = await api.get(`/tests/${testId}/questions`);
-      return response.data;
+      return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch questions');
     }
@@ -260,18 +260,12 @@ const testSlice = createSlice({
 
     // Add Question
     builder.addCase(addQuestion.fulfilled, (state, action) => {
-      if (state.currentTest) {
-        state.currentTest.questions = [...(state.currentTest.questions || []), action.payload];
-      }
+      state.currentTest = action.payload.test;
     });
 
     // Update Question
     builder.addCase(updateQuestion.fulfilled, (state, action) => {
-      if (state.currentTest) {
-        state.currentTest.questions = state.currentTest.questions.map(q => 
-          q.id === action.payload.id ? action.payload : q
-        );
-      }
+      state.currentTest = action.payload.test;
     });
 
     // Delete Question
@@ -291,6 +285,7 @@ const testSlice = createSlice({
     builder.addCase(fetchQuestionsByTestId.fulfilled, (state, action) => {
       state.loading = false;
       state.currentTest = action.payload;
+      state.questions = action.payload || [];
     });
     builder.addCase(fetchQuestionsByTestId.rejected, (state, action) => {
       state.loading = false;

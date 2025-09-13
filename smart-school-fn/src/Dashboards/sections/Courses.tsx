@@ -77,16 +77,17 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
     
     try {
       await dispatch(deleteCourse(courseToDelete)).unwrap();
-      dispatch(fetchCourses({ 
-        page: currentPage, 
-        limit: itemsPerPage
-      }));
+     
       toast.current?.show({
         severity: 'success',
         summary: 'Success',
         detail: 'Course deleted successfully',
         life: 3000
       });
+      dispatch(fetchCourses({ 
+        page: currentPage, 
+        limit: itemsPerPage
+      }));
     } catch (error) {
       toast.current?.show({
         severity: 'error',

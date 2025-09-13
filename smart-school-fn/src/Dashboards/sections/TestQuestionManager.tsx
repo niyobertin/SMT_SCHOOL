@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Clock, Users, Trash, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Clock, Users, Trash, Loader2, Eye, ArrowLeft, Pencil, FileQuestion } from 'lucide-react';
 import { fetchCourses } from "../../redux/features/courses/courseSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../../redux/stores';
-import { addQuestion, createTest, deleteTest } from '../../redux/features/test/manageTestslice';
+import { addQuestion, createTest, deleteTest, fetchQuestionsByTestId } from '../../redux/features/test/manageTestslice';
 import { Toast } from 'primereact/toast';
+import StatusMessage from '../../components/ui/loadingAndError';
 
 
 const TestQuestionManager = () => {
@@ -49,8 +50,8 @@ const TestQuestionManager = () => {
   }
 
   const { items: courses, loading, error } = useSelector((state: RootState) => state.courses);
-  const { tests } = useSelector((state: RootState) => state.test);
-  const { questions, loading: questionsLoading } = useSelector((state: RootState) => state.test);
+  const { tests, loading: testsLoading, error: testsError } = useSelector((state: RootState) => state.test);
+  const { questions, loading: questionsLoading, error: questionsError } = useSelector((state: RootState) => state.manageTest);
 
   useEffect(() => {
     dispatch(fetchCourses({
@@ -59,7 +60,7 @@ const TestQuestionManager = () => {
     }));
   }, [dispatch]);
 
-  
+
 
   useEffect(() => {
     if (selectedCourseId) {
@@ -67,9 +68,9 @@ const TestQuestionManager = () => {
     }
   }, [dispatch, selectedCourseId]);
 
- 
 
-  const startCreatingTest = (courseId : string) => {
+
+  const startCreatingTest = (courseId: string) => {
     setCurrentTest({ ...defaultTest, courseId, id: Date.now().toString() });
     setActiveTab('test-editor');
   };
@@ -77,17 +78,17 @@ const TestQuestionManager = () => {
   const saveTest = async () => {
     try {
       setCreatingTestLoading(true);
-  
+
       await dispatch(createTest({ testData: currentTest, courseId: selectedCourseId! })).unwrap();
       await dispatch(fetchTestsByCourseId(selectedCourseId!)).unwrap();
-  
+
       toast.current?.show({
         severity: "success",
         summary: "Test Created",
         detail: "Test created successfully!",
         life: 3000,
       });
-  
+
       setActiveTab('tests');
     } catch (error) {
       console.error("Error creating test:", error);
@@ -101,14 +102,23 @@ const TestQuestionManager = () => {
       setCreatingTestLoading(false);
     }
   };
-  
+
+  useEffect(() => {
+    if (selectedTestId) {
+      dispatch(fetchQuestionsByTestId(selectedTestId)).unwrap().then(() => {
+      }).catch((error) => {
+        console.error("Error fetching questions:", error);
+      });
+    }
+  }, [dispatch, selectedTestId]);
+
 
   const startCreatingQuestion = () => {
     setCurrentQuestion({ ...defaultQuestion, id: Date.now().toString() });
-    setSelectedTestId(currentTest?.id);
+    // setSelectedTestId(currentTest?.id);
     setIsCreatingQuestion(true);
   };
-  
+
 
   const addOption = () => {
     setCurrentQuestion((prev: any) => {
@@ -116,10 +126,10 @@ const TestQuestionManager = () => {
       return {
         ...prev,
         options: [
-          ...prev.options, 
-          { 
-            option: '', 
-            isCorrect: false 
+          ...prev.options,
+          {
+            option: '',
+            isCorrect: false
           }
         ]
       };
@@ -131,9 +141,9 @@ const TestQuestionManager = () => {
       if (!prev) return null;
       return {
         ...prev,
-        options: prev.options.map((opt: any, i: number) => 
-          i === index ? { ...opt, [field]: value } : 
-          field === 'isCorrect' && value ? { ...opt, isCorrect: false } : opt
+        options: prev.options.map((opt: any, i: number) =>
+          i === index ? { ...opt, [field]: value } :
+            field === 'isCorrect' && value ? { ...opt, isCorrect: false } : opt
         )
       };
     });
@@ -169,10 +179,10 @@ const TestQuestionManager = () => {
         });
         return;
       }
-  
+
       const correctAnswer =
         currentQuestion.options.find((opt: any) => opt.isCorrect)?.option || "";
-  
+
       const newQuestion: any = {
         question: currentQuestion.question,
         type: currentQuestion.type,
@@ -184,33 +194,37 @@ const TestQuestionManager = () => {
         })),
         correctAnswer,
       };
-  
-      setCreatingQuestionLoading(true);
+
       await dispatch(
         addQuestion({ questionData: newQuestion, testId: selectedTestId! })
       ).unwrap();
-      setCreatingQuestionLoading(false);
+      await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
       toast.current?.show({
         severity: "success",
         summary: "Question Added",
         detail: "The question has been added successfully.",
         life: 3000,
       });
-  
+
       setCurrentQuestion(null);
       setSelectedTestId(null);
       setIsCreatingQuestion(false);
     } catch (error) {
-      console.error(error);
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: "Something went wrong while saving the question.",
+        detail: "Something went wrong while saving the question." + error,
         life: 3000,
       });
-    } 
+    } finally {
+      setCreatingQuestionLoading(false);
+    }
   };
-  
+
+  function handleEditQuestion(question: any): void {
+    throw new Error('Function not implemented.');
+  }
+
   // const removeQuestion = (index: number) => {
   //   setCurrentTest((prev: any) => {
   //     if (!prev) return null;
@@ -230,17 +244,17 @@ const TestQuestionManager = () => {
       <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
         {[
           { key: 'courses', label: 'Courses', icon: BookOpen },
-          // { key: 'tests', label: '', icon: Award },
+          { key: 'tests', label: 'Tests', icon: Award },
+          { key: 'test-questions', label: 'Questions', icon: FileQuestion },
           { key: 'test-editor', label: 'Test Editor', icon: Edit }
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
-              activeTab === key
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${activeTab === key
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+              }`}
           >
             <Icon size={16} />
             {label}
@@ -269,11 +283,12 @@ const TestQuestionManager = () => {
                   </button>
                   <button
                     onClick={() => {
-                        setSelectedCourseId(course.id);
-                        setActiveTab('tests');
-                      }}
-                    className="px-3 py-2 bg-gray-100 text-gray-600 rounded text-sm">
-                    {(course.tests || []).length} tests
+                      setSelectedCourseId(course.id);
+                      setActiveTab('tests');
+                    }}
+                    className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer">
+                    <Eye size={14} />
+                    View {course.tests && (course.tests || []).length} tests
                   </button>
                 </div>
               </div>
@@ -289,9 +304,9 @@ const TestQuestionManager = () => {
             <h2 className="text-2xl font-bold mb-4">All Tests</h2>
             <button
               onClick={() => {
-                if (selectedCourseId){
-                startCreatingTest(selectedCourseId);
-                return;
+                if (selectedCourseId) {
+                  startCreatingTest(selectedCourseId);
+                  return;
                 }
               }}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -302,6 +317,17 @@ const TestQuestionManager = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {testsLoading && (
+              <div className="flex items-center justify-center p-4">
+                <StatusMessage type="loading" message="Loading tests..." />
+              </div>
+            )}
+
+            {testsError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+                <StatusMessage type="error" message={`Error loading tests: ${testsError}`} />
+              </div>
+            )}
             {(tests || []).map(test => {
               const course = (courses || []).find(c => c.id === test.courseId);
               return (
@@ -340,6 +366,16 @@ const TestQuestionManager = () => {
                     </button>
                     <button
                       onClick={() => {
+                        setSelectedTestId(test.id);
+                        setActiveTab('test-questions');
+                      }}
+                      className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer"
+                    >
+                      <Eye size={16} />
+                      View Questions
+                    </button>
+                    <button
+                      onClick={() => {
                         deleteTest(test.id);
                       }}
                       className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -356,6 +392,217 @@ const TestQuestionManager = () => {
         </div>
       )}
 
+      {/* Test Questions Tab */}
+      {activeTab === 'test-questions' && (
+
+        <div className="bg-white p-6">
+          {questionsLoading && (
+            <div className="flex justify-center items-center h-full">
+              <StatusMessage type="loading" message="Loading questions..." />
+            </div>
+          )}
+          {questionsError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <StatusMessage type="error" message={`Error loading questions: ${questionsError}`} />
+            </div>
+          )}
+          <div className="mb-4 flex">
+            <button onClick={() => setActiveTab('tests')} className="text-blue-600 bg-blue-50 px-3 py-2 rounded hover:underline flex items-center gap-2"> <span><ArrowLeft size={16} /></span>Back to Tests</button>
+          </div>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center justify-between">
+              {questions.length > 0 && (
+                <>
+                  <h3 className="text-xl font-semibold">
+                    Questions ({questions.length})
+                  </h3>
+                </>
+              )}
+            </div>
+            <button
+              onClick={startCreatingQuestion}   // sets isCreatingQuestion = true
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              <Plus size={16} />
+              Add Question
+            </button>
+
+          </div>
+          {questionsLoading && (
+            <div className="flex justify-center items-center h-full">
+              <Loader2 size={20} className="animate-spin" />
+            </div>
+          )}
+          {!questionsLoading && questions.length === 0 && (
+            <div className="flex justify-center items-center h-full">
+              <p>No questions found</p>
+            </div>
+          )}
+          {questions.map((question: any, index: any) => (
+            <div key={index} className="gap-2 mb-2 border p-2 rounded">
+              <div className="flex gap-2 justify-between items-center">
+                <div className="flex gap-2">
+                  <p><span className="font-bold">{index + 1}.</span> {question.question}</p>
+                  <span className="text-xs">({question.points} points)</span>
+                </div>
+                <div className="flex gap-2 items-center">
+
+                  <button onClick={() => handleEditQuestion(question.id)} className="ml-2 text-xs text-blue-600 hover:underline"><Edit size={24} /></button>
+                  <button onClick={() => handleEditQuestion(question.id)} className="ml-2 text-xs text-red-600 hover:underline"><Trash2 size={24} /></button>
+                </div>
+              </div>
+              <span className="ml-auto text-xs font-semibold">{question.type}</span>
+              <div className="block">
+                <ul className="list-disc list-inside space-y-1">
+                  {question.options.map((option: any, idx: number) => (
+                    <li key={idx} className="text-sm text-gray-700">
+                      {option.option}
+                      {option.isCorrect && (
+                        <span className="ml-2 text-xs text-green-600 font-semibold">
+                          (Correct)
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+          {/* Question Creator Modal */}
+          {isCreatingQuestion && (
+            <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold">Create Question</h3>
+                  <button
+                    onClick={() => {
+                      setIsCreatingQuestion(false);
+                      setCurrentQuestion(null);
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Question *</label>
+                    <textarea
+                      value={currentQuestion?.question}
+                      onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, question: e.target.value }))}
+                      className="w-full p-2 border rounded h-20"
+                      placeholder="Enter your question"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Points</label>
+                      <input
+                        type="number"
+                        value={currentQuestion?.points}
+                        onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, points: parseInt(e.target.value) }))}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Type</label>
+                      <select
+                        value={currentQuestion?.type}
+                        onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, type: e.target.value }))}
+                        className="w-full p-2 border rounded"
+                      >
+                        <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                        <option value="TRUE_FALSE">True/False</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Explanation</label>
+                    <textarea
+                      value={currentQuestion?.explanation}
+                      onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, explanation: e.target.value }))}
+                      className="w-full p-2 border rounded h-16"
+                      placeholder="Optional explanation shown after answering"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium">Options</label>
+                      <button
+                        onClick={addOption}
+                        className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-sm rounded"
+                      >
+                        <Plus size={14} />
+                        Add Option
+                      </button>
+                    </div>
+
+                    {(currentQuestion?.options || []).map((option: any, index: any) => (
+                      <div key={index} className="flex items-center gap-2 mb-2">
+                        <input
+                          type="radio"
+                          name="correct-option"
+                          checked={option.isCorrect}
+                          onChange={() => updateOption(index, 'isCorrect', true)}
+                        />
+                        <input
+                          type="text"
+                          value={option.option}
+                          onChange={(e) => updateOption(index, 'option', e.target.value)}
+                          className="flex-1 p-2 border rounded"
+                          placeholder={`Option ${index + 1}`}
+                        />
+                        {(currentQuestion?.options || []).length > 2 && (
+                          <button
+                            onClick={() => removeOption(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Correct Answer</label>
+                    <input
+                      type="text"
+                      value={currentQuestion?.correctAnswer}
+                      readOnly
+                      className="w-full p-2 border rounded bg-gray-100"
+                      placeholder={`${currentQuestion?.correctAnswer || ''} Automatically filled based on selected correct option`}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <button
+                      onClick={() => {
+                        setIsCreatingQuestion(false);
+                        setCurrentQuestion(null);
+                      }}
+                      className="px-4 py-2 border rounded hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveQuestion}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      <Save size={16} />
+                      {creatingQuestionLoading ? 'Saving...' : isCreatingQuestion ? 'Save Question' : 'Update Question'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       {/* Test Editor Tab */}
       {activeTab === 'test-editor' && (
         <div className="space-y-6">
@@ -380,7 +627,7 @@ const TestQuestionManager = () => {
                     <input
                       type="text"
                       value={currentTest.title}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, title: e.target.value }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, title: e.target.value }))}
                       className="w-full p-2 border rounded"
                       placeholder="Enter test title"
                     />
@@ -389,7 +636,7 @@ const TestQuestionManager = () => {
                     <label className="block text-sm font-medium mb-2">Course</label>
                     <select
                       value={currentTest.courseId || ''}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, courseId: parseInt(e.target.value) || null }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, courseId: parseInt(e.target.value) || null }))}
                       className="w-full p-2 border rounded"
                     >
                       <option value="">No Course</option>
@@ -402,7 +649,7 @@ const TestQuestionManager = () => {
                     <label className="block text-sm font-medium mb-2">Description</label>
                     <textarea
                       value={currentTest.description}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, description: e.target.value }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, description: e.target.value }))}
                       className="w-full p-2 border rounded h-20"
                       placeholder="Enter test description"
                     />
@@ -420,13 +667,13 @@ const TestQuestionManager = () => {
                     />
 
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
                     <input
                       type="number"
                       value={currentTest.duration}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, duration: parseInt(e.target.value) }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, duration: parseInt(e.target.value) }))}
                       className="w-full p-2 border rounded"
                     />
                   </div>
@@ -435,7 +682,7 @@ const TestQuestionManager = () => {
                     <input
                       type="number"
                       value={currentTest.passingScore}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, passingScore: parseInt(e.target.value) }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, passingScore: parseInt(e.target.value) }))}
                       className="w-full p-2 border rounded"
                     />
                   </div>
@@ -444,7 +691,7 @@ const TestQuestionManager = () => {
                     <input
                       type="number"
                       value={currentTest.maxAttempts}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, maxAttempts: parseInt(e.target.value) }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, maxAttempts: parseInt(e.target.value) }))}
                       className="w-full p-2 border rounded"
                     />
                   </div>
@@ -452,7 +699,7 @@ const TestQuestionManager = () => {
                     <label className="block text-sm font-medium mb-2">Show Results</label>
                     <select
                       value={currentTest.showResults}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, showResults: e.target.value }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, showResults: e.target.value }))}
                       className="w-full p-2 border rounded"
                     >
                       <option value="AFTER_COMPLETION">After Completion</option>
@@ -466,7 +713,7 @@ const TestQuestionManager = () => {
                     <input
                       type="checkbox"
                       checked={currentTest.randomizeQuestions}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, randomizeQuestions: e.target.checked }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, randomizeQuestions: e.target.checked }))}
                       className="mr-2"
                     />
                     Randomize Questions
@@ -475,7 +722,7 @@ const TestQuestionManager = () => {
                     <input
                       type="checkbox"
                       checked={currentTest.randomizeOptions}
-                      onChange={(e) => setCurrentTest((prev:any) => ({ ...prev, randomizeOptions: e.target.checked }))}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, randomizeOptions: e.target.checked }))}
                       className="mr-2"
                     />
                     Randomize Options
@@ -502,184 +749,11 @@ const TestQuestionManager = () => {
                   {creatingTestLoading ? 'Loading...' : 'Save Test'}
                 </button>
               </div>
-
-              {/* Questions Section */}
-              <div className="bg-white border rounded-lg p-6">
-                <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center justify-between">
-                    {questions.length > 0 && (
-                      <>
-                        <h3 className="text-xl font-semibold">
-                          Questions ({questions.length})
-                        </h3>
-                      </>
-                    )}
-                  </div>
-                  <button
-                    onClick={startCreatingQuestion}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                  >
-                    <Plus size={16} />
-                    Add Question
-                  </button>
-                </div>
-                {questionsLoading && (
-                  <div className="flex justify-center items-center h-full">
-                    <Loader2 size={20} className="animate-spin" />
-                  </div>
-                )}
-                {!questionsLoading && questions.length === 0 && (
-                  <div className="flex justify-center items-center h-full">
-                    <p>No questions found</p>
-                  </div>
-                )}
-                {questions.map((question:any, index:any) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
-                   <p><span className="font-bold">{index + 1}.</span> {question.question}</p>
-                   <p>({question.points} points)</p>
-                   {question.options}
-                  </div>
-                ))}
-
-                {/* Question Creator Modal */}
-                {isCreatingQuestion && (
-                  <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-semibold">Create Question</h3>
-                        <button
-                          onClick={() => {
-                            setIsCreatingQuestion(false);
-                            setCurrentQuestion(null);
-                          }}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          <X size={20} />
-                        </button>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Question *</label>
-                          <textarea
-                            value={currentQuestion?.question}
-                            onChange={(e) => setCurrentQuestion((prev:any) => ({ ...prev, question: e.target.value }))}
-                            className="w-full p-2 border rounded h-20"
-                            placeholder="Enter your question"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Points</label>
-                            <input
-                              type="number"
-                              value={currentQuestion?.points}
-                              onChange={(e) => setCurrentQuestion((prev:any) => ({ ...prev, points: parseInt(e.target.value) }))}
-                              className="w-full p-2 border rounded"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2">Type</label>
-                            <select
-                              value={currentQuestion?.type}
-                              onChange={(e) => setCurrentQuestion((prev:any) => ({ ...prev, type: e.target.value }))}
-                              className="w-full p-2 border rounded"
-                            >
-                              <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-                              <option value="TRUE_FALSE">True/False</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Explanation</label>
-                          <textarea
-                            value={currentQuestion?.explanation}
-                            onChange={(e) => setCurrentQuestion((prev:any) => ({ ...prev, explanation: e.target.value }))}
-                            className="w-full p-2 border rounded h-16"
-                            placeholder="Optional explanation shown after answering"
-                          />
-                        </div>
-
-                        <div>
-                          <div className="flex justify-between items-center mb-2">
-                            <label className="block text-sm font-medium">Options</label>
-                            <button
-                              onClick={addOption}
-                              className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-sm rounded"
-                            >
-                              <Plus size={14} />
-                              Add Option
-                            </button>
-                          </div>
-                          
-                          {(currentQuestion?.options || []).map((option:any, index:any) => (
-                            <div key={index} className="flex items-center gap-2 mb-2">
-                              <input
-                                type="radio"
-                                name="correct-option"
-                                checked={option.isCorrect}
-                                onChange={() => updateOption(index, 'isCorrect', true)}
-                              />
-                              <input
-                                type="text"
-                                value={option.option}
-                                onChange={(e) => updateOption(index, 'option', e.target.value)}
-                                className="flex-1 p-2 border rounded"
-                                placeholder={`Option ${index + 1}`}
-                              />
-                              {(currentQuestion?.options || []).length > 2 && (
-                                <button
-                                  onClick={() => removeOption(index)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Correct Answer</label>
-                          <input
-                            type="text"
-                            value={currentQuestion?.correctAnswer}
-                            readOnly
-                            className="w-full p-2 border rounded bg-gray-100"
-                            placeholder="Automatically filled based on selected correct option"
-                          />
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-4">
-                          <button
-                            onClick={() => {
-                              setIsCreatingQuestion(false);
-                              setCurrentQuestion(null);
-                            }}
-                            className="px-4 py-2 border rounded hover:bg-gray-50"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={saveQuestion}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                          >
-                            <Save size={16} />
-                            { creatingQuestionLoading ? 'Saving...' : isCreatingQuestion ? 'Save Question' : 'Update Question'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
             </>
           )}
-          <Toast ref={toast} position="top-right" />
         </div>
       )}
+      <Toast ref={toast} position="top-right" />
     </div>
   );
 };
