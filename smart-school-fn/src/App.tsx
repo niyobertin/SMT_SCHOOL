@@ -17,6 +17,7 @@ import LessonContentPage from "./pages/courses/LessonContentPage";
 import { TestPage } from "./pages/test/TestPage";
 import { TestResults } from "./pages/test/TestResults";
 import { dashboardRoutes } from "./routes";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 // Create a component that uses useRoutes
 const DashboardRoutes = () => {
@@ -28,6 +29,7 @@ function App() {
   return (
     <TranslationProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/dashboard/*" element={<DashboardRoutes />} />
           <Route
@@ -45,7 +47,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/request-link" element={<RequestReset />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
-            
+
             {/* Updated course routes */}
             <Route path="/courses" element={<Navigate to="/courses/all" replace />} />
             <Route path="/courses/all" element={<CoursesPage />} />
@@ -55,7 +57,7 @@ function App() {
             <Route path="/test/:testId" element={<TestPage />} />
             <Route path="/test/:testId/results" element={<TestResults />} />
             <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
-            
+
             <Route path="/contact" element={<ContactPage />} />
           </Route>
         </Routes>
