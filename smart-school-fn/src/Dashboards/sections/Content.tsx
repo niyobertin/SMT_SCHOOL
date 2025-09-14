@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, Trash2, Eye, BookOpen, FileText, Video, ListChecks, Edit, Inbox } from 'lucide-react';
+import { Plus, Search, Trash2, BookOpen, FileText, Video, ListChecks, Edit, Inbox } from 'lucide-react';
 import { LessonContentModal } from '../Modals/LessonContentModal';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { useParams } from 'react-router-dom';
-import { 
-  fetchLessonContent, 
-  clearLessonContent, 
+import {
+  fetchLessonContent,
+  clearLessonContent,
   createLessonContent,
   deleteLessonContent, // Add delete thunk
   updateLessonContent // Add update thunk
@@ -38,7 +38,7 @@ export const LessonContent = () => {
   const toast = useRef<Toast>(null);
 
   const dispatch = useAppDispatch();
-  
+
   const {
     items: lessonContents,
     loading: lessonsLoading,
@@ -117,6 +117,7 @@ export const LessonContent = () => {
         formData.append("lessonId", lessonId);
 
         await dispatch(createLessonContent(formData)).unwrap();
+        dispatch(fetchLessonContent(lessonId!));
 
         toast.current?.show({
           severity: "success",
@@ -159,7 +160,7 @@ export const LessonContent = () => {
           });
         }
       },
-      reject: () => {}
+      reject: () => { }
     });
   };
 
@@ -182,8 +183,8 @@ export const LessonContent = () => {
       {[...Array(5)].map((_, i) => (
         <div key={i}>
           <div className="h-6 bg-gray-200 rounded w-full mb-2"></div>
-          <div className="h-6 bg-gray-200 rounded w-full mb-2"></div> 
-          <div className="h-6 bg-gray-200 rounded w-full mb-2"></div> 
+          <div className="h-6 bg-gray-200 rounded w-full mb-2"></div>
+          <div className="h-6 bg-gray-200 rounded w-full mb-2"></div>
         </div>
       ))}
     </div>
@@ -220,7 +221,7 @@ export const LessonContent = () => {
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
-            <input type="text" placeholder="Search content..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+            <input type="text" placeholder="Search content..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
           </div>
           <button onClick={() => handleOpenContentModal()} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" /> Add Lesson content
@@ -241,19 +242,16 @@ export const LessonContent = () => {
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <button onClick={() => handleOpenContentModal(item as unknown as Lesson)} className="p-1.5 text-blue-600 hover:text-blue-800" title="Edit">
-                      <Edit className="h-5 w-5"/>
+                    <button onClick={() => handleOpenContentModal(item as unknown as Lesson)} className="p-1.5 text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-1 bg-indigo-500 text-white rounded" title="Edit">
+                      <Edit className="h-4 w-4" />Edit
                     </button>
-                    <button onClick={() => handleDeleteContent(item.id)} className="p-1.5 text-red-600 hover:text-red-800" title="Delete">
-                      <Trash2 className="h-5 w-5"/>
-                    </button>
-                    <button onClick={() => handleOpenContentModal(item as unknown as Lesson)} className="p-1.5 text-gray-400 hover:text-gray-500" title="View">
-                      <Eye className="h-5 w-5"/>
+                    <button onClick={() => handleDeleteContent(item.id)} className="p-1.5 text-red-600 hover:text-red-800 cursor-pointer bg-red-500 text-white rounded flex items-center gap-1" title="Delete" >
+                      <Trash2 className="h-4 w-4" />Delete
                     </button>
                   </div>
                 </div>
               </li>
-            )) :(<div className="flex flex-col items-center justify-center py-10 text-gray-500">
+            )) : (<div className="flex flex-col items-center justify-center py-10 text-gray-500">
               <div className="bg-gray-100 p-4 rounded-full mb-4">
                 <Inbox className="w-8 h-8 text-gray-400" />
               </div>
@@ -263,17 +261,17 @@ export const LessonContent = () => {
               </p>
             </div>)}
           </ul>
-        ) }
+        )}
       </div>
 
-      <Toast ref={toast} position="top-right"/>
+      <Toast ref={toast} position="top-right" />
 
       <LessonContentModal
         isOpen={isContentModalOpen}
         onClose={handleCloseContentModal}
         onSave={handleSaveContent}
         initialData={editingContent}
-        isLoading={lessonsLoading} 
+        isLoading={lessonsLoading}
       />
     </div>
   );

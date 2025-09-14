@@ -1,15 +1,19 @@
 import express from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { catchAsync } from '../utils/errors';
-import { 
-  createTest, 
-  addQuestionToTest, 
-  startTestAttempt, 
-  submitAnswer, 
+import {
+  createTest,
+  addQuestionToTest,
+  startTestAttempt,
+  submitAnswer,
   submitTest,
   getTestById,
   getTestQuestions,
-  getTestByCourseId
+  getTestByCourseId,
+  updateTestById,
+  deleteTestById,
+  deleteTestQuestion,
+  updateTestQuestion
 } from '../controller/test.controller';
 
 const router = express.Router();
@@ -91,10 +95,106 @@ const router = express.Router();
 router.post(
   '/:courseId/tests',
   authenticate,
-  authorize('INSTRUCTOR',"ADMIN"),
+  authorize('INSTRUCTOR', "ADMIN"),
   catchAsync(createTest)
 );
 
+/**
+ * @swagger
+ * /api/tests/{testId}:
+ *  patch:
+ *    summary: Update a test
+ *    tags: [Tests]
+ *    security:
+ *      - bearerAuth: []
+ *    parameters:
+ *      - in: path
+ *        name: testId
+ *        required: true
+ *        schema:
+ *          type: string
+ *        description: ID of the test to update
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              title:
+ *                type: string
+ *              description:
+ *                type: string
+ *              instructions:
+ *                type: array
+ *                items:
+ *                  type: string
+ *              duration:
+ *                type: number
+ *              passingScore:
+ *                type: number
+ *              maxAttempts:
+ *                type: number
+ *              randomizeQuestions:
+ *                type: boolean
+ *              randomizeOptions:
+ *                type: boolean
+ *              showResults:
+ *                type: string
+ *                enum: [AFTER_COMPLETION, AFTER_GRADING, NEVER]
+ *    responses:
+ *      200:
+ *        description: Test updated successfully
+ *      404:
+ *        description: Test not found
+ *      401:
+ *        description: Unauthorized
+ *      403:
+ *        description: Forbidden - User is not the course instructor
+ *      500:
+ *        description: Internal server error
+ */
+
+router.patch(
+  '/:testId',
+  authenticate,
+  authorize('INSTRUCTOR', "ADMIN"),
+  catchAsync(updateTestById)
+);
+
+/**
+ * @swagger
+ * /api/tests/{testId}:
+ *   delete:
+ *     summary: Delete a test
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: testId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the test to delete
+ *     responses:
+ *       200:
+ *         description: Test deleted successfully
+ *       404:
+ *         description: Test not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not the course instructor
+ *       500:
+ *         description: Internal server error
+ */
+router.delete(
+  '/:testId',
+  authenticate,
+  authorize('INSTRUCTOR', "ADMIN"),
+  catchAsync(deleteTestById)
+);
 /**
  * @swagger
  * /api/tests/{courseId}/tests:
@@ -202,8 +302,103 @@ router.get(
 router.post(
   '/:testId/questions',
   authenticate,
-  authorize('INSTRUCTOR',"ADMIN"),
+  authorize('INSTRUCTOR', "ADMIN"),
   catchAsync(addQuestionToTest)
+);
+
+/** 
+ * @swagger
+ * /api/tests/questions/{questionId}:
+ *   patch:
+ *     summary: Update a question by ID
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: questionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               question:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER, ESSAY, FILL_BLANK]
+ *               points:
+ *                 type: number
+ *               explanation:
+ *                 type: string
+ *               options:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     option:
+ *                       type: string
+ *                     isCorrect:
+ *                       type: boolean
+ *                 description: Answer options (required for multiple choice/true-false)
+ *               correctAnswer:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Question updated successfully
+ *       404:
+ *         description: Question not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not the question owner
+ *       500:
+ *         description: Internal server error
+*/
+router.patch(
+  '/questions/:questionId',
+  authenticate,
+  authorize('INSTRUCTOR', "ADMIN"),
+  catchAsync(updateTestQuestion)
+);
+
+/**
+ * @swagger
+ * /api/tests/questions/{questionId}:
+ *   delete:
+ *     summary: Delete a question by ID
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: questionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the question to delete
+ *     responses:
+ *       200:
+ *         description: Question deleted successfully
+ *       404:
+ *         description: Question not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - User is not the question owner
+ *       500:
+ *         description: Internal server error
+*/
+router.delete(
+  '/questions/:questionId',
+  authenticate,
+  authorize('INSTRUCTOR', "ADMIN"),
+  catchAsync(deleteTestQuestion)
 );
 
 // Get test by ID
@@ -313,7 +508,7 @@ router.get(
 router.post(
   '/:testId/start',
   authenticate,
-  authorize('STUDENT',"ADMIN"),
+  authorize('STUDENT', "ADMIN"),
   catchAsync(startTestAttempt)
 );
 
@@ -367,7 +562,7 @@ router.post(
 router.put(
   '/test-attempts/:attemptId/answer',
   authenticate,
-  authorize('STUDENT',"ADMIN","INSTRUCTOR"),
+  authorize('STUDENT', "ADMIN", "INSTRUCTOR"),
   catchAsync(submitAnswer)
 );
 
@@ -439,7 +634,7 @@ router.put(
 router.post(
   '/test-attempts/:attemptId/submit',
   authenticate,
-  authorize('STUDENT',"ADMIN","INSTRUCTOR"),
+  authorize('STUDENT', "ADMIN", "INSTRUCTOR"),
   catchAsync(submitTest)
 );
 

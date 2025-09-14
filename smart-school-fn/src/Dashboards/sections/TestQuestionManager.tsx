@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Clock, Users, Trash, Loader2, Eye, ArrowLeft, Pencil, FileQuestion } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Clock, Users, Trash, Loader2, Eye, ArrowLeft, FileQuestion } from 'lucide-react';
 import { fetchCourses } from "../../redux/features/courses/courseSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../../redux/stores';
-import { addQuestion, createTest, deleteTest, fetchQuestionsByTestId } from '../../redux/features/test/manageTestslice';
+import { addQuestion, createTest, deleteQuestion, deleteTest, fetchQuestionsByTestId, updateQuestion, updateTest } from '../../redux/features/test/manageTestslice';
 import { Toast } from 'primereact/toast';
 import StatusMessage from '../../components/ui/loadingAndError';
+import { ConfirmDeleteModal } from '../Modals/ConfirmDeleteModal';
 
 
 const TestQuestionManager = () => {
@@ -15,9 +16,20 @@ const TestQuestionManager = () => {
   const [activeTab, setActiveTab] = useState('courses');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+  const [isEditingTest, setIsEditingTest] = useState(false);
   const [creatingQuestionLoading, setCreatingQuestionLoading] = useState(false);
   const [creatingTestLoading, setCreatingTestLoading] = useState(false);
   const [isCreatingQuestion, setIsCreatingQuestion] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [testToDelete, setTestToDelete] = useState<any | null>(null);
+  const [questionToDelete, setQuestionToDelete] = useState<any | null>(null);
+  const [deletingQuestionLoading, setDeletingQuestionLoading] = useState(false);
+
+  const [isEditingQuestion, setIsEditingQuestion] = useState(false);
+  const [questionToEditId, setQuestionToEditId] = useState<string | null>(null);
+
+
   const dispatch = useDispatch<AppDispatch>();
   const toast = useRef<Toast>(null);
 
@@ -77,18 +89,19 @@ const TestQuestionManager = () => {
 
   const saveTest = async () => {
     try {
-      setCreatingTestLoading(true);
-
-      await dispatch(createTest({ testData: currentTest, courseId: selectedCourseId! })).unwrap();
+      if (isEditingTest) {
+        await dispatch(updateTest({ testData: currentTest, id: selectedTestId! })).unwrap();
+      } else {
+        setCreatingTestLoading(true);
+        await dispatch(createTest({ testData: currentTest, courseId: selectedCourseId! })).unwrap();
+      }
       await dispatch(fetchTestsByCourseId(selectedCourseId!)).unwrap();
-
       toast.current?.show({
         severity: "success",
         summary: "Test Created",
         detail: "Test created successfully!",
         life: 3000,
       });
-
       setActiveTab('tests');
     } catch (error) {
       console.error("Error creating test:", error);
@@ -115,7 +128,6 @@ const TestQuestionManager = () => {
 
   const startCreatingQuestion = () => {
     setCurrentQuestion({ ...defaultQuestion, id: Date.now().toString() });
-    // setSelectedTestId(currentTest?.id);
     setIsCreatingQuestion(true);
   };
 
@@ -195,25 +207,40 @@ const TestQuestionManager = () => {
         correctAnswer,
       };
 
-      await dispatch(
-        addQuestion({ questionData: newQuestion, testId: selectedTestId! })
-      ).unwrap();
+      if (isEditingQuestion && questionToEditId) {
+        // Update existing question
+        await dispatch(
+          updateQuestion({ questionData: newQuestion, id: questionToEditId })
+        ).unwrap();
+        await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
+        setQuestionToEditId(null);
+        toast.current?.show({
+          severity: "success",
+          summary: "Updated",
+          detail: "Question updated successfully!",
+          life: 3000,
+        });
+      } else {
+        // Add new question
+        await dispatch(addQuestion({ questionData: newQuestion, testId: selectedTestId! })).unwrap();
+        toast.current?.show({
+          severity: "success",
+          summary: "Question Added",
+          detail: "The question has been added successfully.",
+          life: 3000,
+        });
+      }
       await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
-      toast.current?.show({
-        severity: "success",
-        summary: "Question Added",
-        detail: "The question has been added successfully.",
-        life: 3000,
-      });
-
       setCurrentQuestion(null);
-      setSelectedTestId(null);
       setIsCreatingQuestion(false);
+      setIsEditingQuestion(false);
+      setQuestionToEditId(null);
+
     } catch (error) {
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: "Something went wrong while saving the question." + error,
+        detail: "Something went wrong while saving the question.",
         life: 3000,
       });
     } finally {
@@ -221,19 +248,49 @@ const TestQuestionManager = () => {
     }
   };
 
-  function handleEditQuestion(question: any): void {
-    throw new Error('Function not implemented.');
-  }
+  const handleDeleteTest = async () => {
+    if (!testToDelete) return;
+    try {
+      await dispatch(deleteTest(testToDelete.id)).unwrap();
+      await dispatch(fetchTestsByCourseId(selectedCourseId!)).unwrap();
+      toast.current?.show({ severity: "success", summary: "Deleted", detail: "Test deleted successfully!", life: 3000 });
+    } catch (err) {
+      toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to delete test.", life: 3000 });
+    } finally {
+      setShowDeleteModal(false);
+      setTestToDelete(null);
+    }
+  };
+  const handleEditQuestion = (question: any) => {
+    setCurrentQuestion({ ...question });
+    setQuestionToEditId(question.id);
+    setIsEditingQuestion(true);
+    setIsCreatingQuestion(true);
+  };
 
-  // const removeQuestion = (index: number) => {
-  //   setCurrentTest((prev: any) => {
-  //     if (!prev) return null;
-  //     return {
-  //       ...prev,
-  //       questions: prev.questions.filter((_:any, i: number) => i !== index)
-  //     };
-  //   });
-  // };   
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      setDeletingQuestionLoading(true);
+      await dispatch(deleteQuestion(questionId)).unwrap();
+      await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
+      toast.current?.show({
+        severity: "success",
+        summary: "Deleted",
+        detail: "Question deleted successfully!",
+        life: 3000,
+      });
+    } catch (error) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Failed to delete question." + error,
+        life: 10000,
+      });
+    } finally {
+      setDeletingQuestionLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
       <div className="pb-4">
@@ -241,7 +298,7 @@ const TestQuestionManager = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
+      <div className="flex items-center justify-center space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
         {[
           { key: 'courses', label: 'Courses', icon: BookOpen },
           { key: 'tests', label: 'Tests', icon: Award },
@@ -250,6 +307,7 @@ const TestQuestionManager = () => {
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
+            disabled
             onClick={() => setActiveTab(key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${activeTab === key
               ? 'bg-white text-blue-600 shadow-sm'
@@ -357,9 +415,11 @@ const TestQuestionManager = () => {
                     <button
                       onClick={() => {
                         setCurrentTest(test);
+                        setIsEditingTest(true);
+                        setSelectedTestId(test.id);
                         setActiveTab('test-editor');
                       }}
-                      className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
                     >
                       <Edit size={16} />
                       Edit
@@ -376,9 +436,10 @@ const TestQuestionManager = () => {
                     </button>
                     <button
                       onClick={() => {
-                        deleteTest(test.id);
+                        setTestToDelete(test);
+                        setShowDeleteModal(true);
                       }}
-                      className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                      className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
                     >
                       <Trash size={16} />
                       Delete
@@ -420,8 +481,8 @@ const TestQuestionManager = () => {
               )}
             </div>
             <button
-              onClick={startCreatingQuestion}   // sets isCreatingQuestion = true
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={startCreatingQuestion}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer"
             >
               <Plus size={16} />
               Add Question
@@ -447,8 +508,14 @@ const TestQuestionManager = () => {
                 </div>
                 <div className="flex gap-2 items-center">
 
-                  <button onClick={() => handleEditQuestion(question.id)} className="ml-2 text-xs text-blue-600 hover:underline"><Edit size={24} /></button>
-                  <button onClick={() => handleEditQuestion(question.id)} className="ml-2 text-xs text-red-600 hover:underline"><Trash2 size={24} /></button>
+                  <button onClick={() =>
+                    handleEditQuestion(question)}
+                    className="ml-2 text-xs text-blue-600 hover:bg-indigo-200 bg-indigo-100 px-2 py-1 rounded cursor-pointer flex items-center gap-2"><Edit size={24} />Edit</button>
+                  <button onClick={() => {
+                    setQuestionToDelete(question);
+                    setIsDeleteModalOpen(true);
+                  }}
+                    className="ml-2 text-xs text-red-600 hover:bg-red-200 bg-red-100 px-2 py-1 rounded cursor-pointer flex items-center gap-2"><Trash2 size={24} />Delete</button>
                 </div>
               </div>
               <span className="ml-auto text-xs font-semibold">{question.type}</span>
@@ -559,7 +626,7 @@ const TestQuestionManager = () => {
                         {(currentQuestion?.options || []).length > 2 && (
                           <button
                             onClick={() => removeOption(index)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 cursor-pointer"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -585,7 +652,7 @@ const TestQuestionManager = () => {
                         setIsCreatingQuestion(false);
                         setCurrentQuestion(null);
                       }}
-                      className="px-4 py-2 border rounded hover:bg-gray-50"
+                      className="px-4 py-2 border rounded hover:bg-gray-50 cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -611,7 +678,7 @@ const TestQuestionManager = () => {
               <p className="text-gray-500 mb-4">No test selected for editing</p>
               <button
                 onClick={() => startCreatingTest(currentTest.courseId)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
               >
                 Create New Test
               </button>
@@ -753,6 +820,46 @@ const TestQuestionManager = () => {
           )}
         </div>
       )}
+      {/* ===== Delete Confirmation Modal ===== */}
+      {showDeleteModal && testToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-sm w-full shadow-xl">
+            <h3 className="text-lg font-semibold mb-4">Delete Test</h3>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete <strong>{testToDelete.title}</strong>?
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteTest}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => {
+          if (questionToDelete) {
+            handleDeleteQuestion(questionToDelete.id);
+            setQuestionToDelete(null);
+          }
+        }}
+        title="Delete Question"
+        message={`Are you sure you want to delete "${questionToDelete?.question}"? This action cannot be undone.`}
+        loading={deletingQuestionLoading}
+      />
+
       <Toast ref={toast} position="top-right" />
     </div>
   );

@@ -16,7 +16,7 @@ export const getTestByCourseId = async (
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    
+
     const test = await prisma.test.findMany({
       where: { courseId },
       skip,
@@ -53,7 +53,7 @@ export const createTest = async (
   try {
     const { title, description, instructions, duration, passingScore, maxAttempts, randomizeQuestions, showResults } = req.body;
     const { courseId } = req.params;
-    
+
     // Verify user owns the course
     // @ts-ignore
     const userId = req.user?.id;
@@ -106,7 +106,7 @@ export const addQuestionToTest = async (
   try {
     const { testId } = req.params;
     const { question, type, points, explanation, options } = req.body;
-    
+
     // Verify test exists and user owns the course
     // @ts-ignore
     const userId = req.user?.id;
@@ -132,7 +132,7 @@ export const addQuestionToTest = async (
       where: { testId },
       orderBy: { order: 'desc' },
     });
-    
+
     const newOrder = lastQuestion ? lastQuestion.order + 1 : 0;
 
     // Create question with transaction to ensure data consistency
@@ -198,7 +198,7 @@ export const getTestById = async (
 ): Promise<void> => {
   try {
     const { testId } = req.params;
-    
+
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
@@ -244,7 +244,7 @@ export const getTestQuestions = async (
 ): Promise<void> => {
   try {
     const { testId } = req.params;
-    
+
     // Verify test exists
     const test = await prisma.test.findUnique({
       where: { id: testId },
@@ -311,15 +311,6 @@ export const startTestAttempt = async (
         },
       },
     });
-
-    // if (!test || test.course.enrollments.length === 0) {
-    //   res.status(403).json({
-    //     status: "error",
-    //     message: "You are not enrolled in this course",
-    //   });
-    //   return;
-    // }
-
     // Check attempt limits
     if (test?.maxAttempts) {
       const attempts = await prisma.testAttempt.count({
@@ -351,7 +342,7 @@ export const startTestAttempt = async (
           },
         },
       },
-      orderBy: test?.randomizeQuestions 
+      orderBy: test?.randomizeQuestions
         ? { id: 'asc' } // We'll randomize in memory to maintain consistent ordering
         : { order: 'asc' },
     });
@@ -495,13 +486,13 @@ export const submitAnswer = async (
       const correctOptions = question.options
         .filter(opt => opt.isCorrect)
         .map(opt => opt.id);
-      
+
       const selected = Array.isArray(selectedOptions) ? selectedOptions : [];
-      
+
       // Check if all correct options are selected and no incorrect ones
       isCorrect = correctOptions.length === selected.length &&
         correctOptions.every(optId => selected.includes(optId));
-      
+
       points = isCorrect ? question.points : 0;
     }
     // For other question types, manual grading is required
@@ -598,7 +589,7 @@ export const submitTest = async (
 
     if (!testAttempt) {
       throw new NotFoundError('Test attempt not found ');
-    } 
+    }
 
     // 2. Calculate final score
     const questions = await prisma.question.findMany({
@@ -628,7 +619,7 @@ export const submitTest = async (
 
     // 4. Update user progress and record achievement if passed
     if (isPassed) {
-      await updateUserProgress(userId, testAttempt.test.courseId, testAttempt.testId);  
+      await updateUserProgress(userId, testAttempt.test.courseId, testAttempt.testId);
     }
 
     // 5. Generate results
@@ -719,9 +710,9 @@ const updateUserProgress = async (userId: string, courseId: string, testId: stri
 };
 
 const sendTestCompletionNotification = async (
-  userId: string, 
-  test: any, 
-  isPassed: boolean, 
+  userId: string,
+  test: any,
+  isPassed: boolean,
   score: number
 ) => {
   try {
@@ -764,5 +755,119 @@ const sendTestCompletionNotification = async (
     }
   } catch (error) {
     logger.error('Error sending test completion notification:', error);
+  }
+};
+
+export const updateTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { testId } = req.params;
+    const { title, description, passingScore, randomizeQuestions, showResults } = req.body;
+    const existingTest = await prisma.test.findUnique({ where: { id: testId } });
+
+    if (!existingTest) {
+      throw new NotFoundError('Test not found');
+    }
+
+    const test = await prisma.test.update({
+      where: { id: testId },
+      data: { title, description, passingScore, randomizeQuestions: randomizeQuestions !== false, showResults: showResults !== false },
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: test,
+      message: "Test updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { testId } = req.params;
+    const existingTest = await prisma.test.findUnique({ where: { id: testId } });
+
+    if (!existingTest) {
+      throw new NotFoundError('Test not found');
+    }
+
+    await prisma.test.delete({ where: { id: testId } });
+
+    res.status(200).json({
+      status: "success",
+      message: "Test deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateTestQuestion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { questionId } = req.params;
+    const { question, type, options, points, order, explanation } = req.body;
+
+    const existingQuestion = await prisma.question.findUnique({
+      where: { id: questionId },
+      include: { options: true },
+    });
+
+    if (!existingQuestion) {
+      throw new NotFoundError("Question not found");
+    }
+
+    const updatedQuestion = await prisma.question.update({
+      where: { id: questionId },
+      data: {
+        question,
+        type,
+        points,
+        order,
+        explanation, // 👈 now updating this too
+        // For options, you may want to replace existing ones
+        options: options
+          ? {
+            deleteMany: {}, // remove old options
+            create: options.map((opt: any, idx: number) => ({
+              id: uuidv4(),
+              option: opt.option,
+              isCorrect: opt.isCorrect || false,
+              order: idx,
+            })),
+          }
+          : undefined,
+      },
+      include: { options: true },
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: updatedQuestion,
+      message: "Question updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const deleteTestQuestion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { questionId } = req.params;
+    const existingQuestion = await prisma.question.findUnique({ where: { id: questionId } });
+
+    if (!existingQuestion) {
+      throw new NotFoundError('Question not found');
+    }
+
+    await prisma.question.delete({ where: { id: questionId } });
+
+    res.status(200).json({
+      status: "success",
+      message: "Question deleted successfully",
+    });
+  } catch (error) {
+    next(error);
   }
 };

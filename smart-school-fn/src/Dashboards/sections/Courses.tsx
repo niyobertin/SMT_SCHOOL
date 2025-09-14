@@ -2,7 +2,7 @@ import { Plus, ChevronLeft, ChevronRight, Edit, Trash2, Eye } from "lucide-react
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { deleteCourse, fetchCourses} from "../../redux/features/courses/courseSlice";
+import { deleteCourse, fetchCourses } from "../../redux/features/courses/courseSlice";
 import { CourseForm } from "../Modals/CourseForm";
 import { CourseCardSkeleton } from "../../components/Skeletons/CourseCardSkeleton";
 import type { AppDispatch, RootState } from "../../redux/stores";
@@ -10,23 +10,23 @@ import { Toast } from 'primereact/toast';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 
-interface CoursesSectionProps {}
+interface CoursesSectionProps { }
 
-export const CoursesSection = ({}: CoursesSectionProps) => {
+export const CoursesSection = ({ }: CoursesSectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; 
-  
+  const itemsPerPage = 6;
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const toast = useRef<Toast>(null);
-  
-  const { 
-    items: courses, 
-    loading, 
+
+  const {
+    items: courses,
+    loading,
     error,
   } = useSelector((state: RootState) => state.courses);
 
@@ -35,8 +35,8 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
   const hasPreviousPage = currentPage > 1;
 
   useEffect(() => {
-    dispatch(fetchCourses({ 
-      page: currentPage, 
+    dispatch(fetchCourses({
+      page: currentPage,
       limit: itemsPerPage
     }));
   }, [dispatch, currentPage]);
@@ -74,18 +74,18 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
 
   const confirmDelete = async () => {
     if (!courseToDelete) return;
-    
+
     try {
       await dispatch(deleteCourse(courseToDelete)).unwrap();
-     
+
       toast.current?.show({
         severity: 'success',
         summary: 'Success',
         detail: 'Course deleted successfully',
         life: 3000
       });
-      dispatch(fetchCourses({ 
-        page: currentPage, 
+      dispatch(fetchCourses({
+        page: currentPage,
         limit: itemsPerPage
       }));
     } catch (error) {
@@ -105,8 +105,8 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
     setIsModalOpen(false);
     setEditingCourse(null);
     // Refresh courses
-    dispatch(fetchCourses({ 
-      page: currentPage, 
+    dispatch(fetchCourses({
+      page: currentPage,
       limit: itemsPerPage
     }));
   };
@@ -153,17 +153,17 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
         modal
         footer={
           <div>
-            <Button 
-              label="No" 
-              icon="pi pi-times" 
-              onClick={() => setShowDeleteDialog(false)} 
+            <Button
+              label="No"
+              icon="pi pi-times"
+              onClick={() => setShowDeleteDialog(false)}
               className="p-button-text"
             />
-            <Button 
-              label="Yes" 
-              icon="pi pi-check" 
-              onClick={confirmDelete} 
-              autoFocus 
+            <Button
+              label="Yes"
+              icon="pi pi-check"
+              onClick={confirmDelete}
+              autoFocus
               className="p-button-danger"
             />
           </div>
@@ -200,7 +200,7 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course,index) => (
+            {courses.map((course, index) => (
               <div
                 key={index}
                 className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
@@ -223,13 +223,13 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                     {course?.description || 'No description available.'}
                   </p>
-                  <div className="flex justify-between items-center text-sm text-gray-500">
-                    <button 
+                  <div className="flex justify-between items-center text-sm text-gray-500 ">
+                    <button
                       onClick={() => handleViewCourse(course.id)}
-                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800 cursor-pointer"
+                      className="flex items-center gap-1 text-blue-600 hover:text-blue-800 cursor-pointer bg-green-500 text-white p-2 rounded"
                     >
-                      <Eye size={16} /> 
-                      {course?.lessons?.length || 0} Lessons
+                      <Eye size={16} />
+                      View {course?.lessons?.length || 0} Lessons
                     </button>
                     <div className="flex gap-3">
                       <button
@@ -237,20 +237,20 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
                           e.stopPropagation();
                           handleEditCourse(course.id);
                         }}
-                        className="text-yellow-600 hover:text-yellow-800 cursor-pointer"
+                        className="flex items-center gap-1 hover:text-yellow-800 cursor-pointer bg-indigo-500 text-white p-2 rounded"
                         title="Edit course"
                       >
-                        <Edit size={16} />
+                        <Edit size={16} /> Edit
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteClick(course.id);
                         }}
-                        className="text-red-600 hover:text-red-800 cursor-pointer"
+                        className="flex items-center gap-1 text-red-600 hover:text-red-800 cursor-pointer bg-red-500 text-white p-2 rounded"
                         title="Delete course"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={16} /> Delete
                       </button>
                     </div>
                   </div>
@@ -258,7 +258,7 @@ export const CoursesSection = ({}: CoursesSectionProps) => {
               </div>
             ))}
           </div>
-          
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-8 flex justify-center items-center gap-4">

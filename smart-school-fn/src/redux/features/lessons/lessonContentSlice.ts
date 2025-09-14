@@ -33,7 +33,7 @@ interface LessonContentState {
     total: number;
     totalPages: number;
   };
-  success: boolean; 
+  success: boolean;
 }
 
 const initialState: LessonContentState = {
@@ -57,11 +57,11 @@ export const fetchLessonContent = createAsyncThunk(
   async (lessonId: string, { getState }) => {
     const state = getState() as RootState;
     const { page, limit } = state.lessonContent.pagination;
-    
+
     const response = await api.get(`/lesson-content/${lessonId}`, {
       params: { page, limit }
     });
-    
+
     return response.data.data;
   }
 );
@@ -70,7 +70,7 @@ export const createLessonContent = createAsyncThunk(
   'lessonContent/createLessonContent',
   async (lessonContent: FormData, { rejectWithValue }) => {
     try {
-      console.log("This is the response",lessonContent);
+      console.log("This is the response", lessonContent);
       const lessonId = lessonContent.get('lessonId');
       lessonContent.delete('lessonId');
       const response = await api.post(`/lesson-content/${lessonId}`, lessonContent, {
@@ -79,9 +79,9 @@ export const createLessonContent = createAsyncThunk(
         },
       });
 
-      
+
       return response.data.data;
-    } catch (error:any) {
+    } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message || 'Failed to create lesson content');
       }
@@ -113,8 +113,9 @@ export const deleteLessonContent = createAsyncThunk(
   'lessonContent/deleteLessonContent',
   async (id: string, { rejectWithValue }) => {
     try {
-      await api.delete(`/lesson-content/${id}`);
-      return id;
+      const response = await api.delete(`/lesson-content/${id}`);
+      console.log("Lesson content deleted successfully", response);
+      return response.data.data;
     } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message || 'Failed to delete lesson content');
@@ -238,11 +239,11 @@ const lessonContentSlice = createSlice({
   },
 });
 
-export const { 
-  setCurrentContent, 
-  toggleRequirements, 
-  setPage, 
-  clearLessonContent 
+export const {
+  setCurrentContent,
+  toggleRequirements,
+  setPage,
+  clearLessonContent
 } = lessonContentSlice.actions;
 
 export default lessonContentSlice.reducer;

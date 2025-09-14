@@ -104,10 +104,9 @@ export const createTest = createAsyncThunk(
 
 export const updateTest = createAsyncThunk(
   'tests/update',
-  async (testData: Partial<Test> & { id: string }, { rejectWithValue }) => {
+  async ({ testData, id }: { testData: any, id: string }, { rejectWithValue }) => {
     try {
-      const { id, ...updateData } = testData;
-      const response = await api.put(`/tests/${id}`, updateData);
+      const response = await api.patch(`/tests/${id}`, testData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update test');
@@ -141,10 +140,14 @@ export const addQuestion = createAsyncThunk(
 
 export const updateQuestion = createAsyncThunk(
   'tests/updateQuestion',
-  async (questionData: Partial<Question> & { id: string }, { rejectWithValue }) => {
+  async (questionData: { id: string; questionData: any }, { rejectWithValue }) => {
     try {
-      const { id, ...updateData } = questionData;
-      const response = await api.put(`/questions/${id}`, updateData);
+      const { id, questionData: qData } = questionData;
+      const payload = {
+        id,
+        ...qData,
+      };
+      const response = await api.patch(`/tests/questions/${id}`, payload);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update question');
@@ -168,7 +171,7 @@ export const deleteQuestion = createAsyncThunk(
   'tests/deleteQuestion',
   async (questionId: string, { rejectWithValue }) => {
     try {
-      await api.delete(`/questions/${questionId}`);
+      await api.delete(`/tests/questions/${questionId}`);
       return questionId;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to delete question');
@@ -266,15 +269,6 @@ const testSlice = createSlice({
     // Update Question
     builder.addCase(updateQuestion.fulfilled, (state, action) => {
       state.currentTest = action.payload.test;
-    });
-
-    // Delete Question
-    builder.addCase(deleteQuestion.fulfilled, (state, action) => {
-      if (state.currentTest) {
-        state.currentTest.questions = state.currentTest.questions.filter(
-          q => q.id !== action.payload
-        );
-      }
     });
 
     // Fetch Questions By Test ID

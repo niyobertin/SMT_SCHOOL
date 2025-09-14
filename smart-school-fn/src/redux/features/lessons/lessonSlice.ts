@@ -82,11 +82,11 @@ export const fetchLessons = createAsyncThunk(
   async (courseId: string, { getState }) => {
     const state = getState() as RootState;
     const { page, limit } = state.lessons.pagination;
-    
+
     const response = await api.get(`/lessons/${courseId}`, {
       params: { page, limit }
     });
-    
+
     return response.data.data;
   }
 );
@@ -97,9 +97,40 @@ export const createLesson = createAsyncThunk(
     try {
       const response = await api.post(`/lessons/${lessonData.courseId}`, lessonData);
       return response.data.data;
-    } catch (error:any) {
+    } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message || 'Failed to create lesson');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
+export const updateLesson = createAsyncThunk(
+  'lessons/updateLesson',
+  async (lessonData: any, { rejectWithValue }) => {
+    try {
+      const response = await api.patch(`/lessons/${lessonData.id}`, lessonData);
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to update lesson');
+      }
+      return rejectWithValue('Network error occurred');
+    }
+  }
+);
+
+
+export const deleteLesson = createAsyncThunk(
+  'lessons/deleteLesson',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await api.delete(`/lessons/${id}`);
+      return response.data.data;
+    } catch (error: any) {
+      if (error.response) {
+        return rejectWithValue(error.response.data.message || 'Failed to delete lesson');
       }
       return rejectWithValue('Network error occurred');
     }
@@ -141,7 +172,14 @@ const lessonSlice = createSlice({
       .addCase(fetchLessons.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch lessons';
-      });
+      })
+
+      .addCase(updateLesson.fulfilled, (state, action) => {
+        state.items = state.items.map((lesson) => (lesson.id === action.payload.id ? action.payload : lesson));
+      })
+      .addCase(deleteLesson.fulfilled, (state, action) => {
+        state.items = state.items.filter((lesson) => lesson.id !== action.payload);
+      })
   },
 });
 

@@ -4,17 +4,16 @@ import { LessonModal } from "../Modals/LessonModal";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createLesson, fetchLessons } from "../../redux/features/lessons/lessonSlice";
+import { createLesson, deleteLesson, fetchLessons, updateLesson } from "../../redux/features/lessons/lessonSlice";
 import type { AppDispatch, RootState } from "../../redux/stores";
 import { Toast } from "primereact/toast";
+interface LessonsProps { }
 
-interface LessonsProps {}
-
-export const Lessons = ({}: LessonsProps) => {
+export const Lessons = ({ }: LessonsProps) => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   const lessons = useSelector((state: RootState) => state.lessons);
   const loading = useSelector((state: RootState) => state.lessons.loading);
   const error = useSelector((state: RootState) => state.lessons.error);
@@ -41,12 +40,33 @@ export const Lessons = ({}: LessonsProps) => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (deleteId) {
-      console.log('Deleting lesson:', deleteId);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      await dispatch(deleteLesson(deleteId)).unwrap();
+      await dispatch(fetchLessons(courseId!)).unwrap();
+
+      toast.current?.show({
+        severity: "success",
+        summary: "Lesson Deleted",
+        detail: "Lesson deleted successfully!",
+        life: 3000,
+      });
+
       setIsDeleteModalOpen(false);
+    } catch (error) {
+      console.error("Error deleting lesson:", error);
+
+      toast.current?.show({
+        severity: "error",
+        summary: "Delete Failed",
+        detail: "An error occurred while deleting the lesson.",
+        life: 3000,
+      });
     }
   };
+
 
   const handleViewLesson = (lessonId: string) => {
     navigate(`/dashboard/courses/${courseId}/lessons/${lessonId}`);
@@ -55,13 +75,17 @@ export const Lessons = ({}: LessonsProps) => {
   const handleSaveLesson = async (lessonData: any) => {
     try {
       setLessonLoading(true);
-      await dispatch(createLesson({ ...lessonData, courseId })).unwrap();
+      if (editingLesson) {
+        await dispatch(updateLesson({ ...lessonData, id: editingLesson.id })).unwrap();
+      } else {
+        await dispatch(createLesson({ ...lessonData, courseId })).unwrap();
+      }
       dispatch(fetchLessons(courseId!));
       setLessonLoading(false);
       toast.current?.show({
         severity: "success",
-        summary: "Lesson Created",
-        detail: "Lesson created successfully!",
+        summary: editingLesson ? "Lesson Updated" : "Lesson Created",
+        detail: editingLesson ? "Lesson updated successfully!" : "Lesson created successfully!",
         life: 3000,
       });
       setIsModalOpen(false);
@@ -72,8 +96,8 @@ export const Lessons = ({}: LessonsProps) => {
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: "Failed to create lesson.",
-        life: 3000,
+        detail: "Failed to create lesson." + (error as any)?.message,
+        life: 4000,
       });
     }
   };
@@ -188,27 +212,27 @@ export const Lessons = ({}: LessonsProps) => {
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => handleViewLesson(lesson.id)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-white hover:text-blue-900 flex items-center gap-2 bg-green-500 rounded px-2 py-1 cursor-pointer"
                         title="View"
                       >
-                        <Eye size={16} />
+                        <Eye size={16} /> View
                       </button>
                       <button
                         onClick={() => {
                           setEditingLesson(lesson);
                           setIsModalOpen(true);
                         }}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="text-white hover:text-blue-900 flex items-center gap-2 bg-indigo-500 rounded px-2 py-1 cursor-pointer"
                         title="Edit"
                       >
-                        <Edit size={16} />
+                        <Edit size={16} /> Edit
                       </button>
                       <button
                         onClick={() => handleDelete(lesson.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-white hover:text-blue-900 flex items-center gap-2 bg-red-500 rounded px-2 py-1 cursor-pointer"
                         title="Delete"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={16} /> Delete
                       </button>
                     </div>
                   </td>
@@ -224,7 +248,7 @@ export const Lessons = ({}: LessonsProps) => {
               )}
             </tbody>
           </table>
-          
+
         </div>
 
         {/* Pagination */}
@@ -271,7 +295,7 @@ export const Lessons = ({}: LessonsProps) => {
         title="Delete Lesson"
         message="Are you sure you want to delete this lesson? This action cannot be undone."
       />
-      <Toast ref={toast} position="top-right"/>
+      <Toast ref={toast} position="top-right" />
     </div>
   );
 };
