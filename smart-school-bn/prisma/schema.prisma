@@ -20,7 +20,7 @@ model User {
   avatar               String?
   isActive             Boolean   @default(true)
   isVerified           Boolean   @default(false)
-  verificationCode    Int?
+  verificationCode     Int?
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
   createdAt            DateTime  @default(now())
@@ -28,15 +28,15 @@ model User {
   lastLogin            DateTime?
 
   // Relations
-  courses      Course[]
-  enrollments  Enrollment[]
-  payments     Payment[]
-  testAttempts TestAttempt[]
-  userProgress UserProgress[]
+  courses            Course[]
+  enrollments        Enrollment[]
+  payments           Payment[]
+  testAttempts       TestAttempt[]
+  userProgress       UserProgress[]
   userCourseProgress UserCourseProgress[]
-  certificates Certificate[]
-  reviews      Review[]
-  notifications Notification[]
+  certificates       Certificate[]
+  reviews            Review[]
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -88,12 +88,12 @@ model Course {
   categoryId   String
   category     Category @relation(fields: [categoryId], references: [id])
 
-  lessons      Lesson[]
-  enrollments  Enrollment[]
-  reviews      Review[]
-  tests        Test[]
-  certificates Certificate[]
-  notifications Notification[]
+  lessons            Lesson[]
+  enrollments        Enrollment[]
+  reviews            Review[]
+  tests              Test[]
+  certificates       Certificate[]
+  notifications      Notification[]
   userCourseProgress UserCourseProgress[]
 
   @@map("courses")
@@ -133,23 +133,23 @@ model Lesson {
 }
 
 model LessonContent {
-  id         String      @id @default(cuid())
-  title      String?
-  textBody   String?  
+  id       String  @id @default(cuid())
+  title    String?
+  textBody String?
 
-  videoUrl   String?
-  audioUrl   String?
-  pdfUrl     String?
-  imageUrl   String?
+  videoUrl String?
+  audioUrl String?
+  pdfUrl   String?
+  imageUrl String?
 
-  fileName   String?      
-  order      Int
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  fileName  String?
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  lessonId   String
-  lesson     Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("lesson_content")
 }
@@ -161,7 +161,7 @@ model Enrollment {
   completionDate    DateTime?
   progress          Float            @default(0)
   status            EnrollmentStatus @default(ACTIVE)
- enrollementPeriod Int @default(30)
+  enrollementPeriod Int              @default(30)
 
   // Relations
   userId   String
@@ -212,9 +212,9 @@ model Test {
   title              String
   description        String?
   instructions       String[]
-  duration           Int? 
+  duration           Int?
   passingScore       Float    @default(70)
-  maxAttempts        Int?      @default(10)
+  maxAttempts        Int?     @default(10)
   isActive           Boolean  @default(true)
   showResults        Boolean  @default(true)
   randomizeQuestions Boolean  @default(true)
@@ -225,8 +225,8 @@ model Test {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  questions    Question[]
-  testAttempts TestAttempt[]
+  questions     Question[]
+  testAttempts  TestAttempt[]
   notifications Notification[]
 
   @@map("tests")
@@ -292,7 +292,7 @@ model TestAttempt {
   testId String
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
 
-  answers Answer[]
+  answers       Answer[]
   notifications Notification[]
 
   @@map("test_attempts")
@@ -343,11 +343,11 @@ model UserProgress {
 }
 
 model UserCourseProgress {
-  id           String    @id @default(cuid())
-  isCompleted  Boolean   @default(false)
-  completedAt  DateTime?
-  lastAccessed DateTime  @default(now())
-  completedTests String[] @default([])
+  id             String    @id @default(cuid())
+  isCompleted    Boolean   @default(false)
+  completedAt    DateTime?
+  lastAccessed   DateTime  @default(now())
+  completedTests String[]  @default([])
 
   // Relations
   userId   String
@@ -398,30 +398,30 @@ model Certificate {
 
 // Notification System
 model Notification {
-  id          String           @id @default(cuid())
-  title       String
-  message     String
-  type        NotificationType
-  status      NotificationStatus @default(UNREAD)
-  metadata    Json?            // For storing additional data like courseId, testId, etc.
-  readAt      DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id        String             @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType
+  status    NotificationStatus @default(UNREAD)
+  metadata  Json? // For storing additional data like courseId, testId, etc.
+  readAt    DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 
   // Relations
-  userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // Optional relations for different notification types
-  courseId    String?
-  course      Course?          @relation(fields: [courseId], references: [id])
-  
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id])
+
   testId      String?
-  test        Test?            @relation(fields: [testId], references: [id])
+  test        Test?         @relation(fields: [testId], references: [id])
+  TestAttempt TestAttempt[]
 
   @@index([userId, status])
   @@map("notifications")
-  TestAttempt TestAttempt[]
 }
 
 enum NotificationType {

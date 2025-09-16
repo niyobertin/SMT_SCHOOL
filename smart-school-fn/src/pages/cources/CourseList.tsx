@@ -213,8 +213,10 @@ export const CourseList = () => {
                       </div>
                       <p className="text-sm text-black font-medium mb-4">
                         {course.createdAt
-                          ? `Created on : ${formatDistanceToNow(new Date(course.createdAt), { addSuffix: true })}`
-                          : "No date"}
+                          ? `Posted : ${formatDistanceToNow(new Date(course.createdAt), { addSuffix: true })}`
+                          : "No date"}.<span className="text-sm text-gray-600">
+                          {course.instructor?.firstName} {course.instructor?.lastName}
+                        </span>
                       </p>
 
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{course.shortDescription || course.description}</p>
@@ -225,9 +227,13 @@ export const CourseList = () => {
                         >
                           <Eye className="mr-2 h-4 w-4" /> View Lessons
                         </Link>
-                        <div className="text-sm text-gray-500">
-                          {course.instructor?.firstName} {course.instructor?.lastName}
-                        </div>
+                        <Link
+                          to={`/courses/${course.id}/lessons`}
+                          className="flex items-center text-white hover:text-blue-800 text-sm font-medium bg-blue-500 px-2 py-1 rounded"
+                        >
+                          <Eye className="mr-2 h-4 w-4" /> View Tests
+                        </Link>
+
                       </div>
                     </div>
                   </div>

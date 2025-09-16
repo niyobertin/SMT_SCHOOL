@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate} from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowLeft, Clock, PlayCircle, Award, XCircle, List, FileText } from 'lucide-react';
 import { fetchLessons } from '../../redux/features/lessons/lessonSlice';
 import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
+import { FaQuestion } from 'react-icons/fa6';
 
 // Skeleton Loader Components
 const LessonSkeleton = () => (
@@ -42,15 +43,15 @@ const CourseLessonsPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState<'lessons' | 'tests'>('lessons');
-  
+
   const { items: lessons, loading: lessonsLoading, error: lessonsError } = useSelector(
     (state: RootState) => state.lessons
   );
-  
+
   const { tests, loading: testsLoading, error: testsError } = useSelector(
     (state: RootState) => state.test
   );
-  
+
   const course = lessons[0]?.course;
   const error = lessonsError || testsError;
   const loading = (activeTab === 'lessons' ? lessonsLoading : testsLoading) && !(activeTab === 'lessons' ? lessons.length : tests.length);
@@ -59,7 +60,7 @@ const CourseLessonsPage = () => {
     if (courseId) {
       dispatch(fetchLessons(courseId));
     }
-    
+
     return () => {
       dispatch({ type: 'lessons/clearLessons' });
       dispatch({ type: 'test/clearTests' });
@@ -148,12 +149,8 @@ const CourseLessonsPage = () => {
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{course?.title}</h1>
             <p className="text-gray-600 mb-4">{course?.description}</p>
-            
+
             <div className="flex items-center space-x-4 text-sm text-gray-500 mb-6">
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-1" />
-                <span>{course?.duration || 'N/A'} hours</span>
-              </div>
               <div className="flex items-center">
                 <Award className="w-4 h-4 mr-1" />
                 <span>{course?.level || 'All Levels'}</span>
@@ -165,8 +162,8 @@ const CourseLessonsPage = () => {
               <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => setActiveTab('lessons')}
-                  className={`${activeTab === 'lessons' 
-                    ? 'border-blue-500 text-blue-600' 
+                  className={`${activeTab === 'lessons'
+                    ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
                     whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
@@ -175,8 +172,8 @@ const CourseLessonsPage = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab('tests')}
-                  className={`${activeTab === 'tests' 
-                    ? 'border-blue-500 text-blue-600' 
+                  className={`${activeTab === 'tests'
+                    ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
                     whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
@@ -206,7 +203,7 @@ const CourseLessonsPage = () => {
                             )}
                           </div>
                           <p className="mt-1 text-sm text-gray-500">{lesson.description}</p>
-                          
+
                           {lesson.content?.length > 0 && (
                             <div className="mt-3 space-y-2">
                               {lesson.content.map((content) => (
@@ -257,7 +254,11 @@ const CourseLessonsPage = () => {
                               <Award className="w-4 h-4 mr-2" />
                               Passing Score: {test.passingScore}%
                             </p>
-                            <p>Max Attempts: {test.maxAttempts || 'Unlimited'}</p>
+                            <p className="flex items-center">
+                              <FaQuestion className="w-4 h-4 mr-2" />
+                              Questions: {test.questions.length}
+                            </p>
+                            Max Attempts: {test.maxAttempts || 'Unlimited'}
                           </div>
                         </div>
                         <button

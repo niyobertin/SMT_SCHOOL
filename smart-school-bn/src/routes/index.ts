@@ -6,6 +6,7 @@ import courseRouters from "./course.route";
 import lessonRoutes from "./lesson.routes";
 import lessonContentRoutes from "./lessonContent.routes";
 import testRoutes from "./test.routes";
+import userRouter from "./users.routes";
 const router = Router();
 
 /**
@@ -43,7 +44,8 @@ router.use("/categories", categoryRoutes);
 router.use("/courses", courseRouters);
 router.use("/lessons", lessonRoutes);
 router.use("/lesson-content", lessonContentRoutes);
-router.use("/tests", testRoutes); // Mount test routes under /tests
+router.use("/tests", testRoutes);
+router.use("/users", userRouter);
 
 // API info endpoint
 /**

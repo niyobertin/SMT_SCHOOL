@@ -1,4 +1,5 @@
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api`,
@@ -9,7 +10,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken"); 
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -19,10 +20,28 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const decoded: any = jwtDecode(token);
+      const role = decoded.role;
+      if (
+        role !== "ADMIN" &&
+        role !== "INSTRUCTOR" &&
+        window.location.pathname === "/dashboard"
+      ) {
+        window.location.href = "/courses";
+      }
+    }
+
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
-      console.warn("Unauthorized! Redirecting to login...");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

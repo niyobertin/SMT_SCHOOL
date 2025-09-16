@@ -18,8 +18,8 @@ import { TestPage } from "./pages/test/TestPage";
 import { TestResults } from "./pages/test/TestResults";
 import { dashboardRoutes } from "./routes";
 import ScrollToTop from "./components/common/ScrollToTop";
+import { UserProfilePage } from "./pages/profile";
 
-// Create a component that uses useRoutes
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
   return element;
@@ -47,6 +47,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/request-link" element={<RequestReset />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/profile" element={<UserProfilePage />} />
 
             {/* Updated course routes */}
             <Route path="/courses" element={<Navigate to="/courses/all" replace />} />

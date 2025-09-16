@@ -68,6 +68,16 @@ export const LoginPage = () => {
     },
     mode: "onChange",
   });
+
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    if (role === "ADMIN" || role === "INSTRUCTOR") {
+      navigate("/dashboard");
+    } else if (role) {
+      navigate("/courses");
+    }
+  }, [navigate]);
+
   useEffect(() => {
     setValue("loginWithPhone", loginWithPhone);
     setValue("selectedCountryCode", selectedCountryCode);
@@ -99,19 +109,19 @@ export const LoginPage = () => {
     };
     try {
       const response = await dispatch(loginUser(loginData)).unwrap();
-      console.log(response);
-      if (toast.current) {
-        toast.current.show({
-          severity: "success",
-          summary: "Login Successful",
-          detail: "You have successfully logged in!",
-          life: 3000,
-        });
-      }
 
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 3000);
+      // Save role in localStorage
+      localStorage.setItem("userRole", response.role);
+
+      toast.current?.show({
+        severity: "success",
+        summary: "Login Successful",
+        detail: "You have successfully logged in!",
+        life: 3000,
+      });
+
+      // Reload page
+      window.location.reload();
     } catch (err) {
       toast.current?.show({
         severity: "error",
@@ -145,11 +155,10 @@ export const LoginPage = () => {
             <button
               type="button"
               onClick={() => toggleLoginMethod(false)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                !loginWithPhone
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${!loginWithPhone
+                ? "bg-blue-100 text-blue-700"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
               <Mail className="h-5 w-5" />
               <span>Email</span>
@@ -157,11 +166,10 @@ export const LoginPage = () => {
             <button
               type="button"
               onClick={() => toggleLoginMethod(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loginWithPhone
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${loginWithPhone
+                ? "bg-blue-100 text-blue-700"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
               <Phone className="h-5 w-5" />
               <span>Phone</span>
@@ -178,11 +186,10 @@ export const LoginPage = () => {
                 type="email"
                 placeholder="Enter your email"
                 {...register("identifier")}
-                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.identifier
-                    ? "border-red-500 focus:ring-red-200"
-                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors.identifier
+                  ? "border-red-500 focus:ring-red-200"
+                  : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                  }`}
               />
               {errors.identifier && (
                 <p className="text-red-500 text-xs mt-1">
@@ -202,11 +209,10 @@ export const LoginPage = () => {
                     onClick={() =>
                       setShowCountryCodeDropdown(!showCountryCodeDropdown)
                     }
-                    className={`h-10 px-3 border rounded-lg text-sm flex items-center gap-1 min-w-[80px] ${
-                      errors.selectedCountryCode
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`h-10 px-3 border rounded-lg text-sm flex items-center gap-1 min-w-[80px] ${errors.selectedCountryCode
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     {selectedCountryCode}
                     <svg
@@ -247,11 +253,10 @@ export const LoginPage = () => {
                     type="tel"
                     placeholder="123 456 7890"
                     {...register("identifier")}
-                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                      errors.identifier
-                        ? "border-red-500 focus:ring-red-200"
-                        : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
-                    }`}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors.identifier
+                      ? "border-red-500 focus:ring-red-200"
+                      : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                      }`}
                   />
                   {errors.identifier && (
                     <p className="text-red-500 text-xs mt-1">
@@ -279,11 +284,10 @@ export const LoginPage = () => {
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 {...register("password")}
-                className={`w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 ${
-                  errors.password
-                    ? "border-red-500 focus:ring-red-200"
-                    : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 ${errors.password
+                  ? "border-red-500 focus:ring-red-200"
+                  : "border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                  }`}
               />
               <button
                 type="button"
@@ -311,9 +315,8 @@ export const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-2 rounded-lg font-medium text-white transition ${
-              loading ? "bg-blue-400" : "bg-blue-800 hover:bg-blue-700"
-            }`}
+            className={`w-full py-2 rounded-lg font-medium text-white transition ${loading ? "bg-blue-400" : "bg-blue-800 hover:bg-blue-700"
+              }`}
           >
             {loading ? "Signing in..." : t("signIn")}
           </button>

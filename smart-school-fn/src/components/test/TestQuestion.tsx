@@ -67,7 +67,6 @@ export function TestQuestion({
 
   const handleSubmitTest = async () => {
     if (testAttemptId && selectedAnswer) {
-      // Submit the current answer first
       try {
         await dispatch(
           submitAnswer({
@@ -78,7 +77,6 @@ export function TestQuestion({
           })
         ).unwrap();
 
-        // Then submit the test
         await dispatch(submitTest(testAttemptId)).unwrap();
         onSubmit();
       } catch (error: unknown) {
@@ -89,7 +87,6 @@ export function TestQuestion({
         }
       }
     } else if (testAttemptId) {
-      // If no answer selected but we have an attempt ID, just submit the test
       try {
         await dispatch(submitTest(testAttemptId)).unwrap();
         onSubmit();
@@ -105,7 +102,6 @@ export function TestQuestion({
     }
   };
 
-  // Format time remaining as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -114,7 +110,6 @@ export function TestQuestion({
       .padStart(2, "0")}`;
   };
 
-  // Update timer
   useEffect(() => {
     if (timeRemaining > 0) {
       const timer = setTimeout(() => timeRemaining - 1, 1000);
@@ -135,44 +130,48 @@ export function TestQuestion({
 
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {question.question}
+          {currentQuestion}. {question.question}
         </h2>
 
         <div className="space-y-3 mt-6">
           {question.options
             .slice()
             .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-            .map((option: any) => (
-              <div key={option.id} className="flex items-center">
-                <input
-                  id={`option-${option.id}`}
-                  type="radio"
-                  name="question-option"
-                  value={option.id}
-                  checked={selectedAnswer === option.id}
-                  onChange={() => onAnswerSelect(option.id)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                />
-                <label
-                  htmlFor={`option-${option.id}`}
-                  className="ml-3 block text-sm font-medium text-gray-700 cursor-pointer"
-                >
-                  {option.option?.option?.option ?? "No label"}
-                </label>
-              </div>
-            ))}
+            .map((option: any, index: number) => {
+              const letter = String.fromCharCode(65 + index);
+              return (
+                <div key={option.id} className="flex items-center">
+                  <input
+                    id={`option-${option.id}`}
+                    type="radio"
+                    name="question-option"
+                    value={option.id}
+                    checked={selectedAnswer === option.id}
+                    onChange={() => onAnswerSelect(option.id)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  />
+                  <label
+                    htmlFor={`option-${option.id}`}
+                    className="ml-3 block text-sm font-medium text-gray-700 cursor-pointer"
+                  >
+                    <span className="font-semibold mr-2">{letter}.</span>
+                    {option.option?.option?.option ?? "No label"}
+                  </label>
+                </div>
+              );
+            })}
         </div>
+
       </div>
 
       <div className="flex justify-between pt-4 border-t border-gray-200">
         <button
           onClick={onPrevious}
           disabled={currentQuestion === 1}
-          className={`px-4 py-2 text-sm font-medium rounded-md ${
-            currentQuestion === 1
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : "text-blue-600 hover:bg-blue-50"
-          }`}
+          className={`px-4 py-2 text-sm font-medium rounded-md ${currentQuestion === 1
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "text-blue-600 hover:bg-blue-50"
+            }`}
         >
           Previous
         </button>
@@ -191,11 +190,10 @@ export function TestQuestion({
           <button
             onClick={handleNext}
             disabled={!selectedAnswer || isSubmitting || isSubmittingAnswer}
-            className={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-              !selectedAnswer || isSubmitting || isSubmittingAnswer
-                ? "bg-blue-300 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
-            }`}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${!selectedAnswer || isSubmitting || isSubmittingAnswer
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+              }`}
           >
             {isSubmitting || isSubmittingAnswer ? "Saving..." : "Next"}
           </button>
