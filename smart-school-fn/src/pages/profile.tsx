@@ -188,6 +188,9 @@ export const UserProfilePage: React.FC = () => {
                     setGlobalLoading(true);
                     await api.patch(`/users/${profile?.id}`, { isActive: false, isVerified: false });
                     localStorage.removeItem("accessToken");
+                    localStorage.removeItem("refreshToken");
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("role");
                     toast.current?.show({ severity: "success", summary: "Deleted", detail: "Account deleted.", life: 3000 });
                     window.location.href = "/login";
                 } catch {
