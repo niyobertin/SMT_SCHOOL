@@ -41,7 +41,11 @@ export function TestPage() {
 
       const durationSeconds = (test.data?.duration ?? 0) * 60;
       setTimeLeft(durationSeconds);
-      // Start countdown timer
+
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+
       timerRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -54,7 +58,6 @@ export function TestPage() {
           return prev - 1;
         });
       }, 1000);
-
     } catch (err) {
       console.error('Failed to start test attempt:', err);
     }
@@ -157,7 +160,19 @@ export function TestPage() {
       </div>
     );
   }
-
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="flex justify-center mb-4">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Test</h2>
+          <p className="text-gray-600 mb-6">Please wait while the test is loading...</p>
+        </div>
+      </div>
+    );
+  }
   /** Questions */
   if (testStarted && questions.length > 0) {
     const currentQuestion = questions[currentQuestionIndex];
@@ -166,14 +181,6 @@ export function TestPage() {
         <div className="mb-6">
           <BackButton />
         </div>
-        {loading && (
-          <div className="min-h-[calc(100vh-5rem)] bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
-              <p className="text-gray-700">Loading test...</p>
-            </div>
-          </div>
-        )}
         <TestQuestion
           question={currentQuestion}
           totalQuestions={questions.length}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bell, LogOut, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../redux/api/api";
 
@@ -54,13 +54,6 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
         </h1>
 
         <div className="flex items-center gap-4">
-          <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-            <Bell size={20} />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-              10
-            </span>
-          </button>
-
           {loadingUser ? (
             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
           ) : user ? (

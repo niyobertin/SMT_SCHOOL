@@ -104,20 +104,20 @@ export function TestResults() {
           >
             <ArrowLeft className="w-5 h-5 mr-2" /> Back to Test
           </button>
-          <div className="flex items-center">
-            <Badge variant={isPassed ? 'success' : 'destructive'}>
-              {isPassed ? 'Passed' : 'Failed'}
-            </Badge>
-          </div>
+
         </div>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900">Test Results</h2>
             <p className="text-gray-500 mt-1">
-              Submitted on {submissionTime} •  {timeSpentSeconds} minutes
+              Submitted on {submissionTime} •  {timeSpentSeconds} minutes <span className={`ml-2 px-4 py-2 text-xl rounded-full text-white  ${isPassed ? 'bg-green-600' : 'bg-red-600'}`} >
+                {isPassed ? 'Passed' : 'Failed'}
+              </span>
             </p>
+
           </div>
+
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="text-center p-4 bg-gray-50 rounded-lg">

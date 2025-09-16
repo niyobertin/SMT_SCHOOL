@@ -7,10 +7,6 @@ import {
   BookOpen,
   BarChart3,
   FileText,
-  Bell,
-  Shield,
-  Settings,
-  HelpCircle,
   Home,
   FileQuestion,
 } from "lucide-react";
@@ -21,12 +17,8 @@ const sidebarItems = [
   { id: "subscriptions", label: "Subscription Management", icon: CreditCard, path: "/dashboard/subscriptions" },
   { id: "tests", label: "Test Management", icon: FileQuestion, path: "/dashboard/tests" },
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
-  { id: "analytics", label: "Analytics & Reports", icon: BarChart3, path: "/dashboard/analytics" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
-  { id: "notifications", label: "Notifications", icon: Bell, path: "/dashboard/notifications" },
-  { id: "security", label: "Security & Permissions", icon: Shield, path: "/dashboard/security" },
-  { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/settings" },
-  { id: "support", label: "Help & Support", icon: HelpCircle, path: "/dashboard/support" },
+  { id: "performance", label: "System Performance", icon: BarChart3, path: "/dashboard/monitoring" },
   { id: "home", label: "Home", icon: Home, path: "/" },
 ];
 
@@ -43,9 +35,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div
-      className={`${
-        isCollapsed ? "w-20" : "w-64"
-      } bg-white border-r border-gray-200 transition-all duration-300`}
+      className={`${isCollapsed ? "w-20" : "w-64"
+        } bg-white border-r border-gray-200 transition-all duration-300`}
     >
       <div className="flex flex-col h-full">
         {/* Logo */}
@@ -103,16 +94,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <li key={item.id}>
                   <Link
                     to={item.path}
-                    className={`flex items-center px-4 py-3 text-sm font-medium ${
-                      isActive
-                        ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
+                    className={`flex items-center px-4 py-3 text-sm font-medium ${isActive
+                      ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600"
+                      : "text-gray-600 hover:bg-gray-50"
+                      }`}
                   >
                     <item.icon
-                      className={`h-5 w-5 ${
-                        isActive ? "text-blue-600" : "text-gray-400"
-                      }`}
+                      className={`h-5 w-5 ${isActive ? "text-blue-600" : "text-gray-400"
+                        }`}
                     />
                     {!isCollapsed && <span className="ml-3">{item.label}</span>}
                   </Link>
