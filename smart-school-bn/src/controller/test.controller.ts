@@ -110,22 +110,17 @@ export const addQuestionToTest = async (
     const { question, type, points, explanation, options } = req.body;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    // Verify test exists and user owns the course
-    // @ts-ignore
-    const userId = req.user?.id;
+    // Verify test exists
     const test = await prisma.test.findFirst({
       where: {
-        id: testId,
-        course: {
-          instructorId: userId,
-        },
+        id: testId
       },
     });
 
     if (!test) {
       res.status(404).json({
         status: "error",
-        message: "Test not found or you don't have permission",
+        message: "Test not found",
       });
       return;
     }
