@@ -863,17 +863,15 @@ export const uploadQuestionsExcel = async (req: Request, res: Response, next: Ne
   try {
     const { testId } = req.params;
     // @ts-ignore
-    const userId = req.user?.id;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     const test = await prisma.test.findFirst({
       where: {
-        id: testId,
-        course: { instructorId: userId },
+        id: testId
       },
     });
     if (!test) {
-      res.status(404).json({ status: "error", message: "Test not found or no permission" });
+      res.status(404).json({ status: "error", message: "Test not found" });
       return;
     }
     if (files.file.length === 0) {
