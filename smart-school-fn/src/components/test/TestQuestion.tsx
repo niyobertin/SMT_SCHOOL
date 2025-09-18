@@ -129,6 +129,13 @@ export function TestQuestion({
       </div>
 
       <div className="mb-8">
+        {question.image && (
+          <img
+            src={question.image}
+            alt="Question Image"
+            className="mt-2 max-w-full h-auto"
+          />
+        )}
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {currentQuestion}. {question.question}
         </h2>

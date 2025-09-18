@@ -13,8 +13,10 @@ import {
   updateTestById,
   deleteTestById,
   deleteTestQuestion,
-  updateTestQuestion
+  updateTestQuestion,
+  uploadQuestionsExcel
 } from '../controller/test.controller';
+import { uploadFile } from '../middleware/uploadFile';
 
 const router = express.Router();
 
@@ -303,6 +305,7 @@ router.post(
   '/:testId/questions',
   authenticate,
   authorize('INSTRUCTOR', "ADMIN"),
+  uploadFile,
   catchAsync(addQuestionToTest)
 );
 
@@ -323,12 +326,14 @@ router.post(
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
  *               question:
  *                 type: string
+ *               fileImage:
+ *                 type: binary
  *               type:
  *                 type: string
  *                 enum: [MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER, ESSAY, FILL_BLANK]
@@ -508,7 +513,7 @@ router.get(
 router.post(
   '/:testId/start',
   authenticate,
-  authorize('STUDENT', "ADMIN"),
+  authorize('STUDENT', "ADMIN", "INSTRUCTOR"),
   catchAsync(startTestAttempt)
 );
 
@@ -636,6 +641,13 @@ router.post(
   authenticate,
   authorize('STUDENT', "ADMIN", "INSTRUCTOR"),
   catchAsync(submitTest)
+);
+router.post(
+  '/:testId/questions/upload',
+  authenticate,
+  authorize('INSTRUCTOR', "ADMIN"),
+  uploadFile,
+  catchAsync(uploadQuestionsExcel)
 );
 
 export default router;

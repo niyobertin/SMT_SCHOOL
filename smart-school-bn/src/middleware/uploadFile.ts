@@ -10,4 +10,5 @@ export const uploadFile = upload.fields([
   { name: "filePDF", maxCount: 1 },
   { name: "fileImage", maxCount: 1 },
   { name: "thumbnail", maxCount: 1 },
+  { name: "file", maxCount: 1 },
 ]);

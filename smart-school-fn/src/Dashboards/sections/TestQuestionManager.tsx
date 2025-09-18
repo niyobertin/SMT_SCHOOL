@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Clock, Users, Trash, Loader2, Eye, ArrowLeft, FileQuestion } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, BookOpen, Award, ImagePlus, Upload, Clock, Users, Trash, Loader2, Eye, ArrowLeft, FileQuestion } from 'lucide-react';
 import { fetchCourses } from "../../redux/features/courses/courseSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +8,7 @@ import { addQuestion, createTest, deleteQuestion, deleteTest, fetchQuestionsByTe
 import { Toast } from 'primereact/toast';
 import StatusMessage from '../../components/ui/loadingAndError';
 import { ConfirmDeleteModal } from '../Modals/ConfirmDeleteModal';
+import api from '../../redux/api/api';
 
 
 const TestQuestionManager = () => {
@@ -29,6 +30,9 @@ const TestQuestionManager = () => {
   const [isEditingQuestion, setIsEditingQuestion] = useState(false);
   const [questionToEditId, setQuestionToEditId] = useState<string | null>(null);
 
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
   const toast = useRef<Toast>(null);
@@ -64,6 +68,20 @@ const TestQuestionManager = () => {
   const { items: courses, loading, error } = useSelector((state: RootState) => state.courses);
   const { tests, loading: testsLoading, error: testsError } = useSelector((state: RootState) => state.test);
   const { questions, loading: questionsLoading, error: questionsError } = useSelector((state: RootState) => state.manageTest);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      setExcelFile(file);
+      setCurrentQuestion({ ...currentQuestion, image: file });
+      // Only create preview if it’s an image
+      if (file.type.startsWith("image/")) {
+        setPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setPreviewUrl(null);
+      }
+    }
+  };
 
   useEffect(() => {
     dispatch(fetchCourses({
@@ -194,23 +212,25 @@ const TestQuestionManager = () => {
 
       const correctAnswer =
         currentQuestion.options.find((opt: any) => opt.isCorrect)?.option || "";
-
-      const newQuestion: any = {
-        question: currentQuestion.question,
-        type: currentQuestion.type,
-        points: currentQuestion.points,
-        explanation: currentQuestion.explanation || "",
-        options: currentQuestion.options.map((opt: any) => ({
-          option: opt.option,
-          isCorrect: opt.isCorrect || false,
-        })),
-        correctAnswer,
-      };
-
+      // Convert to FormData
+      const formData = new FormData();
+      formData.append("question", currentQuestion.question);
+      formData.append("type", currentQuestion.type);
+      formData.append("points", currentQuestion.points);
+      formData.append("explanation", currentQuestion.explanation || "");
+      formData.append("correctAnswer", correctAnswer);
+      // Add image if present
+      if (currentQuestion.image) {
+        formData.append("fileImage", currentQuestion.image);
+      }
+      // Add options
+      currentQuestion.options.forEach((opt: any, index: number) => {
+        formData.append(`options[${index}][isCorrect]`, String(opt.isCorrect === true || opt.isCorrect === "true"));
+        formData.append(`options[${index}][option]`, opt.option);
+      });
       if (isEditingQuestion && questionToEditId) {
-        // Update existing question
         await dispatch(
-          updateQuestion({ questionData: newQuestion, id: questionToEditId })
+          updateQuestion({ questionData: formData, id: questionToEditId })
         ).unwrap();
         await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
         setQuestionToEditId(null);
@@ -221,8 +241,7 @@ const TestQuestionManager = () => {
           life: 3000,
         });
       } else {
-        // Add new question
-        await dispatch(addQuestion({ questionData: newQuestion, testId: selectedTestId! })).unwrap();
+        await dispatch(addQuestion({ questionData: formData, testId: selectedTestId! })).unwrap();
         toast.current?.show({
           severity: "success",
           summary: "Question Added",
@@ -230,6 +249,7 @@ const TestQuestionManager = () => {
           life: 3000,
         });
       }
+
       await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
       setCurrentQuestion(null);
       setIsCreatingQuestion(false);
@@ -247,6 +267,7 @@ const TestQuestionManager = () => {
       setCreatingQuestionLoading(false);
     }
   };
+
 
   const handleDeleteTest = async () => {
     if (!testToDelete) return;
@@ -519,6 +540,13 @@ const TestQuestionManager = () => {
                 </div>
               </div>
               <span className="ml-auto text-xs font-semibold">{question.type}</span>
+              {question.image && (
+                <img
+                  src={question.image}
+                  alt="Question Image"
+                  className="mt-2 max-w-full h-auto"
+                />
+              )}
               <div className="block">
                 <ul className="list-disc list-inside space-y-1">
                   {question.options.map((option: any, idx: number) => (
@@ -551,7 +579,123 @@ const TestQuestionManager = () => {
                     <X size={20} />
                   </button>
                 </div>
+                <div className="flex gap-2 items-center justify-center">
+                  <div className="relative group">
+                    <label
+                      htmlFor="excel-upload"
+                      className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Choose Excel
+                    </label>
+                    <input
+                      id="excel-upload"
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) setExcelFile(e.target.files[0]);
+                      }}
+                      className="hidden"
+                    />
 
+                    <div className="absolute mt-2 w-auto p-3 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <p className="font-semibold mb-2">Excel Format</p>
+                      <table className="w-full border border-gray-600 border-collapse text-[11px]">
+                        <thead className="bg-gray-700 text-white">
+                          <tr>
+                            <th className="border border-gray-600 py-1 px-2">Question</th>
+                            <th className="border border-gray-600 py-1 px-2">Type</th>
+                            <th className="border border-gray-600 py-1 px-2">Points</th>
+                            <th className="border border-gray-600 py-1 px-2">Explanation(optional)</th>
+                            <th className="border border-gray-600 py-1 px-2">Options</th>
+                            <th className="border border-gray-600 py-1 px-2">Correct</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="even:bg-gray-800/30">
+                            <td className="border border-gray-600 py-1 px-2 font-medium">Question?</td>
+                            <td className="border border-gray-600 py-1 px-2">Choice type</td>
+                            <td className="border border-gray-600 py-1 px-2 font-medium">2</td>
+                            <td className="border border-gray-600 py-1 px-2">Explanation</td>
+                            <td className="border border-gray-600 py-1 px-2">A,B,C,D</td>
+                            <td className="border border-gray-600 py-1 px-2">B</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                  </div>
+                  <button
+                    disabled={!excelFile || uploading}
+                    onClick={async () => {
+                      if (!excelFile) return;
+                      setUploading(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append("file", excelFile);
+                        const response = await api.post(`/tests/${selectedTestId}/questions/upload`, formData, {
+                          headers: { "Content-Type": "multipart/form-data" },
+                        });
+                        toast.current?.show({
+                          severity: "success",
+                          summary: "Success",
+                          detail: response.data.message || "Questions uploaded successfully!",
+                          life: 3000,
+                        });
+                        console.log(response.data);
+                        setExcelFile(null);
+                      } catch (err) {
+                        console.error(err);
+                        toast.current?.show({
+                          severity: "error",
+                          summary: "Error",
+                          detail: (err as any).response?.data?.message || "Upload failed. Check console for details.",
+                          life: 3000,
+                        });
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                    className={`px-4 py-2 cursor-pointer rounded text-white ${uploading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
+                  >
+                    {uploading ? "Uploading..." : "Send to Server"}
+                  </button>
+                </div>
+                {excelFile && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Selected: <span className="font-medium">{excelFile.name}</span>
+                  </p>
+                )}
+                <div className="h-[200px] w-[150px]">
+                  <label
+                    htmlFor="image-upload"
+                    className="group relative w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
+                  >
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="rounded-xl object-cover w-full h-full"
+                      />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-12 w-12 text-gray-400 group-hover:text-blue-500 mb-3" />
+                        <p className="text-gray-600 group-hover:text-blue-600 font-normal text-sm text-center">
+                          Click to upload or drag & drop
+                        </p>
+                        <p className="text-xs text-gray-400 text-center">PNG, JPG, GIF up to 5 MB</p>
+                      </>
+                    )}
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </label>
+
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Question *</label>
@@ -795,6 +939,7 @@ const TestQuestionManager = () => {
                     Randomize Options
                   </label>
                 </div>
+
               </div>
 
               {/* Save Test */}

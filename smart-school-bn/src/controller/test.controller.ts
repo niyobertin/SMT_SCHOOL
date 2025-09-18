@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
+import * as XLSX from "xlsx";
 import { NotFoundError } from "../utils/errors";
+import { uploadBufferToCloudinary } from "../config/cloudinary";
 
 const prisma = new PrismaClient();
 
@@ -106,6 +108,7 @@ export const addQuestionToTest = async (
   try {
     const { testId } = req.params;
     const { question, type, points, explanation, options } = req.body;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     // Verify test exists and user owns the course
     // @ts-ignore
@@ -134,15 +137,20 @@ export const addQuestionToTest = async (
     });
 
     const newOrder = lastQuestion ? lastQuestion.order + 1 : 0;
-
+    const imageFile = files?.["fileImage"]?.[0];
+    let imageUrl = "";
+    if (imageFile) {
+      imageUrl = await uploadBufferToCloudinary(imageFile.buffer, imageFile.mimetype);
+    }
     // Create question with transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
       const newQuestion = await tx.question.create({
         data: {
           id: uuidv4(),
           question,
+          image: imageUrl,
           type,
-          points: points || 1,
+          points: Number(points || 1),
           explanation: explanation || null,
           order: newOrder,
           test: {
@@ -152,14 +160,15 @@ export const addQuestionToTest = async (
       });
 
       // Add options if it's a multiple choice question
+
       if (options && options.length > 0 && (type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE')) {
         await Promise.all(
-          options.map((opt: { option: string; isCorrect: boolean }, index: number) =>
+          options.map((opt: { option: string; isCorrect: any }, index: number) =>
             tx.questionOption.create({
               data: {
                 id: uuidv4(),
                 option: opt.option,
-                isCorrect: opt.isCorrect || false,
+                isCorrect: opt.isCorrect === true || opt.isCorrect === 'true',
                 order: index,
                 question: {
                   connect: { id: newQuestion.id },
@@ -271,6 +280,7 @@ export const getTestQuestions = async (
         options: true,
         points: true,
         order: true,
+        image: true,
       },
       orderBy: { order: 'asc' },
     });
@@ -311,24 +321,6 @@ export const startTestAttempt = async (
         },
       },
     });
-    // Check attempt limits
-    if (test?.maxAttempts) {
-      const attempts = await prisma.testAttempt.count({
-        where: {
-          testId,
-          userId,
-        },
-      });
-
-      if (attempts >= test.maxAttempts) {
-        res.status(400).json({
-          status: "error",
-          message: `Maximum number of attempts (${test.maxAttempts}) reached`,
-        });
-        return;
-      }
-    }
-
     // Get questions
     const questions = await prisma.question.findMany({
       where: { testId, isActive: true },
@@ -343,7 +335,7 @@ export const startTestAttempt = async (
         },
       },
       orderBy: test?.randomizeQuestions
-        ? { id: 'asc' } // We'll randomize in memory to maintain consistent ordering
+        ? { id: 'asc' }
         : { order: 'asc' },
     });
 
@@ -395,6 +387,7 @@ export const startTestAttempt = async (
         questions: randomizedQuestions.map(q => ({
           id: q.id,
           question: q.question,
+          image: q.image,
           type: q.type,
           points: q.points,
           options: q.options,
@@ -824,11 +817,10 @@ export const updateTestQuestion = async (req: Request, res: Response, next: Next
         type,
         points,
         order,
-        explanation, // 👈 now updating this too
-        // For options, you may want to replace existing ones
+        explanation,
         options: options
           ? {
-            deleteMany: {}, // remove old options
+            deleteMany: {},
             create: options.map((opt: any, idx: number) => ({
               id: uuidv4(),
               option: opt.option,
@@ -868,6 +860,105 @@ export const deleteTestQuestion = async (req: Request, res: Response, next: Next
       message: "Question deleted successfully",
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadQuestionsExcel = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { testId } = req.params;
+    // @ts-ignore
+    const userId = req.user?.id;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const test = await prisma.test.findFirst({
+      where: {
+        id: testId,
+        course: { instructorId: userId },
+      },
+    });
+    if (!test) {
+      res.status(404).json({ status: "error", message: "Test not found or no permission" });
+      return;
+    }
+    if (files.file.length === 0) {
+      res.status(400).json({ status: "error", message: "No file uploaded" });
+      return;
+    }
+
+    const workbook = XLSX.read(files.file[0].buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const data: any[] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+    if (data.length === 0) {
+      res.status(400).json({ status: "error", message: "Empty Excel file" });
+      return;
+    }
+    const lastQuestion = await prisma.question.findFirst({
+      where: { testId },
+      orderBy: { order: "desc" },
+    });
+    let currentOrder = lastQuestion ? lastQuestion.order + 1 : 0;
+    const created = await prisma.$transaction(async (tx) => {
+      const results: any[] = [];
+
+      for (const row of data) {
+        const {
+          question,
+          type,
+          points,
+          explanation,
+          options,
+          correct,
+        } = row;
+
+        const newQ = await tx.question.create({
+          data: {
+            id: uuidv4(),
+            question,
+            type,
+            points: Number(points) || 1,
+            explanation: explanation || null,
+            order: currentOrder++,
+            test: { connect: { id: testId } },
+          },
+        });
+
+        if (options && (type === "MULTIPLE_CHOICE" || type === "TRUE_FALSE")) {
+          const optionArr = String(options).split(",").map((s: string) => s.trim());
+          const correctArr = String(correct || "")
+            .split(",")
+            .map((s: string) => s.trim());
+
+          await Promise.all(
+            optionArr.map((opt: string, idx: number) =>
+              tx.questionOption.create({
+                data: {
+                  id: uuidv4(),
+                  option: opt,
+                  isCorrect: correctArr.includes(opt),
+                  order: idx,
+                  question: { connect: { id: newQ.id } },
+                },
+              })
+
+            )
+          );
+        }
+
+        results.push(newQ);
+      }
+
+      return results;
+    });
+
+    res.status(201).json({
+      status: "success",
+      message: `${created.length} questions uploaded successfully`,
+      data: created,
+    });
+  } catch (error) {
+    logger.error(error);
     next(error);
   }
 };

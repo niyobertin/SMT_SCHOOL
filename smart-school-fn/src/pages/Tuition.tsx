@@ -63,7 +63,7 @@ export default function TuitionPage() {
       id: "yearly",
       name: t("yearly"),
       description: "Perfect for teams and organizations",
-      basePrice: 15000,
+      basePrice: 30000,
       popular: false,
       features: [
         t("customLearning"),
@@ -94,9 +94,8 @@ export default function TuitionPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative group hover:shadow-2xl transition-all duration-300 border rounded-2xl bg-white/80 backdrop-blur-sm p-6 ${
-                  plan.popular ? "ring-2 ring-blue-500 scale-105" : ""
-                }`}
+                className={`relative group hover:shadow-2xl transition-all duration-300 border rounded-2xl bg-white/80 backdrop-blur-sm p-6 ${plan.popular ? "ring-2 ring-blue-500 scale-105" : ""
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -114,7 +113,7 @@ export default function TuitionPage() {
                 <div className="text-center mb-6">
                   <div className="text-4xl font-bold text-gray-900 mb-1">{plan.basePrice}Frw</div>
                   <div className="text-gray-500 text-sm">
-                    {plan.id === "weekly" ? t("perWeek") : plan.id === "monthly" ? t("perMonth") : plan.id === "quarterly" ? "": plan.id === "yearly" ? t("perYear") : ""}
+                    {plan.id === "weekly" ? t("perWeek") : plan.id === "monthly" ? t("perMonth") : plan.id === "quarterly" ? "" : plan.id === "yearly" ? t("perYear") : ""}
                   </div>
                 </div>
 
@@ -128,11 +127,10 @@ export default function TuitionPage() {
                 </div>
 
                 <button
-                  className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${
-                    plan.popular
-                      ? "bg-blue-800 hover:bg-blue-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                  }`}
+                  className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${plan.popular
+                    ? "bg-blue-800 hover:bg-blue-600 text-white"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                    }`}
                 >
                   {t("choosePlan")}
                 </button>

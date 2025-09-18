@@ -68,7 +68,7 @@ const initialState: CoursesState = {
   error: null,
   q: '',
   page: 1,
-  limit: 10,
+  limit: 9,
   total: 0,
   totalPages: 1,
   categoryFilter: null,
@@ -78,7 +78,7 @@ const initialState: CoursesState = {
 
 export const fetchCourses = createAsyncThunk(
   'courses/fetchCourses',
-  async ({ page = 1, q = '', limit = 10, categoryId = null }: { page?: number; q?: string; limit?: number; categoryId?: string | null }) => {
+  async ({ page = 1, q = '', limit = 9, categoryId = null }: { page?: number; q?: string; limit?: number; categoryId?: string | null }) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -86,7 +86,7 @@ export const fetchCourses = createAsyncThunk(
       ...(categoryId && { categoryId }),
     });
 
-    const response = await api.get(`/courses?${params}`);    
+    const response = await api.get(`/courses?${params}`);
     return response.data;
   }
 );
@@ -102,9 +102,9 @@ export const createCourse = createAsyncThunk(
           'Content-Type': 'multipart/form-data',
         },
       });
-      
+
       return response.data.data;
-    } catch (error:any) {
+    } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message || 'Failed to create course');
       }
@@ -115,7 +115,7 @@ export const createCourse = createAsyncThunk(
 
 export const updateCourse = createAsyncThunk(
   'courses/updateCourse',
-  async ({courseId, courseData}: {courseId: string, courseData: FormData}, { rejectWithValue }) => {
+  async ({ courseId, courseData }: { courseId: string, courseData: FormData }, { rejectWithValue }) => {
     try {
       const response = await api.patch(`/courses/${courseId}`, courseData, {
         headers: {
@@ -123,7 +123,7 @@ export const updateCourse = createAsyncThunk(
         },
       });
       return response.data.data;
-    } catch (error:any) {
+    } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message || 'Failed to update course');
       }
@@ -138,7 +138,7 @@ export const deleteCourse = createAsyncThunk(
     try {
       const response = await api.delete(`/courses/${courseId}`);
       return response.data.data;
-    } catch (error:any) {
+    } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message || 'Failed to delete course');
       }
@@ -153,14 +153,14 @@ const coursesSlice = createSlice({
   reducers: {
     setSearch: (state, action) => {
       state.q = action.payload;
-      state.page = 1; 
+      state.page = 1;
     },
     setPage: (state, action) => {
       state.page = action.payload;
     },
     setCategoryFilter: (state, action) => {
       state.categoryFilter = action.payload;
-      state.page = 1; 
+      state.page = 1;
     },
     clearFilters: (state) => {
       state.q = '';

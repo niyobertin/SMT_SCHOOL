@@ -38,7 +38,7 @@ export const createCourse = async (
             return;
         }
         const thumbnailFile = files?.["thumbnail"]?.[0];
-       const thumbnail = await uploadBufferToCloudinary(thumbnailFile.buffer, thumbnailFile.mimetype, thumbnailFile.originalname);
+        const thumbnail = await uploadBufferToCloudinary(thumbnailFile.buffer, thumbnailFile.mimetype, thumbnailFile.originalname);
         const course = await prisma.course.create({
             data: {
                 ...courseData,
@@ -113,9 +113,19 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
                     contains: query,
                     mode: "insensitive",
                 },
+                category: {
+                    id: req.query.categoryId as string,
+                },
             },
         });
-        const total = courses.length;
+        const total = await prisma.course.count({
+            where: {
+                title: {
+                    contains: query,
+                    mode: "insensitive",
+                },
+            },
+        });
         const totalPages = Math.ceil(total / limit);
         res.status(200).json({
             status: "success",
@@ -256,13 +266,13 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
         let thumbnail: string | undefined;
         const thumbnailFile = files?.thumbnail?.[0];
         if (thumbnailFile) {
-          thumbnail = await uploadBufferToCloudinary(
-            thumbnailFile.buffer,
-            thumbnailFile.mimetype,
-            thumbnailFile.originalname
-          );
+            thumbnail = await uploadBufferToCloudinary(
+                thumbnailFile.buffer,
+                thumbnailFile.mimetype,
+                thumbnailFile.originalname
+            );
         }
-    
+
         const updatedCourse = await prisma.course.update({
             where: { id },
             data: {

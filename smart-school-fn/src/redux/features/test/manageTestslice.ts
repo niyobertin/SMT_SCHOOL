@@ -128,9 +128,15 @@ export const deleteTest = createAsyncThunk(
 
 export const addQuestion = createAsyncThunk(
   'tests/addQuestion',
-  async ({ questionData, testId }: { questionData: Question, testId: string }, { rejectWithValue }) => {
+  async ({ questionData, testId }: { questionData: any, testId: string }, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/tests/${testId}/questions`, questionData);
+      const response = await api.post(`/tests/${testId}/questions`, questionData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to add question');
