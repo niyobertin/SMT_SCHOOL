@@ -19,6 +19,7 @@ import { TestResults } from "./pages/test/TestResults";
 import { dashboardRoutes } from "./routes";
 import ScrollToTop from "./components/common/ScrollToTop";
 import { UserProfilePage } from "./pages/profile";
+import { PaymentFlow } from "./components/common/Payment";
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -58,7 +59,7 @@ function App() {
             <Route path="/test/:testId" element={<TestPage />} />
             <Route path="/test/:testId/results" element={<TestResults />} />
             <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
-
+            <Route path="/payment-flow/:amount/:period" element={<PaymentFlow />} />
             <Route path="/contact" element={<ContactPage />} />
           </Route>
         </Routes>

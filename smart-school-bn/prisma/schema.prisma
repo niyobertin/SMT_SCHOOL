@@ -96,6 +96,7 @@ model Course {
   notifications      Notification[]
   userCourseProgress UserCourseProgress[]
   Payment            Payment[]
+  PaymentCourse      PaymentCourse[]
 
   @@map("courses")
 }
@@ -123,7 +124,6 @@ model Lesson {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
@@ -148,14 +148,12 @@ model LessonContent {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   lessonId String
   lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("lesson_content")
 }
 
-// Enrollment & Payment
 model Enrollment {
   id                String           @id @default(cuid())
   enrollmentDate    DateTime         @default(now())
@@ -163,12 +161,10 @@ model Enrollment {
   progress          Float            @default(0)
   status            EnrollmentStatus @default(ACTIVE)
   enrollementPeriod Int              @default(30)
-
-  // Relations
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId          String
+  course            Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@map("enrollments")
@@ -182,14 +178,18 @@ enum EnrollmentStatus {
 }
 
 model Payment {
-  id                 String        @id @default(cuid())
+  id                 String          @id @default(cuid())
   amount             Float
-  currency           String        @default("RWF")
-  status             PaymentStatus @default(PENDING)
+  currency           String          @default("RWF")
+  status             PaymentStatus   @default(PENDING)
   channel            String
-  subscribedCourseId String[]
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  paypackRef         String?
+  subscriptionPeriod Int             @default(30)
+  remainingPeriod    Int             @default(0)
+  isActive           Boolean         @default(false)
+  courses            PaymentCourse[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   // Relations
   userId String
@@ -197,6 +197,15 @@ model Payment {
   course Course[]
 
   @@map("payments")
+}
+
+model PaymentCourse {
+  paymentId String
+  courseId  String
+  payment   Payment @relation(fields: [paymentId], references: [id])
+  course    Course  @relation(fields: [courseId], references: [id])
+
+  @@id([paymentId, courseId])
 }
 
 enum PaymentStatus {
@@ -444,15 +453,4 @@ enum NotificationStatus {
   READ
   ARCHIVED
   DELETED
-}
-
-// System Configuration
-model SystemSettings {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("system_settings")
 }

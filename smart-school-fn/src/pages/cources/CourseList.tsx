@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, Eye, Book, ChevronDown, Crown } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Book, ChevronDown, Crown, CheckCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../redux/stores";
@@ -193,72 +193,67 @@ export const CourseList = () => {
               </p>
             </div>
           )}
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses?.map(course => (
-              <div
-                key={course.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              <Link
+                to={`/courses/${course.id}/lessons`}
               >
-                <div className="h-48 bg-gray-200 relative">
-                  {course.thumbnail && (
-                    <img
-                      src={course.thumbnail}
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                  <div className="absolute top-2 right-2 bg-yellow-500 text-white p-1 rounded-full shadow-md">
-                    <Crown className="w-5 h-5" />
+                <div
+                  key={course.id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  <div className="h-48 bg-gray-200 relative">
+                    {course.thumbnail && (
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    {course.enrollments?.length > 0 ? (
+                      <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-md">
+                        <CheckCircle className="h-6 w-6 text-white" />
+                      </div>
+                    ) : (
+                      <div className="absolute top-2 right-2 bg-yellow-500 text-white p-1 rounded-full shadow-md">
+                        <Crown className="w-5 h-5" />
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {course.title}
-                  </h3>
-                  <div className="flex space-x-4 items-center mb-2 bg-gray-100 px-2 py-1 rounded-md w-fit">
-                    <span className="text-sm text-gray-700 font-medium">
-                      {course.tests?.length || 0}{" "}
-                      <Book className="inline mr-1 h-4 w-4" />
-                      Tests
-                    </span>
-                    <span className="text-sm text-gray-700 font-medium">
-                      {course.lessons?.length || 0}{" "}
-                      <Book className="inline mr-1 h-4 w-4" />
-                      Lessons
-                    </span>
-                  </div>
-                  <p className="text-sm text-black font-medium mb-4">
-                    {course.createdAt
-                      ? `Posted : ${formatDistanceToNow(new Date(course.createdAt), {
-                        addSuffix: true
-                      })}`
-                      : "No date"}
-                    .{" "}
-                    <span className="text-sm text-gray-600">
-                      {course.instructor?.firstName} {course.instructor?.lastName}
-                    </span>
-                  </p>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {course.title}
+                    </h3>
+                    <div className="flex space-x-4 items-center mb-2 bg-gray-100 px-2 py-1 rounded-md w-fit">
+                      <span className="text-sm text-gray-700 font-medium">
+                        {course.tests?.length || 0}{" "}
+                        <Book className="inline mr-1 h-4 w-4" />
+                        Tests
+                      </span>
+                      <span className="text-sm text-gray-700 font-medium">
+                        {course.lessons?.length || 0}{" "}
+                        <Book className="inline mr-1 h-4 w-4" />
+                        Lessons
+                      </span>
+                    </div>
+                    <p className="text-sm text-black font-medium mb-4">
+                      {course.createdAt
+                        ? `Posted : ${formatDistanceToNow(new Date(course.createdAt), {
+                          addSuffix: true
+                        })}`
+                        : "No date"}
+                      .{" "}
+                      <span className="text-sm text-gray-600">
+                        {course.instructor?.firstName} {course.instructor?.lastName}
+                      </span>
+                    </p>
 
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                    {course.shortDescription || course.description}
-                  </p>
-                  <div className="flex justify-between items-center">
-                    <Link
-                      to={`/courses/${course.id}/lessons`}
-                      className="flex items-center text-white hover:text-blue-800 text-sm font-medium bg-green-500 px-2 py-1 rounded"
-                    >
-                      <Eye className="mr-2 h-4 w-4" /> View Lessons
-                    </Link>
-                    <Link
-                      to={`/courses/${course.id}/lessons`}
-                      className="flex items-center text-white hover:text-blue-800 text-sm font-medium bg-blue-500 px-2 py-1 rounded"
-                    >
-                      <Eye className="mr-2 h-4 w-4" /> View Tests
-                    </Link>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                      {course.shortDescription || course.description}
+                    </p>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
           {/* Pagination */}

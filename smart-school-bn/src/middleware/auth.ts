@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -47,6 +47,42 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const optionalAuthenticate = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      // no token, guest user
+      return next();
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        phoneNumber: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true
+      }
+    });
+
+    if (!user || !user.isActive) {
+      // invalid token, treat as guest
+      return next();
+    }
+
+    //@ts-ignore
+    req.user = user;
+    next();
+  } catch (err) {
+    // token invalid, just treat as guest
+    next();
+  }
+};
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // @ts-ignore

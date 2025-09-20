@@ -7,6 +7,7 @@ import lessonRoutes from "./lesson.routes";
 import lessonContentRoutes from "./lessonContent.routes";
 import testRoutes from "./test.routes";
 import userRouter from "./users.routes";
+import paymentRouter from "./payment.route";
 const router = Router();
 
 /**
@@ -46,6 +47,7 @@ router.use("/lessons", lessonRoutes);
 router.use("/lesson-content", lessonContentRoutes);
 router.use("/tests", testRoutes);
 router.use("/users", userRouter);
+router.use("/payments", paymentRouter);
 
 // API info endpoint
 /**

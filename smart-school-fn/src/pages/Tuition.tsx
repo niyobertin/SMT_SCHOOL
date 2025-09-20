@@ -1,12 +1,33 @@
 import { Check, Users, Award, BookOpen, TrendingUp } from "lucide-react"
 import useLanguage from "../hooks/useLanguage"
+import { useNavigate } from "react-router-dom"
 
 export default function TuitionPage() {
   const { t } = useLanguage()
+  const navigate = useNavigate()
 
   const plans = [
     {
       id: "weekly",
+      period: 1,
+      name: t("weekly"),
+      description: "Perfect for beginners starting their learning journey",
+      basePrice: 100,
+      popular: false,
+      features: [
+        t("accessToCourses"),
+        t("limitedSupport"),
+        t("basicCertificates"),
+        "Mobile app access",
+        "Basic progress tracking",
+        "Community forum access",
+      ],
+      icon: BookOpen,
+      color: "from-gray-500 to-gray-600",
+    },
+    {
+      id: "weekly",
+      period: 7,
       name: t("weekly"),
       description: "Perfect for beginners starting their learning journey",
       basePrice: 2000,
@@ -24,6 +45,7 @@ export default function TuitionPage() {
     },
     {
       id: "monthly",
+      period: 30,
       name: t("monthly"),
       description: "Most popular choice for serious learners",
       basePrice: 5000,
@@ -42,6 +64,7 @@ export default function TuitionPage() {
     },
     {
       id: "quarterly",
+      period: 90,
       name: t("quarterly"),
       description: "Complete learning experience with mentorship",
       basePrice: 10000,
@@ -61,6 +84,7 @@ export default function TuitionPage() {
     },
     {
       id: "yearly",
+      period: 365,
       name: t("yearly"),
       description: "Perfect for teams and organizations",
       basePrice: 30000,
@@ -127,6 +151,7 @@ export default function TuitionPage() {
                 </div>
 
                 <button
+                  onClick={() => navigate(`/payment-flow/${plan.basePrice}/${plan.period}`)}
                   className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${plan.popular
                     ? "bg-blue-800 hover:bg-blue-600 text-white"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-900"

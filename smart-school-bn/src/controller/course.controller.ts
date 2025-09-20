@@ -84,6 +84,8 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
         const query = req.query.q as string || "";
+        //@ts-ignore
+        const userId = req.user?.id;
         const courses = await prisma.course.findMany({
             orderBy: { createdAt: "desc" },
             include: {
@@ -101,7 +103,12 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
                 },
                 category: true,
                 lessons: true,
-                enrollments: true,
+                enrollments: userId
+                    ? {
+                        where: { userId },
+                        select: { id: true, status: true },
+                    }
+                    : false,
                 reviews: true,
                 tests: true,
                 certificates: true,
@@ -131,7 +138,7 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
             status: "success",
             message: "Courses retrieved successfully",
             data: {
-                courses: courses,
+                courses,
                 pagination: {
                     page,
                     limit,
