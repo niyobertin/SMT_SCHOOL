@@ -4,22 +4,25 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import dotenv from "dotenv";
-import { createServer } from "http";
+import http from "http";
 
 import { logger } from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
-import { rateLimiter } from "./middleware/rateLimiter";
 import { healthCheck } from "./middleware/healthCheck";
 import { swaggerSetup } from "./config/swagger";
 import router from "./routes";
 import YouTubeUploader from "./helper/youtubeUploader";
+import cron from "node-cron";
+import { pollPendingPayments } from "./helper/pullPaymentEvent";
+import { initSocket } from "./utils/socketServer";
 dotenv.config();
 
 const app = express();
-const server = createServer(app);
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
+initSocket(server);
 // Security middleware
 app.use(helmet());
 app.use(
@@ -32,16 +35,12 @@ app.use(
 // Compression middleware
 app.use(compression());
 
-// // Rate limiting
-// app.use(rateLimiter);
-
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging middleware
 app.use(requestLogger);
-
 // Health check endpoint
 app.use("/health", healthCheck);
 
@@ -103,6 +102,11 @@ const shutdown = (signal: string) => {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
+// Run every 1 minute
+cron.schedule("*/1 * * * *", async () => {
+  console.log("⏰ Running Paypack polling job...");
+  await pollPendingPayments();
+});
 // Start server
 server.listen(PORT, () => {
   logger.info(`Server is running on port ${PORT}`);

@@ -84,6 +84,8 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
         const query = req.query.q as string || "";
+        //@ts-ignore
+        const userId = req.user?.id;
         const courses = await prisma.course.findMany({
             orderBy: { createdAt: "desc" },
             include: {
@@ -101,7 +103,17 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
                 },
                 category: true,
                 lessons: true,
-                enrollments: true,
+                enrollments: userId
+                    ? {
+                        where: { userId },
+                        select: {
+                            id: true,
+                            userId: true,
+                            courseId: true,
+                            status: true
+                        },
+                    }
+                    : false,
                 reviews: true,
                 tests: true,
                 certificates: true,
@@ -131,7 +143,7 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
             status: "success",
             message: "Courses retrieved successfully",
             data: {
-                courses: courses,
+                courses,
                 pagination: {
                     page,
                     limit,
@@ -148,6 +160,8 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
 export const getCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const id = req.params.id;
+        //@ts-ignore
+        const userId = req.user?.id;
         const course = await prisma.course.findUnique({
             where: { id },
             include: {
@@ -165,7 +179,15 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
                 },
                 category: true,
                 lessons: true,
-                enrollments: true,
+                enrollments: userId ? {
+                    where: { userId },
+                    select: {
+                        id: true,
+                        userId: true,
+                        courseId: true,
+                        status: true
+                    },
+                } : false,
                 reviews: true,
                 tests: true,
                 certificates: true,
