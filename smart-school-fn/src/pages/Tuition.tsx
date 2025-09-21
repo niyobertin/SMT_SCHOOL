@@ -192,10 +192,10 @@ export default function TuitionPage() {
             <h2 className="text-3xl font-bold text-white mb-4">{t("readyToStart")}</h2>
             <p className="text-xl text-blue-100 mb-8">{t("joinThousands")}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-100">
+              <button onClick={() => navigate('/login')} className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-100">
                 {t("getStarted")}
               </button>
-              <button className="px-6 py-3 border border-white text-white font-semibold rounded-xl hover:bg-white hover:text-blue-600 bg-transparent">
+              <button onClick={() => navigate('/contact')} className="px-6 py-3 border border-white text-white font-semibold rounded-xl hover:bg-white hover:text-blue-600 bg-transparent">
                 {t("contactUs")}
               </button>
             </div>

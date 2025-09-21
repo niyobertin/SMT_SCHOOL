@@ -49,7 +49,8 @@ const CourseLessonsPage = () => {
     const user = localStorage.getItem('user');
     if (user) {
       const userData = JSON.parse(user);
-      if (userData.role !== 'ADMIN' || userData.role !== 'INSTRUCTOR' && subscribed === 'false') {
+      console.log("this is the logged in user ==> ", userData);
+      if ((userData.role !== 'ADMIN' && userData.role !== 'INSTRUCTOR') && subscribed === 'false') {
         setShowPaymentModal(true);
       }
     }

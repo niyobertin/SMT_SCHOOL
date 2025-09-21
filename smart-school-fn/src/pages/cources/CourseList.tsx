@@ -200,16 +200,16 @@ export const CourseList = () => {
               >
                 <div
                   key={course.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:bg-gray-200 transition-shadow"
                 >
-                  <div className="h-48 bg-gray-200 relative">
-                    {course.thumbnail && (
+                  <div className="bg-gray-200 relative">
+                    {/* {course.thumbnail && (
                       <img
                         src={course.thumbnail}
                         alt={course.title}
                         className="w-full h-full object-cover"
                       />
-                    )}
+                    )} */}
                     {course.enrollments?.length > 0 ? (
                       <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-md">
                         <CheckCircle className="h-6 w-6 text-white" />
@@ -221,7 +221,7 @@ export const CourseList = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       {course.title}
                     </h3>
                     <div className="flex space-x-4 items-center mb-2 bg-gray-100 px-2 py-1 rounded-md w-fit">

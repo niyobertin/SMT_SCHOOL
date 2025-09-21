@@ -7,6 +7,8 @@ import api from "../../redux/api/api";
 
 interface UserProfile {
   username: string;
+  firstName: string;
+  lastName: string;
   role: string;
 }
 
@@ -135,7 +137,7 @@ export function Header() {
                   className="flex items-center gap-2 text-white bg-gradient-to-r from-blue-500 to-indigo-500 transition-colors hover:bg-gray-100 p-2 rounded-full cursor-pointer"
                 >
                   <User className="h-5 w-5" />
-                  <span className="hidden sm:inline text-sm font-medium">{user.username}</span>
+                  <span className="hidden sm:inline text-sm font-medium">{user?.firstName} {user?.lastName}</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
 

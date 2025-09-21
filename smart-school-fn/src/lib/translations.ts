@@ -66,7 +66,6 @@ export const translations = {
     explanation: "Explanation:",
 
     // Home Page
-    exceledgeLearning: "Exceledge Learning Platform",
     transformYourFuture:
       "Rwanda's Leading Exam Partner for Academic and Professional Success",
     homeSubtitle:
@@ -91,7 +90,7 @@ export const translations = {
     rating: "rating",
     readyToStart: "Ready to Start Your Learning Journey?",
     joinThousands:
-      "Join thousands of students who have transformed their careers with Exceledge Learning Platform.",
+      "Join thousands of students who have transformed their careers with Smart school Learning Platform.",
 
     // Authentication
     login: "Login",
@@ -251,7 +250,7 @@ export const translations = {
     companies: "500+",
     getCareerSupport: "Get Career Support",
     bookConsultation: "Book Consultation",
-    username:"Username",
+    username: "Username",
 
     // News Page
     news: "News",
@@ -346,7 +345,7 @@ export const translations = {
     explanation: "Explication:",
 
     // Home Page
-    exceledgeLearning: "Plateforme d'Apprentissage Exceledge",
+    exceledgeLearning: "Plateforme d'Apprentissage Smart school",
     transformYourFuture:
       "Le principal partenaire d’examens au Rwanda pour la réussite académique et professionnelle",
     homeSubtitle:
@@ -371,7 +370,7 @@ export const translations = {
     rating: "note",
     readyToStart: "Prêt à Commencer Votre Parcours d'Apprentissage?",
     joinThousands:
-      "Rejoignez des milliers d'étudiants qui ont transformé leur carrière avec la Plateforme d'Apprentissage Exceledge.",
+      "Rejoignez des milliers d'étudiants qui ont transformé leur carrière avec la Plateforme d'Apprentissage Smart school.",
 
     // Authentication
     login: "Connexion",
@@ -649,7 +648,7 @@ export const translations = {
     rating: "amanota",
     readyToStart: "Witeguye Gutangira Urugendo Rwawe rwo Kwiga?",
     joinThousands:
-      "Jya mu bihumbi by'abanyeshuri bahinduye imyuga yabo hamwe n'Urubuga rw'Uburezi Exceledge.",
+      "Jya mu bihumbi by'abanyeshuri bahinduye imyuga yabo hamwe n'Urubuga rw'Uburezi Smart school.",
 
     // Authentication
     login: "Kwinjira",
