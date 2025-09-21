@@ -7,12 +7,19 @@ import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { FaQuestion } from 'react-icons/fa6';
 import { HeaderSkeleton, LessonSkeleton } from '../../components/Skeletons/LessonSekleton';
+import { LoginRequestModal, PaymentRequestModal } from '../../components/RequestModal';
+import { useLocation } from "react-router-dom";
 
 const CourseLessonsPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState<'lessons' | 'tests'>('lessons');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const queryParams = new URLSearchParams(location.search);
+  const subscribed = queryParams.get("subscribed");
 
   const { items: lessons, loading: lessonsLoading, error: lessonsError } = useSelector(
     (state: RootState) => state.lessons
@@ -20,6 +27,43 @@ const CourseLessonsPage = () => {
   const { tests, loading: testsLoading, error: testsError } = useSelector(
     (state: RootState) => state.test
   );
+
+  useEffect(() => {
+    const localToken = localStorage.getItem('accessToken');
+    if (!localToken) {
+      setIsModalOpen(true);
+    }
+  }, []);
+
+  const handleClose = () => {
+    setIsModalOpen(false);
+    navigate(-1);
+  };
+
+  const handleContinue = () => {
+    setIsModalOpen(false);
+    navigate('/login');
+  };
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      if (userData.role !== 'ADMIN' || userData.role !== 'INSTRUCTOR' && subscribed === 'false') {
+        setShowPaymentModal(true);
+      }
+    }
+  }, [subscribed]);
+
+  const handlePaymentContinue = () => {
+    setShowPaymentModal(false);
+    navigate(`/tuition`);
+  };
+
+  const handlePaymentClose = () => {
+    setShowPaymentModal(false);
+    navigate(-1);
+  };
 
   const course = lessons[0]?.course;
 
@@ -218,6 +262,19 @@ const CourseLessonsPage = () => {
             </div>
           )}
         </div>
+        <LoginRequestModal
+          isOpen={isModalOpen}
+          onClose={handleClose}
+          onContinue={handleContinue}
+          featureName="lessons from the course"
+        />
+
+        <PaymentRequestModal
+          isOpen={showPaymentModal}
+          onClose={handlePaymentClose}
+          onGoToPricing={handlePaymentContinue}
+        />
+
       </div>
     </div>
   );

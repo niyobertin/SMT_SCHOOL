@@ -196,7 +196,7 @@ export const CourseList = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses?.map(course => (
               <Link
-                to={`/courses/${course.id}/lessons`}
+                to={`/courses/${course.id}/lessons?subscribed=${course.enrollments?.length > 0}`}
               >
                 <div
                   key={course.id}

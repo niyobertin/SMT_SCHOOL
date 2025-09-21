@@ -106,7 +106,12 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
                 enrollments: userId
                     ? {
                         where: { userId },
-                        select: { id: true, status: true },
+                        select: {
+                            id: true,
+                            userId: true,
+                            courseId: true,
+                            status: true
+                        },
                     }
                     : false,
                 reviews: true,
@@ -155,6 +160,8 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
 export const getCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const id = req.params.id;
+        //@ts-ignore
+        const userId = req.user?.id;
         const course = await prisma.course.findUnique({
             where: { id },
             include: {
@@ -172,7 +179,15 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
                 },
                 category: true,
                 lessons: true,
-                enrollments: true,
+                enrollments: userId ? {
+                    where: { userId },
+                    select: {
+                        id: true,
+                        userId: true,
+                        courseId: true,
+                        status: true
+                    },
+                } : false,
                 reviews: true,
                 tests: true,
                 certificates: true,

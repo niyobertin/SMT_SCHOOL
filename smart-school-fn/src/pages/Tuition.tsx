@@ -1,10 +1,32 @@
 import { Check, Users, Award, BookOpen, TrendingUp } from "lucide-react"
 import useLanguage from "../hooks/useLanguage"
 import { useNavigate } from "react-router-dom"
+import { useState } from "react"
+import { LoginRequestModal } from "../components/RequestModal"
 
 export default function TuitionPage() {
   const { t } = useLanguage()
   const navigate = useNavigate()
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleModalOpen = (price: number, period: number) => {
+    const localToken = localStorage.getItem('accessToken');
+    if (!localToken) {
+      setIsModalOpen(true);
+    } else {
+      navigate(`/payment-flow/${price}/${period}`);
+    }
+  };
+
+  const handleClose = () => {
+    setIsModalOpen(false);
+    navigate('/tuition');
+  };
+
+  const handleContinue = () => {
+    setIsModalOpen(false);
+    navigate('/login');
+  };
 
   const plans = [
     {
@@ -151,7 +173,7 @@ export default function TuitionPage() {
                 </div>
 
                 <button
-                  onClick={() => navigate(`/payment-flow/${plan.basePrice}/${plan.period}`)}
+                  onClick={() => handleModalOpen(plan.basePrice, plan.period)}
                   className={`w-full py-3 px-4 rounded-xl font-semibold transition-all ${plan.popular
                     ? "bg-blue-800 hover:bg-blue-600 text-white"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-900"
@@ -180,6 +202,12 @@ export default function TuitionPage() {
           </div>
         </div>
       </div>
+      <LoginRequestModal
+        isOpen={isModalOpen}
+        onClose={handleClose}
+        onContinue={handleContinue}
+        featureName="courses payment"
+      />
     </div>
   )
 }
