@@ -20,6 +20,8 @@ import { dashboardRoutes } from "./routes";
 import ScrollToTop from "./components/common/ScrollToTop";
 import { UserProfilePage } from "./pages/profile";
 import { PaymentFlow } from "./components/common/Payment";
+import { JobListing } from "./pages/JobListing";
+import { JobDetails } from "./pages/JobDetails";
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -61,6 +63,8 @@ function App() {
             <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
             <Route path="/payment-flow/:amount/:period" element={<PaymentFlow />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/job-listing" element={<JobListing />} />
+            <Route path="/job-listing/:slug" element={<JobDetails />} />
           </Route>
         </Routes>
       </BrowserRouter>

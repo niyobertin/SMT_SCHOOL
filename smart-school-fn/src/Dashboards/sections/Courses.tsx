@@ -205,7 +205,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
                 key={index}
                 className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
               >
-                <div className="h-48 bg-gray-200 relative">
+                {/* <div className="h-48 bg-gray-200 relative">
                   {course?.thumbnail && (
                     <img
                       src={course.thumbnail}
@@ -213,7 +213,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
                       className="w-full h-full object-cover"
                     />
                   )}
-                </div>
+                </div> */}
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-lg font-semibold text-gray-900">

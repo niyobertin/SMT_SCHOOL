@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import ReactQuill from "react-quill-new";
+import { useState, useEffect, useRef } from "react";
+import JoditEditor from "jodit-react";
 import "react-quill-new/dist/quill.snow.css";
 
 type LessonContentModalProps = {
@@ -19,6 +19,8 @@ export const LessonContentModal = ({
   isLoading = false,
   isSuccess = false,
 }: LessonContentModalProps) => {
+  const editor = useRef(null);
+
   const [formData, setFormData] = useState({
     title: "",
     textBody: "",
@@ -73,9 +75,12 @@ export const LessonContentModal = ({
     }
   };
 
-  const handleEditorChange = (content: string) => {
-    setFormData({ ...formData, textBody: content });
-  };
+  // const handleEditorChange = (newContent: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     textBody: newContent,
+  //   }));
+  // };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,21 +124,17 @@ export const LessonContentModal = ({
           {/* React Quill Rich Text Editor */}
           <div>
             <label className="block mb-1 text-sm font-medium">Text Body</label>
-            <ReactQuill
+            <JoditEditor
+              ref={editor}
               value={formData.textBody}
-              onChange={handleEditorChange}
-              className="bg-white rounded-lg"
-              theme="snow"
-              modules={{
-                toolbar: [
-                  [{ header: [1, 2, 3, false] }],
-                  ["bold", "italic", "underline", "strike"],
-                  [{ color: [] }, { background: [] }],
-                  [{ list: "ordered" }, { list: "bullet" }],
-                  ["blockquote", "code-block"],
-                  ["link", "image", "video"],
-                  ["clean"],
-                ],
+              onBlur={(newContent) => {
+                setFormData((prev) => ({ ...prev, textBody: newContent }));
+              }}
+              config={{
+                readonly: false,
+                height: 400,
+                placeholder: "Write your lesson content here...",
+                toolbarAdaptive: false,
               }}
             />
           </div>

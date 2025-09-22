@@ -8,6 +8,7 @@ import { CoursesSection } from '../Dashboards/sections/Courses';
 import { Lessons } from '../Dashboards/sections/Lessons';
 import { LessonContent } from '../Dashboards/sections/Content';
 import { Tests } from '../Dashboards/sections/Tests';
+import { JobBoard } from '../Dashboards/sections/Jobs';
 
 export const dashboardRoutes: RouteObject[] = [
   {
@@ -29,6 +30,10 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'tests',
         element: <Tests />,
+      },
+      {
+        path: 'content',
+        element: <JobBoard />,
       },
       {
         path: 'courses',

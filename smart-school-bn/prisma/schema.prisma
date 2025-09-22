@@ -454,3 +454,20 @@ enum NotificationStatus {
   ARCHIVED
   DELETED
 }
+
+model JobPost {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  description     String
+  dueDate         DateTime
+  companyname     String?
+  companylogo     String?
+  companywebsite  String?
+  applicationLink String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("job_posts")
+}
