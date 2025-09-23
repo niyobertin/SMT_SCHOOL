@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Building, Globe, ExternalLink, MapPin, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar, Globe, ExternalLink, MapPin, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../redux/api/api';
 
@@ -95,7 +95,16 @@ export const JobDetails = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-2xl font-bold">Job Details</h1>
+                    <button
+                        onClick={() => navigate('/job-listing')}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        Back to Job Listings
+                    </button>
+                </div>
                 {/* Header Section */}
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6 transform hover:scale-[1.01] transition-transform duration-300">
                     <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-8 text-white relative overflow-hidden">
@@ -107,7 +116,7 @@ export const JobDetails = () => {
                                         <img
                                             src={job.companylogo}
                                             alt={job.companyname}
-                                            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-lg"
+                                            className="w-16 h-16 rounded-md object-cover border-2 border-white shadow-lg"
                                             onError={(e) => {
                                                 e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNFNUU3RUIiLz4KPHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSIxMCIgeT0iMTAiPgo8cGF0aCBkPSJNMTIgMTJDMTQuMjA5MSAxMiAxNiAxMC4yMDkxIDE2IDhDMTYgNS43OTA5IDE0LjIwOTEgNCAxMiA0QzkuNzkwODYgNCA4IDUuNzkwOSA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSIjOTk5OTk5Ii8+CjxwYXRoIGQ9Ik0xMiAxNEM5LjMzMzMzIDE0IDcuNzY2NjcgMTUuNzY2NyA3IDE4VjIwSDE3VjE4QzE2LjIzMzMgMTUuNzY2NyAxNC42NjY3IDE0IDEyIDE0WiIgZmlsbD0iIzk5OTk5OSIvPgo8L3N2Zz4KPC9zdmc+';
                                             }}
@@ -146,10 +155,6 @@ export const JobDetails = () => {
                 <div className="grid md:grid-cols-3 gap-6">
                     {/* Description */}
                     <div className="md:col-span-2 bg-white rounded-2xl shadow-lg p-8 transform hover:shadow-xl transition-shadow duration-300">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                            <Building className="w-6 h-6 text-blue-600" />
-                            Project Description
-                        </h3>
                         <div className="prose max-w-none">
                             <div dangerouslySetInnerHTML={{ __html: job?.description || '' }} />
                         </div>

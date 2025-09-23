@@ -5,7 +5,6 @@ import {
   Users,
   CreditCard,
   BookOpen,
-  BarChart3,
   FileText,
   Home,
   FileQuestion,
@@ -18,7 +17,6 @@ const sidebarItems = [
   { id: "tests", label: "Test Management", icon: FileQuestion, path: "/dashboard/tests" },
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
-  { id: "performance", label: "System Performance", icon: BarChart3, path: "/dashboard/monitoring" },
   { id: "home", label: "Home", icon: Home, path: "/" },
 ];
 
@@ -87,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1">
+          <ul className="space-y-5">
             {sidebarItems.map((item) => {
               const isActive = location.pathname.startsWith(item.path);
               return (

@@ -34,8 +34,6 @@ model User {
   testAttempts       TestAttempt[]
   userProgress       UserProgress[]
   userCourseProgress UserCourseProgress[]
-  certificates       Certificate[]
-  reviews            Review[]
   notifications      Notification[]
 
   @@map("users")
@@ -86,13 +84,11 @@ model Course {
   instructorId String
   instructor   User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
   categoryId   String
-  category     Category @relation(fields: [categoryId], references: [id])
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   lessons            Lesson[]
   enrollments        Enrollment[]
-  reviews            Review[]
   tests              Test[]
-  certificates       Certificate[]
   notifications      Notification[]
   userCourseProgress UserCourseProgress[]
   Payment            Payment[]
@@ -193,7 +189,7 @@ model Payment {
 
   // Relations
   userId String
-  user   User     @relation(fields: [userId], references: [id])
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course[]
 
   @@map("payments")
@@ -202,8 +198,8 @@ model Payment {
 model PaymentCourse {
   paymentId String
   courseId  String
-  payment   Payment @relation(fields: [paymentId], references: [id])
-  course    Course  @relation(fields: [courseId], references: [id])
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@id([paymentId, courseId])
 }
@@ -370,43 +366,6 @@ model UserCourseProgress {
   @@map("user_course_progress")
 }
 
-// Reviews & Ratings
-model Review {
-  id        String   @id @default(cuid())
-  rating    Int // 1-5 stars
-  comment   String?
-  isPublic  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  userId   String
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@map("reviews")
-}
-
-// Certificates
-model Certificate {
-  id                String    @id @default(cuid())
-  certificateNumber String    @unique
-  issuedAt          DateTime  @default(now())
-  validUntil        DateTime?
-  downloadCount     Int       @default(0)
-
-  // Relations
-  userId   String
-  user     User   @relation(fields: [userId], references: [id])
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id])
-
-  @@unique([userId, courseId])
-  @@map("certificates")
-}
-
 // Notification System
 model Notification {
   id        String             @id @default(cuid())
@@ -425,10 +384,10 @@ model Notification {
 
   // Optional relations for different notification types
   courseId String?
-  course   Course? @relation(fields: [courseId], references: [id])
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   testId      String?
-  test        Test?         @relation(fields: [testId], references: [id])
+  test        Test?         @relation(fields: [testId], references: [id], onDelete: Cascade)
   TestAttempt TestAttempt[]
 
   @@index([userId, status])

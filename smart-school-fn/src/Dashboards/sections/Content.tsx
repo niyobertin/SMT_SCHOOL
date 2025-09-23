@@ -7,8 +7,8 @@ import {
   fetchLessonContent,
   clearLessonContent,
   createLessonContent,
-  deleteLessonContent, // Add delete thunk
-  updateLessonContent // Add update thunk
+  deleteLessonContent,
+  updateLessonContent
 } from '../../redux/features/lessons/lessonContentSlice';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';

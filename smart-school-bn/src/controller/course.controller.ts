@@ -37,8 +37,15 @@ export const createCourse = async (
             });
             return;
         }
-        const thumbnailFile = files?.["thumbnail"]?.[0];
-        const thumbnail = await uploadBufferToCloudinary(thumbnailFile.buffer, thumbnailFile.mimetype, thumbnailFile.originalname);
+        let thumbnail: string | undefined;
+        const thumbnailFile = files?.thumbnail?.[0];
+        if (thumbnailFile) {
+            thumbnail = await uploadBufferToCloudinary(
+                thumbnailFile.buffer,
+                thumbnailFile.mimetype,
+                thumbnailFile.originalname
+            );
+        }
         const course = await prisma.course.create({
             data: {
                 ...courseData,
@@ -54,7 +61,7 @@ export const createCourse = async (
                         id: categoryId,
                     },
                 },
-                thumbnail,
+                ...(thumbnail && { thumbnail }),
                 status: courseData.status,
                 isPublished: Boolean(courseData.isPublished),
                 isFeatured: Boolean(courseData.isFeatured),
@@ -114,9 +121,7 @@ export const getCouses = async (req: Request, res: Response, next: NextFunction)
                         },
                     }
                     : false,
-                reviews: true,
                 tests: true,
-                certificates: true,
             },
             take: limit,
             skip: startIndex,
@@ -188,9 +193,7 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
                         status: true
                     },
                 } : false,
-                reviews: true,
                 tests: true,
-                certificates: true,
             },
         });
         if (!course) {
@@ -238,9 +241,7 @@ export const getCourseByCategory = async (req: Request, res: Response, next: Nex
                 category: true,
                 lessons: true,
                 enrollments: true,
-                reviews: true,
                 tests: true,
-                certificates: true,
             },
         });
         const total = courses.length;

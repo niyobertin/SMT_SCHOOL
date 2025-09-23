@@ -43,9 +43,7 @@ export interface Course {
   };
   lessons: any[];
   enrollments: any[];
-  reviews: any[];
   tests: any[];
-  certificates: any[];
 }
 
 interface CoursesState {

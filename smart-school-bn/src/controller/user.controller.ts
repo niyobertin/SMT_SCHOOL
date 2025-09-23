@@ -90,9 +90,7 @@ export const getUserById = async (
       include: {
         courses: true,
         enrollments: true,
-        reviews: true,
         testAttempts: true,
-        certificates: true,
         userProgress: true,
       },
     });
