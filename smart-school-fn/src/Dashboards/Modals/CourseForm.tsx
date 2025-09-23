@@ -389,11 +389,14 @@ export const CourseForm = ({ open, onClose, onSuccess, course }: CourseFormProps
                           disabled={categoriesLoading}
                         >
                           <option value="">Select a category</option>
-                          {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </option>
-                          ))}
+                          {categories
+                            .filter((cat) => cat.isActive)
+                            .map((cat) => (
+                              <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </option>
+                            ))}
+
                         </select>
                         {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId}</p>}
                       </>
