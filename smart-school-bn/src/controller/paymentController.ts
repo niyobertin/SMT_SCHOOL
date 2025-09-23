@@ -65,3 +65,55 @@ export const cashin = async (req: Request, res: Response, next: NextFunction) =>
         next(error);
     }
 }
+
+export const getPayments = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const skip = (page as number - 1) * (limit as number);
+        const payments = await prisma.payment.findMany({
+            skip,
+            take: limit as number,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        phoneNumber: true,
+                    }
+                }
+            },
+        });
+        const total = await prisma.payment.count();
+        const active = await prisma.payment.count({
+            where: { isActive: true },
+        });
+        const pending = await prisma.payment.count({
+            where: { status: "PENDING" },
+        });
+        const completed = await prisma.payment.count({
+            where: { status: "COMPLETED" },
+        });
+        const failed = await prisma.payment.count({
+            where: { status: "FAILED" },
+        });
+        const amount = await prisma.payment.aggregate({
+            where: { status: "COMPLETED" },
+            _sum: { amount: true },
+        });
+        res.status(200).json({
+            payments,
+            page,
+            limit,
+            total,
+            active,
+            pending,
+            completed,
+            failed,
+            amount: amount._sum.amount,
+        });
+    } catch (error: any) {
+        next(error);
+    }
+}
