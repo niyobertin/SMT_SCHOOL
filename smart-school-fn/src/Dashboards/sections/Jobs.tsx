@@ -1,15 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
+import { useDebounce } from "use-debounce";
 import {
     Search, Calendar, ChevronLeft, ChevronRight, Plus,
-    Eye, Edit, Trash2, X, Upload, Save, Send, AlertCircle,
+    Eye, Edit, Trash2, X, Upload, Send, AlertCircle,
     Globe, Building2, FileText, Link, MoreVertical
 } from 'lucide-react';
 import api from '../../redux/api/api';
 import { Toast } from 'primereact/toast';
 import JoditEditor from 'jodit-react';
 
+interface JobFormData {
+    title: string;
+    description: string;
+    dueDate: string;
+    companyname: string;
+    companyLogo: File | null;
+    companywebsite: string;
+    applicationLink: string;
+}
+
 export const JobBoard = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch] = useDebounce(searchTerm, 500);
     const [currentPage, setCurrentPage] = useState(1);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showActionMenu, setShowActionMenu] = useState(null);
@@ -26,8 +38,12 @@ export const JobBoard = () => {
     const toast = useRef<Toast>(null);
     const editor = useRef(null);
 
+    // Add editing state
+    const [isEditing, setIsEditing] = useState(false);
+    const [slug, setSlug] = useState(null);
+
     // Create Job Form State
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<JobFormData>({
         title: '',
         description: '',
         dueDate: '',
@@ -40,43 +56,47 @@ export const JobBoard = () => {
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
     // Fetch jobs from API
-    useEffect(() => {
-        const fetchJobs = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const response = await api.get(`/job-posts?page=${currentPage}&limit=${jobsPerPage}`);
-                setJobs(response.data.data);
-                setPagination({
-                    page: response.data.pagination.page,
-                    limit: response.data.pagination.limit,
-                    total: response.data.pagination.total,
-                    totalPages: response.data.pagination.totalPages
-                });
-            } catch (err: any) {
-                console.error('Error fetching jobs:', err);
-                setError(err.message || 'Failed to load jobs. Please try again later.');
-                toast.current?.show({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to load jobs. Please try again later.',
-                    life: 3000
-                });
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const fetchJobs = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const query = new URLSearchParams({
+                page: currentPage.toString(),
+                limit: jobsPerPage.toString(),
+                ...(searchTerm ? { q: searchTerm } : {}),
+            }).toString();
+            const response = await api.get(`/job-posts?${query}`);
+            setJobs(response.data.data);
+            setPagination({
+                page: response.data.pagination.page,
+                limit: response.data.pagination.limit,
+                total: response.data.pagination.total,
+                totalPages: response.data.pagination.totalPages
+            });
+        } catch (err: any) {
+            console.error('Error fetching jobs:', err);
+            setError(err.message || 'Failed to load jobs. Please try again later.');
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to load jobs. Please try again later.',
+                life: 3000
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchJobs();
-    }, [currentPage]);
+    }, [currentPage, debouncedSearch]);
 
     // Handle job deletion
-    const handleDeleteJob = async (id: string) => {
+    const handleDeleteJob = async (slug: string) => {
         if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
             try {
-                await api.delete(`/job-posts/${id}`);
-                // Refresh jobs after deletion
-                setCurrentPage(1);
+                await api.delete(`/job-posts/${slug}`);
+                await fetchJobs();
                 toast.current?.show({
                     severity: 'success',
                     summary: 'Success',
@@ -96,6 +116,35 @@ export const JobBoard = () => {
         setShowActionMenu(null);
     };
 
+    // Handle opening edit modal
+    const handleEditJob = (job: any) => {
+        setIsEditing(true);
+        setSlug(job.slug);
+
+        // Format date for datetime-local input
+        const formattedDate = new Date(job.dueDate).toISOString().slice(0, 16);
+
+        setFormData({
+            title: job.title || '',
+            description: job.description || '',
+            dueDate: formattedDate,
+            companyname: job.companyname || '',
+            companyLogo: null,
+            companywebsite: job.companywebsite || '',
+            applicationLink: job.applicationLink || ''
+        });
+
+        // Set logo preview if exists
+        if (job.companylogo) {
+            setLogoPreview(job.companylogo);
+        } else {
+            setLogoPreview(null);
+        }
+
+        setShowCreateModal(true);
+        setShowActionMenu(null);
+    };
+
     // Form handling functions
     const handleInputChange = (e: any) => {
         const { name, value } = e.target;
@@ -103,12 +152,10 @@ export const JobBoard = () => {
             ...prev,
             [name]: value
         }));
-
     };
 
     const handleFileChange = (e: any) => {
         const file = e.target.files[0];
-        console.log("selected file ==>", file);
 
         if (file) {
             if (!file.type.startsWith("image/")) {
@@ -132,16 +179,12 @@ export const JobBoard = () => {
             }
 
             const previewUrl = URL.createObjectURL(file);
-
-            // Save both file and previewUrl in formData
             setFormData(prev => ({
                 ...prev,
-                companyLogo: file,      // actual file (for uploading later)
-                companyLogoPreview: previewUrl, // preview url for UI
+                companyLogo: file,
+                companyLogoPreview: previewUrl,
             }));
-
-            console.log("previewUrl ==>", previewUrl);
-            setLogoPreview(previewUrl); // if you also keep separate preview state
+            setLogoPreview(previewUrl);
         }
     };
 
@@ -155,8 +198,8 @@ export const JobBoard = () => {
         const fileInput = document.getElementById('companyLogo') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
     };
-    const handleSubmit = async () => {
 
+    const handleSubmit = async () => {
         setIsSubmitting(true);
 
         try {
@@ -167,9 +210,8 @@ export const JobBoard = () => {
             formDataToSend.append('dueDate', new Date(formData.dueDate).toISOString());
             formDataToSend.append('companyname', formData.companyname);
 
-            if (formData.companyLogo) {
-                console.log("formData.companyLogo ==>", formData.companyLogo);
-                formDataToSend.append("companyLogo", formData.companyLogo); // File object
+            if (formData.companyLogo && formData.companyLogo instanceof File) {
+                formDataToSend.append("companyLogo", formData.companyLogo);
             }
 
             if (formData.companywebsite) {
@@ -180,35 +222,43 @@ export const JobBoard = () => {
                 formDataToSend.append('applicationLink', formData.applicationLink);
             }
 
-            const response = await api.post('/job-posts', formDataToSend, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            let response;
+            if (isEditing && slug) {
+                // Update existing job
+                response = await api.patch(`/job-posts/${slug}`, formDataToSend, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+            } else {
+                // Create new job
+                response = await api.post('/job-posts', formDataToSend, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+            }
 
-            if (response.status === 201) {
-                const result = await response.data;
+            if (response.status === 200 || response.status === 201) {
                 toast.current?.show({
                     severity: 'success',
                     summary: 'Success',
-                    detail: 'Job post created successfully',
+                    detail: isEditing ? 'Job updated successfully' : 'Job created successfully',
                     life: 3000
                 });
 
-                // Reset form
-                resetForm();
+                // Refresh the jobs list
+                await fetchJobs();
 
-                // Close modal after 2 seconds
+                resetForm();
                 setTimeout(() => {
                     setShowCreateModal(false);
-                }, 2000);
-
-                console.log('Job created:', result);
+                }, 1500);
             } else {
                 toast.current?.show({
                     severity: 'error',
                     summary: 'Error',
-                    detail: `Failed to create job post: ${response.data.message}`,
+                    detail: `Failed to ${isEditing ? 'update' : 'create'} job post: ${response.data.message}`,
                     life: 3000
                 });
             }
@@ -216,10 +266,10 @@ export const JobBoard = () => {
             toast.current?.show({
                 severity: 'error',
                 summary: 'Error',
-                detail: `Failed to create job post: ${error.message}`,
+                detail: `Failed to ${isEditing ? 'update' : 'create'} job post: ${error.message}`,
                 life: 3000
             });
-            console.error('Error creating job:', error);
+            console.error(`Error ${isEditing ? 'updating' : 'creating'} job:`, error);
         } finally {
             setIsSubmitting(false);
         }
@@ -236,20 +286,16 @@ export const JobBoard = () => {
             applicationLink: ''
         });
         setLogoPreview(null);
+        setIsEditing(false);
+        setSlug(null);
+
+        // Clear file input
+        const fileInput = document.getElementById('companyLogo') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
     };
 
-    const handleSaveDraft = () => {
-        alert('Draft saved! (This would typically save to localStorage or send to API)');
-    };
-
-    // Job action handlers
     const handleViewJob = (slug: string) => {
         console.log(`Viewing job ${slug}`);
-        setShowActionMenu(null);
-    };
-
-    const handleEditJob = (slug: string) => {
-        console.log(`Editing job ${slug}`);
         setShowActionMenu(null);
     };
 
@@ -265,6 +311,11 @@ export const JobBoard = () => {
                 {status}
             </span>
         );
+    };
+
+    const handleCloseModal = () => {
+        setShowCreateModal(false);
+        resetForm();
     };
 
     return (
@@ -319,7 +370,7 @@ export const JobBoard = () => {
                                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <p className="text-gray-600">{error}</p>
                                 <button
-                                    onClick={() => setCurrentPage(1)}
+                                    onClick={() => fetchJobs()}
                                     className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 >
                                     Retry
@@ -358,17 +409,19 @@ export const JobBoard = () => {
 
                                                     <div className="flex items-center text-sm text-gray-600 mb-3 space-x-4 flex-wrap">
                                                         <span className="font-medium text-blue-600">{job.companyname}</span>
-                                                        <span className="flex items-center">
-                                                            <a
-                                                                href={job.companywebsite}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="flex items-center text-blue-600 hover:underline"
-                                                            >
-                                                                <Globe className="w-4 h-4 mr-1" />
-                                                                Website
-                                                            </a>
-                                                        </span>
+                                                        {job.companywebsite && (
+                                                            <span className="flex items-center">
+                                                                <a
+                                                                    href={job.companywebsite}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center text-blue-600 hover:underline"
+                                                                >
+                                                                    <Globe className="w-4 h-4 mr-1" />
+                                                                    Website
+                                                                </a>
+                                                            </span>
+                                                        )}
                                                         <span className="flex items-center">
                                                             <Calendar className="w-4 h-4 mr-1" />
                                                             Deadline: {new Date(job.dueDate).toLocaleDateString()}
@@ -376,15 +429,17 @@ export const JobBoard = () => {
                                                     </div>
 
                                                     <div className="flex items-center justify-between">
-                                                        <a
-                                                            href={job.applicationLink}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-blue-600 hover:underline text-sm flex items-center"
-                                                        >
-                                                            <Link className="w-4 h-4 mr-1" />
-                                                            Apply Now
-                                                        </a>
+                                                        {job.applicationLink && (
+                                                            <a
+                                                                href={job.applicationLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-blue-600 hover:underline text-sm flex items-center"
+                                                            >
+                                                                <Link className="w-4 h-4 mr-1" />
+                                                                Apply Now
+                                                            </a>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -409,14 +464,14 @@ export const JobBoard = () => {
                                                                 View Details
                                                             </button>
                                                             <button
-                                                                onClick={() => handleEditJob(job.id)}
+                                                                onClick={() => handleEditJob(job)}
                                                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                                             >
                                                                 <Edit className="w-4 h-4 mr-3" />
                                                                 Edit Job
                                                             </button>
                                                             <button
-                                                                onClick={() => handleDeleteJob(job.id)}
+                                                                onClick={() => handleDeleteJob(job.slug)}
                                                                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                                                             >
                                                                 <Trash2 className="w-4 h-4 mr-3" />
@@ -492,18 +547,17 @@ export const JobBoard = () => {
                     )}
                 </div>
 
-                {/* Create Job Modal */}
+                {/* Create/Edit Job Modal */}
                 {showCreateModal && (
                     <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                             {/* Modal Header */}
                             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                                <h2 className="text-2xl font-bold text-gray-900">Create New Job Post</h2>
+                                <h2 className="text-2xl font-bold text-gray-900">
+                                    {isEditing ? 'Edit Job Post' : 'Create New Job Post'}
+                                </h2>
                                 <button
-                                    onClick={() => {
-                                        setShowCreateModal(false);
-                                        resetForm();
-                                    }}
+                                    onClick={handleCloseModal}
                                     className="text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <X className="w-6 h-6" />
@@ -535,7 +589,6 @@ export const JobBoard = () => {
                                                     placeholder="e.g., TENDER NOTICE FOR CONSTRUCTION WORKS..."
                                                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
                                                 />
-
                                             </div>
 
                                             {/* Job Description */}
@@ -552,7 +605,7 @@ export const JobBoard = () => {
                                                     config={{
                                                         readonly: false,
                                                         height: 300,
-                                                        placeholder: "Write your lesson content here...",
+                                                        placeholder: "Write your job description here...",
                                                         toolbarAdaptive: false,
                                                     }}
                                                 />
@@ -574,7 +627,6 @@ export const JobBoard = () => {
                                                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
                                                     />
                                                 </div>
-
                                             </div>
                                         </div>
                                     </div>
@@ -601,7 +653,6 @@ export const JobBoard = () => {
                                                     placeholder="e.g., Kilimo Trust"
                                                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
                                                 />
-
                                             </div>
 
                                             {/* Company Website */}
@@ -621,7 +672,6 @@ export const JobBoard = () => {
                                                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
                                                     />
                                                 </div>
-
                                             </div>
                                         </div>
 
@@ -663,7 +713,6 @@ export const JobBoard = () => {
                                                     </button>
                                                 </div>
                                             )}
-
                                         </div>
 
                                         {/* Application Link */}
@@ -683,7 +732,6 @@ export const JobBoard = () => {
                                                     className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
                                                 />
                                             </div>
-
                                         </div>
                                     </div>
 
@@ -698,31 +746,18 @@ export const JobBoard = () => {
                                             {isSubmitting ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    Creating...
+                                                    {isEditing ? 'Updating...' : 'Creating...'}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Send className="w-5 h-5 mr-2" />
-                                                    Publish Job Post
+                                                    {isEditing ? 'Update Job Post' : 'Publish Job Post'}
                                                 </>
                                             )}
                                         </button>
-
                                         <button
                                             type="button"
-                                            onClick={handleSaveDraft}
-                                            className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center"
-                                        >
-                                            <Save className="w-5 h-5 mr-2" />
-                                            Save as Draft
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowCreateModal(false);
-                                                resetForm();
-                                            }}
+                                            onClick={handleCloseModal}
                                             className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
                                         >
                                             Cancel
@@ -733,7 +768,6 @@ export const JobBoard = () => {
                         </div>
                     </div>
                 )}
-
                 {/* Click outside to close action menu */}
                 {showActionMenu && (
                     <div

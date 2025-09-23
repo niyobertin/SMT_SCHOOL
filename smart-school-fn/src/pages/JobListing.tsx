@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Calendar, Clock, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import api from '../redux/api/api';
 import { useNavigate } from 'react-router-dom';
+import { useDebounce } from "use-debounce";
 
 export const JobListing = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch] = useDebounce(searchTerm, 500);
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,15 @@ export const JobListing = () => {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await api.get(`/job-posts?page=${currentPage}&limit=${jobsPerPage}&status=active`);
+                const query = new URLSearchParams({
+                    page: currentPage.toString(),
+                    limit: jobsPerPage.toString(),
+                    status: "active",
+                    ...(searchTerm ? { q: searchTerm } : {}),
+                }).toString();
+
+                const response = await api.get(`/job-posts?${query}`);
+
                 const jobData = response.data.data || [];
                 setJobs(jobData);
                 setPagination({
@@ -45,15 +55,9 @@ export const JobListing = () => {
         };
 
         fetchJobs();
-    }, [currentPage, jobsPerPage]);
+    }, [currentPage, jobsPerPage, debouncedSearch]);
 
 
-    // Filter jobs based on search term and category
-    const filteredJobs = jobs.filter(job => {
-        const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesSearch;
-    });
 
     const handleJobClick = (slug: string) => {
         console.log(`Navigating to job details for job ID: ${slug}`);
@@ -105,12 +109,12 @@ export const JobListing = () => {
                                 Retry
                             </button>
                         </div>
-                    ) : filteredJobs.length === 0 ? (
+                    ) : jobs.length === 0 ? (
                         <div className="text-center py-12">
                             <p className="text-gray-500 text-lg">No jobs found matching your search criteria.</p>
                         </div>
                     ) : (
-                        filteredJobs.map((job) => (
+                        jobs.map((job) => (
                             <div
                                 key={job.id}
                                 onClick={() => handleJobClick(job.slug)}

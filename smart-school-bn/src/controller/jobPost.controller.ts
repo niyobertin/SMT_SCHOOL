@@ -118,8 +118,17 @@ export const updateJobPost = async (
         const { slug } = req.params;
         const updateData = req.body;
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-        const companylogoFile = files?.["companylogo"]?.[0];
-        const companylogo = await uploadBufferToCloudinary(companylogoFile.buffer, companylogoFile.mimetype, companylogoFile.originalname);
+        let companylogo: string | null = null;
+
+        if (files?.["companylogo"]?.[0]) {
+            const companylogoFile = files["companylogo"][0];
+            companylogo = await uploadBufferToCloudinary(
+                companylogoFile.buffer,
+                companylogoFile.mimetype,
+                companylogoFile.originalname
+            );
+        }
+
         const existingJobPost = await prisma.jobPost.findUnique({ where: { slug } });
         if (!existingJobPost) {
             res.status(404).json({
@@ -136,7 +145,7 @@ export const updateJobPost = async (
             data: {
                 ...safeUpdateData,
                 slug: updateData.title.toLowerCase().replace(/\s/g, "-"),
-                companylogo: companylogo || null,
+                ...(companylogo ? { companylogo } : {}),
                 updatedAt: new Date(),
             },
         });
