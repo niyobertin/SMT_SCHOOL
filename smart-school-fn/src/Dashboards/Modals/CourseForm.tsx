@@ -13,7 +13,7 @@ interface CourseFormProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  course?: any; // Add course prop for editing
+  course?: any;
 }
 
 export const CourseForm = ({ open, onClose, onSuccess, course }: CourseFormProps) => {

@@ -11,6 +11,7 @@ export const JobListing = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [jobs, setJobs] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const navigate = useNavigate();
     const [pagination, setPagination] = useState({
         page: 1,
@@ -57,7 +58,28 @@ export const JobListing = () => {
         fetchJobs();
     }, [currentPage, jobsPerPage, debouncedSearch]);
 
+    const fetchCategories = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await api.get('/job-categories');
+            setCategories(response.data.data);
+        } catch (err: any) {
+            console.error('Error fetching categories:', err);
+            setError(err.message || 'Failed to load categories. Please try again later.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const handleViewJob = (slug: string) => {
+        setSearchTerm(slug);
+        setCurrentPage(1);
+    };
 
     const handleJobClick = (slug: string) => {
         console.log(`Navigating to job details for job ID: ${slug}`);
@@ -72,6 +94,7 @@ export const JobListing = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-6xl mx-auto">
+
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Job Opportunities</h1>
@@ -80,6 +103,19 @@ export const JobListing = () => {
 
                 {/* Search Bar */}
                 <div className="mb-6">
+                    <div className="flex justify-start gap-2 items-center mb-4">
+                        {categories.map((category) => (
+                            <div key={category.id} className="flex items-center relative">
+                                <button
+                                    onClick={() => handleViewJob(category.slug)}
+                                    className="bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                                >
+                                    {category.name} ({category.jobPosts.length})
+                                </button>
+                            </div>
+                        ))}
+
+                    </div>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
@@ -151,6 +187,10 @@ export const JobListing = () => {
                                                 </a>
                                             </span>
                                             <span className="flex items-center">
+                                                <Calendar className="w-4 h-4 mr-1" />
+                                                Posted on : {new Date(job.createdAt).toLocaleDateString()}
+                                            </span>
+                                            <span className="flex items-center font-semibold">
                                                 <Calendar className="w-4 h-4 mr-1" />
                                                 Deadline: {new Date(job.dueDate).toLocaleDateString()}
                                             </span>

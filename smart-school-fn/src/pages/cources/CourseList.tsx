@@ -94,7 +94,6 @@ export const CourseList = () => {
       </div>
     );
   }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Top Bar: Search + Category Dropdown */}
@@ -210,7 +209,8 @@ export const CourseList = () => {
                         className="w-full h-full object-cover"
                       />
                     )} */}
-                    {course.enrollments?.length > 0 ? (
+
+                    {course.enrollments?.map(enrollment => enrollment.status === "ACTIVE")?.length > 0 ? (
                       <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-md">
                         <CheckCircle className="h-6 w-6 text-white" />
                       </div>

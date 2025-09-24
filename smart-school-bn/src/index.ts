@@ -13,9 +13,8 @@ import { healthCheck } from "./middleware/healthCheck";
 import { swaggerSetup } from "./config/swagger";
 import router from "./routes";
 import YouTubeUploader from "./helper/youtubeUploader";
-import cron from "node-cron";
-import { pollPendingPayments } from "./helper/pullPaymentEvent";
 import { initSocket } from "./utils/socketServer";
+import { startUpdateRemainingDaysJob } from "./utils/jobs";
 dotenv.config();
 
 const app = express();
@@ -78,6 +77,7 @@ app.use("*", (req, res) => {
 // Global error handler
 app.use(errorHandler);
 
+startUpdateRemainingDaysJob();
 // Graceful shutdown
 const shutdown = (signal: string) => {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
@@ -102,11 +102,6 @@ const shutdown = (signal: string) => {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
-// Run every 1 minute
-cron.schedule("*/1 * * * *", async () => {
-  console.log("⏰ Running Paypack polling job...");
-  await pollPendingPayments();
-});
 // Start server
 server.listen(PORT, () => {
   logger.info(`Server is running on port ${PORT}`);

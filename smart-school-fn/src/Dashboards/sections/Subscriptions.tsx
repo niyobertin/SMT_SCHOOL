@@ -203,6 +203,9 @@ export const SubscriptionsSection = () => {
                   Remaining
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Active
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
               </tr>
@@ -243,6 +246,9 @@ export const SubscriptionsSection = () => {
                     <div className="text-xs text-gray-500">
                       of {payment.subscriptionPeriod} total
                     </div>
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap ${payment.isActive ? "text-green-600" : "text-red-600"}`}>
+                    {payment.isActive ? "Active" : "Inactive"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(payment.createdAt)}

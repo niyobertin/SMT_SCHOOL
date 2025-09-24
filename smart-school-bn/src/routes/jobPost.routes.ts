@@ -1,10 +1,15 @@
 import { Router } from "express";
 import {
+    createJobCategory,
     createJobPost,
+    deleteJobCategory,
     deleteJobPost,
     getAllJobPosts,
     getExpiredJobPosts,
+    getJobCategories,
+    getJobPostByCategory,
     getJobPostById,
+    updateJobCategory,
     updateJobPost,
 } from "../controller/jobPost.controller";
 import { authenticate, authorize } from "../middleware/auth";
@@ -254,5 +259,4 @@ router.delete("/:slug", authenticate, authorize("ADMIN"), deleteJobPost);
  *         description: Forbidden - Admin access required
  */
 router.post("/cleanup/expired", authenticate, authorize("ADMIN"), getExpiredJobPosts);
-
 export default router;
