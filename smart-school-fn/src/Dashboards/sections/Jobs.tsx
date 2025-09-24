@@ -3,18 +3,21 @@ import { useDebounce } from "use-debounce";
 import {
     Search, Calendar, ChevronLeft, ChevronRight, Plus,
     Eye, Edit, Trash2, X, Upload, Send, AlertCircle,
-    Globe, Building2, FileText, Link, MoreVertical
+    Globe, Building2, FileText, Link, MoreVertical,
 } from 'lucide-react';
 import api from '../../redux/api/api';
 import { Toast } from 'primereact/toast';
 import JoditEditor from 'jodit-react';
+import { CategoryModal } from '../Modals/CategoryModal';
 
 interface JobFormData {
     title: string;
     description: string;
     dueDate: string;
+    jobCategoryId: string;
     companyname: string;
     companyLogo: File | null;
+    attachments: File | null;
     companywebsite: string;
     applicationLink: string;
 }
@@ -41,14 +44,110 @@ export const JobBoard = () => {
     // Add editing state
     const [isEditing, setIsEditing] = useState(false);
     const [slug, setSlug] = useState(null);
+    const [categories, setCategories] = useState<any[]>([]);
 
+    // Add these states inside your Jobs component
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<{ slug?: string; name: string } | null>(null);
+    const [isSubmittingCategory, setIsSubmittingCategory] = useState(false);
+
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+
+    const handleEditCategory = (category: any) => {
+        setSelectedCategory(category);
+        setIsCategoryModalOpen(true);
+        setOpenMenuId(null);
+    };
+
+    const handleDeleteCategory = async (category: any) => {
+        if (window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+            try {
+                await api.delete(`/job-categories/category/${category?.slug}`);
+                fetchCategories();
+                toast.current?.show({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Category deleted successfully',
+                    life: 3000
+                });
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                toast.current?.show({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to delete category',
+                    life: 3000
+                });
+            }
+        }
+        setOpenMenuId(null);
+    };
+
+    // Add these functions inside your Jobs component
+    const handleOpenCategoryModal = (category = null) => {
+        setSelectedCategory(category);
+        setIsCategoryModalOpen(true);
+    };
+
+    const handleCategorySubmit = async (data: { name: string }) => {
+        try {
+            setIsSubmittingCategory(true);
+            if (selectedCategory) {
+                console.log("selectedCategory", selectedCategory);
+                // Update existing category
+                await api.patch(`/job-categories/category/${selectedCategory.slug}`, data);
+                toast.current?.show({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Category updated successfully',
+                    life: 3000,
+                });
+            } else {
+                // Create new category
+                await api.post('/job-categories/category', data);
+                toast.current?.show({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Category created successfully',
+                    life: 3000,
+                });
+            }
+            fetchCategories(); // Refresh the categories list
+        } catch (error) {
+            console.error('Error saving category:', error);
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to save category. Please try again.',
+                life: 3000,
+            });
+        } finally {
+            setIsSubmittingCategory(false);
+        }
+    };
     // Create Job Form State
     const [formData, setFormData] = useState<JobFormData>({
         title: '',
         description: '',
         dueDate: '',
+        jobCategoryId: '',
         companyname: '',
         companyLogo: null,
+        attachments: null,
         companywebsite: '',
         applicationLink: ''
     });
@@ -86,6 +185,30 @@ export const JobBoard = () => {
             setIsLoading(false);
         }
     };
+
+    const fetchCategories = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await api.get('/job-categories');
+            setCategories(response.data.data);
+        } catch (err: any) {
+            console.error('Error fetching categories:', err);
+            setError(err.message || 'Failed to load categories. Please try again later.');
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to load categories. Please try again later.',
+                life: 3000
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         fetchJobs();
@@ -128,8 +251,10 @@ export const JobBoard = () => {
             title: job.title || '',
             description: job.description || '',
             dueDate: formattedDate,
+            jobCategoryId: job.jobCategoryId || '',
             companyname: job.companyname || '',
             companyLogo: null,
+            attachments: job.attachments || '',
             companywebsite: job.companywebsite || '',
             applicationLink: job.applicationLink || ''
         });
@@ -158,16 +283,6 @@ export const JobBoard = () => {
         const file = e.target.files[0];
 
         if (file) {
-            if (!file.type.startsWith("image/")) {
-                toast.current?.show({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Please select a valid image file',
-                    life: 3000
-                });
-                return;
-            }
-
             if (file.size > 5 * 1024 * 1024) {
                 toast.current?.show({
                     severity: 'error',
@@ -209,6 +324,7 @@ export const JobBoard = () => {
             formDataToSend.append('description', formData.description);
             formDataToSend.append('dueDate', new Date(formData.dueDate).toISOString());
             formDataToSend.append('companyname', formData.companyname);
+            formDataToSend.append('jobCategoryId', formData.jobCategoryId);
 
             if (formData.companyLogo && formData.companyLogo instanceof File) {
                 formDataToSend.append("companyLogo", formData.companyLogo);
@@ -220,6 +336,10 @@ export const JobBoard = () => {
 
             if (formData.applicationLink) {
                 formDataToSend.append('applicationLink', formData.applicationLink);
+            }
+
+            if (formData.attachments && formData.attachments instanceof File) {
+                formDataToSend.append('attachments', formData.attachments);
             }
 
             let response;
@@ -274,14 +394,15 @@ export const JobBoard = () => {
             setIsSubmitting(false);
         }
     };
-
     const resetForm = () => {
         setFormData({
             title: '',
             description: '',
             dueDate: '',
+            jobCategoryId: '',
             companyname: '',
             companyLogo: null,
+            attachments: null,
             companywebsite: '',
             applicationLink: ''
         });
@@ -295,8 +416,8 @@ export const JobBoard = () => {
     };
 
     const handleViewJob = (slug: string) => {
-        console.log(`Viewing job ${slug}`);
-        setShowActionMenu(null);
+        setSearchTerm(slug);
+        setCurrentPage(1);
     };
 
     const getStatusBadge = (status: string) => {
@@ -338,6 +459,49 @@ export const JobBoard = () => {
 
                 {/* Search and Filter Section */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                    <div className="flex justify-start gap-2 items-center mb-4">
+                        {categories.map((category) => (
+                            <div key={category.id} className="flex items-center relative">
+                                <button
+                                    onClick={() => handleViewJob(category.slug)}
+                                    className="bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                                >
+                                    {category.name} ({category.jobPosts.length})
+                                </button>
+                                <div className="relative ml-2" ref={menuRef}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setOpenMenuId(openMenuId === category.id ? null : category.id);
+                                        }}
+                                        className="p-1 hover:bg-gray-100 rounded-full"
+                                    >
+                                        <MoreVertical className="w-5 h-5 text-gray-500" />
+                                    </button>
+
+                                    {openMenuId === category.id && (
+                                        <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                            <button
+                                                onClick={() => handleEditCategory(category)}
+                                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                <Edit className="w-4 h-4 mr-2" />
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteCategory(category)}
+                                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                            >
+                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+
+                    </div>
                     <div className="flex flex-col lg:flex-row gap-4">
                         {/* Search Bar */}
                         <div className="flex-1">
@@ -422,7 +586,13 @@ export const JobBoard = () => {
                                                                 </a>
                                                             </span>
                                                         )}
+
                                                         <span className="flex items-center">
+                                                            <Calendar className="w-4 h-4 mr-1" />
+                                                            Created: {new Date(job.createdAt).toLocaleDateString()}
+                                                        </span>
+
+                                                        <span className="flex items-center font-semibold">
                                                             <Calendar className="w-4 h-4 mr-1" />
                                                             Deadline: {new Date(job.dueDate).toLocaleDateString()}
                                                         </span>
@@ -591,6 +761,40 @@ export const JobBoard = () => {
                                                 />
                                             </div>
 
+                                            <div>
+                                                <label
+                                                    htmlFor="category"
+                                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                                >
+                                                    Category
+                                                </label>
+
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <select
+                                                        id="category"
+                                                        name="jobCategoryId"
+                                                        value={formData.jobCategoryId}
+                                                        onChange={handleInputChange}
+                                                        className="w-1/2 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300"
+                                                    >
+                                                        <option value="">Select a category</option>
+                                                        {categories?.map((category: any) => (
+                                                            <option key={category.id} value={category.id}>
+                                                                {category.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenCategoryModal()}
+                                                        className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 bg-blue-500 rounded-lg hover:bg-gray-50 mt-2"
+                                                    >
+                                                        Add Category
+                                                    </button>
+                                                </div>
+                                            </div>
+
                                             {/* Job Description */}
                                             <div>
                                                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
@@ -733,6 +937,22 @@ export const JobBoard = () => {
                                                 />
                                             </div>
                                         </div>
+                                        {/* Attachments */}
+                                        <div className="mt-4">
+                                            <label htmlFor="attachments" className="block text-sm font-medium text-gray-700 mb-2">
+                                                Attachments
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="file"
+                                                    accept="application/pdf | doc | docx | txt | zip | rar | 7z"
+                                                    id="attachments"
+                                                    name="attachments"
+                                                    onChange={handleFileChange}
+                                                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Action Buttons */}
@@ -776,6 +996,17 @@ export const JobBoard = () => {
                     />
                 )}
             </div>
+            <CategoryModal
+                isOpen={isCategoryModalOpen}
+                onClose={() => {
+                    setIsCategoryModalOpen(false);
+                    setSelectedCategory(null);
+                }}
+                onSubmit={handleCategorySubmit}
+                initialData={selectedCategory}
+                isSubmitting={isSubmittingCategory}
+            />
+
             <Toast ref={toast} position="top-right" />
         </div>
     );

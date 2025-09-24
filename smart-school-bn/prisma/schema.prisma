@@ -73,6 +73,7 @@ model Course {
   status           CourseStatus @default(DRAFT)
   isPublished      Boolean      @default(false)
   isFeatured       Boolean      @default(false)
+  type             String?      @default("free")
   tags             String[]
   requirements     String[]
   objectives       String[]
@@ -378,11 +379,8 @@ model Notification {
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
-  // Relations
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Optional relations for different notification types
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId String?
   course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
@@ -415,18 +413,32 @@ enum NotificationStatus {
 }
 
 model JobPost {
-  id              String   @id @default(cuid())
+  id              String       @id @default(cuid())
   title           String
-  slug            String   @unique
+  slug            String       @unique
   description     String
   dueDate         DateTime
   companyname     String?
   companylogo     String?
   companywebsite  String?
   applicationLink String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  attachments     String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  jobCategory     JobCategory? @relation(fields: [jobCategoryId], references: [id], onDelete: Cascade)
+  jobCategoryId   String?
 
   @@map("job_posts")
+}
+
+model JobCategory {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String    @unique
+  jobPosts  JobPost[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("job_categories")
 }

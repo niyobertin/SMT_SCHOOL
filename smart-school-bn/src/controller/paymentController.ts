@@ -4,14 +4,13 @@ import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { getAccessToken } from "../services/paypackAuth";
-
+import { pollPendingPaymentsJob } from "../utils/jobs";
 const prisma = new PrismaClient();
 
 export const cashin = async (req: Request, res: Response, next: NextFunction) => {
     // @ts-ignore
     const userId = req.user?.id;
     const { amount, phoneNumber, channel, subscribedCourseIds, subscriptionPeriod, isActive } = req.body;
-    const remainingPeriod = subscriptionPeriod;
     try {
         // 1. Create the payment
         const payment = await prisma.payment.create({
@@ -27,7 +26,6 @@ export const cashin = async (req: Request, res: Response, next: NextFunction) =>
                     })),
                 },
                 subscriptionPeriod,
-                remainingPeriod,
                 isActive,
             },
             include: { courses: true },
@@ -54,6 +52,7 @@ export const cashin = async (req: Request, res: Response, next: NextFunction) =>
         });
 
         logger.info("Payment created", payment);
+        pollPendingPaymentsJob();
         // 4. Return response
         res.json({
             message: "Payment initialized successfully",
@@ -82,7 +81,10 @@ export const getPayments = async (req: Request, res: Response, next: NextFunctio
                         lastName: true,
                         phoneNumber: true,
                     }
-                }
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
             },
         });
         const total = await prisma.payment.count();

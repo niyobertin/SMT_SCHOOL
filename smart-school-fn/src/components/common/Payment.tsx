@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { CreditCard, Clock, Book, ArrowLeft, ArrowRight, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import mtn from "../../assets/momopay.jpg";
 import airtel from "../../assets/airtel.png";
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { breakdownDays } from '../../utils/convertDays';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { fetchCourses } from '../../redux/features/courses/courseSlice';
-import { useNavigate } from 'react-router-dom';
 import socket from '../../utils/socket';
 import api from '../../redux/api/api';
-// Type definitions
+
 type PaymentMethod = 'mtn' | 'airtel' | '';
 type ModalType = 'loading' | 'success' | 'failure' | '';
+
 export const PaymentFlow: React.FC = () => {
     const [step, setStep] = useState<number>(1);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('');
@@ -21,28 +21,54 @@ export const PaymentFlow: React.FC = () => {
     const [showModal, setShowModal] = useState<boolean>(false);
     const [modalType, setModalType] = useState<ModalType>('');
     const { amount, period } = useParams<{ amount: string, period: string }>();
+    const [searchParams] = useSearchParams();
+    const type = (searchParams.get("type") || "").trim().toLowerCase();
+    const name = (searchParams.get("name") || "").trim();
     const [availableCourses, setAvailableCourses] = useState<any[]>([]);
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
-    const {
-        items: courses,
-        loading,
-        error,
-    } = useSelector((state: RootState) => state.courses);
 
+    const { items: courses, loading, error } = useSelector((state: RootState) => state.courses);
+
+    const filterTuitionCourses = courses.filter((course: any) => {
+        const categoryName = course.category.name.toLowerCase().replace(/\s+/g, "");
+        const targetName = "cpa(r)".toLowerCase().replace(/\s+/g, "");
+        return categoryName !== targetName;
+    });
+
+    const filterCpaCourses = courses.filter((course: any) => {
+        const categoryName = course.category.name.toLowerCase().replace(/\s+/g, "");
+        const targetName = "cpa(r)".toLowerCase().replace(/\s+/g, "");
+        return categoryName === targetName;
+    });
+    const normalize = (str: string) =>
+        str
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .replace(/\(r\)/g, "r")
+            .trim();
     useEffect(() => {
-        setAvailableCourses(courses);
-    }, [courses]);
+        if (type !== "cpa") {
+            setAvailableCourses(filterTuitionCourses);
+        } else if (type === "cpa") {
+            setAvailableCourses(filterCpaCourses);
+
+            const match = filterCpaCourses.find(
+                (course: any) => normalize(course.title) === normalize(name)
+            );
+
+            if (match) {
+                setSelectedCourses([match]);
+            }
+        }
+    }, [courses, type, name]);
 
     useEffect(() => {
         dispatch(fetchCourses({ page: 1, q: '', limit: 1000, categoryId: null }));
     }, [dispatch]);
 
     useEffect(() => {
-        // Listen to transactionUpdate from backend
         socket.on("transactionUpdate", (data) => {
-            console.log("📩 Received transactionUpdate:", data);
-
             if (data.status === "COMPLETED") {
                 setModalType("success");
                 setShowModal(true);
@@ -51,15 +77,15 @@ export const PaymentFlow: React.FC = () => {
                 setShowModal(true);
             }
         });
-
-        // Cleanup listener
         return () => {
             socket.off("transactionUpdate");
         };
     }, []);
 
-
     const handleCourseSelection = (course: any): void => {
+        if (type === "cpa") {
+            return;
+        }
         setSelectedCourses(prev => {
             if (prev.find(c => c.id === course.id)) {
                 return prev.filter(c => c.id !== course.id);
@@ -84,24 +110,17 @@ export const PaymentFlow: React.FC = () => {
 
         try {
             const response = await api.post('/payments/cashin', paymentData);
-            console.log(response);
-
-            // Join the payment room
-            const paymentId = response.data.paymentId; // adjust according to your API response
+            const paymentId = response.data.paymentId;
             socket.emit("joinTransaction", { transactionId: paymentId });
-
         } catch (error: any) {
-            console.error("Payment creation failed:", error);
             setModalType('failure');
         }
     };
-
 
     const closeModal = (): void => {
         setShowModal(false);
         if (modalType === 'success') {
             navigate('/courses');
-            // Reset form or redirect
             setStep(1);
             setPaymentMethod('');
             setPhoneNumber('07');
@@ -118,7 +137,10 @@ export const PaymentFlow: React.FC = () => {
     };
 
     const totalAmount = amount;
-    const isFormValid: boolean = paymentMethod !== '' && phoneNumber.length >= 10 && selectedCourses.length > 0;
+    const isFormValid: boolean =
+        paymentMethod !== '' &&
+        phoneNumber.length >= 10 &&
+        selectedCourses.length > 0;
     const { years, months, weeks, days } = breakdownDays(Number(period));
 
     // Main Payment Form
@@ -138,37 +160,39 @@ export const PaymentFlow: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Column - Payment Method & Phone */}
+                    {/* Left Column */}
                     <div className="space-y-6">
-                        {/* Payment Method Selection */}
+                        {/* Payment Method */}
                         <div>
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">Payment Method</h3>
                             <div className="space-y-3">
                                 <div
-                                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'mtn' ? 'border-yellow-500 bg-yellow-50' : 'border-gray-200 hover:border-yellow-300'
+                                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'mtn'
+                                        ? 'border-yellow-500 bg-yellow-50'
+                                        : 'border-gray-200 hover:border-yellow-300'
                                         }`}
                                     onClick={() => handlePaymentMethodSelect('mtn')}
                                 >
                                     <div className="flex items-center">
-                                        <img src={mtn} alt="MTN Mobile Money" loading="lazy" className="w-12 h-12 mr-3 rounded-md" />
+                                        <img src={mtn} alt="MTN Mobile Money" className="w-12 h-12 mr-3 rounded-md" />
                                         <div>
-                                            <p className="font-semibold text-gray-800 flex items-center">
-                                                MTN Mobile Money</p>
+                                            <p className="font-semibold text-gray-800">MTN Mobile Money</p>
                                             <p className="text-sm text-gray-600">Pay with MTN MoMo</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div
-                                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'airtel' ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-300'
+                                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === 'airtel'
+                                        ? 'border-red-500 bg-red-50'
+                                        : 'border-gray-200 hover:border-red-300'
                                         }`}
                                     onClick={() => handlePaymentMethodSelect('airtel')}
                                 >
                                     <div className="flex items-center">
-                                        <img src={airtel} alt="Airtel Money" loading="lazy" className="w-12 h-12 mr-3 rounded-md" />
+                                        <img src={airtel} alt="Airtel Money" className="w-12 h-12 mr-3 rounded-md" />
                                         <div>
-                                            <p className="font-semibold text-gray-800 flex items-center">
-                                                Airtel Money</p>
+                                            <p className="font-semibold text-gray-800">Airtel Money</p>
                                             <p className="text-sm text-gray-600">Pay with Airtel Money</p>
                                         </div>
                                     </div>
@@ -176,7 +200,7 @@ export const PaymentFlow: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Phone Number Input */}
+                        {/* Phone Number */}
                         <div>
                             <h3 className="text-xl font-semibold text-gray-800 mb-4">Phone Number</h3>
                             <div className="relative">
@@ -191,16 +215,17 @@ export const PaymentFlow: React.FC = () => {
                                 />
                                 {paymentMethod && (
                                     <div className="absolute right-3 top-3">
-                                        <span className={`text-xs px-2 py-1 rounded-full ${paymentMethod === 'mtn' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                                            }`}>
+                                        <span
+                                            className={`text-xs px-2 py-1 rounded-full ${paymentMethod === 'mtn'
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : 'bg-red-100 text-red-800'
+                                                }`}
+                                        >
                                             {paymentMethod.toUpperCase()}
                                         </span>
                                     </div>
                                 )}
                             </div>
-                            {!paymentMethod && (
-                                <p className="text-sm text-gray-500 mt-2">Select a payment method first</p>
-                            )}
                         </div>
                     </div>
 
@@ -208,8 +233,9 @@ export const PaymentFlow: React.FC = () => {
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-semibold text-gray-800">Choose Your Courses</h3>
-                            <span className="text-sm text-gray-600">({selectedCourses.length}/3 selected)</span>
+                            <span className="text-sm text-gray-600">({selectedCourses.length}{type !== "cpa" && "/3"} selected)</span>
                         </div>
+
                         {loading ? (
                             <div className="flex items-center justify-center h-96">
                                 <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
@@ -221,16 +247,19 @@ export const PaymentFlow: React.FC = () => {
                         ) : (
                             <div className="space-y-3 max-h-96 overflow-y-auto">
                                 {availableCourses.map((course: any) => {
-                                    const isSelected: boolean = !!selectedCourses.find(c => c.id === course.id);
-                                    const canSelect: boolean = selectedCourses.length < 3 || isSelected;
+                                    const isSelected = !!selectedCourses.find(c => c.id === course.id);
+                                    const canSelect =
+                                        type === "cpa"
+                                            ? isSelected // only preselected course clickable
+                                            : selectedCourses.length < 3 || isSelected;
 
                                     return (
                                         <div
                                             key={course.id}
-                                            className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${isSelected
+                                            className={`border-2 rounded-lg p-4 transition-all ${isSelected
                                                 ? 'border-green-500 bg-green-50'
                                                 : canSelect
-                                                    ? 'border-gray-200 hover:border-blue-300'
+                                                    ? 'border-gray-200 hover:border-blue-300 cursor-pointer'
                                                     : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
                                                 }`}
                                             onClick={() => canSelect && handleCourseSelection(course)}
@@ -242,28 +271,15 @@ export const PaymentFlow: React.FC = () => {
                                                         <h4 className="font-semibold text-gray-800 text-sm">{course.title}</h4>
                                                     </div>
                                                     <p className="text-xs text-gray-600 mb-1">{course.shortDescription}</p>
-                                                    <p className="text-xs text-green-600 font-medium">{course.enrollments?.length > 0 ? 'Enrolled' : 'Not Enrolled'}</p>
+                                                    <p className="text-xs text-green-600 font-medium">
+                                                        {course.enrollments?.length > 0 ? 'Enrolled' : 'Not Enrolled'}
+                                                    </p>
                                                 </div>
                                                 {isSelected && <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />}
                                             </div>
                                         </div>
                                     );
                                 })}
-                            </div>)
-                        }
-
-                        {/* Selected Courses Summary */}
-                        {selectedCourses.length > 0 && (
-                            <div className="mt-4 bg-gray-50 p-4 rounded-lg">
-                                <h4 className="font-semibold text-gray-800 mb-3">Selected Courses:</h4>
-                                <ul className="space-y-1">
-                                    {selectedCourses.map((course: any) => (
-                                        <li key={course.id} className="flex items-center text-sm">
-                                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                                            <span className="text-gray-800">{course.title}</span>
-                                        </li>
-                                    ))}
-                                </ul>
                             </div>
                         )}
                     </div>
@@ -287,16 +303,6 @@ export const PaymentFlow: React.FC = () => {
                             <ArrowRight className="w-5 h-5 ml-2" />
                         </button>
                     </div>
-
-                    {!isFormValid && (
-                        <div className="mt-3 text-right">
-                            <p className="text-sm text-red-500">
-                                {!paymentMethod ? 'Please select a payment method' :
-                                    phoneNumber.length < 10 ? 'Please enter a valid phone number' :
-                                        'Please select at least one course'}
-                            </p>
-                        </div>
-                    )}
                 </div>
             </div>
         );
@@ -419,3 +425,4 @@ export const PaymentFlow: React.FC = () => {
         );
     }
 };
+

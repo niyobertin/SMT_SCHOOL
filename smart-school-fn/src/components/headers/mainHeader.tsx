@@ -57,7 +57,7 @@ export function Header() {
     { href: "/about", label: t("aboutUs") },
     { href: "/courses", label: t("courses") },
     { href: "/tuition", label: t("tuition") },
-    { href: "/job-listing", label: t("news") },
+    { href: "/job-listing", label: "Jobs" },
     { href: "/contact", label: t("contactUs") },
   ];
 

@@ -18,11 +18,20 @@ export const createJobPost = async (
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         const companylogoFile = files?.["companyLogo"]?.[0];
         const companylogo = await uploadBufferToCloudinary(companylogoFile.buffer, companylogoFile.mimetype, companylogoFile.originalname);
-
+        let attachments = null;
+        if (files?.["attachments"]?.[0]) {
+            const attachmentsFile = files["attachments"][0];
+            attachments = await uploadBufferToCloudinary(
+                attachmentsFile.buffer,
+                attachmentsFile.mimetype,
+                attachmentsFile.originalname
+            );
+        }
         const jobPost = await prisma.jobPost.create({
             data: {
                 ...jobPostData,
                 companylogo: companylogo || null,
+                ...(attachments ? { attachments } : {}),
                 slug: jobPostData.title.toLowerCase().replace(/\s/g, "-"),
                 isActive: true,
             },
@@ -51,14 +60,26 @@ export const getAllJobPosts = async (
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
         const jobPosts = await prisma.jobPost.findMany({
-            where: { isActive: true, title: { contains: query, mode: "insensitive" } },
+            where: {
+                isActive: true,
+                jobCategory: {
+                    slug: { contains: query, mode: "insensitive" }
+                },
+                title: { contains: query, mode: "insensitive" }
+            },
             orderBy: { createdAt: "desc" },
             take: limit,
             skip: startIndex,
         });
 
         const total = await prisma.jobPost.count({
-            where: { isActive: true, title: { contains: query, mode: "insensitive" } },
+            where: {
+                isActive: true,
+                jobCategory: {
+                    slug: { contains: query, mode: "insensitive" }
+                },
+                title: { contains: query, mode: "insensitive" }
+            },
         });
         const totalPages = Math.ceil(total / limit);
         res.status(200).json({
@@ -119,6 +140,7 @@ export const updateJobPost = async (
         const updateData = req.body;
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         let companylogo: string | null = null;
+        let attachments: string | null = null;
 
         if (files?.["companylogo"]?.[0]) {
             const companylogoFile = files["companylogo"][0];
@@ -126,6 +148,15 @@ export const updateJobPost = async (
                 companylogoFile.buffer,
                 companylogoFile.mimetype,
                 companylogoFile.originalname
+            );
+        }
+
+        if (files?.["attachments"]?.[0]) {
+            const attachmentsFile = files["attachments"][0];
+            attachments = await uploadBufferToCloudinary(
+                attachmentsFile.buffer,
+                attachmentsFile.mimetype,
+                attachmentsFile.originalname
             );
         }
 
@@ -146,6 +177,7 @@ export const updateJobPost = async (
                 ...safeUpdateData,
                 slug: updateData.title.toLowerCase().replace(/\s/g, "-"),
                 ...(companylogo ? { companylogo } : {}),
+                ...(attachments ? { attachments } : {}),
                 updatedAt: new Date(),
             },
         });
@@ -199,6 +231,7 @@ export const deleteJobPost = async (
         });
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.log(error);
             if (error.code === "P2025") {
                 res.status(404).json({
                     status: "error",
@@ -241,6 +274,26 @@ export const getExpiredJobPosts = async (
     }
 };
 
+export const getJobPostByCategory = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { slug } = req.params;
+        const jobPost = await prisma.jobPost.findMany({
+            where: { slug },
+        });
+        res.status(200).json({
+            status: "success",
+            data: jobPost,
+        });
+    } catch (error) {
+        logger.error("Error fetching job post by category:", error);
+        next(error);
+    }
+};
+
 // ================== CRON JOB ==================
 export const jobPostCronJob = CronJob.schedule(
     "0 0 * * *", // Midnight daily
@@ -261,3 +314,106 @@ export const jobPostCronJob = CronJob.schedule(
     },
     { timezone: "Africa/Kigali" }
 );
+
+export const createJobCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const jobCategoryData = req.body;
+        const existingJobCategory = await prisma.jobCategory.findUnique({
+            where: { name: jobCategoryData.name },
+        });
+        if (existingJobCategory) {
+            res.status(400).json({
+                status: "error",
+                message: "Job category already exists",
+            });
+            return;
+        }
+        const jobCategory = await prisma.jobCategory.create({
+            data: {
+                ...jobCategoryData,
+                slug: jobCategoryData.name.toLowerCase().replace(/\s/g, "-"),
+            },
+        });
+        res.status(201).json({
+            status: "success",
+            data: jobCategory,
+        });
+    } catch (error) {
+        logger.error("Error creating job category:", error);
+        next(error);
+    }
+};
+
+export const updateJobCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { slug } = req.params;
+        const updateData = req.body;
+        const existingJobCategory = await prisma.jobCategory.findUnique({
+            where: { slug },
+        });
+        if (!existingJobCategory) {
+            res.status(404).json({
+                status: "error",
+                message: "Job category not found",
+            });
+            return;
+        }
+        const jobCategory = await prisma.jobCategory.update({
+            where: { slug },
+            data: {
+                ...updateData,
+                slug: updateData.name.toLowerCase().replace(/\s/g, "-"),
+            },
+        });
+        res.status(200).json({
+            status: "success",
+            data: jobCategory,
+        });
+    } catch (error) {
+        logger.error("Error updating job category:", error);
+        next(error);
+    }
+};
+
+export const deleteJobCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { slug } = req.params;
+        const existingJobCategory = await prisma.jobCategory.findUnique({
+            where: { slug },
+        });
+        if (!existingJobCategory) {
+            res.status(404).json({
+                status: "error",
+                message: "Job category not found",
+            });
+            return;
+        }
+        const jobCategory = await prisma.jobCategory.delete({
+            where: { slug },
+        });
+        res.status(204).json({
+            status: "success",
+            data: jobCategory,
+        });
+    } catch (error) {
+        logger.error("Error deleting job category:", error);
+        next(error);
+    }
+};
+
+export const getJobCategories = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const jobCategories = await prisma.jobCategory.findMany({
+            include: {
+                jobPosts: true,
+            },
+        });
+        res.status(200).json({
+            status: "success",
+            data: jobCategories,
+        });
+    } catch (error) {
+        logger.error("Error fetching job categories:", error);
+        next(error);
+    }
+};

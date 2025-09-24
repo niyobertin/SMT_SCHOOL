@@ -9,6 +9,7 @@ import testRoutes from "./test.routes";
 import userRouter from "./users.routes";
 import paymentRouter from "./payment.route";
 import jobPostRoutes from "./jobPost.routes";
+import jobCategoriesRouter from "./jobCategories";
 const router = Router();
 
 /**
@@ -52,6 +53,7 @@ router.use("/tests", testRoutes);
 router.use("/users", userRouter);
 router.use("/payments", paymentRouter);
 router.use("/job-posts", jobPostRoutes);
+router.use("/job-categories", jobCategoriesRouter);
 
 // API info endpoint
 /**
