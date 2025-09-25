@@ -1,6 +1,7 @@
 import Router from "express";
 import { deleteUser, getProfile, getUserById, getUsers, updateUserPassword, updateUserProfile } from "../controller/user.controller";
 import { authenticate, authorize } from "../middleware/auth";
+import { getDashboardStats } from "../controller/dashbord.controller";
 
 const userRouter = Router();
 
@@ -278,5 +279,10 @@ userRouter.delete("/:id",
 userRouter.patch("/:id/password",
     authenticate,
     updateUserPassword
+);
+userRouter.get("/dashboard/stats",
+    authenticate,
+    authorize("ADMIN"),
+    getDashboardStats
 );
 export default userRouter;

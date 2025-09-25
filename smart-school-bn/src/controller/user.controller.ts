@@ -7,6 +7,7 @@ import { sendSmsTo } from "../utils/sendSms";
 import { sendEmail } from "../utils/sendEmail";
 import { generateToken, refreshToken } from "../utils/tokens";
 import jwt from "jsonwebtoken";
+import { logActivity } from "../helper/activitylogs";
 
 const prisma = new PrismaClient();
 
@@ -231,6 +232,8 @@ export const createUser = async (
       },
     });
 
+    logActivity(newUser.id, "CREATE_USER", "New user registerd", req.ip || "");
+
     const { password, ...userWithoutPassword } = newUser;
 
     res.status(201).json({
@@ -265,6 +268,7 @@ export const verifyUser = async (
       where: { id: user.id },
       data: user,
     });
+    logActivity(user.id, "VERIFY_USER", "User account verified", req.ip || "");
     res.status(200).json({
       status: "success",
       message: "User verified successfully",
@@ -320,6 +324,7 @@ export const login = async (
     }
     const token = generateToken(user);
     const { password, verificationCode, resetPasswordToken, resetPasswordExpires, ...userWithoutPassword } = user;
+    logActivity(user.id, "LOGIN", "User logged in", req.ip || "");
     res.status(200).json({
       status: "success",
       message: "User logged in successfully",
@@ -540,6 +545,7 @@ export const updateUserPassword = async (
         `Your password has been updated successfully. If you did not request this change, please contact us immediately.`
       );
     }
+    logActivity(user.id, "UPDATE_PASSWORD", "User password updated", req.ip || "");
     res.status(200).json({
       status: "success",
       message: "Password updated successfully",
@@ -572,6 +578,7 @@ export const updateUserProfile = async (
       data: userData,
     });
     const { password, verificationCode, resetPasswordToken, resetPasswordExpires, ...userWithoutPassword } = updatedUser;
+    logActivity(user.id, "UPDATE_PROFILE", "User profile updated", req.ip || "");
     res.status(200).json({
       status: "success",
       message: "User updated successfully",

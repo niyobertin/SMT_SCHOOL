@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { getAccessToken } from "../services/paypackAuth";
 import { pollPendingPaymentsJob } from "../utils/jobs";
+import { logActivity } from "../helper/activitylogs";
 const prisma = new PrismaClient();
 
 export const cashin = async (req: Request, res: Response, next: NextFunction) => {
@@ -50,7 +51,7 @@ export const cashin = async (req: Request, res: Response, next: NextFunction) =>
                 status: "PENDING",
             },
         });
-
+        logActivity(userId, "PAYMENT", "Payment initialized", req.ip || "");
         logger.info("Payment created", payment);
         pollPendingPaymentsJob();
         // 4. Return response
