@@ -33,14 +33,6 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  to="/instructors"
-                  className="hover:text-white transition-colors"
-                >
-                  Instructors
-                </Link>
-              </li>
-              <li>
-                <Link
                   to="/tuition"
                   className="hover:text-white transition-colors"
                 >
@@ -53,22 +45,13 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-slate-400">
-              <li>
-                <Link to="/help" className="hover:text-white transition-colors">
-                  Help Center
-                </Link>
-              </li>
+
               <li>
                 <Link
                   to="/contact"
                   className="hover:text-white transition-colors"
                 >
                   {t("contactUs")}
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="hover:text-white transition-colors">
-                  FAQ
                 </Link>
               </li>
             </ul>

@@ -398,7 +398,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {(
                 <div className="mt-8 flex justify-center items-center gap-4">
                   <button
                     onClick={handlePreviousPage}

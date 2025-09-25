@@ -1,14 +1,59 @@
-
-import React from "react"
-import {Mail, Phone, MapPin, Clock, Facebook, Twitter, Linkedin, Instagram } from "lucide-react"
+import React, { useState, useRef } from "react"
+import { Mail, Phone, MapPin, Clock } from "lucide-react"
 import useLanguage from "../hooks/useLanguage"
+import { Toast } from "primereact/toast"
 
 export const ContactPage = () => {
   const { t } = useLanguage()
+  const [loading, setLoading] = useState<boolean>(false)
+  const toast = useRef<Toast>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Form submitted")
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault() // prevent reload
+    const formData = new FormData(e.currentTarget)
+
+    const data = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      subject: formData.get("subject"),
+      message: formData.get("message"),
+    }
+
+    const scriptFormApi = import.meta.env.VITE_CONTACT_FORM_SCRIPT_ID
+    const url = `https://script.google.com/macros/s/${scriptFormApi}/exec`
+    const encoded_data = encodeURI(JSON.stringify(data))
+
+    try {
+      setLoading(true)
+      const response = await fetch(`${url}?data=${encoded_data}`)
+      setLoading(false)
+
+      if (!response.ok) {
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: "Failed to submit your message. Try again",
+          life: 3000,
+        })
+        return
+      }
+
+      const result = await response.json()
+      toast.current?.show({
+        severity: "success",
+        summary: "Success",
+        detail: result.message,
+        life: 3000,
+      })
+    } catch (error) {
+      setLoading(false)
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: error instanceof Error ? error.message : "Unknown error",
+        life: 3000,
+      })
+    }
   }
 
   return (
@@ -29,6 +74,7 @@ export const ContactPage = () => {
                   <label htmlFor="name" className="block mb-2 font-medium text-slate-700">{t("name")}</label>
                   <input
                     id="name"
+                    name="name"
                     type="text"
                     required
                     placeholder={t("name")}
@@ -39,6 +85,7 @@ export const ContactPage = () => {
                   <label htmlFor="email" className="block mb-2 font-medium text-slate-700">{t("email")}</label>
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     required
                     placeholder={t("emailAddress")}
@@ -51,6 +98,7 @@ export const ContactPage = () => {
                 <label htmlFor="subject" className="block mb-2 font-medium text-slate-700">{t("subject")}</label>
                 <input
                   id="subject"
+                  name="subject"
                   type="text"
                   required
                   placeholder={t("subject")}
@@ -62,6 +110,7 @@ export const ContactPage = () => {
                 <label htmlFor="message" className="block mb-2 font-medium text-slate-700">{t("message")}</label>
                 <textarea
                   id="message"
+                  name="message"
                   required
                   placeholder={t("message")}
                   rows={6}
@@ -71,9 +120,10 @@ export const ContactPage = () => {
 
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-lg transition-colors"
               >
-                {t("sendMessage")}
+                {loading ? "Loading..." : t("sendMessage")}
               </button>
             </form>
           </div>
@@ -130,27 +180,10 @@ export const ContactPage = () => {
                 </div>
               </div>
             </div>
-
-            <div className="bg-white shadow-md rounded-xl p-6">
-              <h3 className="text-xl font-bold text-slate-900 mb-4">{t("followUs")}</h3>
-              <div className="flex gap-4">
-                <a href="#" className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white hover:bg-blue-700 transition-colors">
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a href="#" className="w-12 h-12 bg-sky-500 rounded-lg flex items-center justify-center text-white hover:bg-sky-600 transition-colors">
-                  <Twitter className="h-5 w-5" />
-                </a>
-                <a href="#" className="w-12 h-12 bg-blue-700 rounded-lg flex items-center justify-center text-white hover:bg-blue-800 transition-colors">
-                  <Linkedin className="h-5 w-5" />
-                </a>
-                <a href="#" className="w-12 h-12 bg-pink-600 rounded-lg flex items-center justify-center text-white hover:bg-pink-700 transition-colors">
-                  <Instagram className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+      <Toast ref={toast} />
     </div>
   )
 }

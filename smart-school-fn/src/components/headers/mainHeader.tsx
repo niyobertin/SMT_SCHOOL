@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Globe, ChevronDown, User, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
+import { ChevronDown, User, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
 import Logo from "../../assets/logo.jpg";
 import api from "../../redux/api/api";
@@ -13,12 +13,13 @@ interface UserProfile {
 }
 
 export function Header() {
-  const { t, language, setLanguage, languages } = useLanguage();
+  const { t } = useLanguage();
+  // language, setLanguage, languages
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  // const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true); // loading state
+  const [loadingUser, setLoadingUser] = useState(true);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ export function Header() {
           {/* Right side */}
           <div className="flex items-center gap-4">
             {/* Language selector */}
-            <div className="relative">
+            {/* <div className="relative">
               <button
                 onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors p-2 rounded-full hover:bg-gray-100"
@@ -123,7 +124,7 @@ export function Header() {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* User section */}
             {loadingUser ? (
