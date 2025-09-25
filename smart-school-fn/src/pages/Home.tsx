@@ -391,14 +391,14 @@ export const HomePage: React.FC = () => {
                   icon: Award,
                   title: "Comprehensive Learning",
                   description: "Education tailored to Rwanda's context with practical relevance",
-                  position: { top: "10%", left: "50%", transform: "translateX(-50%)" },
+                  position: { top: "8%", left: "40%", transform: "translateX(-50%)" },
                   delay: 0.1
                 },
                 {
                   icon: Award,
                   title: "Variety of Resources",
                   description: "Diverse study materials for multiple career paths",
-                  position: { top: "25%", right: "15%" },
+                  position: { top: "25%", right: "20%" },
                   delay: 0.2
                 },
                 {
@@ -412,7 +412,7 @@ export const HomePage: React.FC = () => {
                   icon: Award,
                   title: "Multi-Format Learning",
                   description: "Videos, audio, and PDFs tailored to your style",
-                  position: { bottom: "25%", right: "15%" },
+                  position: { top: "10%", right: "2%" },
                   delay: 0.4
                 },
                 {
@@ -433,7 +433,7 @@ export const HomePage: React.FC = () => {
                   icon: Award,
                   title: "Affordable Cost",
                   description: "Quality learning accessible to everyone",
-                  position: { top: "50%", left: "5%" },
+                  position: { top: "20%", left: "5%" },
                   delay: 0.7
                 }
               ].map((feature, i) => (
