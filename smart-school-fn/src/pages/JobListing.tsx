@@ -76,8 +76,8 @@ export const JobListing = () => {
         fetchCategories();
     }, []);
 
-    const handleViewJob = (slug: string) => {
-        setSearchTerm(slug);
+    const handleViewJob = (name: string) => {
+        setSearchTerm(name);
         setCurrentPage(1);
     };
 
@@ -105,9 +105,9 @@ export const JobListing = () => {
                 <div className="mb-6">
                     <div className="flex justify-start gap-2 items-center mb-4">
                         {categories.map((category) => (
-                            <div key={category.id} className="flex items-center relative">
+                            <div key={category.id} className="flex items-center flex-wrap relative">
                                 <button
-                                    onClick={() => handleViewJob(category.slug)}
+                                    onClick={() => handleViewJob(category.name)}
                                     className="bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700 transition-colors flex items-center"
                                 >
                                     {category.name} ({category.jobPosts.length})

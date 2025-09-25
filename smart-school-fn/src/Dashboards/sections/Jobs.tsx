@@ -415,8 +415,8 @@ export const JobBoard = () => {
         if (fileInput) fileInput.value = '';
     };
 
-    const handleViewJob = (slug: string) => {
-        setSearchTerm(slug);
+    const handleViewJob = (name: string) => {
+        setSearchTerm(name);
         setCurrentPage(1);
     };
 
@@ -459,16 +459,16 @@ export const JobBoard = () => {
 
                 {/* Search and Filter Section */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                    <div className="flex justify-start gap-2 items-center mb-4">
+                    <div className="flex justify-start gap-2 items-center mb-4 flex-wrap ">
                         {categories.map((category) => (
-                            <div key={category.id} className="flex items-center relative">
+                            <div key={category.id} className="flex items-center relative ">
                                 <button
-                                    onClick={() => handleViewJob(category.slug)}
+                                    onClick={() => handleViewJob(category.name)}
                                     className="bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700 transition-colors flex items-center"
                                 >
                                     {category.name} ({category.jobPosts.length})
                                 </button>
-                                <div className="relative ml-2" ref={menuRef}>
+                                <div className="relative ml-2">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();

@@ -13,6 +13,7 @@ interface JobDetailsData {
     companylogo: string;
     companywebsite: string;
     applicationLink: string;
+    attachments: string;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -160,6 +161,9 @@ export const JobDetails = () => {
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-gray-100">
+                            {job?.attachments && (
+                                <p>Attachemnt: {job?.attachments}</p>
+                            )}
                             <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                                 <MapPin className="w-4 h-4" />
                                 <span>Project Location</span>

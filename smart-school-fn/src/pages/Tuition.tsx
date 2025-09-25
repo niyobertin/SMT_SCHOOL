@@ -133,25 +133,6 @@ export default function TuitionPage() {
 
   const cpaPlanTemplate = [
     {
-      id: "Foundation",
-      type: "cpa",
-      basePrice: 30000,
-      period: 90,
-      features: [
-        "Study material",
-        "Mock Practices",
-        "Examination Model Answers",
-        "✓ F1.1 BUSINESS MATHEMATICS AND Quantitative Methods",
-        "✓ F1.2 INTRODUCTION TO LAW",
-        "✓ F1.3 FINANCIAL ACCOUNTING",
-        "✓ F1.4 BUSINESS MANAGEMENT, ETHICS & Entrepreneurship",
-        "✓ F2.1 MANAGEMENT ACCOUNTING",
-        "✓ F2.2 ECONOMICS AND THE BUSINESS environment",
-        "✓ F2.3 INFORMATION SYSTEMS",
-        "✓ F2.4 TAXATION",
-      ],
-    },
-    {
       id: "CAT",
       type: "cpa",
       basePrice: 30000,
@@ -175,21 +156,6 @@ export default function TuitionPage() {
       ],
     },
     {
-      id: "Intermediate",
-      type: "cpa",
-      basePrice: 40000,
-      period: 90,
-      features: [
-        "Study material",
-        "Mock Practices",
-        "Examination Model Answers",
-        "I1.1 MANAGERIAL FINANCE",
-        "I1.2 FINANCIAL REPORTING",
-        "I1.3 COMPANY LAW",
-        "I1.4 AUDITING",
-      ],
-    },
-    {
       id: "Advanced",
       type: "cpa",
       basePrice: 50000,
@@ -206,29 +172,66 @@ export default function TuitionPage() {
         "A2.3 ADVANCED TAXATION",
       ],
     },
+    {
+      id: "Intermediate",
+      type: "cpa",
+      basePrice: 40000,
+      period: 90,
+      features: [
+        "Study material",
+        "Mock Practices",
+        "Examination Model Answers",
+        "I1.1 MANAGERIAL FINANCE",
+        "I1.2 FINANCIAL REPORTING",
+        "I1.3 COMPANY LAW",
+        "I1.4 AUDITING",
+      ],
+    },
+    {
+      id: "Foundation",
+      type: "cpa",
+      basePrice: 30000,
+      period: 90,
+      features: [
+        "Study material",
+        "Mock Practices",
+        "Examination Model Answers",
+        "✓ F1.1 BUSINESS MATHEMATICS AND Quantitative Methods",
+        "✓ F1.2 INTRODUCTION TO LAW",
+        "✓ F1.3 FINANCIAL ACCOUNTING",
+        "✓ F1.4 BUSINESS MANAGEMENT, ETHICS & Entrepreneurship",
+        "✓ F2.1 MANAGEMENT ACCOUNTING",
+        "✓ F2.2 ECONOMICS AND THE BUSINESS environment",
+        "✓ F2.3 INFORMATION SYSTEMS",
+        "✓ F2.4 TAXATION",
+      ],
+    },
   ];
 
-  const cpaPlans = cpaPlanTemplate.map((plan, index) => {
-    const apiCourse = filterCpaCourses[index];
+  const cpaPlans = cpaPlanTemplate
+    .map((plan, index) => {
+      const apiCourse = filterCpaCourses[index];
 
-    let price = plan.basePrice;
-    if (apiCourse) {
-      const title = apiCourse.title.toLowerCase();
-      if (title.includes("all courses") || title.includes("foundation")) {
-        price = 30000;
-      } else if (title.includes("intermediate")) {
-        price = 40000;
-      } else if (title.includes("advanced")) {
-        price = 50000;
+      let price = plan.basePrice;
+      if (apiCourse) {
+        const title = apiCourse.title.toLowerCase();
+        if (title.includes("all courses") || title.includes("foundation")) {
+          price = 30000;
+        } else if (title.includes("intermediate")) {
+          price = 40000;
+        } else if (title.includes("advanced")) {
+          price = 50000;
+        }
       }
-    }
 
-    return {
-      ...plan,
-      name: apiCourse ? apiCourse.title : `${plan.id} Plan`,
-      basePrice: price,
-    };
-  });
+      return {
+        ...plan,
+        name: apiCourse ? apiCourse.title : `${plan.id} Plan`,
+        basePrice: price,
+      };
+    })
+    .sort((a, b) => a.basePrice - b.basePrice);
+
 
 
   return (
@@ -305,23 +308,23 @@ export default function TuitionPage() {
           </p>
         </div>
 
-
+        {loading && (
+          <div className="flex items-center justify-center h-full bg-white p-4 w-fit mx-auto rounded-lg shadow-lg my-4">
+            <Loader2 className="animate-spin" /> Loading...
+          </div>
+        )}
+        {error && (
+          <div className="flex items-center justify-center h-full bg-white p-4 w-fit mx-auto rounded-lg shadow-lg my-4">
+            <p className="text-red-500">{error}</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-          {loading && (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="animate-spin" />
-            </div>
-          )}
-          {error && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-red-500">{error}</p>
-            </div>
-          )}
+
           {cpaPlans.map((plan) => {
             return (
               <div
                 key={plan.id}
-                className="relative group hover:shadow-2xl transition-all duration-300 border rounded-2xl bg-white/80 backdrop-blur-sm p-6 flex flex-col h-full"
+                className="relative group hover:shadow-2xl transition-all duration-300 border rounded-2xl bg-white/80 backdrop-blur-sm p-6 flex flex-col h-full py-2"
               >
                 <div className="text-center pb-4">
                   <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>

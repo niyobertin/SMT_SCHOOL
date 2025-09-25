@@ -62,23 +62,35 @@ export const getAllJobPosts = async (
         const jobPosts = await prisma.jobPost.findMany({
             where: {
                 isActive: true,
-                jobCategory: {
-                    slug: { contains: query, mode: "insensitive" }
-                },
-                title: { contains: query, mode: "insensitive" }
+                OR: [
+                    { title: { contains: query, mode: "insensitive" } },
+                    {
+                        jobCategory: {
+                            name: { contains: query, mode: "insensitive" }
+                        }
+                    }
+                ]
             },
             orderBy: { createdAt: "desc" },
             take: limit,
             skip: startIndex,
+            include: {
+                jobCategory: true,
+            },
         });
+
 
         const total = await prisma.jobPost.count({
             where: {
                 isActive: true,
-                jobCategory: {
-                    slug: { contains: query, mode: "insensitive" }
-                },
-                title: { contains: query, mode: "insensitive" }
+                OR: [
+                    { title: { contains: query, mode: "insensitive" } },
+                    {
+                        jobCategory: {
+                            name: { contains: query, mode: "insensitive" }
+                        }
+                    }
+                ]
             },
         });
         const totalPages = Math.ceil(total / limit);
