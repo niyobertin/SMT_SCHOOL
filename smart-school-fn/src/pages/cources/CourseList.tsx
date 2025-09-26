@@ -31,6 +31,7 @@ export const CourseList = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
   // fetch categories once
   useEffect(() => {
@@ -42,6 +43,7 @@ export const CourseList = () => {
     dispatch(
       fetchCourses({
         page,
+        limit: itemsPerPage,
         q,
         categoryId: categoryFilter
       })
@@ -56,6 +58,7 @@ export const CourseList = () => {
         dispatch(
           fetchCourses({
             page: 1,
+            limit: itemsPerPage,
             q: searchTerm,
             categoryId: categoryFilter
           })
@@ -72,19 +75,35 @@ export const CourseList = () => {
     }
   };
 
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    dispatch(setPage(1));
+    dispatch(
+      fetchCourses({
+        page: 1,
+        limit: newItemsPerPage,
+        q,
+        categoryId: categoryFilter
+      })
+    );
+  };
+
+  const publishedCourses = courses?.filter(course => course.isPublished);
+
   const selectCategory = useCallback(
     (categoryId: string | null) => {
       dispatch(setCategoryFilter(categoryId));
       setDropdownOpen(false);
       dispatch(
         fetchCourses({
-          page: 1,
+          page,
+          limit: itemsPerPage,
           q: searchTerm,
           categoryId: categoryId
         })
       );
     },
-    [dispatch, searchTerm]
+    [dispatch, searchTerm, itemsPerPage]
   );
 
   if (error) {
@@ -163,13 +182,13 @@ export const CourseList = () => {
       {/* Courses Grid */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(itemsPerPage)].map((_, i) => (
             <CourseCardSkeleton key={i} />
           ))}
         </div>
       ) : (
         <>
-          {courses?.length === 0 && (
+          {publishedCourses?.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 px-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 text-center shadow-sm">
               <div className="w-24 h-24 mb-6 flex items-center justify-center rounded-full border-2 border-gray-300 bg-white">
                 <svg
@@ -193,7 +212,7 @@ export const CourseList = () => {
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses?.map(course => (
+            {publishedCourses?.map((course: any) => (
               <Link
                 to={`/courses/${course.id}/lessons?subscribed=${course.enrollments?.length > 0}`}
               >
@@ -210,17 +229,23 @@ export const CourseList = () => {
                       />
                     )} */}
 
-                    {course.enrollments?.map(enrollment => enrollment.status === "ACTIVE")?.length > 0 ? (
-                      <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-md">
-                        <CheckCircle className="h-6 w-6 text-white" />
-                      </div>
-                    ) : (
-                      <div className="absolute top-2 right-2 bg-yellow-500 text-white p-1 rounded-full shadow-md">
-                        <Crown className="w-5 h-5" />
-                      </div>
+                    {course.type !== "free" && (
+                      course.enrollments?.some((enrollment: any) => enrollment.status === "ACTIVE") ? (
+                        <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-md">
+                          <CheckCircle className="h-6 w-6 text-white" />
+                        </div>
+                      ) : (
+                        <div className="absolute top-2 right-2 bg-yellow-500 text-white p-1 rounded-full shadow-md">
+                          <Crown className="w-5 h-5" />
+                        </div>
+                      )
                     )}
+
                   </div>
                   <div className="p-4">
+                    <div className="flex gap-2">
+                      <h3 className={`text-sm font-semibold text-gray-700  px-2  rounded-full ${course.type === "free" ? "bg-green-200" : "bg-yellow-200"}`}>{course?.type}</h3>
+                    </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       {course.title}
                     </h3>
@@ -278,7 +303,22 @@ export const CourseList = () => {
                 <ChevronRight className="h-5 w-5" />
               </button>
 
-
+              <select
+                value={itemsPerPage}
+                onChange={e => handleItemsPerPageChange(Number(e.target.value))}
+                className="px-3 py-1 border rounded-md"
+              >
+                <option value="9">9 per page</option>
+                <option value="18">18 per page</option>
+                <option value="27">27 per page</option>
+                <option value="36">36 per page</option>
+                <option value="45">45 per page</option>
+                <option value="54">54 per page</option>
+                <option value="63">63 per page</option>
+                <option value="72">72 per page</option>
+                <option value="81">81 per page</option>
+                <option value="90">90 per page</option>
+              </select>
             </div>
           )}
 

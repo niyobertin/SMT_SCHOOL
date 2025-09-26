@@ -42,6 +42,10 @@ interface DashboardStats {
     id: string;
     userId: string;
     action: string;
+    user: {
+      username: string;
+      role: string;
+    };
     details: string;
     ip: string;
     createdAt: string;
@@ -245,16 +249,17 @@ export const DashboardHome = () => {
           <Activity className="text-gray-400" />
         </div>
         <div className="space-y-4">
-          {stats.logs.map((log) => (
+          {stats.logs.slice(0, 5).map((log) => (
             <div key={log.id} className="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
               <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                 <span className="text-blue-600 font-medium">
-                  {log.userId ? log.userId.charAt(0).toUpperCase() : 'U'}
+                  {log.user?.username ? log.user.username.charAt(0).toUpperCase() : 'U'}
                 </span>
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">{log.action}</p>
-                <p className="text-sm text-gray-500">{log.details}</p>
+                <p className="text-sm text-gray-500">{log.user?.username} with role {log.user?.role} {log.details}</p>
+                <p className="text-sm text-gray-500">{log.ip}</p>
                 <p className="text-xs text-gray-400 mt-1">
                   {new Date(log.createdAt).toLocaleString()}
                 </p>

@@ -20,6 +20,14 @@ export const getDashboardStats = async (req: Request, res: Response, next: NextF
             orderBy: {
                 createdAt: "desc",
             },
+            include: {
+                user: {
+                    select: {
+                        username: true,
+                        role: true,
+                    },
+                },
+            },
         });
         const revenueTrend = await prisma.payment.findMany({
             where: {

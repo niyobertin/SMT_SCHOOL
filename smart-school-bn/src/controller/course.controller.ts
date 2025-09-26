@@ -63,7 +63,9 @@ export const createCourse = async (
                 },
                 ...(thumbnail && { thumbnail }),
                 status: courseData.status,
-                isPublished: Boolean(courseData.isPublished),
+                isPublished: courseData.status !== "PUBLISHED"
+                    ? false
+                    : Boolean(courseData.isPublished),
                 isFeatured: Boolean(courseData.isFeatured),
                 tags: courseData.tags,
                 requirements: courseData.requirements,
@@ -300,11 +302,14 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
             where: { id },
             data: {
                 ...courseData,
-                isPublished: Boolean(courseData.isPublished),
+                isPublished: courseData.status !== "PUBLISHED"
+                    ? false
+                    : Boolean(courseData.isPublished),
                 isFeatured: Boolean(courseData.isFeatured),
-                ...(thumbnail && { thumbnail })
+                ...(thumbnail && { thumbnail }),
             },
         });
+
         res.status(200).json({
             status: "success",
             message: "Course updated successfully",

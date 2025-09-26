@@ -1,6 +1,7 @@
 import React from "react";
 import { Header } from "../headers/mainHeader";
 import { Footer } from "../footer";
+import { WhatsAppButton } from "../whatsappIcon";
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -11,6 +12,7 @@ export const MainLayout: React.FC<LayoutProps> = ({ children }) => {
       <Header />
       <main className="flex-grow">{children}</main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

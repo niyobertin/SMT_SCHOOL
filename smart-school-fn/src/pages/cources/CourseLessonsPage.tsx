@@ -44,12 +44,18 @@ const CourseLessonsPage = () => {
     setIsModalOpen(false);
     navigate('/login');
   };
+  const course = lessons[0]?.course;
 
   useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
       const userData = JSON.parse(user);
-      if ((userData.role !== 'ADMIN' && userData.role !== 'INSTRUCTOR') && subscribed === 'false') {
+      if (
+        userData.role !== 'ADMIN' &&
+        userData.role !== 'INSTRUCTOR' &&
+        subscribed === 'false' &&
+        course?.type !== 'free'
+      ) {
         setShowPaymentModal(true);
       }
     }
@@ -65,7 +71,7 @@ const CourseLessonsPage = () => {
     navigate(-1);
   };
 
-  const course = lessons[0]?.course;
+
 
   useEffect(() => {
     if (courseId) {
@@ -94,7 +100,7 @@ const CourseLessonsPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <HeaderSkeleton />
           <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
-            {[...Array(3)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
               <LessonSkeleton key={i} />
             ))}
           </div>

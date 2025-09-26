@@ -32,6 +32,7 @@
     "jodit-react": "^5.2.25",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.540.0",
+    "pdfjs-dist": "^5.4.149",
     "primeicons": "^7.0.0",
     "primereact": "^10.9.7",
     "react": "^19.1.1",

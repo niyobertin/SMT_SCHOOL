@@ -30,6 +30,7 @@ interface Lesson {
   content: Content[];
   userProgress: any[];
   course: {
+    type: string;
     duration: string;
     id: string;
     title: string;
