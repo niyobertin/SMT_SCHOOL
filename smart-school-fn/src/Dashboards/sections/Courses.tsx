@@ -2,7 +2,7 @@ import { Plus, ChevronLeft, ChevronRight, Edit, Trash2, Eye, Calendar, X } from 
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { deleteCourse, fetchCourses } from "../../redux/features/courses/courseSlice";
+import { deleteCourse, fetchCourses, setPage } from "../../redux/features/courses/courseSlice";
 import { CourseForm } from "../Modals/CourseForm";
 import { CourseCardSkeleton } from "../../components/Skeletons/CourseCardSkeleton";
 import type { AppDispatch, RootState } from "../../redux/stores";
@@ -12,7 +12,6 @@ import { Button } from 'primereact/button';
 import { fetchCategories, createCategory } from "../../redux/features/courses/category";
 import api from "../../redux/api/api";
 
-
 interface CoursesSectionProps { }
 
 export const CoursesSection = ({ }: CoursesSectionProps) => {
@@ -21,10 +20,9 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"courses" | "categories">("courses");
-  const [currentPage, setCurrentPage] = useState(1);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
-  const itemsPerPage = 6;
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -34,36 +32,39 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
     items: courses,
     loading,
     error,
+    page,
+    totalPages,
   } = useSelector((state: RootState) => state.courses);
 
   const { items: categories, loading: categoriesLoading } = useSelector(
     (state: RootState) => state.categories
   );
 
-  const totalPages = Math.ceil((courses.length || 0) / itemsPerPage);
-  const hasNextPage = currentPage < totalPages;
-  const hasPreviousPage = currentPage > 1;
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      dispatch(setPage(newPage));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    dispatch(setPage(1));
+    dispatch(
+      fetchCourses({
+        page: 1,
+        limit: newItemsPerPage,
+      })
+    );
+  };
 
   useEffect(() => {
     dispatch(fetchCourses({
-      page: currentPage,
+      page,
       limit: itemsPerPage
     }));
-  }, [dispatch, currentPage]);
+  }, [dispatch, page]);
 
-  const handleNextPage = () => {
-    if (hasNextPage) {
-      setCurrentPage(prev => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (hasPreviousPage) {
-      setCurrentPage(prev => prev - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
 
   const handleViewCourse = (courseId: string) => {
     navigate(`/dashboard/courses/${courseId}`);
@@ -95,7 +96,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
         life: 3000
       });
       dispatch(fetchCourses({
-        page: currentPage,
+        page,
         limit: itemsPerPage
       }));
     } catch (error) {
@@ -116,7 +117,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
     setEditingCourse(null);
     // Refresh courses
     dispatch(fetchCourses({
-      page: currentPage,
+      page,
       limit: itemsPerPage
     }));
   };
@@ -151,7 +152,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
     if (editingCategory) {
       try {
         await api.patch(`/categories/${editingCategory.id}`, newCategory);
-        dispatch(fetchCategories({ page: currentPage, limit: itemsPerPage }));
+        dispatch(fetchCategories({ page, limit: itemsPerPage }));
         toast.current?.show({
           severity: "success",
           summary: "Category Updated",
@@ -205,7 +206,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
   };
   const confirmDeleteCategory = () => {
     api.delete(`/categories/${categoryToDelete}`);
-    dispatch(fetchCategories({ page: currentPage, limit: itemsPerPage }));
+    dispatch(fetchCategories({ page, limit: itemsPerPage }));
     setShowDeleteDialog(false);
     setCategoryToDelete(null);
     toast.current?.show({
@@ -234,7 +235,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-        {[...Array(6)].map((_, index) => (
+        {[...Array(9)].map((_, index) => (
           <CourseCardSkeleton key={index} />
         ))}
       </div>
@@ -338,7 +339,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course, index) => (
+                {courses.map((course: any, index: number) => (
                   <div
                     key={index}
                     className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
@@ -353,7 +354,12 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
                   )}
                 </div> */}
                     <div className="p-4">
+                      <div className="flex justify-between">
+                        <h3 className="text-sm font-semibold text-gray-700">{course?.status}</h3>
+                        <h3 className="text-sm font-semibold text-gray-700">{course?.type}</h3>
+                      </div>
                       <div className="flex justify-between items-start mb-3">
+
                         <h3 className="text-lg font-semibold text-gray-900">
                           {course?.title}
                         </h3>
@@ -367,7 +373,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
                           className="flex items-center gap-1 text-blue-600 hover:text-blue-800 cursor-pointer bg-green-500 text-white p-2 rounded"
                         >
                           <Eye size={16} />
-                          View {course?.lessons?.length || 0} Lessons
+                          {course?.lessons?.length || 0} Lessons
                         </button>
                         <div className="flex gap-3">
                           <button
@@ -398,25 +404,42 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
               </div>
 
               {/* Pagination */}
-              {(
-                <div className="mt-8 flex justify-center items-center gap-4">
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center mt-8 space-x-2">
                   <button
-                    onClick={handlePreviousPage}
-                    disabled={!hasPreviousPage}
-                    className={`p-2 rounded-full ${hasPreviousPage ? 'hover:bg-gray-100' : 'opacity-50'}`}
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    className="px-3 py-1 border rounded-md disabled:opacity-50 cursor-pointer"
                   >
-                    <ChevronLeft size={20} />
+                    <ChevronLeft className="h-5 w-5" />
                   </button>
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </span>
+
+                  <div className="text-sm text-black flex items-center justify-between gap-2">
+                    Page <span className="font-semibold">{page} </span> of <span className="font-semibold"> {totalPages}</span>
+                  </div>
                   <button
-                    onClick={handleNextPage}
-                    disabled={!hasNextPage}
-                    className={`p-2 rounded-full ${hasNextPage ? 'hover:bg-gray-100' : 'opacity-50'}`}
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    className="px-3 py-1 border rounded-md disabled:opacity-50 cursor-pointer"
                   >
-                    <ChevronRight size={20} />
+                    <ChevronRight className="h-5 w-5" />
                   </button>
+                  <select
+                    value={itemsPerPage}
+                    onChange={e => handleItemsPerPageChange(Number(e.target.value))}
+                    className="px-3 py-1 border rounded-md"
+                  >
+                    <option value="9">9 per page</option>
+                    <option value="18">18 per page</option>
+                    <option value="27">27 per page</option>
+                    <option value="36">36 per page</option>
+                    <option value="45">45 per page</option>
+                    <option value="54">54 per page</option>
+                    <option value="63">63 per page</option>
+                    <option value="72">72 per page</option>
+                    <option value="81">81 per page</option>
+                    <option value="90">90 per page</option>
+                  </select>
                 </div>
               )}
             </>

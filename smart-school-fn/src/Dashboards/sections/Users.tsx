@@ -9,6 +9,7 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  username: string;
   role: string;
   createdAt: string;
   isActive: boolean;
@@ -145,6 +146,7 @@ export const UsersSection = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -173,6 +175,7 @@ export const UsersSection = () => {
                         {user.firstName} {user.lastName}
                       </div>
                     </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{user.username}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
                     <td className="px-6 py-4">
                       <select

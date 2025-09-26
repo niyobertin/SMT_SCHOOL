@@ -34,6 +34,7 @@ export const CourseForm = ({ open, onClose, onSuccess, course }: CourseFormProps
     status: "DRAFT",
     isPublished: false,
     isFeatured: false,
+    type: "free",
     tags: [] as string[],
     requirements: [] as string[],
     objectives: [] as string[],
@@ -53,6 +54,7 @@ export const CourseForm = ({ open, onClose, onSuccess, course }: CourseFormProps
         status: course.status || "DRAFT",
         isPublished: course.isPublished || false,
         isFeatured: course.isFeatured || false,
+        type: course.type || "free",
         tags: course.tags || [],
         requirements: course.requirements || [],
         objectives: course.objectives || [],
@@ -70,6 +72,7 @@ export const CourseForm = ({ open, onClose, onSuccess, course }: CourseFormProps
         status: "DRAFT",
         isPublished: false,
         isFeatured: false,
+        type: "free",
         tags: [],
         requirements: [],
         objectives: [],
@@ -370,6 +373,20 @@ export const CourseForm = ({ open, onClose, onSuccess, course }: CourseFormProps
                       <option>ARCHIVED</option>
                     </select>
                     {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
+                  </div>
+                  {/* Type */}
+                  <div className="flex-1">
+                    <label htmlFor="type" className="block mb-1 font-medium">Type</label>
+                    <select
+                      name="type"
+                      value={courseData.type}
+                      onChange={handleChange}
+                      className={`w-full border rounded-lg p-2 mb-2 ${errors.type ? 'border-red-500' : ''}`}
+                    >
+                      <option>Free</option>
+                      <option>Paid</option>
+                    </select>
+                    {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
                   </div>
                 </div>
                 {/* Category Selector */}

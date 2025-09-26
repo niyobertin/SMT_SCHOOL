@@ -103,9 +103,9 @@ export const JobListing = () => {
 
                 {/* Search Bar */}
                 <div className="mb-6">
-                    <div className="flex justify-start gap-2 items-center mb-4">
+                    <div className="flex justify-start flex-wrap gap-2 items-center mb-4">
                         {categories.map((category) => (
-                            <div key={category.id} className="flex items-center flex-wrap relative">
+                            <div key={category.id} className="flex items-center  relative">
                                 <button
                                     onClick={() => handleViewJob(category.name)}
                                     className="bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700 transition-colors flex items-center"

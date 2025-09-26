@@ -12,9 +12,9 @@ import {
   FileArchive,
   PlayCircle,
   Volume2,
-  Eye,
+  X,
+  Menu,
 } from 'lucide-react';
-import { FaEyeSlash } from "react-icons/fa6";
 import { Skeleton } from '../../components/ui/Skeleton';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -74,9 +74,20 @@ const LessonContentPage = () => {
       <div className="w-full h-full">
         <div className="border rounded-lg overflow-hidden h-screen">
           <object
-            data={pdfUrl}
+            data={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
             type="application/pdf"
-            className="w-full h-full"
+            className="w-full h-full "
+            style={{
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              MozUserSelect: "none",
+              msUserSelect: "none",
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
+            onPaste={(e) => e.preventDefault()}
             aria-label="PDF Viewer"
           >
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -102,10 +113,22 @@ const LessonContentPage = () => {
   const renderContent = () => {
     if (!currentContent) return null;
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">{currentContent.title}</h1>
+      <div className="space-y-2"
+        style={{
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+        }}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+        onCopy={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onPaste={(e) => e.preventDefault()}
+      >
+        <h1 className="text-2xl text-center font-bold">{currentContent.title}</h1>
         {currentContent.createdAt && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-end text-gray-500">
             Created{' '}
             {formatDistanceToNow(new Date(currentContent.createdAt), {
               addSuffix: true,
@@ -154,7 +177,21 @@ const LessonContentPage = () => {
           renderPdfViewer(currentContent.pdfUrl)}
 
         {currentContent.textBody && (
-          <div className="prose max-w-none">
+          <div className="prose max-w-none"
+            style={{
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              MozUserSelect: "none",
+              msUserSelect: "none",
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
+            onPaste={(e) => e.preventDefault()}
+            onDragOver={(e) => e.preventDefault()}
+            onPointerCancel={(e) => e.preventDefault()}
+          >
             <div dangerouslySetInnerHTML={{ __html: currentContent.textBody }} />
           </div>
         )}
@@ -201,63 +238,80 @@ const LessonContentPage = () => {
       {/* Sidebar */}
       <div
         className={`transition-all duration-300 border-r bg-white
-          ${isSidebarOpen ? 'w-64' : 'w-0 overflow-hidden'}`}
+          ${isSidebarOpen ? 'w-64' : 'w-0 overflow-hidden flex-shrink-0'}`}
       >
-        <div className="p-4">
-          <h2 className="text-lg font-semibold mb-4">Table of Content</h2>
-          {contents.map((content, index) => (
+        <div className={isSidebarOpen ? 'p-4' : 'py-2 px-2'}>
+          <div className={isSidebarOpen ? 'flex items-center space-x-4 mb-4' : 'fixed items-center space-x-4 mb-4'}>
             <button
-              key={content.id || index}
-              onClick={() => dispatch(setCurrentContent(content))}
-              className={`w-full text-left p-3 rounded-lg mb-2 transition-colors ${currentContent?.id === content.id
-                ? 'bg-blue-100 text-blue-700'
-                : 'hover:bg-gray-100'
-                }`}
+              onClick={() => navigate(-1)}
+              className="flex items-center text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-md"
             >
-              <div className="flex items-center">
-                <span className="mr-2">
-                  {isPdf(content.pdfUrl || '') ? (
-                    <FileArchive size={16} />
-                  ) : isVideo(content.videoUrl || '') ? (
-                    <PlayCircle size={16} />
-                  ) : isAudio(content.audioUrl || '') ? (
-                    <Volume2 size={16} />
-                  ) : (
-                    <FileText size={16} />
-                  )}
-                </span>
-                {content.title || `Section ${index + 1}`}
-              </div>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span className={isSidebarOpen ? 'block' : 'sr-only'}>Back</span>
             </button>
-          ))}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="flex items-center text-black bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md"
+            >
+              {isSidebarOpen ? <X className="mr-2 h-4 w-4" /> : <Menu className="mr-2 h-4 w-4" />}
+            </button>
+
+          </div>
+          <div className={isSidebarOpen ? 'block' : 'hidden'}>
+            <h2 className="text-lg font-semibold mb-4">Table of Content</h2>
+            {contents.map((content, index) => (
+              <button
+                key={content.id || index}
+                onClick={() => dispatch(setCurrentContent(content))}
+                className={`w-full text-left p-3 rounded-lg mb-2 transition-colors ${currentContent?.id === content.id
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'hover:bg-gray-100'
+                  }`}
+              >
+                <div className="flex items-center">
+                  <span className="mr-2">
+                    {isPdf(content.pdfUrl || '') ? (
+                      <FileArchive size={16} />
+                    ) : isVideo(content.videoUrl || '') ? (
+                      <PlayCircle size={16} />
+                    ) : isAudio(content.audioUrl || '') ? (
+                      <Volume2 size={16} />
+                    ) : (
+                      <FileText size={16} />
+                    )}
+                  </span>
+                  {content.title || `Section ${index + 1}`}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
-        <div className="flex justify-between space-x-4 mb-4">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="flex items-center text-black bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md"
-          >
-            {isSidebarOpen ? <FaEyeSlash className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}{isSidebarOpen ? 'Hide Table of Content' : 'Show Table of Content'}
-          </button>
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-md"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Lessons
-          </button>
-        </div>
+      <div
+        className="flex-1 p-2 md:p-2 overflow-y-auto bg-white rounded-lg px-2"
+        style={{
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+        }}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+        onCopy={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onPaste={(e) => e.preventDefault()}
+      >
         {currentContent ? (
-          <div className="bg-white rounded-lg p-6">{renderContent()}</div>
+          <div>{renderContent()}</div>
         ) : (
           <div className="text-center py-12 text-gray-500">
             Select a content item from the sidebar to view it here
           </div>
         )}
       </div>
+
     </div>
   );
 };
