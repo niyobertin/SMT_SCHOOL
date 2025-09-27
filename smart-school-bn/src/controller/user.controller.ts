@@ -589,3 +589,23 @@ export const updateUserProfile = async (
   }
 };
 
+export const callbackUrlHandler = (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      res
+        .status(401)
+        .json({ message: "Authentication failed" });
+      return;
+    }
+    console.log("Authenticated user:", req.user);
+    const token = generateToken(req.user);
+    res.redirect(`${process.env.FRONTEND_URL}?token=${token}`);
+    return;
+  } catch (error) {
+    console.error("Error in callbackUrlHandler:", error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong during authentication." });
+    return;
+  }
+};
