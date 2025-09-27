@@ -1,6 +1,8 @@
 import { Users, Target, Eye, Heart, BookOpen, Award, Globe, Lightbulb } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
+import ouner from "../assets/blessed night.jpg"
+import backgroundImage from "../assets/aboutimage.jpg";
 
 export const About = () => {
   const teamMembers = [
@@ -131,15 +133,27 @@ export const About = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20 overflow-hidden">
+      <motion.section
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+        className="relative py-20 lg:py-32 h-[80vh] flex items-center overflow-hidden"
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+      >
         <motion.div
-          className="absolute inset-0 bg-black opacity-10"
+          className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-blue-900/60"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.1 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-        ></motion.div>
+        />
 
-        <div className="relative max-w-6xl mx-auto px-6 text-center">
+        <div className="relative max-w-6xl mx-auto px-6 text-center text-white">
+          <p className="text-2xl font-bold mb-6">About Smart School</p>
           <motion.h1
             className="text-5xl font-bold mb-6 leading-tight"
             initial={{ opacity: 0, y: -50 }}
@@ -163,11 +177,33 @@ export const About = () => {
             animate={{ opacity: 0.9, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
           >
-            Welcome to EduTech, where we're revolutionizing education by making high-quality learning accessible,
+            Welcome to Smart School, where we're revolutionizing education by making high-quality learning accessible,
             engaging, and transformative for learners worldwide.
           </motion.p>
         </div>
-      </div>
+        {/* Floating particles effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-white/20 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [-20, -100, -20],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
+      </motion.section>
 
       {/* Welcome Message */}
       <motion.div
@@ -177,35 +213,37 @@ export const About = () => {
         viewport={{ once: true, amount: 0.3 }}
         variants={staggerContainer}
       >
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.div variants={bounceIn}>
-            <BookOpen className="w-16 h-16 text-blue-600 mx-auto mb-8" />
+        <div className="max-w-7xl mx-auto px-6 lg:flex justify-center items-center text-center">
+          <motion.div variants={bounceIn} className="flex justify-center items-center w-full ">
+            <img src={ouner} alt="owner" loading="lazy" className="w-1/2 h-1/2 rounded-full" />
           </motion.div>
 
-          <motion.h2
-            className="text-3xl font-bold text-gray-800 mb-6"
-            variants={fadeInUp}
-          >
-            Welcome to the Future of Learning
-          </motion.h2>
+          <div className="w-full">
+            <motion.h2
+              className="text-3xl font-bold text-gray-800 mb-6"
+              variants={fadeInUp}
+            >
+              Welcome to the Future of Learning
+            </motion.h2>
 
-          <motion.p
-            className="text-lg text-gray-600 leading-relaxed mb-8"
-            variants={fadeInUp}
-          >
-            At EduTech, we understand that learning doesn't stop at the classroom door. In today's rapidly evolving world,
-            continuous learning is essential for personal and professional growth. Our platform bridges the gap between
-            traditional education and modern learning needs, offering flexible, interactive, and personalized educational
-            experiences that fit seamlessly into your life.
-          </motion.p>
+            <motion.p
+              className="text-lg text-gray-600 leading-relaxed mb-8 "
+              variants={fadeInUp}
+            >
+              At Smart School, we understand that learning doesn't stop at the classroom door. In today's rapidly evolving world,
+              continuous learning is essential for personal and professional growth. Our platform bridges the gap between
+              traditional education and modern learning needs, offering flexible, interactive, and personalized educational
+              experiences that fit seamlessly into your life.
+            </motion.p>
 
-          <motion.p
-            className="text-lg text-gray-600 leading-relaxed"
-            variants={fadeInUp}
-          >
-            Whether you're a student looking to supplement your studies, a professional seeking to upskill, or someone
-            pursuing a new passion, we're here to support your learning journey every step of the way.
-          </motion.p>
+            <motion.p
+              className="text-lg text-gray-600 leading-relaxed"
+              variants={fadeInUp}
+            >
+              Whether you're a student looking to supplement your studies, a professional seeking to upskill, or someone
+              pursuing a new passion, we're here to support your learning journey every step of the way.
+            </motion.p>
+          </div>
         </div>
       </motion.div>
 
