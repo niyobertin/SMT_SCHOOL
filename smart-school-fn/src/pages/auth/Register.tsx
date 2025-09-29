@@ -11,8 +11,8 @@ import useLanguage from "../../hooks/useLanguage";
 import { countryCodes } from "../../constants/countryCodes";
 import { registerUser, clearError } from "../../redux/features/auth";
 import type { AppDispatch, RootState } from "../../redux/stores";
-import { FaFacebookF } from "react-icons/fa";
 import googleLogo from "../../assets/search.png";
+import facebookLogo from "../../assets/facebook.png";
 
 // --- Schema ---
 const registerSchema: yup.ObjectSchema<FormData> = yup.object({
@@ -374,10 +374,10 @@ export const RegisterPage = () => {
           <a href={`${import.meta.env.VITE_API_URL}/api/users/auth/google`}>
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition"
+              className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition cursor-pointer"
             >
 
-              <img src={googleLogo} alt="Google" className="h-6 w-6" />
+              <img src={googleLogo} alt="Google" className="h-4 w-4" />
               Google
 
             </button>
@@ -385,9 +385,9 @@ export const RegisterPage = () => {
           <a href={`${import.meta.env.VITE_API_URL}/api/users/auth/facebook`}>
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition"
+              className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition cursor-pointer"
             >
-              <FaFacebookF className="w-4 h-4" color="blue" />
+              <img src={facebookLogo} alt="Facebook" className="h-6 w-6" />
               Facebook
             </button>
           </a>

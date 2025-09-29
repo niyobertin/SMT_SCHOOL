@@ -1,61 +1,62 @@
-import { Users, Target, Eye, Heart, BookOpen, Award, Globe, Lightbulb } from 'lucide-react';
+import { Users, Target, Eye, Heart, Award, Lightbulb } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import ouner from "../assets/blessed night.jpg"
+import ouner from "../assets/Picture1.png";
 import backgroundImage from "../assets/aboutimage.jpg";
+import { Link } from "react-router-dom";
+import cto from "../assets/cto.jpeg";
+import ceo from "../assets/Picture1.png";
+import olivessfd from "../assets/olive.png";
+import enock from "../assets/Enock.png";
 
 export const About = () => {
   const teamMembers = [
     {
-      name: "Sarah Johnson",
-      position: "CEO & Founder",
-      image: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face",
-      bio: "15+ years in educational technology with a passion for democratizing learning.",
-      linkedin: "#"
+      name: "Damascene Sibomana",
+      position: "Founder/CEO,BSC, MBA, CFA",
+      image: ceo,
+      bio: "+250781212252"
     },
     {
-      name: "Michael Chen",
-      position: "CTO",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
-      bio: "Former Google engineer specializing in scalable learning platforms and AI.",
-      linkedin: "#"
+      name: "Olive Niyomurinzi",
+      position: "Customer relations/BSC",
+      image: olivessfd,
+      bio: "+250780697816"
     },
     {
-      name: "Dr. Emily Rodriguez",
-      position: "Head of Learning Design",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face",
-      bio: "PhD in Educational Psychology with expertise in online curriculum development.",
-      linkedin: "#"
+      name: "Enock Iradukunda",
+      position: "Head of content/BSC, CPA(R), MBA",
+      image: enock,
+      bio: "+250788701837",
     },
     {
-      name: "David Kim",
-      position: "Lead UX Designer",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face",
-      bio: "Award-winning designer focused on creating intuitive learning experiences.",
-      linkedin: "#"
+      name: "Bertin Niyonkuru",
+      position: "Software engineer/CTO",
+      image: cto,
+      bio: "+250783021801",
     }
   ];
 
   const values = [
     {
       icon: <Heart className="w-8 h-8" />,
-      title: "Accessibility",
-      description: "We believe quality education should be available to everyone, regardless of their background or circumstances."
+      title: "Lifelong Learning",
+      description: "Promoting continuous growth beyond classrooms and careers."
     },
     {
       icon: <Lightbulb className="w-8 h-8" />,
       title: "Innovation",
-      description: "We continuously explore new technologies and methodologies to enhance the learning experience."
+      description: "Using creativity and technology to deliver modern, practical learning."
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: "Community",
-      description: "Learning thrives in supportive communities where students and educators collaborate and grow together."
+      title: "Impact",
+      description: "Focusing on real results that transform learners, workplaces, and the nation."
     },
     {
       icon: <Award className="w-8 h-8" />,
       title: "Excellence",
-      description: "We maintain the highest standards in content quality, platform reliability, and student support."
+      description: "Striving for the highest quality in education and skills development."
     }
   ];
 
@@ -213,35 +214,20 @@ export const About = () => {
         viewport={{ once: true, amount: 0.3 }}
         variants={staggerContainer}
       >
-        <div className="max-w-7xl mx-auto px-6 lg:flex justify-center items-center text-center">
+        <div className="max-w-7xl mx-auto px-6 lg:flex justify-center items-center">
           <motion.div variants={bounceIn} className="flex justify-center items-center w-full ">
             <img src={ouner} alt="owner" loading="lazy" className="w-1/2 h-1/2 rounded-full" />
           </motion.div>
 
           <div className="w-full">
-            <motion.h2
-              className="text-3xl font-bold text-gray-800 mb-6"
-              variants={fadeInUp}
-            >
-              Welcome to the Future of Learning
-            </motion.h2>
-
             <motion.p
               className="text-lg text-gray-600 leading-relaxed mb-8 "
               variants={fadeInUp}
             >
-              At Smart School, we understand that learning doesn't stop at the classroom door. In today's rapidly evolving world,
-              continuous learning is essential for personal and professional growth. Our platform bridges the gap between
-              traditional education and modern learning needs, offering flexible, interactive, and personalized educational
-              experiences that fit seamlessly into your life.
-            </motion.p>
-
-            <motion.p
-              className="text-lg text-gray-600 leading-relaxed"
-              variants={fadeInUp}
-            >
-              Whether you're a student looking to supplement your studies, a professional seeking to upskill, or someone
-              pursuing a new passion, we're here to support your learning journey every step of the way.
+              Welcome to <span className="font-bold">Smart School</span>, the future of learning where education goes beyond classroom walls and adapts to the demands of today’s fast-changing world.
+              Here, continuous learning is not just encouraged but made accessible through flexible, interactive, and personalized experiences designed to fit seamlessly into your life.
+              Whether you are a student aiming to strengthen your studies, a professional looking to enhance your skills, or an individual pursuing a new passion,
+              Smart School is here to walk with you every step of your learning journey.
             </motion.p>
           </div>
         </div>
@@ -275,10 +261,9 @@ export const About = () => {
               </motion.div>
               <h3 className="text-2xl font-bold text-gray-800 mb-4">Our Mission</h3>
               <p className="text-gray-600 leading-relaxed">
-                To democratize access to quality education by creating an innovative online learning platform that
-                connects learners with expert instructors worldwide. We strive to break down barriers to education
-                and empower individuals to achieve their full potential through flexible, engaging, and effective
-                learning experiences.
+                Our mission is to close Rwanda’s skills gap by equipping graduates and employees with practical,
+                market-relevant knowledge and continuous training that enhances workplace readiness, boosts productivity,
+                fosters innovation, and strengthens the nation’s competitiveness in the global economy.
               </p>
             </motion.div>
 
@@ -300,10 +285,9 @@ export const About = () => {
               </motion.div>
               <h3 className="text-2xl font-bold text-gray-800 mb-4">Our Vision</h3>
               <p className="text-gray-600 leading-relaxed">
-                To become the world's leading online learning platform, where millions of learners can access
-                transformative education that adapts to their unique needs and goals. We envision a future where
-                geographical boundaries don't limit learning opportunities, and where every person has the tools
-                they need to succeed in an ever-changing world.
+                Our vision is to build a future where every Rwandan learner and professional has access to practical,
+                lifelong education that empowers them to succeed in the workplace, drive innovation, and
+                contribute to a thriving, competitive national economy.
               </p>
             </motion.div>
           </div>
@@ -346,7 +330,7 @@ export const About = () => {
                     {value.icon}
                   </motion.div>
                   <h3 className="text-xl font-bold text-gray-800 mb-3">{value.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{value.description}</p>
+                  <p className="text-gray-600 text-base leading-relaxed">{value.description}</p>
                 </motion.div>
               </motion.div>
             ))}
@@ -365,7 +349,7 @@ export const About = () => {
         <div className="max-w-6xl mx-auto px-6">
           <motion.div className="text-center mb-12" variants={fadeInUp}>
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Meet Our Team</h2>
-            <p className="text-lg text-gray-600">The passionate individuals behind EduTech</p>
+            <p className="text-lg text-gray-600">The passionate individuals behind Smart School</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -384,6 +368,7 @@ export const About = () => {
                   <motion.img
                     src={member.image}
                     alt={member.name}
+                    loading="lazy"
                     className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-blue-100"
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     transition={{ duration: 0.3 }}
@@ -391,69 +376,12 @@ export const About = () => {
                   <h3 className="text-xl font-bold text-gray-800 mb-1">{member.name}</h3>
                   <p className="text-blue-600 font-semibold mb-3">{member.position}</p>
                   <p className="text-gray-600 text-sm leading-relaxed mb-4">{member.bio}</p>
-                  <motion.a
-                    href={member.linkedin}
-                    className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Users className="w-4 h-4 mr-1" />
-                    Connect
-                  </motion.a>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
       </motion.div>
-
-      {/* Stats Section */}
-      <motion.div
-        className="py-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={staggerContainer}
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            {[
-              { icon: Globe, number: "50+", label: "Countries Served" },
-              { icon: Users, number: "100K+", label: "Active Learners" },
-              { icon: BookOpen, number: "5K+", label: "Courses Available" },
-              { icon: Award, number: "98%", label: "Satisfaction Rate" }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                variants={bounceIn}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <motion.div
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <stat.icon className="w-8 h-8 mx-auto mb-3 opacity-80" />
-                </motion.div>
-                <motion.div
-                  className="text-3xl font-bold mb-2"
-                  initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    delay: index * 0.1
-                  }}
-                >
-                  {stat.number}
-                </motion.div>
-                <div className="text-blue-100">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-
       {/* CTA Section */}
       <motion.div
         className="py-16 bg-white"
@@ -482,7 +410,7 @@ export const About = () => {
             variants={fadeInUp}
           >
             <motion.button
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg"
+              className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg"
               whileHover={{
                 scale: 1.05,
                 boxShadow: "0 20px 40px -12px rgba(59, 130, 246, 0.5)",
@@ -490,7 +418,7 @@ export const About = () => {
               }}
               whileTap={{ scale: 0.95 }}
             >
-              Browse Courses
+              <Link to="/courses">Browse Courses</Link>
             </motion.button>
 
             <motion.button
@@ -501,7 +429,7 @@ export const About = () => {
               }}
               whileTap={{ scale: 0.95 }}
             >
-              Contact Us
+              <Link to="/contact">Contact Us</Link>
             </motion.button>
           </motion.div>
         </div>
