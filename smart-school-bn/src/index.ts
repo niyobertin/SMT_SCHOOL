@@ -5,7 +5,9 @@ import helmet from "helmet";
 import compression from "compression";
 import dotenv from "dotenv";
 import http from "http";
-
+import passport from "passport";
+import "./config/passport";
+import session from "express-session";
 import { logger } from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import { requestLogger } from "./middleware/requestLogger";
@@ -36,6 +38,15 @@ app.use(compression());
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || "keyboard cat",
+  resave: false,
+  saveUninitialized: false,
+}));
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Request logging middleware
 app.use(requestLogger);

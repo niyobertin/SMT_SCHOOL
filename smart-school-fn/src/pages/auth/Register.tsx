@@ -11,6 +11,8 @@ import useLanguage from "../../hooks/useLanguage";
 import { countryCodes } from "../../constants/countryCodes";
 import { registerUser, clearError } from "../../redux/features/auth";
 import type { AppDispatch, RootState } from "../../redux/stores";
+import googleLogo from "../../assets/search.png";
+import facebookLogo from "../../assets/facebook.png";
 
 // --- Schema ---
 const registerSchema: yup.ObjectSchema<FormData> = yup.object({
@@ -87,10 +89,10 @@ export const RegisterPage = () => {
       identifier: "",
       password: "",
       confirmPassword: "",
-      loginWithPhone: false,   
-      selectedCountryCode: "+250", 
+      loginWithPhone: false,
+      selectedCountryCode: "+250",
     },
-    mode: "onChange", 
+    mode: "onChange",
   });
 
   useEffect(() => {
@@ -117,7 +119,7 @@ export const RegisterPage = () => {
     event?.preventDefault();
     try {
       await registerSchema.validate(data, { abortEarly: false });
-      
+
       const registerData = {
         email: data.loginWithPhone ? null : data.identifier!,
         phoneNumber: data.loginWithPhone ? `${data.selectedCountryCode}${data.identifier}` : null,
@@ -125,7 +127,7 @@ export const RegisterPage = () => {
         firstName: data.firstName,
         lastName: data.lastName,
         password: data.password,
-      role: "STUDENT",
+        role: "STUDENT",
         avatar: "",
         isActive: true,
       };
@@ -150,7 +152,7 @@ export const RegisterPage = () => {
             life: 3000,
           });
         });
-      }     
+      }
     }
   };
 
@@ -166,8 +168,8 @@ export const RegisterPage = () => {
           <p className="text-slate-600 mt-2">Join thousands of learners today!</p>
         </div>
 
-        <form 
-          className="space-y-4" 
+        <form
+          className="space-y-4"
           onSubmit={handleSubmit(onSubmit)}
         >
           {/* Name Fields */}
@@ -176,9 +178,8 @@ export const RegisterPage = () => {
               <label className="block text-sm font-medium">{t("firstName")}</label>
               <input
                 {...register("firstName")}
-                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.firstName ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors.firstName ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                  }`}
                 placeholder="John"
               />
               {errors.firstName && (
@@ -189,9 +190,8 @@ export const RegisterPage = () => {
               <label className="block text-sm font-medium">{t("lastName")}</label>
               <input
                 {...register("lastName")}
-                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.lastName ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors.lastName ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                  }`}
                 placeholder="Doe"
               />
               {errors.lastName && (
@@ -205,9 +205,8 @@ export const RegisterPage = () => {
             <label className="block text-sm font-medium">{t("username")}</label>
             <input
               {...register("username", { required: "Username is required" })}
-              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                errors.username ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
-              }`}
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors.username ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                }`}
               placeholder="Choose a username"
             />
             {errors.username && (
@@ -220,18 +219,16 @@ export const RegisterPage = () => {
             <button
               type="button"
               onClick={() => setLoginWithPhone(false)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                !loginWithPhone ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${!loginWithPhone ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
               <Mail className="h-5 w-5" /> Email
             </button>
             <button
               type="button"
               onClick={() => setLoginWithPhone(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loginWithPhone ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${loginWithPhone ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
               <Phone className="h-5 w-5" /> Phone
             </button>
@@ -244,9 +241,8 @@ export const RegisterPage = () => {
                 type="email"
                 {...register("identifier")}
                 placeholder="john@example.com"
-                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                  errors.identifier ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors.identifier ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                  }`}
               />
               {errors.identifier && (
                 <p className="text-xs text-red-500">{errors.identifier.message}</p>
@@ -261,9 +257,8 @@ export const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowCountryCodeDropdown(!showCountryCodeDropdown)}
-                    className={`h-10 px-3 border rounded-lg text-sm flex items-center gap-1 min-w-[80px] ${
-                      errors.selectedCountryCode ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`h-10 px-3 border rounded-lg text-sm flex items-center gap-1 min-w-[80px] ${errors.selectedCountryCode ? "border-red-500" : "border-gray-300"
+                      }`}
                   >
                     {selectedCountryCode}
                     <svg
@@ -297,9 +292,8 @@ export const RegisterPage = () => {
                   type="tel"
                   {...register("identifier")}
                   placeholder="123 456 7890"
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-                    errors.identifier ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
-                  }`}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${errors.identifier ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                    }`}
                 />
               </div>
               {errors.identifier && (
@@ -316,9 +310,8 @@ export const RegisterPage = () => {
                 type={showPassword ? "text" : "password"}
                 {...register("password")}
                 placeholder="Create a strong password"
-                className={`w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 ${
-                  errors.password ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 ${errors.password ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                  }`}
               />
               <button
                 type="button"
@@ -339,9 +332,8 @@ export const RegisterPage = () => {
                 type={showConfirmPassword ? "text" : "password"}
                 {...register("confirmPassword")}
                 placeholder="Confirm your password"
-                className={`w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 ${
-                  errors.confirmPassword ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
-                }`}
+                className={`w-full rounded-lg border px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 ${errors.confirmPassword ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-500"
+                  }`}
               />
               <button
                 type="button"
@@ -360,9 +352,8 @@ export const RegisterPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full cursor-pointer py-2 rounded-lg font-medium text-white transition ${
-              loading ? "bg-blue-400" : "bg-blue-800 hover:bg-blue-700"
-            }`}
+            className={`w-full cursor-pointer py-2 rounded-lg font-medium text-white transition ${loading ? "bg-blue-400" : "bg-blue-800 hover:bg-blue-700"
+              }`}
           >
             {loading ? "Creating account..." : t("createAccount")}
           </button>
@@ -380,28 +371,26 @@ export const RegisterPage = () => {
 
         {/* Social Login Buttons */}
         <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Google
-          </button>
+          <a href={`${import.meta.env.VITE_API_URL}/api/users/auth/google`}>
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition cursor-pointer"
+            >
 
-          <button
-            type="button"
-            className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.99 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.99 22 12z" />
-            </svg>
-            Facebook
-          </button>
+              <img src={googleLogo} alt="Google" className="h-4 w-4" />
+              Google
+
+            </button>
+          </a>
+          <a href={`${import.meta.env.VITE_API_URL}/api/users/auth/facebook`}>
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-2 border border-slate-300 rounded-lg py-2 hover:bg-slate-50 transition cursor-pointer"
+            >
+              <img src={facebookLogo} alt="Facebook" className="h-6 w-6" />
+              Facebook
+            </button>
+          </a>
         </div>
 
         {/* Footer */}

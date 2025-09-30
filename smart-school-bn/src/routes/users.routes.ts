@@ -1,7 +1,8 @@
 import Router from "express";
-import { deleteUser, getProfile, getUserById, getUsers, updateUserPassword, updateUserProfile } from "../controller/user.controller";
+import { callbackUrlHandler, deleteUser, getProfile, getUserById, getUsers, updateUserPassword, updateUserProfile } from "../controller/user.controller";
 import { authenticate, authorize } from "../middleware/auth";
 import { getDashboardStats } from "../controller/dashbord.controller";
+import passport from "passport";
 
 const userRouter = Router();
 
@@ -285,4 +286,27 @@ userRouter.get("/dashboard/stats",
     authorize("ADMIN"),
     getDashboardStats
 );
+userRouter.get("/callback-url",
+    callbackUrlHandler
+);
+
+userRouter.get(
+    "/auth/google",
+    passport.authenticate("google", { scope: ["profile", "email"] }),
+);
+userRouter.get(
+    "/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    callbackUrlHandler,
+);
+userRouter.get(
+    "/auth/facebook",
+    passport.authenticate("facebook"),
+);
+userRouter.get(
+    "/auth/facebook/callback",
+    passport.authenticate("facebook", { failureRedirect: "/login" }),
+    callbackUrlHandler,
+);
+
 export default userRouter;
