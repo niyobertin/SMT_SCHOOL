@@ -94,7 +94,8 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
     const limit = req.query.limit ? Number(req.query.limit) : 10;
     const query = req.query.q as string || "";
     const skip = (page - 1) * limit;
-    const lessonContent = await prisma.lessonContent.findMany({ where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" }},
+    const lessonContent = await prisma.lessonContent.findMany({
+      where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" } },
       include: {
         lesson: {
           select: {
@@ -107,7 +108,8 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
           },
         },
       },
-     skip, take: limit });
+      skip, take: limit
+    });
     const total = await prisma.lessonContent.count({ where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" } } });
     const totalPages = Math.ceil(total / limit);
     res.status(200).json({
@@ -144,72 +146,72 @@ export const getLessonContentById = async (req: Request, res: Response, next: Ne
 };
 
 export const updateLessonContent = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { lessonContentId } = req.params;
-      const { title, textBody, order, fileName } = req.body;
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      const existingContent = await prisma.lessonContent.findUnique({ 
-        where: { id: lessonContentId } 
-      });
-      if (!existingContent) {
-        return res.status(404).json({ status: "error", message: "Lesson content not found" });
-      }
-      let updateData: any = { title, textBody, order: order ? Number(order) : 0, fileName };
-      const uploader = new YouTubeUploader();
-      const videoFile = files?.["fileVideo"]?.[0];
-      if (videoFile) {
-        const tempPath = path.join(tmpDir, `${Date.now()}-${videoFile.originalname}`);
-        fs.writeFileSync(tempPath, videoFile.buffer);
-        updateData.videoUrl = await uploader.uploadVideo({
-          title: videoFile.originalname,
-          description: textBody || "",
-          filePath: tempPath,
-        });
-        fs.unlinkSync(tempPath);
-      }
-      const fileHandlers = {
-        fileAudio: 'audioUrl',
-        filePDF: 'pdfUrl',
-        fileImage: 'imageUrl'
-      };
-  
-      for (const [field, urlField] of Object.entries(fileHandlers)) {
-        const file = files?.[field]?.[0];
-        if (file) {
-          updateData[urlField] = await uploadBufferToCloudinary(file.buffer, file.mimetype, file.originalname);
-        }
-      }
-      const updatedLessonContent = await prisma.lessonContent.update({
-        where: { id: lessonContentId },
-        data: updateData,
-      });
-  
-      res.status(200).json({
-        status: "success",
-        message: "Lesson content updated successfully",
-        data: updatedLessonContent
-      });
-    } catch (error) {
-      logger.error("Error updating lesson content:", error);
-      next(error);
+  try {
+    const { lessonContentId } = req.params;
+    const { title, textBody, order, fileName } = req.body;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const existingContent = await prisma.lessonContent.findUnique({
+      where: { id: lessonContentId }
+    });
+    if (!existingContent) {
+      return res.status(404).json({ status: "error", message: "Lesson content not found" });
     }
-  };
+    let updateData: any = { title, textBody, order: order ? Number(order) : 0, fileName };
+    const uploader = new YouTubeUploader();
+    const videoFile = files?.["fileVideo"]?.[0];
+    if (videoFile) {
+      const tempPath = path.join(tmpDir, `${Date.now()}-${videoFile.originalname}`);
+      fs.writeFileSync(tempPath, videoFile.buffer);
+      updateData.videoUrl = await uploader.uploadVideo({
+        title: videoFile.originalname,
+        description: textBody || "",
+        filePath: tempPath,
+      });
+      fs.unlinkSync(tempPath);
+    }
+    const fileHandlers = {
+      fileAudio: 'audioUrl',
+      filePDF: 'pdfUrl',
+      fileImage: 'imageUrl'
+    };
 
-  export const deleteLessonContent = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { lessonContentId } = req.params;
-      const lessonContent = await prisma.lessonContent.findUnique({ where: { id: lessonContentId } });
-      if (!lessonContent) {
-        return res.status(404).json({ status: "error", message: "Lesson content not found" });
+    for (const [field, urlField] of Object.entries(fileHandlers)) {
+      const file = files?.[field]?.[0];
+      if (file) {
+        updateData[urlField] = await uploadBufferToCloudinary(file.buffer, file.mimetype, file.originalname);
       }
-      const deletedLessonContent = await prisma.lessonContent.delete({ where: { id: lessonContentId } });
-      res.status(200).json({
-        status: "success",
-        message: "Lesson content deleted successfully",
-        data: deletedLessonContent
-      });
-    } catch (error) {
-      logger.error("Error deleting lesson content:", error);
-      next(error);
     }
-  };
+    const updatedLessonContent = await prisma.lessonContent.update({
+      where: { id: lessonContentId },
+      data: updateData,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Lesson content updated successfully",
+      data: updatedLessonContent
+    });
+  } catch (error) {
+    logger.error("Error updating lesson content:", error);
+    next(error);
+  }
+};
+
+export const deleteLessonContent = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { lessonContentId } = req.params;
+    const lessonContent = await prisma.lessonContent.findUnique({ where: { id: lessonContentId } });
+    if (!lessonContent) {
+      return res.status(404).json({ status: "error", message: "Lesson content not found" });
+    }
+    const deletedLessonContent = await prisma.lessonContent.delete({ where: { id: lessonContentId } });
+    res.status(200).json({
+      status: "success",
+      message: "Lesson content deleted successfully",
+      data: deletedLessonContent
+    });
+  } catch (error) {
+    logger.error("Error deleting lesson content:", error);
+    next(error);
+  }
+};

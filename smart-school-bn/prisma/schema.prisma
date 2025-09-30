@@ -453,3 +453,13 @@ model ActivityLog {
   ip        String?
   createdAt DateTime @default(now())
 }
+
+model YouTubeToken {
+  id          String    @id @default(uuid())
+  provider    String    @default("youtube")
+  credentials String
+  expiryDate  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

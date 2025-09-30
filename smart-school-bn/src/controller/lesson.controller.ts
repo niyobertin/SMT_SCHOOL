@@ -59,7 +59,7 @@ export const getLessons = async (req: Request, res: Response, next: NextFunction
             return;
         }
         const lessons = await prisma.lesson.findMany({
-            where: { courseId: course.id},
+            where: { courseId: course.id },
             include: {
                 course: true,
                 content: true,
@@ -67,6 +67,7 @@ export const getLessons = async (req: Request, res: Response, next: NextFunction
             },
             skip,
             take: limit,
+            orderBy: { order: "asc" },
         });
         const total = await prisma.lesson.count({
             where: { courseId: course.id },
@@ -176,5 +177,4 @@ export const deleteLesson = async (req: Request, res: Response, next: NextFuncti
         next(error);
     }
 };
-        
-    
+

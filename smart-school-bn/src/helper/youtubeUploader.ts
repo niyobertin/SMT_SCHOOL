@@ -1,11 +1,10 @@
 import fs from "fs";
-import path from "path";
-import dotenv from "dotenv";
 import { google } from "googleapis";
 import open from "open";
 import logger from "../utils/logger";
+import { PrismaClient } from "@prisma/client";
 
-dotenv.config();
+const prisma = new PrismaClient();
 
 interface UploadOptions {
   title: string;
@@ -17,7 +16,6 @@ interface UploadOptions {
 
 class YouTubeUploader {
   public oAuth2Client;
-  private tokenPath: string;
 
   constructor() {
     const clientId = process.env.GOOGLE_CLIENT_ID!;
@@ -25,27 +23,34 @@ class YouTubeUploader {
     const redirectUri = process.env.GOOGLE_REDIRECT_URI!;
 
     this.oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
-    this.tokenPath = path.join(process.cwd(), "youtube_token.json");
-
-    this.loadTokens();
   }
 
-  /** Load tokens from file if they exist */
-  private loadTokens() {
-    if (fs.existsSync(this.tokenPath)) {
-      const tokens = JSON.parse(fs.readFileSync(this.tokenPath, "utf-8"));
+  /** Load tokens from DB if available */
+  async init() {
+    const tokenRecord = await prisma.youTubeToken.findFirst({ where: { provider: "youtube" } });
+    if (tokenRecord) {
+      const tokens = JSON.parse(tokenRecord.credentials);
       this.oAuth2Client.setCredentials(tokens);
 
-      this.oAuth2Client.on("tokens", (tokens) => {
+      // Save refreshed tokens automatically
+      this.oAuth2Client.on("tokens", async (tokens) => {
         if (tokens.access_token) {
-          logger.info("🔄 Tokens refreshed, saving...");
-          fs.writeFileSync(this.tokenPath, JSON.stringify(tokens, null, 2));
+          logger.info("🔄 Tokens refreshed, saving to DB...");
+          await prisma.youTubeToken.update({
+            where: { id: tokenRecord.id },
+            data: {
+              credentials: JSON.stringify(this.oAuth2Client.credentials),
+              expiryDate: this.oAuth2Client.credentials.expiry_date
+                ? new Date(this.oAuth2Client.credentials.expiry_date)
+                : null,
+            },
+          });
         }
       });
     }
   }
 
-  /** Get Google auth URL for first-time login */
+  /** Generate Google OAuth URL */
   getAuthUrl(): string {
     return this.oAuth2Client.generateAuthUrl({
       access_type: "offline",
@@ -54,48 +59,108 @@ class YouTubeUploader {
     });
   }
 
-  /** Exchange code for tokens and save */
+  /** Exchange OAuth code for tokens and save to DB */
   async exchangeCodeForToken(code: string) {
     const { tokens } = await this.oAuth2Client.getToken(code);
     this.oAuth2Client.setCredentials(tokens);
-    fs.writeFileSync(this.tokenPath, JSON.stringify(tokens, null, 2));
-    logger.info("✅ Tokens saved to youtube_token.json");
+
+    // Remove old tokens
+    await prisma.youTubeToken.deleteMany({ where: { provider: "youtube" } });
+
+    // Save new token
+    await prisma.youTubeToken.create({
+      data: {
+        provider: "youtube",
+        credentials: JSON.stringify(tokens),
+        expiryDate: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      },
+    });
+
+    logger.info("✅ Tokens saved in database");
   }
 
-  /** Upload video */
+  /** Ensure token is valid, refresh if expired */
+  private async ensureValidToken(): Promise<boolean> {
+    const tokenRecord = await prisma.youTubeToken.findFirst({ where: { provider: "youtube" } });
+    if (!tokenRecord) return false;
+
+    this.oAuth2Client.setCredentials(JSON.parse(tokenRecord.credentials));
+
+    try {
+      // Get a valid access token (automatically refreshes if expired)
+      const accessToken = await this.oAuth2Client.getAccessToken();
+      if (!accessToken.token) throw new Error("Unable to refresh token");
+
+      // Save updated credentials
+      await prisma.youTubeToken.update({
+        where: { id: tokenRecord.id },
+        data: {
+          credentials: JSON.stringify(this.oAuth2Client.credentials),
+          expiryDate: this.oAuth2Client.credentials.expiry_date
+            ? new Date(this.oAuth2Client.credentials.expiry_date)
+            : null,
+        },
+      });
+
+      logger.info("🔄 Token is valid");
+      return true;
+    } catch (err) {
+      logger.error("❌ Failed to refresh token. Deleting from DB...");
+      await prisma.youTubeToken.delete({ where: { id: tokenRecord.id } });
+      return false;
+    }
+  }
+
+  /** Upload video with automatic token handling */
   async uploadVideo(options: UploadOptions): Promise<string> {
-    if (!this.oAuth2Client.credentials.refresh_token && !this.oAuth2Client.credentials.access_token) {
-      logger.info("⚠️ No token found. Visit the following URL to authorize:");
+    let valid = await this.ensureValidToken();
+
+    if (!valid) {
+      // No valid token, prompt user to authorize
       const authUrl = this.getAuthUrl();
+      logger.info("⚠️ No valid token found. Visit this URL to authorize:");
       logger.info(authUrl);
       await open(authUrl);
-      throw new Error("Authorization required. Complete the OAuth flow via /oauth2callback.");
+
+      // Wait for token to appear in DB (max 5 min)
+      const maxWait = 300000;
+      const start = Date.now();
+      while (Date.now() - start < maxWait) {
+        await new Promise((res) => setTimeout(res, 5000));
+        valid = await this.ensureValidToken();
+        if (valid) break;
+      }
+
+      if (!valid) throw new Error("Authorization required. You did not complete OAuth flow.");
     }
 
     const youtube = google.youtube({ version: "v3", auth: this.oAuth2Client });
 
-    const res = await youtube.videos.insert({
-      part: ["snippet", "status"],
-      requestBody: {
-        snippet: {
-          title: options.title,
-          description: options.description || "",
-          tags: options.tags || [],
-          categoryId: "22",
+    try {
+      const res = await youtube.videos.insert({
+        part: ["snippet", "status"],
+        requestBody: {
+          snippet: {
+            title: options.title,
+            description: options.description || "",
+            tags: options.tags || [],
+            categoryId: "22",
+          },
+          status: {
+            privacyStatus: options.privacyStatus || "unlisted",
+          },
         },
-        status: {
-          privacyStatus: options.privacyStatus || "unlisted",
+        media: {
+          body: fs.createReadStream(options.filePath),
         },
-      },
-      media: {
-        body: fs.createReadStream(options.filePath),
-      },
-    });
+      });
 
-    const videoId = res.data.id;
-    if (!videoId) throw new Error("Failed to upload video: No video ID returned.");
-
-    return `https://youtu.be/${videoId}`;
+      if (!res.data.id) throw new Error("Upload failed: No video ID returned.");
+      return `https://youtu.be/${res.data.id}`;
+    } catch (err: any) {
+      logger.error(err);
+      throw err;
+    }
   }
 }
 
