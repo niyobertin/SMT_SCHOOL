@@ -177,7 +177,7 @@ const LessonContentPage = () => {
           renderPdfViewer(currentContent.pdfUrl)}
 
         {currentContent.textBody && (
-          <div className="prose max-w-none"
+          <div className="prose max-w-5xl mx-auto no-print"
             style={{
               userSelect: "none",
               WebkitUserSelect: "none",

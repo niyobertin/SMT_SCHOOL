@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowLeft, Clock, PlayCircle, Award, List, FileText } from 'lucide-react';
-import { fetchLessons } from '../../redux/features/lessons/lessonSlice';
+import { clearLessons, fetchLessons, setPage } from '../../redux/features/lessons/lessonSlice';
 import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { FaQuestion } from 'react-icons/fa6';
@@ -21,7 +21,7 @@ const CourseLessonsPage = () => {
   const queryParams = new URLSearchParams(location.search);
   const subscribed = queryParams.get("subscribed");
 
-  const { items: lessons, loading: lessonsLoading, error: lessonsError } = useSelector(
+  const { items: lessons, pagination, loading: lessonsLoading, error: lessonsError } = useSelector(
     (state: RootState) => state.lessons
   );
   const { tests, loading: testsLoading, error: testsError } = useSelector(
@@ -39,7 +39,6 @@ const CourseLessonsPage = () => {
     setIsModalOpen(false);
     navigate(-1);
   };
-
   const handleContinue = () => {
     setIsModalOpen(false);
     navigate('/login');
@@ -75,13 +74,19 @@ const CourseLessonsPage = () => {
 
   useEffect(() => {
     if (courseId) {
-      dispatch(fetchLessons(courseId));
+      dispatch(fetchLessons({
+        courseId,
+        page: pagination.page,
+        limit: pagination.limit
+      }));
     }
+
     return () => {
-      dispatch({ type: 'lessons/clearLessons' });
+      dispatch(clearLessons());
       dispatch({ type: 'test/clearTests' });
     };
-  }, [courseId, dispatch]);
+  }, [courseId, dispatch, pagination.page, pagination.limit]);
+
 
   useEffect(() => {
     if (activeTab === 'tests' && courseId) {
@@ -156,10 +161,10 @@ const CourseLessonsPage = () => {
                 <div className="p-6 text-center text-red-500">{lessonsError}</div>
               ) : lessons.length > 0 ? (
                 lessons.map((lesson, index) => (
-                  <div key={lesson.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                        {index + 1}
+                        {lesson.order}
                       </div>
                       <div className="ml-4 flex-1">
                         <div className="flex items-center justify-between">
@@ -207,6 +212,46 @@ const CourseLessonsPage = () => {
                   </div>
                 </div>
               )}
+
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-t mt-6 gap-2">
+                  {/* Previous Button */}
+                  <button
+                    disabled={pagination.page === 1}
+                    onClick={() => dispatch(setPage(pagination.page - 1))}
+                    className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100"
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex gap-2 overflow-x-auto">
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => dispatch(setPage(num))}
+                        className={`px-3 py-1 rounded-lg text-sm border whitespace-nowrap ${num === pagination.page
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                          }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    disabled={pagination.page === pagination.totalPages}
+                    onClick={() => dispatch(setPage(pagination.page + 1))}
+                    className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+
             </div>
           ) : (
             <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">

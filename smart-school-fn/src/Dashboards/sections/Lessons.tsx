@@ -4,7 +4,7 @@ import { LessonModal } from "../Modals/LessonModal";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { createLesson, deleteLesson, fetchLessons, updateLesson } from "../../redux/features/lessons/lessonSlice";
+import { clearLessons, createLesson, deleteLesson, fetchLessons, setPage, updateLesson } from "../../redux/features/lessons/lessonSlice";
 import type { AppDispatch, RootState } from "../../redux/stores";
 import { Toast } from "primereact/toast";
 interface LessonsProps { }
@@ -15,12 +15,11 @@ export const Lessons = ({ }: LessonsProps) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const lessons = useSelector((state: RootState) => state.lessons);
+  const { pagination } = useSelector((state: RootState) => state.lessons);
   const loading = useSelector((state: RootState) => state.lessons.loading);
   const error = useSelector((state: RootState) => state.lessons.error);
 
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
@@ -31,9 +30,18 @@ export const Lessons = ({ }: LessonsProps) => {
 
   useEffect(() => {
     if (courseId) {
-      dispatch(fetchLessons(courseId));
+      dispatch(fetchLessons({
+        courseId,
+        page: pagination.page,
+        limit: pagination.limit
+      }));
     }
-  }, [courseId, dispatch]);
+
+    return () => {
+      dispatch(clearLessons());
+      dispatch({ type: 'test/clearTests' });
+    };
+  }, [courseId, dispatch, pagination.page, pagination.limit]);
 
   const handleDelete = (id: string) => {
     setDeleteId(id);
@@ -45,7 +53,11 @@ export const Lessons = ({ }: LessonsProps) => {
 
     try {
       await dispatch(deleteLesson(deleteId)).unwrap();
-      await dispatch(fetchLessons(courseId!)).unwrap();
+      await dispatch(fetchLessons({
+        courseId: courseId!,
+        page: pagination.page,
+        limit: pagination.limit
+      })).unwrap();
 
       toast.current?.show({
         severity: "success",
@@ -80,7 +92,11 @@ export const Lessons = ({ }: LessonsProps) => {
       } else {
         await dispatch(createLesson({ ...lessonData, courseId })).unwrap();
       }
-      dispatch(fetchLessons(courseId!));
+      dispatch(fetchLessons({
+        courseId: courseId!,
+        page: pagination.page,
+        limit: pagination.limit
+      }));
       setLessonLoading(false);
       toast.current?.show({
         severity: "success",
@@ -101,12 +117,6 @@ export const Lessons = ({ }: LessonsProps) => {
       });
     }
   };
-
-  const totalPages = Math.ceil(lessons.items.length / itemsPerPage);
-  const paginatedLessons = lessons.items.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   if (loading) {
     return (
@@ -186,7 +196,7 @@ export const Lessons = ({ }: LessonsProps) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedLessons.map((lesson) => (
+              {lessons.items.map((lesson) => (
                 <tr key={lesson.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -239,7 +249,7 @@ export const Lessons = ({ }: LessonsProps) => {
                 </tr>
               ))}
 
-              {paginatedLessons.length === 0 && (
+              {lessons.items.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                     No lessons found
@@ -252,27 +262,44 @@ export const Lessons = ({ }: LessonsProps) => {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center px-6 py-4 border-t">
+        {pagination.totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-t mt-6 gap-2">
+            {/* Previous Button */}
             <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50"
+              disabled={pagination.page === 1}
+              onClick={() => dispatch(setPage(pagination.page - 1))}
+              className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100"
             >
               Previous
             </button>
-            <div className="text-sm text-gray-700">
-              Page {currentPage} of {totalPages}
+
+            {/* Page Numbers */}
+            <div className="flex gap-2 overflow-x-auto">
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((num) => (
+                <button
+                  key={num}
+                  onClick={() => dispatch(setPage(num))}
+                  className={`px-3 py-1 rounded-lg text-sm border whitespace-nowrap ${num === pagination.page
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                    }`}
+                >
+                  {num}
+                </button>
+              ))}
             </div>
+
+            {/* Next Button */}
             <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50"
+              disabled={pagination.page === pagination.totalPages}
+              onClick={() => dispatch(setPage(pagination.page + 1))}
+              className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100"
             >
               Next
             </button>
           </div>
         )}
+
       </div>
 
       {/* Lesson Modal */}

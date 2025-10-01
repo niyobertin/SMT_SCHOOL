@@ -67,7 +67,6 @@ export const LessonContent = () => {
   }, [createSuccess, isContentModalOpen]);
 
   const handleOpenContentModal = (lesson?: Lesson) => {
-    console.log("this is lesson selcted for being upadtaed ==>", lesson)
     if (lesson) setEditingContent(lesson);
     else setEditingContent(null);
     setIsContentModalOpen(true);

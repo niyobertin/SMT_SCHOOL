@@ -15,6 +15,23 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Add to your global CSS */
+.no-print {
+  user-select: none;
+  /* prevent text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* hide on print */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+
 /* Draft.js Editor Styles */
 .rdw-dropdown-wrapper {
   background: white;

@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/api";
-import type { RootState } from "../../stores";
 
 interface Content {
   id: string;
@@ -80,17 +79,12 @@ const initialState: LessonsState = {
 
 export const fetchLessons = createAsyncThunk(
   'lessons/fetchLessons',
-  async (courseId: string, { getState }) => {
-    const state = getState() as RootState;
-    const { page, limit } = state.lessons.pagination;
-
-    const response = await api.get(`/lessons/${courseId}`, {
-      params: { page, limit }
-    });
-
+  async ({ courseId, page, limit }: { courseId: string; page: number; limit: number }) => {
+    const response = await api.get(`/lessons/${courseId}`, { params: { page, limit } });
     return response.data.data;
   }
 );
+
 
 export const createLesson = createAsyncThunk(
   'lessons/createLesson',
@@ -143,16 +137,14 @@ const lessonSlice = createSlice({
   initialState,
   reducers: {
     setPage: (state, action) => {
-      state.pagination.page = action.payload;
+      state.pagination = { ...state.pagination, page: action.payload };
     },
     setLimit: (state, action) => {
-      state.pagination.limit = action.payload;
+      state.pagination = { ...state.pagination, limit: action.payload };
     },
+
     clearLessons: (state) => {
       state.items = [];
-      state.pagination.page = 1;
-      state.pagination.total = 0;
-      state.pagination.totalPages = 1;
     },
   },
   extraReducers: (builder) => {
