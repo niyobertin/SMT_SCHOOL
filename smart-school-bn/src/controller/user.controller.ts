@@ -597,7 +597,6 @@ export const callbackUrlHandler = (req: Request, res: Response) => {
         .json({ message: "Authentication failed" });
       return;
     }
-    console.log("Authenticated user:", req.user);
     const token = generateToken(req.user);
     res.redirect(`${process.env.FRONTEND_URL}?token=${token}`);
     return;

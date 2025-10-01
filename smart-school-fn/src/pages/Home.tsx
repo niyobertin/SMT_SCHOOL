@@ -1,9 +1,9 @@
 import { Award, ArrowRight, Play, Star } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { Variants } from "framer-motion";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import useLanguage from "../hooks/useLanguage";
 import backgroundImage from "../assets/background.jpg";
 import { ourPrograms } from "../constants/programs";
@@ -79,6 +79,19 @@ const bidirectionalSlide: Variants = {
 export const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const ref = useRef(null);
+  const navigate = useNavigate();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (token) {
+      localStorage.setItem("accessToken", token); // ✅ store token
+      localStorage.setItem("userRole", "STUDENT")
+      navigate("/caurses"); // redirect wherever you want
+    } else {
+      navigate("/login");
+    }
+  }, [navigate]);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"]
