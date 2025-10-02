@@ -6,6 +6,6 @@ COPY package*.json ./
 RUN npm install --production
 
 COPY . .
-
+#COPY . .
 EXPOSE 5000
 CMD ["npm", "start"]
