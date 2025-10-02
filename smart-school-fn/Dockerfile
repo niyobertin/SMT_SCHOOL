@@ -1,34 +1,18 @@
-# Build stage
-FROM node:20-alpine as build
+
+FROM node:18-alpine as build
 
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies with legacy peer deps flag
-RUN npm install --legacy-peer-deps
-
-# Copy source code
+RUN npm install
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Production stage
-FROM nginx:stable-alpine
+# Production image
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy built assets from the build stage
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
+# Copy custom nginx config (optional)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy .env file if it exists
-COPY .env* /usr/share/nginx/html
-
-# Expose port 80
 EXPOSE 80
-
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]

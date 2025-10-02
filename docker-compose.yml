@@ -1,80 +1,37 @@
-version: '3.8'
-
 services:
-  frontend:
-    build:
-      context: ./smart-school-fn
-      dockerfile: Dockerfile
-    container_name: smart-school-frontend
-    ports:
-      - "3000:80"
-    env_file:
-      - ./smart-school-fn/.env
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
     environment:
-      - NODE_ENV=production
-      - VITE_API_URL=http://localhost:3001/api
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - smart-school-network
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "http://localhost:80/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  backend:
-    build:
-      context: ./smart-school-bn
-      dockerfile: Dockerfile
-      target: development # or 'production' for production
-    container_name: smart-school-backend
-    ports:
-      - "3001:3001"
-    env_file:
-      - ./smart-school-bn/.env
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-smartschool}
-      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here}
-      - PORT=3001
-    volumes:
-      - ./smart-school-bn:/usr/src/app
-      - /usr/src/app/node_modules
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - smart-school-network
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "http://localhost:3001/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  db:
-    image: postgres:14
-    container_name: smart-school-db
-    environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-smartschool}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - smart-school-network
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-smartschool}" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
-networks:
-  smart-school-network:
-    driver: bridge
+  backend:
+    build: ./smart-school-bn
+    container_name: smart-school-bn
+    restart: always
+    env_file: ./smart-school-bn/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./smart-school-fn
+    container_name: smart-school-fn
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    env_file:
+      - ./smart-school-fn/.env
 
 volumes:
   postgres_data:
