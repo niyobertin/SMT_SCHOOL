@@ -85,11 +85,11 @@ export const HomePage: React.FC = () => {
     const token = params.get("token");
 
     if (token) {
-      localStorage.setItem("accessToken", token); // ✅ store token
+      localStorage.setItem("accessToken", token);
       localStorage.setItem("userRole", "STUDENT")
-      navigate("/caurses"); // redirect wherever you want
+      navigate("/courses");
     } else {
-      navigate("/login");
+      navigate("/");
     }
   }, [navigate]);
   const { scrollYProgress } = useScroll({

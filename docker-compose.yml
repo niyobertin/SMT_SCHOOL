@@ -16,22 +16,27 @@ services:
     build: ./smart-school-bn
     container_name: smart-school-bn
     restart: always
-    env_file: ./smart-school-bn/.env
+    env_file:
+      - ./smart-school-bn/.env
+    environment:
+      # Inject database URL (uses postgres container as host)
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     ports:
-      - "3000:3000"
+      - "5000:5000"
     depends_on:
       - postgres
+    command: sh -c "npx prisma migrate deploy && npm start"
 
   frontend:
     build: ./smart-school-fn
     container_name: smart-school-fn
     restart: always
+    env_file:
+      - ./smart-school-fn/.env
     ports:
       - "80:80"
     depends_on:
       - backend
-    env_file:
-      - ./smart-school-fn/.env
 
 volumes:
   postgres_data:

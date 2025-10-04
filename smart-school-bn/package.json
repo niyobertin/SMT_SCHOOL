@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "tsc && npm run prisma:deploy",
+    "build": "tsc",
     "start": "node dist/index.js",
     "start:dev": "ts-node src/index.ts",
     "test": "jest",
