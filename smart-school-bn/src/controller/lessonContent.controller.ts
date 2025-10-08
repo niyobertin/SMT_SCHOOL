@@ -108,7 +108,8 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
           },
         },
       },
-      skip, take: limit
+      skip, take: limit,
+      orderBy: { createdAt: "asc" }
     });
     const total = await prisma.lessonContent.count({ where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" } } });
     const totalPages = Math.ceil(total / limit);
@@ -134,7 +135,10 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
 export const getLessonContentById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { lessonContentId } = req.params;
-    const lessonContent = await prisma.lessonContent.findUnique({ where: { id: lessonContentId } });
+    const lessonContent = await prisma.lessonContent.findFirst({
+      where: { id: lessonContentId },
+      orderBy: { createdAt: "asc" }
+    });
     if (!lessonContent) {
       return res.status(404).json({ status: "error", message: "Lesson content not found" });
     }
