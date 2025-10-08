@@ -140,9 +140,17 @@ export const ContactPage = () => {
                 <div>
                   <h4 className="font-semibold text-slate-900 mb-1">{t("address")}</h4>
                   <p className="text-slate-600">
-                    123 Learning Street<br />
-                    Education District<br />
-                    Kigali, Rwanda
+                    JQX4+W7R Nyanza<br />
+                    Rwanda<br />
+                    <a
+                      href="https://maps.app.goo.gl/b5DKTVxiYmGCc6ud6"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600"
+                    >
+                      View on map
+                    </a>
+
                   </p>
                 </div>
               </div>
@@ -153,7 +161,7 @@ export const ContactPage = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-900 mb-1">{t("phone")}</h4>
-                  <p className="text-slate-600">+250 788 123 456</p>
+                  <p className="text-slate-600">+250 781 212 252</p>
                 </div>
               </div>
 
@@ -163,7 +171,7 @@ export const ContactPage = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold text-slate-900 mb-1">{t("emailAddress")}</h4>
-                  <p className="text-slate-600">support@exceledge.com</p>
+                  <p className="text-slate-600">smartschoolrwanda@gmail.com</p>
                 </div>
               </div>
 
@@ -174,8 +182,7 @@ export const ContactPage = () => {
                 <div>
                   <h4 className="font-semibold text-slate-900 mb-1">{t("businessHours")}</h4>
                   <p className="text-slate-600">
-                    {t("mondayToFriday")}<br />
-                    {t("weekends")}
+                    Moday - Sunday(24/7)
                   </p>
                 </div>
               </div>

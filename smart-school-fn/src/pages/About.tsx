@@ -1,7 +1,6 @@
 import { Users, Target, Eye, Heart, Award, Lightbulb } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import ouner from "../assets/Picture1.png";
 import backgroundImage from "../assets/aboutimage.jpg";
 import { Link } from "react-router-dom";
 import cto from "../assets/cto.jpeg";
@@ -118,19 +117,6 @@ export const About = () => {
     },
   };
 
-  const bounceIn: Variants = {
-    initial: { opacity: 0, scale: 0.3 },
-    animate: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 10
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Hero Section */}
@@ -155,31 +141,16 @@ export const About = () => {
 
         <div className="relative max-w-6xl mx-auto px-6 text-center text-white">
           <p className="text-2xl font-bold mb-6">About Smart School</p>
-          <motion.h1
-            className="text-5xl font-bold mb-6 leading-tight"
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            Empowering Minds Through
-            <motion.span
-              className="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent"
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-            >
-              Online Learning
-            </motion.span>
-          </motion.h1>
-
           <motion.p
             className="text-xl opacity-90 max-w-3xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 0.9, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
           >
-            Welcome to Smart School, where we're revolutionizing education by making high-quality learning accessible,
-            engaging, and transformative for learners worldwide.
+            Welcome to <span className="font-bold text-yellow-600">Smart School</span>, the future of learning where education goes beyond classroom walls and adapts to the demands of today’s fast-changing world.
+            Here, continuous learning is not just encouraged but made accessible through flexible, interactive, and personalized experiences designed to fit seamlessly into your life.
+            Whether you are a student aiming to strengthen your studies, a professional looking to enhance your skills, or an individual pursuing a new passion,
+            Smart School is here to walk with you every step of your learning journey.
           </motion.p>
         </div>
         {/* Floating particles effect */}
@@ -206,34 +177,8 @@ export const About = () => {
         </div>
       </motion.section>
 
-      {/* Welcome Message */}
-      <motion.div
-        className="py-16 bg-white"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={staggerContainer}
-      >
-        <div className="max-w-7xl mx-auto px-6 lg:flex justify-center items-center">
-          <motion.div variants={bounceIn} className="flex justify-center items-center w-full ">
-            <img src={ouner} alt="owner" loading="lazy" className="w-1/2 h-1/2 rounded-full" />
-          </motion.div>
+      <p className="text-2xl font-bold pt-6 text-center">Mission and vision</p>
 
-          <div className="w-full">
-            <motion.p
-              className="text-lg text-gray-600 leading-relaxed mb-8 "
-              variants={fadeInUp}
-            >
-              Welcome to <span className="font-bold">Smart School</span>, the future of learning where education goes beyond classroom walls and adapts to the demands of today’s fast-changing world.
-              Here, continuous learning is not just encouraged but made accessible through flexible, interactive, and personalized experiences designed to fit seamlessly into your life.
-              Whether you are a student aiming to strengthen your studies, a professional looking to enhance your skills, or an individual pursuing a new passion,
-              Smart School is here to walk with you every step of your learning journey.
-            </motion.p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Mission & Vision */}
       <motion.div
         className="py-16 bg-gray-50"
         initial="initial"
@@ -308,7 +253,7 @@ export const About = () => {
             <p className="text-lg text-gray-600">The principles that guide everything we do</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {values.map((value, index) => (
               <motion.div
                 key={index}
@@ -352,7 +297,7 @@ export const About = () => {
             <p className="text-lg text-gray-600">The passionate individuals behind Smart School</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-2">
             {teamMembers.map((member, index) => (
               <motion.div
                 key={index}
@@ -369,7 +314,7 @@ export const About = () => {
                     src={member.image}
                     alt={member.name}
                     loading="lazy"
-                    className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-blue-100"
+                    className="w-44 h-44 rounded-full mx-auto mb-4 object-cover border-4 border-blue-100"
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     transition={{ duration: 0.3 }}
                   />
