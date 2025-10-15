@@ -174,7 +174,25 @@ const LessonContentPage = () => {
 
         {currentContent.pdfUrl &&
           isPdf(currentContent.pdfUrl) &&
-          renderPdfViewer(currentContent.pdfUrl)}
+          (
+            <div
+              style={{
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                MozUserSelect: "none",
+                msUserSelect: "none",
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+              onCopy={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onPaste={(e) => e.preventDefault()}
+              onDragOver={(e) => e.preventDefault()}
+              onPointerCancel={(e) => e.preventDefault()}
+            >
+              {renderPdfViewer(currentContent.pdfUrl)}
+            </div>
+          )}
 
         {currentContent.textBody && (
           <div className="prose max-w-5xl mx-auto no-print"

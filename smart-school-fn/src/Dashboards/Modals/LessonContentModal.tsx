@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import JoditEditor from "jodit-react";
 import "react-quill-new/dist/quill.snow.css";
-
+const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10 MB
 type LessonContentModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -20,6 +20,7 @@ export const LessonContentModal = ({
   isSuccess = false,
 }: LessonContentModalProps) => {
   const editor = useRef(null);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -45,7 +46,7 @@ export const LessonContentModal = ({
     }
   }, [initialData]);
 
-  console.log("this is formData ==>", initialData);
+
 
   useEffect(() => {
     if (isSuccess && !isLoading) {
@@ -69,6 +70,10 @@ export const LessonContentModal = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, files, value } = e.target;
     if (files) {
+      if (name === "filePDF" && files[0].size > MAX_PDF_SIZE) {
+        setError("PDF file size exceeds the maximum limit of 10 MB.");
+        return;
+      }
       setFormData({ ...formData, [name]: files[0] });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -174,6 +179,8 @@ export const LessonContentModal = ({
               </div>
             ))}
           </div>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
 
           {/* Buttons */}
           <div className="flex justify-end gap-2 pt-4">

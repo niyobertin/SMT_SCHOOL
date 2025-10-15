@@ -368,6 +368,7 @@ router.post(
 router.patch(
   '/questions/:questionId',
   authenticate,
+  uploadFile,
   authorize('INSTRUCTOR', "ADMIN"),
   catchAsync(updateTestQuestion)
 );
