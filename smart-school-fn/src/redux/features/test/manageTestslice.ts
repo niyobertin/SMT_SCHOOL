@@ -146,14 +146,15 @@ export const addQuestion = createAsyncThunk(
 
 export const updateQuestion = createAsyncThunk(
   'tests/updateQuestion',
-  async (questionData: { id: string; questionData: any }, { rejectWithValue }) => {
+  async ({ questionData, id }: { questionData: any, id: string }, { rejectWithValue }) => {
     try {
-      const { id, questionData: qData } = questionData;
-      const payload = {
-        id,
-        ...qData,
-      };
-      const response = await api.patch(`/tests/questions/${id}`, payload);
+      const response = await api.patch(`/tests/questions/${id}`, questionData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update question');

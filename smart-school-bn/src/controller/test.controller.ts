@@ -23,11 +23,11 @@ export const getTestByCourseId = async (
     });
 
     if (!test) {
-      throw new NotFoundError('Test not found');
+      throw new NotFoundError("Test not found");
     }
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: test,
     });
   } catch (error) {
@@ -41,7 +41,16 @@ export const createTest = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { title, description, instructions, duration, passingScore, maxAttempts, randomizeQuestions, showResults } = req.body;
+    const {
+      title,
+      description,
+      instructions,
+      duration,
+      passingScore,
+      maxAttempts,
+      randomizeQuestions,
+      showResults,
+    } = req.body;
     const { courseId } = req.params;
 
     // Verify user owns the course
@@ -101,7 +110,7 @@ export const addQuestionToTest = async (
     // Verify test exists
     const test = await prisma.test.findFirst({
       where: {
-        id: testId
+        id: testId,
       },
     });
 
@@ -116,14 +125,17 @@ export const addQuestionToTest = async (
     // Get current max order to set for the new question
     const lastQuestion = await prisma.question.findFirst({
       where: { testId },
-      orderBy: { order: 'desc' },
+      orderBy: { order: "desc" },
     });
 
     const newOrder = lastQuestion ? lastQuestion.order + 1 : 0;
     const imageFile = files?.["fileImage"]?.[0];
     let imageUrl = "";
     if (imageFile) {
-      imageUrl = await uploadBufferToCloudinary(imageFile.buffer, imageFile.mimetype);
+      imageUrl = await uploadBufferToCloudinary(
+        imageFile.buffer,
+        imageFile.mimetype
+      );
     }
     // Create question with transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
@@ -144,20 +156,25 @@ export const addQuestionToTest = async (
 
       // Add options if it's a multiple choice question
 
-      if (options && options.length > 0 && (type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE')) {
+      if (
+        options &&
+        options.length > 0 &&
+        (type === "MULTIPLE_CHOICE" || type === "TRUE_FALSE")
+      ) {
         await Promise.all(
-          options.map((opt: { option: string; isCorrect: any }, index: number) =>
-            tx.questionOption.create({
-              data: {
-                id: uuidv4(),
-                option: opt.option,
-                isCorrect: opt.isCorrect === true || opt.isCorrect === 'true',
-                order: index,
-                question: {
-                  connect: { id: newQuestion.id },
+          options.map(
+            (opt: { option: string; isCorrect: any }, index: number) =>
+              tx.questionOption.create({
+                data: {
+                  id: uuidv4(),
+                  option: opt.option,
+                  isCorrect: opt.isCorrect === true || opt.isCorrect === "true",
+                  order: index,
+                  question: {
+                    connect: { id: newQuestion.id },
+                  },
                 },
-              },
-            })
+              })
           )
         );
       }
@@ -216,11 +233,11 @@ export const getTestById = async (
     });
 
     if (!test) {
-      throw new NotFoundError('Test not found');
+      throw new NotFoundError("Test not found");
     }
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: test,
     });
   } catch (error) {
@@ -250,7 +267,7 @@ export const getTestQuestions = async (
     });
 
     if (!test) {
-      throw new NotFoundError('Test not found');
+      throw new NotFoundError("Test not found");
     }
 
     // Get questions for the test
@@ -265,11 +282,11 @@ export const getTestQuestions = async (
         order: true,
         image: true,
       },
-      orderBy: { order: 'asc' },
+      orderBy: { order: "asc" },
     });
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: questions,
     });
   } catch (error) {
@@ -297,7 +314,7 @@ export const startTestAttempt = async (
             enrollments: {
               where: {
                 userId,
-                status: 'ACTIVE',
+                status: "ACTIVE",
               },
             },
           },
@@ -309,7 +326,7 @@ export const startTestAttempt = async (
       where: { testId, isActive: true },
       include: {
         options: {
-          orderBy: { order: 'asc' },
+          orderBy: { order: "asc" },
           select: {
             id: true,
             option: true,
@@ -317,9 +334,7 @@ export const startTestAttempt = async (
           },
         },
       },
-      orderBy: test?.randomizeQuestions
-        ? { id: 'asc' }
-        : { order: 'asc' },
+      orderBy: test?.randomizeQuestions ? { id: "asc" } : { order: "asc" },
     });
 
     if (questions.length === 0) {
@@ -367,7 +382,7 @@ export const startTestAttempt = async (
           passingScore: test?.passingScore,
           showResults: test?.showResults,
         },
-        questions: randomizedQuestions.map(q => ({
+        questions: randomizedQuestions.map((q) => ({
           id: q.id,
           question: q.question,
           image: q.image,
@@ -402,7 +417,7 @@ export const submitAnswer = async (
     const testAttempt = await prisma.testAttempt.findFirst({
       where: {
         id: attemptId,
-        userId
+        userId,
       },
       include: {
         test: {
@@ -424,7 +439,7 @@ export const submitAnswer = async (
         message: "Test attempt not found ",
       });
       return;
-    } else if (testAttempt.status === 'COMPLETED') {
+    } else if (testAttempt.status === "COMPLETED") {
       res.status(400).json({
         status: "error",
         message: "Test attempt already completed",
@@ -443,8 +458,8 @@ export const submitAnswer = async (
 
     // Get the selected option texts
     const selectedOptionTexts = question.options
-      .filter(opt => selectedOptions?.includes(opt.id))
-      .map(opt => opt.option);
+      .filter((opt) => selectedOptions?.includes(opt.id))
+      .map((opt) => opt.option);
 
     // Check if answer already exists
     const existingAnswer = await prisma.answer.findFirst({
@@ -458,16 +473,17 @@ export const submitAnswer = async (
     let points = 0;
 
     // Auto-grade if possible
-    if (question.type === 'MULTIPLE_CHOICE' || question.type === 'TRUE_FALSE') {
+    if (question.type === "MULTIPLE_CHOICE" || question.type === "TRUE_FALSE") {
       const correctOptions = question.options
-        .filter(opt => opt.isCorrect)
-        .map(opt => opt.id);
+        .filter((opt) => opt.isCorrect)
+        .map((opt) => opt.id);
 
       const selected = Array.isArray(selectedOptions) ? selectedOptions : [];
 
       // Check if all correct options are selected and no incorrect ones
-      isCorrect = correctOptions.length === selected.length &&
-        correctOptions.every(optId => selected.includes(optId));
+      isCorrect =
+        correctOptions.length === selected.length &&
+        correctOptions.every((optId) => selected.includes(optId));
 
       points = isCorrect ? question.points : 0;
     }
@@ -506,7 +522,7 @@ export const submitAnswer = async (
       where: { testAttemptId: attemptId },
     });
 
-    const correctAnswers = answers.filter(a => a.isCorrect).length;
+    const correctAnswers = answers.filter((a) => a.isCorrect).length;
     const totalPoints = answers.reduce((sum, a) => sum + (a.points || 0), 0);
 
     await prisma.testAttempt.update({
@@ -547,7 +563,7 @@ export const submitTest = async (
     const testAttempt = await prisma.testAttempt.findFirst({
       where: {
         id: attemptId,
-        userId
+        userId,
       },
       include: {
         test: {
@@ -564,7 +580,7 @@ export const submitTest = async (
     });
 
     if (!testAttempt) {
-      throw new NotFoundError('Test attempt not found ');
+      throw new NotFoundError("Test attempt not found ");
     }
 
     // 2. Calculate final score
@@ -572,11 +588,19 @@ export const submitTest = async (
       where: { testId: testAttempt.testId },
     });
 
-    const totalScoreForQuestions = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+    const totalScoreForQuestions = questions.reduce(
+      (sum, q) => sum + (q.points || 0),
+      0
+    );
     const totalQuestions = questions.length;
     const answeredQuestions = testAttempt.answers.length;
-    const correctAnswers = testAttempt.answers.filter(a => a.isCorrect).length;
-    const totalPoints = testAttempt.answers.reduce((sum, a) => sum + (a.points || 0), 0);
+    const correctAnswers = testAttempt.answers.filter(
+      (a) => a.isCorrect
+    ).length;
+    const totalPoints = testAttempt.answers.reduce(
+      (sum, a) => sum + (a.points || 0),
+      0
+    );
     const score = (totalPoints / totalScoreForQuestions) * 100;
     const isPassed = score >= testAttempt.test.passingScore;
 
@@ -588,14 +612,20 @@ export const submitTest = async (
         endTime: now,
         score,
         isPassed,
-        status: 'COMPLETED',
-        timeSpent: Math.floor((now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60), // in minutes
+        status: "COMPLETED",
+        timeSpent: Math.floor(
+          (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
+        ), // in minutes
       },
     });
 
     // 4. Update user progress and record achievement if passed
     if (isPassed) {
-      await updateUserProgress(userId, testAttempt.test.courseId, testAttempt.testId);
+      await updateUserProgress(
+        userId,
+        testAttempt.test.courseId,
+        testAttempt.testId
+      );
     }
 
     // 5. Generate results
@@ -611,8 +641,10 @@ export const submitTest = async (
         correctAnswers,
         pointsEarned: totalPoints,
         totalPoints: totalScoreForQuestions,
-        timeSpent: Math.floor((now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60),
-        submittedAt: now.toISOString()
+        timeSpent: Math.floor(
+          (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
+        ),
+        submittedAt: now.toISOString(),
       },
       message: "Test submitted successfully",
     };
@@ -626,29 +658,34 @@ export const submitTest = async (
             include: {
               options: {
                 where: { isCorrect: true },
-                select: { id: true, option: true }
-              }
-            }
-          }
+                select: { id: true, option: true },
+              },
+            },
+          },
         },
       });
 
-      response.data.details = detailedAnswers.map(a => ({
+      response.data.details = detailedAnswers.map((a) => ({
         questionId: a.questionId,
         question: a.question.question,
         type: a.question.type,
         isCorrect: a.isCorrect,
         points: a.points,
         userAnswer: a.answerText || a.userAnswer,
-        correctAnswers: a.question.options.map(opt => ({
+        correctAnswers: a.question.options.map((opt) => ({
           id: opt.id,
-          option: opt.option
-        }))
+          option: opt.option,
+        })),
       }));
     }
 
     // 7. Send notifications
-    await sendTestCompletionNotification(userId, testAttempt.test, isPassed, score);
+    await sendTestCompletionNotification(
+      userId,
+      testAttempt.test,
+      isPassed,
+      score
+    );
 
     res.status(200).json(response);
   } catch (error) {
@@ -657,7 +694,11 @@ export const submitTest = async (
 };
 
 // Helper functions
-const updateUserProgress = async (userId: string, courseId: string, testId: string) => {
+const updateUserProgress = async (
+  userId: string,
+  courseId: string,
+  testId: string
+) => {
   try {
     await prisma.userCourseProgress.upsert({
       where: {
@@ -680,7 +721,7 @@ const updateUserProgress = async (userId: string, courseId: string, testId: stri
       },
     });
   } catch (error) {
-    console.error('Error updating user course progress:', error);
+    console.error("Error updating user course progress:", error);
     throw error;
   }
 };
@@ -697,7 +738,7 @@ const sendTestCompletionNotification = async (
       data: {
         id: uuidv4(),
         userId: test.course.instructorId,
-        type: 'TEST_GRADED',
+        type: "TEST_GRADED",
         title: `Student completed test "${test.title}"`,
         message: `A student has completed the test with ${score.toFixed(2)}%`,
         metadata: {
@@ -716,7 +757,7 @@ const sendTestCompletionNotification = async (
         data: {
           id: uuidv4(),
           userId: test.course.instructorId,
-          type: 'TEST_GRADED',
+          type: "TEST_GRADED",
           title: `Student completed test "${test.title}"`,
           message: `A student has completed the test with ${score.toFixed(2)}%`,
           metadata: {
@@ -730,23 +771,41 @@ const sendTestCompletionNotification = async (
       });
     }
   } catch (error) {
-    logger.error('Error sending test completion notification:', error);
+    logger.error("Error sending test completion notification:", error);
   }
 };
 
-export const updateTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateTestById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { testId } = req.params;
-    const { title, description, passingScore, randomizeQuestions, showResults } = req.body;
-    const existingTest = await prisma.test.findUnique({ where: { id: testId } });
+    const {
+      title,
+      description,
+      passingScore,
+      randomizeQuestions,
+      showResults,
+    } = req.body;
+    const existingTest = await prisma.test.findUnique({
+      where: { id: testId },
+    });
 
     if (!existingTest) {
-      throw new NotFoundError('Test not found');
+      throw new NotFoundError("Test not found");
     }
 
     const test = await prisma.test.update({
       where: { id: testId },
-      data: { title, description, passingScore, randomizeQuestions: randomizeQuestions !== false, showResults: showResults !== false },
+      data: {
+        title,
+        description,
+        passingScore,
+        randomizeQuestions: randomizeQuestions !== false,
+        showResults: showResults !== false,
+      },
     });
 
     res.status(200).json({
@@ -759,13 +818,19 @@ export const updateTestById = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const deleteTestById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const deleteTestById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { testId } = req.params;
-    const existingTest = await prisma.test.findUnique({ where: { id: testId } });
+    const existingTest = await prisma.test.findUnique({
+      where: { id: testId },
+    });
 
     if (!existingTest) {
-      throw new NotFoundError('Test not found');
+      throw new NotFoundError("Test not found");
     }
 
     await prisma.test.delete({ where: { id: testId } });
@@ -779,10 +844,23 @@ export const deleteTestById = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const updateTestQuestion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateTestQuestion = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { questionId } = req.params;
     const { question, type, options, points, order, explanation } = req.body;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const imageFile = files?.["fileImage"]?.[0];
+    let imageUrl = "";
+    if (imageFile) {
+      imageUrl = await uploadBufferToCloudinary(
+        imageFile.buffer,
+        imageFile.mimetype
+      );
+    }
 
     const existingQuestion = await prisma.question.findUnique({
       where: { id: questionId },
@@ -798,16 +876,17 @@ export const updateTestQuestion = async (req: Request, res: Response, next: Next
       data: {
         question,
         type,
-        points,
+        points: Number(points),
         order,
         explanation,
+        image: imageUrl,
         options: options
           ? {
             deleteMany: {},
             create: options.map((opt: any, idx: number) => ({
               id: uuidv4(),
               option: opt.option,
-              isCorrect: opt.isCorrect || false,
+              isCorrect: (opt.isCorrect === "true" || opt.isCorrect === true) || false,
               order: idx,
             })),
           }
@@ -826,14 +905,19 @@ export const updateTestQuestion = async (req: Request, res: Response, next: Next
   }
 };
 
-
-export const deleteTestQuestion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const deleteTestQuestion = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { questionId } = req.params;
-    const existingQuestion = await prisma.question.findUnique({ where: { id: questionId } });
+    const existingQuestion = await prisma.question.findUnique({
+      where: { id: questionId },
+    });
 
     if (!existingQuestion) {
-      throw new NotFoundError('Question not found');
+      throw new NotFoundError("Question not found");
     }
 
     await prisma.question.delete({ where: { id: questionId } });
@@ -847,7 +931,11 @@ export const deleteTestQuestion = async (req: Request, res: Response, next: Next
   }
 };
 
-export const uploadQuestionsExcel = async (req: Request, res: Response, next: NextFunction) => {
+export const uploadQuestionsExcel = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { testId } = req.params;
     // @ts-ignore
@@ -855,7 +943,7 @@ export const uploadQuestionsExcel = async (req: Request, res: Response, next: Ne
 
     const test = await prisma.test.findFirst({
       where: {
-        id: testId
+        id: testId,
       },
     });
     if (!test) {
@@ -884,14 +972,7 @@ export const uploadQuestionsExcel = async (req: Request, res: Response, next: Ne
       const results: any[] = [];
 
       for (const row of data) {
-        const {
-          question,
-          type,
-          points,
-          explanation,
-          options,
-          correct,
-        } = row;
+        const { question, type, points, explanation, options, correct } = row;
 
         const newQ = await tx.question.create({
           data: {
@@ -906,7 +987,9 @@ export const uploadQuestionsExcel = async (req: Request, res: Response, next: Ne
         });
 
         if (options && (type === "MULTIPLE_CHOICE" || type === "TRUE_FALSE")) {
-          const optionArr = String(options).split(",").map((s: string) => s.trim());
+          const optionArr = String(options)
+            .split(",")
+            .map((s: string) => s.trim());
           const correctArr = String(correct || "")
             .split(",")
             .map((s: string) => s.trim());
@@ -922,7 +1005,6 @@ export const uploadQuestionsExcel = async (req: Request, res: Response, next: Ne
                   question: { connect: { id: newQ.id } },
                 },
               })
-
             )
           );
         }

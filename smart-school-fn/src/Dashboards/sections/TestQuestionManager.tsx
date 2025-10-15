@@ -228,9 +228,10 @@ const TestQuestionManager = () => {
         formData.append(`options[${index}][isCorrect]`, String(opt.isCorrect === true || opt.isCorrect === "true"));
         formData.append(`options[${index}][option]`, opt.option);
       });
+
       if (isEditingQuestion && questionToEditId) {
         await dispatch(
-          updateQuestion({ questionData: formData, id: questionToEditId })
+          updateQuestion({ id: questionToEditId, questionData: formData })
         ).unwrap();
         await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
         setQuestionToEditId(null);
@@ -603,12 +604,12 @@ const TestQuestionManager = () => {
                       <table className="w-full border border-gray-600 border-collapse text-[11px]">
                         <thead className="bg-gray-700 text-white">
                           <tr>
-                            <th className="border border-gray-600 py-1 px-2">Question</th>
-                            <th className="border border-gray-600 py-1 px-2">Type</th>
-                            <th className="border border-gray-600 py-1 px-2">Points</th>
-                            <th className="border border-gray-600 py-1 px-2">Explanation(optional)</th>
-                            <th className="border border-gray-600 py-1 px-2">Options</th>
-                            <th className="border border-gray-600 py-1 px-2">Correct</th>
+                            <th className="border border-gray-600 py-1 px-2">question</th>
+                            <th className="border border-gray-600 py-1 px-2">type</th>
+                            <th className="border border-gray-600 py-1 px-2">points</th>
+                            <th className="border border-gray-600 py-1 px-2">explanation(optional)</th>
+                            <th className="border border-gray-600 py-1 px-2">options</th>
+                            <th className="border border-gray-600 py-1 px-2">correct</th>
                           </tr>
                         </thead>
                         <tbody>
