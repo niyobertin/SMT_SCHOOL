@@ -9,6 +9,7 @@ import { FaQuestion } from 'react-icons/fa6';
 import { HeaderSkeleton, LessonSkeleton } from '../../components/Skeletons/LessonSekleton';
 import { LoginRequestModal, PaymentRequestModal } from '../../components/RequestModal';
 import { useLocation } from "react-router-dom";
+import { jwtDecode } from 'jwt-decode';
 
 const CourseLessonsPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -44,11 +45,27 @@ const CourseLessonsPage = () => {
     navigate('/login');
   };
   const course = lessons[0]?.course;
+  const token = localStorage.getItem('accessToken');
+  let decodedUser = null;
+
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      // If decoded is a JwtPayload, it will have the user data directly
+      // If it's a string, it's already the user data
+      decodedUser = typeof decoded === 'string' ? JSON.parse(decoded) : decoded;
+      console.log(decodedUser);
+    } catch (error) {
+      console.error('Error decoding token:', error);
+    }
+  }
+
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
+    const user = localStorage.getItem('user') || decodedUser;
+
     if (user) {
-      const userData = JSON.parse(user);
+      const userData = typeof user === 'string' ? JSON.parse(user) : user;
       if (
         userData.role !== 'ADMIN' &&
         userData.role !== 'INSTRUCTOR' &&
@@ -58,7 +75,7 @@ const CourseLessonsPage = () => {
         setShowPaymentModal(true);
       }
     }
-  }, [subscribed]);
+  }, [subscribed, decodedUser, course?.type]);
 
   const handlePaymentContinue = () => {
     setShowPaymentModal(false);
