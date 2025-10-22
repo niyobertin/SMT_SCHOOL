@@ -1,6 +1,6 @@
 import fs from "fs";
 import { google } from "googleapis";
-import open from "open";
+// import open from "open";
 import logger from "../utils/logger";
 import { PrismaClient } from "@prisma/client";
 
@@ -120,7 +120,7 @@ class YouTubeUploader {
       const authUrl = this.getAuthUrl();
       logger.info("⚠️ No valid token found. Visit this URL to authorize:");
       logger.info(authUrl);
-      await open(authUrl);
+      // await open(authUrl);
 
       // Wait for token to appear in DB (max 5 min)
       const maxWait = 300000;
