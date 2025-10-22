@@ -1,9 +1,11 @@
 import "reflect-metadata";
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
-import dotenv from "dotenv";
+
 import http from "http";
 import passport from "passport";
 import "./config/passport";
@@ -17,7 +19,7 @@ import router from "./routes";
 import YouTubeUploader from "./helper/youtubeUploader";
 import { initSocket } from "./utils/socketServer";
 import { startUpdateRemainingDaysJob } from "./utils/jobs";
-dotenv.config();
+
 
 const app = express();
 const server = http.createServer(app);
