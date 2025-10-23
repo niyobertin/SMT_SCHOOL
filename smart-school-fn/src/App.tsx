@@ -22,6 +22,7 @@ import { UserProfilePage } from "./pages/profile";
 import { PaymentFlow } from "./components/common/Payment";
 import { JobListing } from "./pages/JobListing";
 import { JobDetails } from "./pages/JobDetails";
+import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -34,7 +35,15 @@ function App() {
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          <Route path="/dashboard/*" element={<DashboardRoutes />} />
+          <Route
+            path="/dashboard/*"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+                <DashboardRoutes />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             element={
               <MainLayout>
@@ -50,7 +59,15 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/request-link" element={<RequestReset />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
-            <Route path="/profile" element={<UserProfilePage />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "STUDENT", "USER"]}>
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
+
 
             {/* Updated course routes */}
             <Route path="/courses" element={<Navigate to="/courses/all" replace />} />
