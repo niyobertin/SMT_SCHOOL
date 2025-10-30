@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { ArrowLeft, Clock, PlayCircle, Award, List, FileText } from 'lucide-react';
+import { ArrowLeft, PlayCircle, List, FileText } from 'lucide-react';
 import { clearLessons, fetchLessons, setPage } from '../../redux/features/lessons/lessonSlice';
 import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
-import { FaQuestion } from 'react-icons/fa6';
+// import { FaQuestion } from 'react-icons/fa6';
 import { HeaderSkeleton, LessonSkeleton } from '../../components/Skeletons/LessonSekleton';
 import { LoginRequestModal, PaymentRequestModal } from '../../components/RequestModal';
 import { useLocation } from "react-router-dom";
