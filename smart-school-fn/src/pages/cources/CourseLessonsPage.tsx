@@ -287,21 +287,21 @@ const CourseLessonsPage = () => {
                       <div className="flex-1">
                         <h3 className="text-lg font-medium text-gray-900">{test.title}</h3>
                         <p className="mt-1 text-sm text-gray-500">{test.description}</p>
-                        <div className="mt-2 text-sm text-gray-600 space-y-1">
+                        {/* <div className="mt-2 text-sm text-gray-600 space-y-1">
                           <p className="flex items-center">
                             <Clock className="w-4 h-4 mr-2" />
                             Duration: {test.duration} minutes
                           </p>
                           <p className="flex items-center">
                             <Award className="w-4 h-4 mr-2" />
-                            Passing Score: {test.passingScore}%
+                            Passing Score s rw: {test.passingScore}%
                           </p>
                           <p className="flex items-center">
                             <FaQuestion className="w-4 h-4 mr-2" />
                             Questions: {test.questions.length}
                           </p>
                           Max Attempts: {test.maxAttempts || 'Unlimited'}
-                        </div>
+                        </div> */}
                       </div>
                       <button
                         onClick={() => handleTakeTest(test.id)}
