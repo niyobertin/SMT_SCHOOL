@@ -1,7 +1,21 @@
 import { Router } from "express";
-import { createCourse, deleteCourse, getCouses, getCourseById, updateCourse, getCourseByCategory } from "../controller/course.controller";
-import { authenticate, authorize, optionalAuthenticate } from "../middleware/auth";
-import { courseValidation, updateCourseValidation } from "../schema/courseSchema";
+import {
+  createCourse,
+  deleteCourse,
+  getCouses,
+  getCourseById,
+  updateCourse,
+  getCourseByCategory,
+} from "../controller/course.controller";
+import {
+  authenticate,
+  authorize,
+  optionalAuthenticate,
+} from "../middleware/auth";
+import {
+  courseValidation,
+  updateCourseValidation,
+} from "../schema/courseSchema";
 import { validateRequest } from "../middleware/validation";
 import { uploadFile } from "../middleware/uploadFile";
 
@@ -835,11 +849,36 @@ const courseRouters = Router();
  *                   type: string
  *                   example: "An unexpected error occurred"
  */
-courseRouters.post("/:categoryId", authenticate, authorize("ADMIN", "INSTRUCTOR"), uploadFile, courseValidation, validateRequest, createCourse);
+courseRouters.post(
+  "/:categoryId",
+  authenticate,
+  authorize("ADMIN", "INSTRUCTOR"),
+  uploadFile,
+  courseValidation,
+  validateRequest,
+  createCourse
+);
 courseRouters.get("/", optionalAuthenticate, getCouses);
 courseRouters.get("/:id", optionalAuthenticate, getCourseById);
-courseRouters.get("/category/:categoryId", optionalAuthenticate, getCourseByCategory);
-courseRouters.patch("/:id", authenticate, authorize("ADMIN", "INSTRUCTOR"), uploadFile, updateCourseValidation, validateRequest, updateCourse);
-courseRouters.delete("/:id", authenticate, authorize("ADMIN", "INSTRUCTOR"), deleteCourse);
+courseRouters.get(
+  "/category/:categoryId",
+  optionalAuthenticate,
+  getCourseByCategory
+);
+courseRouters.patch(
+  "/:id",
+  authenticate,
+  authorize("ADMIN", "INSTRUCTOR"),
+  uploadFile,
+  updateCourseValidation,
+  validateRequest,
+  updateCourse
+);
+courseRouters.delete(
+  "/:id",
+  authenticate,
+  authorize("ADMIN", "INSTRUCTOR"),
+  deleteCourse
+);
 
 export default courseRouters;

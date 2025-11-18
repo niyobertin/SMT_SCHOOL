@@ -173,6 +173,7 @@ enum EnrollmentStatus {
   COMPLETED
   SUSPENDED
   CANCELLED
+  EXPIRED
 }
 
 model Payment {

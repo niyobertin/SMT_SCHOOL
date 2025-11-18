@@ -2,7 +2,7 @@ export const translations = {
   en: {
     // Navigation
     dashboard: "Dashboard",
-    courses: "Courses",
+    courses: "Programs",
     profile: "Profile",
     settings: "Settings",
     backToDashboard: "Back to Dashboard",
@@ -178,7 +178,7 @@ export const translations = {
     viewProgram: "View Program",
 
     // Tuition Page
-    tuition: "Tuition",
+    tuition: "Pricing",
     pricingPlans: "Pricing Plans",
     tuitionSubtitle:
       "Choose the perfect plan for your learning journey with flexible payment options",

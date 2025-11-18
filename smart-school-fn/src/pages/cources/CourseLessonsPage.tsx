@@ -1,36 +1,51 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { ArrowLeft, PlayCircle, List, FileText } from 'lucide-react';
-import { clearLessons, fetchLessons, setPage } from '../../redux/features/lessons/lessonSlice';
-import { fetchTestsByCourseId } from '../../redux/features/test/testSlice';
-import type { AppDispatch, RootState } from '../../redux/stores';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { ArrowLeft, PlayCircle, List, FileText } from "lucide-react";
+import {
+  clearLessons,
+  fetchLessons,
+  setPage,
+} from "../../redux/features/lessons/lessonSlice";
+import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
+import type { AppDispatch, RootState } from "../../redux/stores";
 // import { FaQuestion } from 'react-icons/fa6';
-import { HeaderSkeleton, LessonSkeleton } from '../../components/Skeletons/LessonSekleton';
-import { LoginRequestModal, PaymentRequestModal } from '../../components/RequestModal';
+import {
+  HeaderSkeleton,
+  LessonSkeleton,
+} from "../../components/Skeletons/LessonSekleton";
+import {
+  LoginRequestModal,
+  PaymentRequestModal,
+} from "../../components/RequestModal";
 import { useLocation } from "react-router-dom";
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from "jwt-decode";
 
 const CourseLessonsPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-  const [activeTab, setActiveTab] = useState<'lessons' | 'tests'>('lessons');
+  const [activeTab, setActiveTab] = useState<"lessons" | "tests">("lessons");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const queryParams = new URLSearchParams(location.search);
   const subscribed = queryParams.get("subscribed");
 
-  const { items: lessons, pagination, loading: lessonsLoading, error: lessonsError } = useSelector(
-    (state: RootState) => state.lessons
-  );
-  const { tests, loading: testsLoading, error: testsError } = useSelector(
-    (state: RootState) => state.test
-  );
+  const {
+    items: lessons,
+    pagination,
+    loading: lessonsLoading,
+    error: lessonsError,
+  } = useSelector((state: RootState) => state.lessons);
+  const {
+    tests,
+    loading: testsLoading,
+    error: testsError,
+  } = useSelector((state: RootState) => state.test);
 
   useEffect(() => {
-    const localToken = localStorage.getItem('accessToken');
+    const localToken = localStorage.getItem("accessToken");
     if (!localToken) {
       setIsModalOpen(true);
     }
@@ -42,10 +57,10 @@ const CourseLessonsPage = () => {
   };
   const handleContinue = () => {
     setIsModalOpen(false);
-    navigate('/login');
+    navigate("/login");
   };
   const course = lessons[0]?.course;
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   let decodedUser = null;
 
   if (token) {
@@ -53,24 +68,23 @@ const CourseLessonsPage = () => {
       const decoded = jwtDecode(token);
       // If decoded is a JwtPayload, it will have the user data directly
       // If it's a string, it's already the user data
-      decodedUser = typeof decoded === 'string' ? JSON.parse(decoded) : decoded;
+      decodedUser = typeof decoded === "string" ? JSON.parse(decoded) : decoded;
       console.log(decodedUser);
     } catch (error) {
-      console.error('Error decoding token:', error);
+      console.error("Error decoding token:", error);
     }
   }
 
-
   useEffect(() => {
-    const user = localStorage.getItem('user') || decodedUser;
+    const user = localStorage.getItem("user") || decodedUser;
 
     if (user) {
-      const userData = typeof user === 'string' ? JSON.parse(user) : user;
+      const userData = typeof user === "string" ? JSON.parse(user) : user;
       if (
-        userData.role !== 'ADMIN' &&
-        userData.role !== 'INSTRUCTOR' &&
-        subscribed === 'false' &&
-        course?.type !== 'free'
+        userData.role !== "ADMIN" &&
+        userData.role !== "INSTRUCTOR" &&
+        subscribed === "false" &&
+        course?.type !== "free"
       ) {
         setShowPaymentModal(true);
       }
@@ -87,31 +101,31 @@ const CourseLessonsPage = () => {
     navigate(-1);
   };
 
-
-
   useEffect(() => {
     if (courseId) {
-      dispatch(fetchLessons({
-        courseId,
-        page: pagination.page,
-        limit: pagination.limit
-      }));
+      dispatch(
+        fetchLessons({
+          courseId,
+          page: pagination.page,
+          limit: pagination.limit,
+        })
+      );
     }
 
     return () => {
       dispatch(clearLessons());
-      dispatch({ type: 'test/clearTests' });
+      dispatch({ type: "test/clearTests" });
     };
   }, [courseId, dispatch, pagination.page, pagination.limit]);
 
-
   useEffect(() => {
-    if (activeTab === 'tests' && courseId) {
+    if (activeTab === "tests" && courseId) {
       dispatch(fetchTestsByCourseId(courseId));
     }
   }, [activeTab, courseId, dispatch]);
 
-  const handleStartLearning = (lessonId: string) => navigate(`/lessons/${lessonId}`);
+  const handleStartLearning = (lessonId: string) =>
+    navigate(`/lessons/${lessonId}`);
   const handleTakeTest = (testId: string) =>
     navigate(`/test/${testId}`, { state: { fromCourse: true } });
 
@@ -142,28 +156,32 @@ const CourseLessonsPage = () => {
         </button>
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{course?.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {course?.title}
+          </h1>
           <p className="text-gray-600 mb-4">{course?.description}</p>
 
           {/* Tabs */}
           <div className="border-b border-gray-200 mb-6">
             <nav className="-mb-px flex space-x-8">
               <button
-                onClick={() => setActiveTab('lessons')}
-                className={`${activeTab === 'lessons'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                onClick={() => setActiveTab("lessons")}
+                className={`${
+                  activeTab === "lessons"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
               >
                 <List className="w-4 h-4 mr-2" />
                 Lessons
               </button>
               <button
-                onClick={() => setActiveTab('tests')}
-                className={`${activeTab === 'tests'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                onClick={() => setActiveTab("tests")}
+                className={`${
+                  activeTab === "tests"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Tests
@@ -172,34 +190,46 @@ const CourseLessonsPage = () => {
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'lessons' ? (
+          {activeTab === "lessons" ? (
             <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
               {lessonsError ? (
-                <div className="p-6 text-center text-red-500">{lessonsError}</div>
+                <div className="p-6 text-center text-red-500">
+                  {lessonsError}
+                </div>
               ) : lessons.length > 0 ? (
                 lessons.map((lesson, index) => (
-                  <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div
+                    key={index}
+                    className="p-6 hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex items-start">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
                         {lesson.order}
                       </div>
                       <div className="ml-4 flex-1">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-medium text-gray-900">{lesson.title}</h3>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {lesson.title}
+                          </h3>
                           {lesson.isPreview && (
                             <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
                               Preview
                             </span>
                           )}
                         </div>
-                        <p className="mt-1 text-sm text-gray-500">{lesson.description}</p>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {lesson.description}
+                        </p>
 
                         {lesson.content?.length > 0 && (
                           <div className="mt-3 space-y-2">
                             {lesson.content.map((content) => (
-                              <div key={content.id} className="flex items-center text-sm text-gray-600">
+                              <div
+                                key={content.id}
+                                className="flex items-center text-sm text-gray-600"
+                              >
                                 <PlayCircle className="h-4 w-4 mr-2 text-blue-600" />
-                                <span>{content.title || 'Lesson Content'}</span>
+                                <span>{content.title || "Lesson Content"}</span>
                               </div>
                             ))}
                           </div>
@@ -224,7 +254,8 @@ const CourseLessonsPage = () => {
                       No Lessons Available
                     </h2>
                     <p className="text-gray-600 text-sm">
-                      This course doesn’t have any lessons yet. Please check back later or explore other courses.
+                      This course doesn’t have any lessons yet. Please check
+                      back later or explore other courses.
                     </p>
                   </div>
                 </div>
@@ -244,14 +275,18 @@ const CourseLessonsPage = () => {
 
                   {/* Page Numbers */}
                   <div className="flex gap-2 overflow-x-auto">
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((num) => (
+                    {Array.from(
+                      { length: pagination.totalPages },
+                      (_, i) => i + 1
+                    ).map((num) => (
                       <button
                         key={num}
                         onClick={() => dispatch(setPage(num))}
-                        className={`px-3 py-1 rounded-lg text-sm border whitespace-nowrap ${num === pagination.page
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                          }`}
+                        className={`px-3 py-1 rounded-lg text-sm border whitespace-nowrap ${
+                          num === pagination.page
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                        }`}
                       >
                         {num}
                       </button>
@@ -268,7 +303,6 @@ const CourseLessonsPage = () => {
                   </button>
                 </div>
               )}
-
             </div>
           ) : (
             <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
@@ -282,11 +316,18 @@ const CourseLessonsPage = () => {
                 </div>
               ) : tests.length > 0 ? (
                 tests.map((test: any) => (
-                  <div key={test.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div
+                    key={test.id}
+                    className="p-6 hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">{test.title}</h3>
-                        <p className="mt-1 text-sm text-gray-500">{test.description}</p>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {test.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {test.description}
+                        </p>
                         {/* <div className="mt-2 text-sm text-gray-600 space-y-1">
                           <p className="flex items-center">
                             <Clock className="w-4 h-4 mr-2" />
@@ -322,7 +363,8 @@ const CourseLessonsPage = () => {
                       No Tests Available
                     </h2>
                     <p className="text-gray-600 text-sm">
-                      This course doesn’t have any tests yet. Please check back later or explore other courses.
+                      This course doesn’t have any tests yet. Please check back
+                      later or explore other courses.
                     </p>
                   </div>
                 </div>
@@ -342,7 +384,6 @@ const CourseLessonsPage = () => {
           onClose={handlePaymentClose}
           onGoToPricing={handlePaymentContinue}
         />
-
       </div>
     </div>
   );

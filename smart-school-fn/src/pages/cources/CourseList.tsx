@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, Book, ChevronDown, Crown, CheckCircle } from "lucide-react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Book,
+  ChevronDown,
+  Crown,
+  CheckCircle,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../redux/stores";
@@ -7,7 +15,7 @@ import {
   fetchCourses,
   setSearch,
   setPage,
-  setCategoryFilter
+  setCategoryFilter,
 } from "../../redux/features/courses/courseSlice";
 import { fetchCategories } from "../../redux/features/courses/category";
 import { CourseCardSkeleton } from "../../components/Skeletons/CourseCardSkeleton";
@@ -22,7 +30,7 @@ export const CourseList = () => {
     q,
     page,
     totalPages,
-    categoryFilter
+    categoryFilter,
   } = useSelector((state: RootState) => state.courses);
 
   const { items: categories, loading: categoriesLoading } = useSelector(
@@ -43,9 +51,9 @@ export const CourseList = () => {
     dispatch(
       fetchCourses({
         page,
-        limit: itemsPerPage,
+        limit: 1000,
         q,
-        categoryId: categoryFilter
+        categoryId: categoryFilter,
       })
     );
   }, [dispatch, page, q, categoryFilter]);
@@ -60,7 +68,7 @@ export const CourseList = () => {
             page: 1,
             limit: itemsPerPage,
             q: searchTerm,
-            categoryId: categoryFilter
+            categoryId: categoryFilter,
           })
         );
       }
@@ -83,12 +91,12 @@ export const CourseList = () => {
         page: 1,
         limit: newItemsPerPage,
         q,
-        categoryId: categoryFilter
+        categoryId: categoryFilter,
       })
     );
   };
 
-  const publishedCourses = courses?.filter(course => course.isPublished);
+  const publishedCourses = courses?.filter((course) => course.isPublished);
 
   const selectCategory = useCallback(
     (categoryId: string | null) => {
@@ -99,7 +107,7 @@ export const CourseList = () => {
           page,
           limit: itemsPerPage,
           q: searchTerm,
-          categoryId: categoryId
+          categoryId: categoryId,
         })
       );
     },
@@ -119,8 +127,10 @@ export const CourseList = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <h2 className="text-2xl font-bold text-gray-900">
           {categoryFilter
-            ? `Courses in ${categories.find(c => c.id === categoryFilter)?.name || "Selected"
-            }`
+            ? `Courses in ${
+                categories.find((c) => c.id === categoryFilter)?.name ||
+                "Selected"
+              }`
             : "All Courses"}
         </h2>
 
@@ -132,7 +142,7 @@ export const CourseList = () => {
               type="text"
               placeholder="Search courses..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -141,11 +151,12 @@ export const CourseList = () => {
           <div className="relative">
             <button
               type="button"
-              onClick={() => setDropdownOpen(prev => !prev)}
+              onClick={() => setDropdownOpen((prev) => !prev)}
               className="flex items-center justify-between w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               {categoryFilter
-                ? categories.find(c => c.id === categoryFilter)?.name || "Select Category"
+                ? categories.find((c) => c.id === categoryFilter)?.name ||
+                  "Select Category"
                 : "All Categories"}
               <ChevronDown className="ml-2 h-4 w-4" />
             </button>
@@ -161,12 +172,15 @@ export const CourseList = () => {
                     >
                       All Categories
                     </button>
-                    {categories.map(cat => (
+                    {categories.map((cat) => (
                       <button
                         key={cat.id}
                         onClick={() => selectCategory(cat.id)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${categoryFilter === cat.id ? "bg-gray-100 font-medium" : ""
-                          }`}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
+                          categoryFilter === cat.id
+                            ? "bg-gray-100 font-medium"
+                            : ""
+                        }`}
                       >
                         {cat.name}
                       </button>
@@ -214,7 +228,10 @@ export const CourseList = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {publishedCourses?.map((course: any) => (
               <Link
-                to={`/courses/${course.id}/lessons?subscribed=${course.enrollments?.length > 0}`}
+                to={`/courses/${course.id}/lessons?subscribed=${
+                  course.enrollments?.filter((e: any) => e.status === "ACTIVE")
+                    .length > 0
+                }`}
               >
                 <div
                   key={course.id}
@@ -229,8 +246,10 @@ export const CourseList = () => {
                       />
                     )} */}
 
-                    {course.type !== "free" && (
-                      course.enrollments?.some((enrollment: any) => enrollment.status === "ACTIVE") ? (
+                    {course.type !== "free" &&
+                      (course.enrollments?.some(
+                        (enrollment: any) => enrollment.status === "ACTIVE"
+                      ) ? (
                         <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-md">
                           <CheckCircle className="h-6 w-6 text-white" />
                         </div>
@@ -238,13 +257,19 @@ export const CourseList = () => {
                         <div className="absolute top-2 right-2 bg-yellow-500 text-white p-1 rounded-full shadow-md">
                           <Crown className="w-5 h-5" />
                         </div>
-                      )
-                    )}
-
+                      ))}
                   </div>
                   <div className="p-4">
                     <div className="flex gap-2">
-                      <h3 className={`text-sm font-semibold text-gray-700  px-2  rounded-full ${course.type === "free" ? "bg-green-200" : "bg-yellow-200"}`}>{course?.type}</h3>
+                      <h3
+                        className={`text-sm font-semibold text-gray-700  px-2  rounded-full ${
+                          course.type === "free"
+                            ? "bg-green-200"
+                            : "bg-yellow-200"
+                        }`}
+                      >
+                        {course?.type}
+                      </h3>
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       {course.title}
@@ -263,13 +288,17 @@ export const CourseList = () => {
                     </div>
                     <p className="text-sm text-black font-medium mb-4">
                       {course.createdAt
-                        ? `Posted : ${formatDistanceToNow(new Date(course.createdAt), {
-                          addSuffix: true
-                        })}`
+                        ? `Posted : ${formatDistanceToNow(
+                            new Date(course.createdAt),
+                            {
+                              addSuffix: true,
+                            }
+                          )}`
                         : "No date"}
                       .{" "}
                       <span className="text-sm text-gray-600">
-                        {course.instructor?.firstName} {course.instructor?.lastName}
+                        {course.instructor?.firstName}{" "}
+                        {course.instructor?.lastName}
                       </span>
                     </p>
 
@@ -293,7 +322,8 @@ export const CourseList = () => {
               </button>
 
               <div className="text-sm text-black flex items-center justify-between gap-2">
-                Page <span className="font-semibold">{page} </span> of <span className="font-semibold"> {totalPages}</span>
+                Page <span className="font-semibold">{page} </span> of{" "}
+                <span className="font-semibold"> {totalPages}</span>
               </div>
               <button
                 onClick={() => handlePageChange(page + 1)}
@@ -305,7 +335,9 @@ export const CourseList = () => {
 
               <select
                 value={itemsPerPage}
-                onChange={e => handleItemsPerPageChange(Number(e.target.value))}
+                onChange={(e) =>
+                  handleItemsPerPageChange(Number(e.target.value))
+                }
                 className="px-3 py-1 border rounded-md"
               >
                 <option value="9">9 per page</option>
@@ -321,7 +353,6 @@ export const CourseList = () => {
               </select>
             </div>
           )}
-
         </>
       )}
     </div>
