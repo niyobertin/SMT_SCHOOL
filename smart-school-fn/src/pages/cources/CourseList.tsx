@@ -127,10 +127,9 @@ export const CourseList = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <h2 className="text-2xl font-bold text-gray-900">
           {categoryFilter
-            ? `Courses in ${
-                categories.find((c) => c.id === categoryFilter)?.name ||
-                "Selected"
-              }`
+            ? `Courses in ${categories.find((c) => c.id === categoryFilter)?.name ||
+            "Selected"
+            }`
             : "All Courses"}
         </h2>
 
@@ -156,7 +155,7 @@ export const CourseList = () => {
             >
               {categoryFilter
                 ? categories.find((c) => c.id === categoryFilter)?.name ||
-                  "Select Category"
+                "Select Category"
                 : "All Categories"}
               <ChevronDown className="ml-2 h-4 w-4" />
             </button>
@@ -176,11 +175,10 @@ export const CourseList = () => {
                       <button
                         key={cat.id}
                         onClick={() => selectCategory(cat.id)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                          categoryFilter === cat.id
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${categoryFilter === cat.id
                             ? "bg-gray-100 font-medium"
                             : ""
-                        }`}
+                          }`}
                       >
                         {cat.name}
                       </button>
@@ -228,10 +226,9 @@ export const CourseList = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {publishedCourses?.map((course: any) => (
               <Link
-                to={`/courses/${course.id}/lessons?subscribed=${
-                  course.enrollments?.filter((e: any) => e.status === "ACTIVE")
+                to={`/courses/${course.id}/lessons?subscribed=${course.enrollments?.filter((e: any) => e.status === "ACTIVE")
                     .length > 0
-                }`}
+                  }`}
               >
                 <div
                   key={course.id}
@@ -262,11 +259,10 @@ export const CourseList = () => {
                   <div className="p-4">
                     <div className="flex gap-2">
                       <h3
-                        className={`text-sm font-semibold text-gray-700  px-2  rounded-full ${
-                          course.type === "free"
+                        className={`text-sm font-semibold text-gray-700  px-2  rounded-full ${course.type === "free"
                             ? "bg-green-200"
                             : "bg-yellow-200"
-                        }`}
+                          }`}
                       >
                         {course?.type}
                       </h3>
@@ -289,11 +285,11 @@ export const CourseList = () => {
                     <p className="text-sm text-black font-medium mb-4">
                       {course.createdAt
                         ? `Posted : ${formatDistanceToNow(
-                            new Date(course.createdAt),
-                            {
-                              addSuffix: true,
-                            }
-                          )}`
+                          new Date(course.createdAt),
+                          {
+                            addSuffix: true,
+                          }
+                        )}`
                         : "No date"}
                       .{" "}
                       <span className="text-sm text-gray-600">

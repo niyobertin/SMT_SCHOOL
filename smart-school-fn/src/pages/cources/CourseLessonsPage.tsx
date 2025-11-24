@@ -69,7 +69,6 @@ const CourseLessonsPage = () => {
       // If decoded is a JwtPayload, it will have the user data directly
       // If it's a string, it's already the user data
       decodedUser = typeof decoded === "string" ? JSON.parse(decoded) : decoded;
-      console.log(decodedUser);
     } catch (error) {
       console.error("Error decoding token:", error);
     }
@@ -84,7 +83,8 @@ const CourseLessonsPage = () => {
         userData.role !== "ADMIN" &&
         userData.role !== "INSTRUCTOR" &&
         subscribed === "false" &&
-        course?.type !== "free"
+        course?.type &&
+        course.type !== "free"
       ) {
         setShowPaymentModal(true);
       }
@@ -166,22 +166,20 @@ const CourseLessonsPage = () => {
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab("lessons")}
-                className={`${
-                  activeTab === "lessons"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                className={`${activeTab === "lessons"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
               >
                 <List className="w-4 h-4 mr-2" />
                 Lessons
               </button>
               <button
                 onClick={() => setActiveTab("tests")}
-                className={`${
-                  activeTab === "tests"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                className={`${activeTab === "tests"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Tests
@@ -282,11 +280,10 @@ const CourseLessonsPage = () => {
                       <button
                         key={num}
                         onClick={() => dispatch(setPage(num))}
-                        className={`px-3 py-1 rounded-lg text-sm border whitespace-nowrap ${
-                          num === pagination.page
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                        }`}
+                        className={`px-3 py-1 rounded-lg text-sm border whitespace-nowrap ${num === pagination.page
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                          }`}
                       >
                         {num}
                       </button>

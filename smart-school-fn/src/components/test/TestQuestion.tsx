@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { submitAnswer, submitTest } from "../../redux/features/test/testSlice";
 import type { RootState, AppDispatch } from "../../redux/stores";
+import { Loader2 } from "lucide-react";
 
 interface TestQuestionProps {
   question: any;
@@ -15,6 +16,7 @@ interface TestQuestionProps {
   timeRemaining: number;
   onSubmit: () => void;
   testAttemptId?: string;
+  nextLoading?: boolean;
 }
 
 export function TestQuestion({
@@ -29,6 +31,7 @@ export function TestQuestion({
   timeRemaining,
   onSubmit,
   testAttemptId,
+  nextLoading,
 }: TestQuestionProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
@@ -103,11 +106,11 @@ export function TestQuestion({
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+    return `${hours > 0 ? `${hours.toString().padStart(2, "0")}:` : ""}${minutes.toString().padStart(2, "0")
+      }:${secs.toString().padStart(2, "0")}`;
   };
 
   useEffect(() => {
@@ -118,7 +121,7 @@ export function TestQuestion({
   }, [timeRemaining]);
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-sm">
+    <div className="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <div className="text-sm font-medium text-gray-500">
           Question {currentQuestion} of {totalQuestions}
@@ -196,14 +199,19 @@ export function TestQuestion({
         ) : (
           <button
             onClick={handleNext}
-            disabled={!selectedAnswer || isSubmitting || isSubmittingAnswer}
-            className={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${!selectedAnswer || isSubmitting || isSubmittingAnswer
+            disabled={!selectedAnswer || isSubmitting || isSubmittingAnswer || nextLoading}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center min-w-[80px] ${!selectedAnswer || isSubmitting || isSubmittingAnswer || nextLoading
               ? "bg-blue-300 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
               }`}
           >
-            {isSubmitting || isSubmittingAnswer ? "Saving..." : "Next"}
+            {nextLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              "Next"
+            )}
           </button>
+
         )}
       </div>
     </div>
