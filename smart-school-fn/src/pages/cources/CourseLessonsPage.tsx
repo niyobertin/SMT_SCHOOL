@@ -76,16 +76,15 @@ const CourseLessonsPage = () => {
 
   useEffect(() => {
     const user = localStorage.getItem("user") || decodedUser;
-
     if (user) {
       const userData = typeof user === "string" ? JSON.parse(user) : user;
-      if (
-        userData.role !== "ADMIN" &&
-        userData.role !== "INSTRUCTOR" &&
-        subscribed === "false" &&
-        course?.type &&
-        course.type !== "free"
-      ) {
+      const isRestrictedRole =
+        userData.role !== "ADMIN" && userData.role !== "INSTRUCTOR";
+
+      const requiresPayment =
+        course?.type === undefined || course.type !== "free";
+
+      if (isRestrictedRole && subscribed === "false" && requiresPayment) {
         setShowPaymentModal(true);
       }
     }
