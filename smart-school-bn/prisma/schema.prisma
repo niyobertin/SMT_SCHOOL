@@ -216,6 +216,12 @@ enum PaymentStatus {
 }
 
 // Testing System
+enum TestType {
+  STANDARD
+  PSYCHOMETRIC
+  INTERVIEW
+}
+
 model Test {
   id                 String   @id @default(cuid())
   title              String
@@ -227,6 +233,7 @@ model Test {
   isActive           Boolean  @default(true)
   showResults        Boolean  @default(true)
   randomizeQuestions Boolean  @default(true)
+  testType           TestType @default(STANDARD)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -242,16 +249,19 @@ model Test {
 }
 
 model Question {
-  id          String       @id @default(cuid())
-  question    String
-  image       String?
-  type        QuestionType @default(MULTIPLE_CHOICE)
-  points      Float        @default(1)
-  explanation String?
-  order       Int
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id              String       @id @default(cuid())
+  question        String
+  image           String?
+  type            QuestionType @default(MULTIPLE_CHOICE)
+  points          Float        @default(1)
+  explanation     String?
+  order           Int
+  isActive        Boolean      @default(true)
+  timePerQuestion Int? // Time limit in seconds for psychometric tests
+  solution        String? // Solution text for interview questions
+  solutionImage   String? // Solution image URL for interview questions
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   // Relations
   testId String
@@ -316,13 +326,15 @@ enum TestAttemptStatus {
 }
 
 model Answer {
-  id              String   @id @default(cuid())
-  answerText      String?
-  selectedOptions String[] // for multiple choice
-  userAnswer      String[] // for multiple choice
-  isCorrect       Boolean?
-  points          Float    @default(0)
-  createdAt       DateTime @default(now())
+  id                String   @id @default(cuid())
+  answerText        String?
+  selectedOptions   String[] // for multiple choice
+  userAnswer        String[] // for multiple choice
+  isCorrect         Boolean?
+  points            Float    @default(0)
+  openEndedResponse String? // Open-ended text response for psychometric tests
+  questionTimeSpent Int? // Time spent on question in seconds
+  createdAt         DateTime @default(now())
 
   // Relations
   testAttemptId String

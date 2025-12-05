@@ -14,7 +14,8 @@ import {
   deleteTestById,
   deleteTestQuestion,
   updateTestQuestion,
-  uploadQuestionsExcel
+  uploadQuestionsExcel,
+  getOpenEndedResponses
 } from '../controller/test.controller';
 import { uploadFile } from '../middleware/uploadFile';
 
@@ -649,6 +650,14 @@ router.post(
   authorize('INSTRUCTOR', "ADMIN"),
   uploadFile,
   catchAsync(uploadQuestionsExcel)
+);
+
+// Get open-ended responses for a test (instructor only)
+router.get(
+  '/:testId/open-ended-responses',
+  authenticate,
+  authorize('INSTRUCTOR', 'ADMIN'),
+  catchAsync(getOpenEndedResponses)
 );
 
 export default router;

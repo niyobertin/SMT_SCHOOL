@@ -219,6 +219,17 @@ const TestQuestionManager = () => {
       formData.append("points", currentQuestion.points);
       formData.append("explanation", currentQuestion.explanation || "");
       formData.append("correctAnswer", correctAnswer);
+
+      // Add psychometric test fields
+      if (currentQuestion.timePerQuestion) {
+        formData.append("timePerQuestion", currentQuestion.timePerQuestion.toString());
+      }
+
+      // Add interview question fields
+      if (currentQuestion.solution) {
+        formData.append("solution", currentQuestion.solution);
+      }
+
       // Add image if present
       if (currentQuestion.image) {
         formData.append("fileImage", currentQuestion.image);
@@ -741,6 +752,35 @@ const TestQuestionManager = () => {
                     />
                   </div>
 
+                  {/* Psychometric Test: Time Per Question */}
+                  {currentTest?.testType === 'PSYCHOMETRIC' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Time Limit (seconds)</label>
+                      <input
+                        type="number"
+                        value={currentQuestion?.timePerQuestion || ''}
+                        onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, timePerQuestion: parseInt(e.target.value) || null }))}
+                        className="w-full p-2 border rounded"
+                        placeholder="e.g., 30"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Time limit for this question (auto-advances when expired)</p>
+                    </div>
+                  )}
+
+                  {/* Interview Questions: Solution */}
+                  {currentTest?.testType === 'INTERVIEW' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Solution</label>
+                      <textarea
+                        value={currentQuestion?.solution || ''}
+                        onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, solution: e.target.value }))}
+                        className="w-full p-2 border rounded h-20"
+                        placeholder="Enter the solution that students can view"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">This will be shown when student clicks "Show Solution"</p>
+                    </div>
+                  )}
+
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <label className="block text-sm font-medium">Options</label>
@@ -856,6 +896,23 @@ const TestQuestionManager = () => {
                         <option key={course.id} value={course.id}>{course.title}</option>
                       ))}
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Test Type *</label>
+                    <select
+                      value={currentTest.testType || 'STANDARD'}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, testType: e.target.value }))}
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="STANDARD">Standard Test</option>
+                      <option value="PSYCHOMETRIC">Psychometric Test</option>
+                      <option value="INTERVIEW">Interview Questions</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {currentTest.testType === 'PSYCHOMETRIC' && 'Timed questions with open-ended responses'}
+                      {currentTest.testType === 'INTERVIEW' && 'Practice questions with viewable solutions'}
+                      {(!currentTest.testType || currentTest.testType === 'STANDARD') && 'Traditional test with multiple choice questions'}
+                    </p>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium mb-2">Description</label>

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "xlsx";
 import { NotFoundError } from "../utils/errors";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
+import { sendOpenEndedResponseEmail } from "../utils/sendOpenEndedEmail";
 
 const prisma = new PrismaClient();
 
@@ -50,6 +51,7 @@ export const createTest = async (
       maxAttempts,
       randomizeQuestions,
       showResults,
+      testType,
     } = req.body;
     const { courseId } = req.params;
 
@@ -80,6 +82,7 @@ export const createTest = async (
         maxAttempts: maxAttempts || null,
         randomizeQuestions: randomizeQuestions !== false, // default true
         showResults: showResults !== false, // default true
+        testType: testType || "STANDARD", // default to STANDARD
         course: {
           connect: { id: courseId },
         },
@@ -104,7 +107,7 @@ export const addQuestionToTest = async (
 ): Promise<void> => {
   try {
     const { testId } = req.params;
-    const { question, type, points, explanation, options } = req.body;
+    const { question, type, points, explanation, options, timePerQuestion, solution } = req.body;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     // Verify test exists
@@ -130,11 +133,21 @@ export const addQuestionToTest = async (
 
     const newOrder = lastQuestion ? lastQuestion.order + 1 : 0;
     const imageFile = files?.["fileImage"]?.[0];
+    const solutionImageFile = files?.["solutionImage"]?.[0];
     let imageUrl = "";
+    let solutionImageUrl = "";
+
     if (imageFile) {
       imageUrl = await uploadBufferToCloudinary(
         imageFile.buffer,
         imageFile.mimetype
+      );
+    }
+
+    if (solutionImageFile) {
+      solutionImageUrl = await uploadBufferToCloudinary(
+        solutionImageFile.buffer,
+        solutionImageFile.mimetype
       );
     }
     // Create question with transaction to ensure data consistency
@@ -148,6 +161,9 @@ export const addQuestionToTest = async (
           points: Number(points || 1),
           explanation: explanation || null,
           order: newOrder,
+          timePerQuestion: timePerQuestion ? Number(timePerQuestion) : null,
+          solution: solution || null,
+          solutionImage: solutionImageUrl || null,
           test: {
             connect: { id: testId },
           },
@@ -409,7 +425,7 @@ export const submitAnswer = async (
 ): Promise<void> => {
   try {
     const { attemptId } = req.params;
-    const { questionId, answerText, selectedOptions } = req.body;
+    const { questionId, answerText, selectedOptions, openEndedResponse, questionTimeSpent } = req.body;
     // @ts-ignore
     const userId = req.user?.id;
 
@@ -422,6 +438,11 @@ export const submitAnswer = async (
       include: {
         test: {
           include: {
+            course: {
+              select: {
+                instructorId: true
+              }
+            },
             questions: {
               where: { id: questionId },
               include: {
@@ -501,6 +522,8 @@ export const submitAnswer = async (
         userAnswer: selectedOptionTexts || [],
         isCorrect,
         points,
+        openEndedResponse: openEndedResponse || null,
+        questionTimeSpent: questionTimeSpent ? Number(questionTimeSpent) : null,
         testAttempt: {
           connect: { id: attemptId },
         },
@@ -514,6 +537,8 @@ export const submitAnswer = async (
         userAnswer: selectedOptionTexts || [],
         isCorrect,
         points,
+        openEndedResponse: openEndedResponse || null,
+        questionTimeSpent: questionTimeSpent ? Number(questionTimeSpent) : null,
       },
     });
 
@@ -532,6 +557,38 @@ export const submitAnswer = async (
         score: (totalPoints / testAttempt.totalQuestions) * 100,
       },
     });
+
+    // Send email notification if open-ended response was submitted
+    if (openEndedResponse && openEndedResponse.trim().length > 0) {
+      try {
+        // Get instructor and student info
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { firstName: true, lastName: true, email: true }
+        });
+
+        const instructor = await prisma.user.findUnique({
+          where: { id: testAttempt.test.course.instructorId },
+          select: { firstName: true, lastName: true, email: true }
+        });
+
+        if (instructor?.email && user) {
+          await sendOpenEndedResponseEmail({
+            instructorEmail: instructor.email,
+            instructorName: `${instructor.firstName} ${instructor.lastName}`,
+            studentName: `${user.firstName} ${user.lastName}`,
+            studentEmail: user.email || '',
+            testTitle: testAttempt.test.title,
+            questionText: question.question,
+            openEndedResponse,
+            timestamp: new Date().toLocaleString()
+          });
+        }
+      } catch (emailError) {
+        // Log error but don't fail the request
+        logger.error('Failed to send open-ended response email:', emailError);
+      }
+    }
 
     res.status(200).json({
       status: "success",
@@ -1019,6 +1076,112 @@ export const uploadQuestionsExcel = async (
       status: "success",
       message: `${created.length} questions uploaded successfully`,
       data: created,
+    });
+  } catch (error) {
+    logger.error(error);
+    next(error);
+  }
+};
+
+// Get open-ended responses for dashboard
+export const getOpenEndedResponses = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { testId } = req.params;
+    // @ts-ignore
+    const userId = req.user?.id;
+
+    // Verify user is the instructor of the test's course
+    const test = await prisma.test.findUnique({
+      where: { id: testId },
+      include: {
+        course: {
+          select: {
+            instructorId: true
+          }
+        }
+      }
+    });
+
+    if (!test) {
+      throw new NotFoundError("Test not found");
+    }
+
+    if (test.course.instructorId !== userId) {
+      res.status(403).json({
+        status: "error",
+        message: "You don't have permission to view these responses"
+      });
+      return;
+    }
+
+    // Get all answers with open-ended responses for this test
+    const responses = await prisma.answer.findMany({
+      where: {
+        testAttempt: {
+          testId: testId
+        },
+        openEndedResponse: {
+          not: null
+        }
+      },
+      include: {
+        question: {
+          select: {
+            id: true,
+            question: true,
+            points: true
+          }
+        },
+        testAttempt: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const formattedResponses = responses.map(response => ({
+      id: response.id,
+      questionId: response.questionId,
+      questionText: response.question.question,
+      questionPoints: response.question.points,
+      openEndedResponse: response.openEndedResponse,
+      selectedAnswer: response.userAnswer,
+      isCorrect: response.isCorrect,
+      points: response.points,
+      timeSpent: response.questionTimeSpent,
+      student: {
+        id: response.testAttempt.user.id,
+        name: `${response.testAttempt.user.firstName} ${response.testAttempt.user.lastName}`,
+        email: response.testAttempt.user.email
+      },
+      submittedAt: response.createdAt
+    }));
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        test: {
+          id: test.id,
+          title: test.title
+        },
+        responses: formattedResponses,
+        total: formattedResponses.length
+      }
     });
   } catch (error) {
     logger.error(error);

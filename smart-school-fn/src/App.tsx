@@ -15,6 +15,7 @@ import CoursesPage from "./pages/cources";
 import CourseLessonsPage from "./pages/cources/CourseLessonsPage";
 import LessonContentPage from "./pages/cources/LessonContentPage";
 import { TestPage } from "./pages/test/TestPage";
+import { InterviewTestPage } from "./pages/test/InterviewTestPage";
 import { TestResults } from "./pages/test/TestResults";
 import { dashboardRoutes } from "./routes";
 import ScrollToTop from "./components/common/ScrollToTop";
@@ -76,6 +77,7 @@ function App() {
             <Route path="/courses/category/:categoryId" element={<CoursesPage />} />
             <Route path="/courses/:courseId/lessons" element={<CourseLessonsPage />} />
             <Route path="/test/:testId" element={<TestPage />} />
+            <Route path="/test/:testId/interview" element={<InterviewTestPage />} />
             <Route path="/test/:testId/results" element={<TestResults />} />
             <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
             <Route path="/payment-flow/:amount/:period" element={<PaymentFlow />} />

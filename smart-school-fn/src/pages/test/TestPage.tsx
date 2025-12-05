@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { TestInstructions } from '../../components/test/TestInstructions';
 import { TestQuestion } from '../../components/test/TestQuestion';
+import { PsychometricTestQuestion } from '../../components/test/PsychometricTestQuestion';
 import { startTest, submitTestAttempt, saveAnswer, startTestAttempt } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { BackButton } from '../../components/common/BackButton';
@@ -18,6 +19,7 @@ export function TestPage() {
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [openEndedResponses, setOpenEndedResponses] = useState<Record<string, string>>({});
   const [testStarted, setTestStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const timerRef = useRef<any | null>(null);
@@ -179,6 +181,35 @@ export function TestPage() {
   /** Questions */
   if (testStarted && questions.length > 0) {
     const currentQuestion = questions[currentQuestionIndex];
+    const testType = test.data?.testType || 'STANDARD';
+
+    // Route to Interview Test Page if test type is INTERVIEW
+    if (testType === 'INTERVIEW') {
+      navigate(`/test/${testId}/interview`);
+      return null;
+    }
+
+    // Render Psychometric Test Question
+    if (testType === 'PSYCHOMETRIC') {
+      return (
+        <PsychometricTestQuestion
+          question={currentQuestion}
+          totalQuestions={questions.length}
+          currentQuestion={currentQuestionIndex + 1}
+          selectedAnswer={answers[currentQuestion.id]}
+          onAnswerSelect={(answerId) => handleAnswerSelect(currentQuestion.id, answerId)}
+          onNext={handleNext}
+          isLastQuestion={currentQuestionIndex === questions.length - 1}
+          onSubmit={handleSubmit}
+          testAttemptId={testAttempt?.id}
+          testTitle={test.data?.title || "Psychometric Test"}
+          openEndedResponse={openEndedResponses[currentQuestion.id] || ""}
+          onOpenEndedChange={(text) => setOpenEndedResponses(prev => ({ ...prev, [currentQuestion.id]: text }))}
+        />
+      );
+    }
+
+    // Render Standard Test Question (default)
     return (
       <TestQuestion
         question={currentQuestion}
