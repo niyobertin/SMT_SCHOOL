@@ -97,6 +97,9 @@ export function TestPage() {
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) setCurrentQuestionIndex(prev => prev - 1);
   };
+  const handleQuestionNavigate = (index: number) => {
+    setCurrentQuestionIndex(index);
+  };
 
   /** Submit test */
   const handleSubmit = async () => {
@@ -177,27 +180,23 @@ export function TestPage() {
   if (testStarted && questions.length > 0) {
     const currentQuestion = questions[currentQuestionIndex];
     return (
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="mb-6 flex items-center gap-4">
-          <BackButton className="self-start border border-gray-300 rounded-md p-2" />
-          <h2 className="text-lg font-semibold text-gray-900">
-            {test.data.title}
-          </h2>
-        </div>
-        <TestQuestion
-          question={currentQuestion}
-          totalQuestions={questions.length}
-          currentQuestion={currentQuestionIndex + 1}
-          selectedAnswer={answers[currentQuestion.id]}
-          onAnswerSelect={(answerId) => handleAnswerSelect(currentQuestion.id, answerId)}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          isLastQuestion={currentQuestionIndex === questions.length - 1}
-          timeRemaining={timeLeft}
-          onSubmit={handleSubmit}
-          testAttemptId={testAttempt?.id}
-        />
-      </div>
+      <TestQuestion
+        question={currentQuestion}
+        totalQuestions={questions.length}
+        currentQuestion={currentQuestionIndex + 1}
+        selectedAnswer={answers[currentQuestion.id]}
+        onAnswerSelect={(answerId) => handleAnswerSelect(currentQuestion.id, answerId)}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        isLastQuestion={currentQuestionIndex === questions.length - 1}
+        timeRemaining={timeLeft}
+        onSubmit={handleSubmit}
+        testAttemptId={testAttempt?.id}
+        allAnswers={answers}
+        onQuestionNavigate={handleQuestionNavigate}
+        questions={questions}
+        testTitle={test.data?.title || "Examination Portal"}
+      />
     );
   }
 
