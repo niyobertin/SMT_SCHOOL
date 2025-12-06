@@ -44,6 +44,7 @@ export interface Course {
   lessons: any[];
   enrollments: any[];
   tests: any[];
+  type: string;
 }
 
 interface CoursesState {

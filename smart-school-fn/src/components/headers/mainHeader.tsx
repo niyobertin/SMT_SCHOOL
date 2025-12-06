@@ -56,7 +56,7 @@ export function Header() {
   const navigationLinks = [
     { href: "/", label: t("home"), exact: true },
     { href: "/about", label: t("aboutUs") },
-    { href: "/courses", label: t("courses") },
+    { href: "/courses", label: "Programs" },
     { href: "/tests", label: "Take Tests", icon: Award },
     { href: "/tuition", label: t("tuition") },
     { href: "/job-listing", label: "Jobs" },

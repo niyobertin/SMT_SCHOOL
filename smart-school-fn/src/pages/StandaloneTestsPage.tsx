@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Clock, FileQuestion, Search, Filter as FilterIcon } from 'lucide-react';
+import { Award, Clock, FileQuestion, Search, Filter as FilterIcon, Lock, GraduationCap, Unlock, Users } from 'lucide-react';
 import api from '../redux/api/api';
 
 const StandaloneTestsPage = () => {
     const [tests, setTests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState<'ALL' | 'PSYCHOMETRIC' | 'INTERVIEW'>('ALL');
+    const [filterType, setFilterType] = useState<'ALL' | 'STANDARD' | 'PSYCHOMETRIC' | 'INTERVIEW'>('ALL');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -19,7 +19,7 @@ const StandaloneTestsPage = () => {
         try {
             const response = await api.get('/tests', {
                 params: {
-                    standalone: true,
+                    standalone: filterType === 'ALL' ? undefined : (filterType === 'STANDARD' ? 'false' : undefined),
                     type: filterType === 'ALL' ? undefined : filterType,
                     limit: 100
                 }
@@ -34,14 +34,26 @@ const StandaloneTestsPage = () => {
 
     const filteredTests = tests.filter(test =>
         test.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        test.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        test.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        test.course?.title?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleStartTest = (testId: string, testType: string) => {
-        if (testType === 'INTERVIEW') {
-            navigate(`/test/${testId}/interview`);
+    const handleStartTest = (test: any) => {
+        if (test.isLocked) {
+            // If locked, redirect to course page for enrollment/subscription
+            if (test.courseId) {
+                navigate(`/courses/${test.courseId}/lessons`);
+            } else {
+                // Fallback for unknown lock
+                navigate('/subscriptions');
+            }
+            return;
+        }
+
+        if (test.testType === 'INTERVIEW') {
+            navigate(`/test/${test.id}/interview`);
         } else {
-            navigate(`/test/${testId}`);
+            navigate(`/test/${test.id}`);
         }
     };
 
@@ -53,7 +65,7 @@ const StandaloneTestsPage = () => {
                     <div className="text-center">
                         <h1 className="text-4xl md:text-5xl font-bold mb-4">Assessment Center</h1>
                         <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-                            Take psychometric and interview tests to evaluate your skills and knowledge
+                            Access all tests, exams, and assessments in one place
                         </p>
                     </div>
                 </div>
@@ -68,7 +80,7 @@ const StandaloneTestsPage = () => {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                             <input
                                 type="text"
-                                placeholder="Search tests..."
+                                placeholder="Search tests or courses..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -84,6 +96,7 @@ const StandaloneTestsPage = () => {
                                 className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="ALL">All Tests</option>
+                                <option value="STANDARD">Course Exams</option>
                                 <option value="PSYCHOMETRIC">Psychometric</option>
                                 <option value="INTERVIEW">Interview</option>
                             </select>
@@ -92,44 +105,23 @@ const StandaloneTestsPage = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <div className="flex items-center justify-between">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    {[
+                        { label: 'Total Tests', value: tests.length, icon: FileQuestion, color: 'text-gray-600', bg: 'bg-gray-100' },
+                        { label: 'Course Exams', value: tests.filter(t => t.testType === 'STANDARD').length, icon: GraduationCap, color: 'text-blue-600', bg: 'bg-blue-100' },
+                        { label: 'Psychometric', value: tests.filter(t => t.testType === 'PSYCHOMETRIC').length, icon: Award, color: 'text-purple-600', bg: 'bg-purple-100' },
+                        { label: 'Interview', value: tests.filter(t => t.testType === 'INTERVIEW').length, icon: Users, color: 'text-green-600', bg: 'bg-green-100' }
+                    ].map((stat, idx) => (
+                        <div key={idx} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                             <div>
-                                <p className="text-gray-600 text-sm">Total Tests</p>
-                                <p className="text-3xl font-bold text-gray-900">{tests.length}</p>
+                                <p className="text-gray-600 text-sm">{stat.label}</p>
+                                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                             </div>
-                            <div className="bg-blue-100 p-3 rounded-lg">
-                                <FileQuestion className="text-blue-600" size={24} />
+                            <div className={`${stat.bg} p-3 rounded-lg`}>
+                                <stat.icon className={stat.color} size={20} />
                             </div>
                         </div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-600 text-sm">Psychometric</p>
-                                <p className="text-3xl font-bold text-purple-600">
-                                    {tests.filter(t => t.testType === 'PSYCHOMETRIC').length}
-                                </p>
-                            </div>
-                            <div className="bg-purple-100 p-3 rounded-lg">
-                                <Award className="text-purple-600" size={24} />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-600 text-sm">Interview</p>
-                                <p className="text-3xl font-bold text-green-600">
-                                    {tests.filter(t => t.testType === 'INTERVIEW').length}
-                                </p>
-                            </div>
-                            <div className="bg-green-100 p-3 rounded-lg">
-                                <FileQuestion className="text-green-600" size={24} />
-                            </div>
-                        </div>
-                    </div>
+                    ))}
                 </div>
 
                 {/* Tests Grid */}
@@ -148,24 +140,37 @@ const StandaloneTestsPage = () => {
                         {filteredTests.map((test) => (
                             <div
                                 key={test.id}
-                                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col h-full"
                             >
-                                {/* Card Header */}
-                                <div className={`h-2 ${test.testType === 'PSYCHOMETRIC'
-                                        ? 'bg-gradient-to-r from-purple-500 to-purple-600'
-                                        : 'bg-gradient-to-r from-green-500 to-green-600'
+                                {/* Card Header Color */}
+                                <div className={`h-2 ${test.testType === 'PSYCHOMETRIC' ? 'bg-gradient-to-r from-purple-500 to-purple-600' :
+                                        test.testType === 'INTERVIEW' ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                                            'bg-gradient-to-r from-blue-500 to-blue-600'
                                     }`}></div>
 
-                                <div className="p-6">
-                                    {/* Badge */}
+                                <div className="p-6 flex-1 flex flex-col">
+                                    {/* Badge & Lock */}
                                     <div className="flex justify-between items-start mb-3">
-                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${test.testType === 'PSYCHOMETRIC'
-                                                ? 'bg-purple-100 text-purple-700'
-                                                : 'bg-green-100 text-green-700'
+                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${test.testType === 'PSYCHOMETRIC' ? 'bg-purple-100 text-purple-700' :
+                                                test.testType === 'INTERVIEW' ? 'bg-green-100 text-green-700' :
+                                                    'bg-blue-100 text-blue-700'
                                             }`}>
-                                            {test.testType}
+                                            {test.testType === 'STANDARD' ? 'COURSE EXAM' : test.testType}
                                         </span>
+                                        {test.isLocked ? (
+                                            <Lock size={16} className="text-red-500" />
+                                        ) : (
+                                            <Unlock size={16} className="text-green-500" />
+                                        )}
                                     </div>
+
+                                    {/* Course Info (for Standard) */}
+                                    {test.course && (
+                                        <div className="mb-2 flex items-center gap-2 text-xs text-gray-500">
+                                            <GraduationCap size={14} />
+                                            <span className="truncate">{test.course.title}</span>
+                                        </div>
+                                    )}
 
                                     {/* Title */}
                                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
@@ -173,7 +178,7 @@ const StandaloneTestsPage = () => {
                                     </h3>
 
                                     {/* Description */}
-                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">
                                         {test.description || 'No description available'}
                                     </p>
 
@@ -181,11 +186,11 @@ const StandaloneTestsPage = () => {
                                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 pb-4 border-b">
                                         <div className="flex items-center gap-1">
                                             <FileQuestion size={16} />
-                                            <span>{test._count?.questions || 0} questions</span>
+                                            <span>{test.questionCount || 0} qs</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <Clock size={16} />
-                                            <span>{test.duration} min</span>
+                                            <span>{test.duration || 30} min</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <Award size={16} />
@@ -195,13 +200,24 @@ const StandaloneTestsPage = () => {
 
                                     {/* Action Button */}
                                     <button
-                                        onClick={() => handleStartTest(test.id, test.testType)}
-                                        className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-300 ${test.testType === 'PSYCHOMETRIC'
-                                                ? 'bg-purple-600 hover:bg-purple-700'
-                                                : 'bg-green-600 hover:bg-green-700'
-                                            } transform group-hover:scale-105`}
+                                        onClick={() => handleStartTest(test)}
+                                        className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2 ${test.isLocked
+                                                ? 'bg-gray-800 hover:bg-black'
+                                                : test.testType === 'PSYCHOMETRIC'
+                                                    ? 'bg-purple-600 hover:bg-purple-700'
+                                                    : test.testType === 'INTERVIEW'
+                                                        ? 'bg-green-600 hover:bg-green-700'
+                                                        : 'bg-blue-600 hover:bg-blue-700'
+                                            } transform group-hover:scale-[1.02]`}
                                     >
-                                        Start Test
+                                        {test.isLocked ? (
+                                            <>
+                                                <Lock size={16} />
+                                                {test.courseId ? 'Go to Course to Unlock' : 'Subscribe to Unlock'}
+                                            </>
+                                        ) : (
+                                            'Start Test'
+                                        )}
                                     </button>
                                 </div>
                             </div>

@@ -1326,6 +1326,7 @@ export const getAllTests = async (
             select: {
               id: true,
               title: true,
+              thumbnail: true,
               instructor: {
                 select: {
                   id: true,
@@ -1349,10 +1350,61 @@ export const getAllTests = async (
       prisma.test.count({ where }),
     ]);
 
+    // Check enrollments for the current user to determine access
+    let userEnrolledCourseIds: string[] = [];
+    if (userId) {
+      const enrollments = await prisma.enrollment.findMany({
+        where: {
+          userId,
+          status: "ACTIVE",
+        },
+        select: {
+          courseId: true,
+        },
+      });
+      userEnrolledCourseIds = enrollments.map((e) => e.courseId);
+    }
+
+    // Map tests to include lock status
+    const testsWithAccess = tests.map((test) => {
+      let isLocked = false;
+      let accessStatus = "GRANTED";
+
+      if (test.testType === "STANDARD") {
+        if (!test.courseId) {
+          // Should not happen for standard tests, but safely unlocked or locked? 
+          // Assuming locked if data is inconsistent
+          isLocked = true;
+          accessStatus = "INVALID_DATA";
+        } else if (userRole === "ADMIN" || userRole === "INSTRUCTOR") {
+          // Admins/Instructors generally have access, or at least shouldn't see lock icons in management view
+          // But if this is for "Take Tests" view, maybe they want to see what students see?
+          // Let's keep it unlocked for them for now to avoid confusion
+          isLocked = false;
+        } else {
+          if (!userEnrolledCourseIds.includes(test.courseId)) {
+            isLocked = true;
+            accessStatus = "REQUIRES_ENROLLMENT";
+          }
+        }
+      } else {
+        // PSYCHOMETRIC and INTERVIEW are standalone
+        // Currently free/open, but structure allows adding logic here
+        isLocked = false;
+      }
+
+      return {
+        ...test,
+        isLocked,
+        accessStatus,
+        questionCount: test._count.questions, // simplified field
+      };
+    });
+
     res.status(200).json({
       status: "success",
       data: {
-        tests,
+        tests: testsWithAccess,
         pagination: {
           page: pageNum,
           limit: limitNum,

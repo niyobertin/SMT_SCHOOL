@@ -19,7 +19,7 @@ import {
 } from "../../redux/features/courses/courseSlice";
 import { fetchCategories } from "../../redux/features/courses/category";
 import { CourseCardSkeleton } from "../../components/Skeletons/CourseCardSkeleton";
-import { formatDistanceToNow } from "date-fns";
+
 
 export const CourseList = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -122,235 +122,215 @@ export const CourseList = () => {
     );
   }
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Top Bar: Search + Category Dropdown */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {categoryFilter
-            ? `Courses in ${categories.find((c) => c.id === categoryFilter)?.name ||
-            "Selected"
-            }`
-            : "All Courses"}
-        </h2>
-
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          {/* Search Box */}
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Search courses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Category Dropdown */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setDropdownOpen((prev) => !prev)}
-              className="flex items-center justify-between w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              {categoryFilter
-                ? categories.find((c) => c.id === categoryFilter)?.name ||
-                "Select Category"
-                : "All Categories"}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </button>
-            {dropdownOpen && (
-              <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                {categoriesLoading ? (
-                  <p className="p-2 text-sm text-gray-500">Loading...</p>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => selectCategory(null)}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                    >
-                      All Categories
-                    </button>
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => selectCategory(cat.id)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${categoryFilter === cat.id
-                            ? "bg-gray-100 font-medium"
-                            : ""
-                          }`}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Programs</h1>
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
+              Browse through our collection of educational programs and start learning today
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Courses Grid */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(itemsPerPage)].map((_, i) => (
-            <CourseCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : (
-        <>
-          {publishedCourses?.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 px-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 text-center shadow-sm">
-              <div className="w-24 h-24 mb-6 flex items-center justify-center rounded-full border-2 border-gray-300 bg-white">
-                <svg
-                  className="w-10 h-10 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                </svg>
-              </div>
-
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">
-                No courses found
-              </h2>
-              <p className="text-gray-500 max-w-sm">
-                It looks like there aren’t any courses available at the moment.
-                Check back later
-              </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+        {/* Search & Filter Card */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search programs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {publishedCourses?.map((course: any) => (
-              <Link
-                to={`/courses/${course.id}/lessons?subscribed=${course.enrollments?.filter((e: any) => e.status === "ACTIVE")
-                    .length > 0
-                  }`}
+
+            {/* Category Dropdown */}
+            <div className="relative min-w-[200px]">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <div
-                  key={course.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg hover:bg-gray-200 transition-shadow"
-                >
-                  <div className="bg-gray-200 relative">
-                    {/* {course.thumbnail && (
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="w-full h-full object-cover"
-                      />
-                    )} */}
+                <span className="truncate">
+                  {categoryFilter
+                    ? categories.find((c) => c.id === categoryFilter)?.name || "Select Category"
+                    : "All Categories"}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </button>
 
-                    {course.type !== "free" &&
-                      (course.enrollments?.some(
-                        (enrollment: any) => enrollment.status === "ACTIVE"
-                      ) ? (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-md">
-                          <CheckCircle className="h-6 w-6 text-white" />
-                        </div>
-                      ) : (
-                        <div className="absolute top-2 right-2 bg-yellow-500 text-white p-1 rounded-full shadow-md">
-                          <Crown className="w-5 h-5" />
-                        </div>
-                      ))}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex gap-2">
-                      <h3
-                        className={`text-sm font-semibold text-gray-700  px-2  rounded-full ${course.type === "free"
-                            ? "bg-green-200"
-                            : "bg-yellow-200"
-                          }`}
+              {dropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {categoriesLoading ? (
+                    <p className="p-2 text-sm text-gray-500">Loading...</p>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => selectCategory(null)}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                       >
-                        {course?.type}
-                      </h3>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {course.title}
-                    </h3>
-                    <div className="flex space-x-4 items-center mb-2 bg-gray-100 px-2 py-1 rounded-md w-fit">
-                      <span className="text-sm text-gray-700 font-medium">
-                        {course.tests?.length || 0}{" "}
-                        <Book className="inline mr-1 h-4 w-4" />
-                        Tests
-                      </span>
-                      <span className="text-sm text-gray-700 font-medium">
-                        {course.lessons?.length || 0}{" "}
-                        <Book className="inline mr-1 h-4 w-4" />
-                        Lessons
-                      </span>
-                    </div>
-                    <p className="text-sm text-black font-medium mb-4">
-                      {course.createdAt
-                        ? `Posted : ${formatDistanceToNow(
-                          new Date(course.createdAt),
-                          {
-                            addSuffix: true,
-                          }
-                        )}`
-                        : "No date"}
-                      .{" "}
-                      <span className="text-sm text-gray-600">
-                        {course.instructor?.firstName}{" "}
-                        {course.instructor?.lastName}
-                      </span>
-                    </p>
-
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      {course.shortDescription || course.description}
-                    </p>
-                  </div>
+                        All Categories
+                      </button>
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => selectCategory(cat.id)}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${categoryFilter === cat.id
+                            ? "bg-blue-50 text-blue-700 font-medium"
+                            : "text-gray-700"
+                            }`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
-              </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Total Programs</p>
+              <p className="text-2xl font-bold text-gray-800">{publishedCourses?.length || 0}</p>
+            </div>
+            <div className="bg-blue-100 p-3 rounded-lg">
+              <Book className="text-blue-600" size={20} />
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Free Programs</p>
+              <p className="text-2xl font-bold text-green-600">{publishedCourses?.filter(c => c.type === 'free').length || 0}</p>
+            </div>
+            <div className="bg-green-100 p-3 rounded-lg">
+              <CheckCircle className="text-green-600" size={20} />
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm">Premium Programs</p>
+              <p className="text-2xl font-bold text-amber-600">{publishedCourses?.filter(c => c.type !== 'free').length || 0}</p>
+            </div>
+            <div className="bg-amber-100 p-3 rounded-lg">
+              <Crown className="text-amber-600" size={20} />
+            </div>
+          </div>
+        </div>
+
+        {/* Courses Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(itemsPerPage)].map((_, i) => (
+              <CourseCardSkeleton key={i} />
             ))}
           </div>
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center mt-8 space-x-2">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                className="px-3 py-1 border rounded-md disabled:opacity-50 cursor-pointer"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-
-              <div className="text-sm text-black flex items-center justify-between gap-2">
-                Page <span className="font-semibold">{page} </span> of{" "}
-                <span className="font-semibold"> {totalPages}</span>
+        ) : (
+          <>
+            {publishedCourses?.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 px-6 border-2 border-dashed border-gray-300 rounded-xl bg-white/50 text-center">
+                <div className="w-20 h-20 mb-6 flex items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                  <Book size={40} />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                  No programs found
+                </h2>
+                <p className="text-gray-500 max-w-sm">
+                  It looks like there aren’t any programs matching your criteria.
+                </p>
               </div>
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === totalPages}
-                className="px-3 py-1 border rounded-md disabled:opacity-50 cursor-pointer"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
+            )}
 
-              <select
-                value={itemsPerPage}
-                onChange={(e) =>
-                  handleItemsPerPageChange(Number(e.target.value))
-                }
-                className="px-3 py-1 border rounded-md"
-              >
-                <option value="9">9 per page</option>
-                <option value="18">18 per page</option>
-                <option value="27">27 per page</option>
-                <option value="36">36 per page</option>
-                <option value="45">45 per page</option>
-                <option value="54">54 per page</option>
-                <option value="63">63 per page</option>
-                <option value="72">72 per page</option>
-                <option value="81">81 per page</option>
-                <option value="90">90 per page</option>
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
+              {publishedCourses?.map((course: any) => (
+                <Link
+                  to={`/courses/${course.id}/lessons?subscribed=${course.enrollments?.filter((e: any) => e.status === "ACTIVE")
+                    .length > 0
+                    }`}
+                  key={course.id} // Add key to Link component
+                >
+                  <div
+                    className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col h-full border border-gray-100"
+                  >
+
+
+                    <div className="p-6 flex flex-col flex-grow">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {course.title}
+                      </h3>
+
+                      <p className="text-gray-500 text-sm mb-4 line-clamp-2 flex-grow">
+                        {course.shortDescription || course.description}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
+                        <div className="flex items-center gap-2 text-gray-500 text-sm">
+                          <div className="bg-blue-50 p-1.5 rounded-md">
+                            <Book className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <span className="font-medium">{course.lessons?.length || 0} Lessons</span>
+                        </div>
+                        <div className="text-xs text-gray-400 font-medium">
+                          {course.instructor?.firstName} {course.instructor?.lastName}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center pb-12 space-x-2">
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  className="p-2 border rounded-md disabled:opacity-50 hover:bg-white bg-white shadow-sm"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+
+                <div className="text-sm text-gray-700 flex items-center gap-2 bg-white px-4 py-2 rounded-md shadow-sm border border-gray-200">
+                  Page <span className="font-semibold">{page} </span> of{" "}
+                  <span className="font-semibold"> {totalPages}</span>
+                </div>
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                  className="p-2 border rounded-md disabled:opacity-50 hover:bg-white bg-white shadow-sm"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) =>
+                    handleItemsPerPageChange(Number(e.target.value))
+                  }
+                  className="px-3 py-2 border rounded-md bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="9">9 / page</option>
+                  <option value="18">18 / page</option>
+                  <option value="27">27 / page</option>
+                </select>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
+
