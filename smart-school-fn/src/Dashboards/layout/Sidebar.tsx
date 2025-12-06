@@ -8,6 +8,7 @@ import {
   FileText,
   Home,
   FileQuestion,
+  Award,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -15,6 +16,7 @@ const sidebarItems = [
   { id: "users", label: "User Management", icon: Users, path: "/dashboard/users" },
   { id: "subscriptions", label: "Subscription Management", icon: CreditCard, path: "/dashboard/subscriptions" },
   { id: "tests", label: "Test Management", icon: FileQuestion, path: "/dashboard/tests" },
+  { id: "standalone-tests", label: "Standalone Tests", icon: Award, path: "/dashboard/standalone-tests" },
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
   { id: "home", label: "Home", icon: Home, path: "/" },

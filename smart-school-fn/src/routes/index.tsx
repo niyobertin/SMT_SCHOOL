@@ -9,6 +9,7 @@ import { Lessons } from '../Dashboards/sections/Lessons';
 import { LessonContent } from '../Dashboards/sections/Content';
 import { Tests } from '../Dashboards/sections/Tests';
 import { JobBoard } from '../Dashboards/sections/Jobs';
+import StandaloneTestManager from '../Dashboards/sections/StandaloneTestManager';
 
 export const dashboardRoutes: RouteObject[] = [
   {
@@ -30,6 +31,10 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'tests',
         element: <Tests />,
+      },
+      {
+        path: 'standalone-tests',
+        element: <StandaloneTestManager />,
       },
       {
         path: 'content',

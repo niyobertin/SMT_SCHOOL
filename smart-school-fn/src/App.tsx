@@ -24,6 +24,7 @@ import { PaymentFlow } from "./components/common/Payment";
 import { JobListing } from "./pages/JobListing";
 import { JobDetails } from "./pages/JobDetails";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import StandaloneTestsPage from "./pages/StandaloneTestsPage";
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -76,9 +77,15 @@ function App() {
             <Route path="/courses/categories" element={<CourseCategories />} />
             <Route path="/courses/category/:categoryId" element={<CoursesPage />} />
             <Route path="/courses/:courseId/lessons" element={<CourseLessonsPage />} />
+
+            {/* Standalone Tests - Public Access */}
+            <Route path="/tests" element={<StandaloneTestsPage />} />
+
+            {/* Test Taking Routes */}
             <Route path="/test/:testId" element={<TestPage />} />
             <Route path="/test/:testId/interview" element={<InterviewTestPage />} />
             <Route path="/test/:testId/results" element={<TestResults />} />
+
             <Route path="/lessons/:lessonId" element={<LessonContentPage />} />
             <Route path="/payment-flow/:amount/:period" element={<PaymentFlow />} />
             <Route path="/contact" element={<ContactPage />} />

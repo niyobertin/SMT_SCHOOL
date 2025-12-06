@@ -32,9 +32,10 @@ export interface Test {
   isActive: boolean;
   showResults: boolean;
   randomizeQuestions: boolean;
+  testType?: 'STANDARD' | 'PSYCHOMETRIC' | 'INTERVIEW';
   createdAt: string;
   updatedAt: string;
-  courseId: string;
+  courseId?: string | null;
   questions: Question[];
 }
 
@@ -92,9 +93,24 @@ export const fetchTestById = createAsyncThunk(
 
 export const createTest = createAsyncThunk(
   'tests/create',
-  async ({ testData, courseId }: { testData: Test, courseId: string }, { rejectWithValue }) => {
+  async ({ testData, courseId }: { testData: any, courseId?: string | null }, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/tests/${courseId}/tests`, testData);
+      // Use standalone endpoint for PSYCHOMETRIC and INTERVIEW tests
+      // Use course-based endpoint for STANDARD tests
+      const isStandalone = testData.testType === 'PSYCHOMETRIC' || testData.testType === 'INTERVIEW';
+
+      let response;
+      if (isStandalone) {
+        // Standalone tests don't need courseId
+        response = await api.post('/tests', testData);
+      } else {
+        // STANDARD tests require courseId
+        if (!courseId) {
+          return rejectWithValue('Course ID is required for STANDARD tests');
+        }
+        response = await api.post(`/tests/${courseId}/tests`, testData);
+      }
+
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to create test');

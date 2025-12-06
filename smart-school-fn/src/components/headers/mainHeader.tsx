@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, User, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
+import { ChevronDown, User, LogOut, LayoutDashboard, Loader2, Award } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
 import Logo from "../../assets/logo.jpg";
 import api from "../../redux/api/api";
@@ -57,6 +57,7 @@ export function Header() {
     { href: "/", label: t("home"), exact: true },
     { href: "/about", label: t("aboutUs") },
     { href: "/courses", label: t("courses") },
+    { href: "/tests", label: "Take Tests", icon: Award },
     { href: "/tuition", label: t("tuition") },
     { href: "/job-listing", label: "Jobs" },
     { href: "/contact", label: t("contactUs") },

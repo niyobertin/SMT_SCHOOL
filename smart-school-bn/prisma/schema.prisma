@@ -238,8 +238,8 @@ model Test {
   updatedAt          DateTime @updatedAt
 
   // Relations
-  courseId String
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   questions     Question[]
   testAttempts  TestAttempt[]

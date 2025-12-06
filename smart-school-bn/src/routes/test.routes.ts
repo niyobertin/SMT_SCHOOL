@@ -15,7 +15,9 @@ import {
   deleteTestQuestion,
   updateTestQuestion,
   uploadQuestionsExcel,
-  getOpenEndedResponses
+  getOpenEndedResponses,
+  createStandaloneTest,
+  getAllTests,
 } from '../controller/test.controller';
 import { uploadFile } from '../middleware/uploadFile';
 
@@ -28,7 +30,103 @@ const router = express.Router();
  *     description: Test management and taking endpoints
  */
 
-// Test Management Routes (Instructor only)
+// Standalone Test Routes (must come before parameterized routes)
+/**
+ * @swagger
+ * /api/tests:
+ *   post:
+ *     summary: Create a standalone test (PSYCHOMETRIC or INTERVIEW only)
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - testType
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               instructions:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               duration:
+ *                 type: number
+ *               passingScore:
+ *                 type: number
+ *               maxAttempts:
+ *                 type: number
+ *               randomizeQuestions:
+ *                 type: boolean
+ *               showResults:
+ *                 type: boolean
+ *               testType:
+ *                 type: string
+ *                 enum: [PSYCHOMETRIC, INTERVIEW]
+ *     responses:
+ *       201:
+ *         description: Standalone test created successfully
+ *       400:
+ *         description: Invalid test type or missing required fields
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+  '/',
+  authenticate,
+  authorize('INSTRUCTOR', 'ADMIN'),
+  catchAsync(createStandaloneTest)
+);
+
+/**
+ * @swagger
+ * /api/tests:
+ *   get:
+ *     summary: Get all tests with optional filtering
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [STANDARD, PSYCHOMETRIC, INTERVIEW]
+ *         description: Filter by test type
+ *       - in: query
+ *         name: standalone
+ *         schema:
+ *           type: boolean
+ *         description: Filter by standalone status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Tests retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+  '/',
+  authenticate,
+  catchAsync(getAllTests)
+);
+
 /**
  * @swagger
  * /api/tests/{courseId}/tests:

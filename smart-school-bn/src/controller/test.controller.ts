@@ -321,7 +321,7 @@ export const startTestAttempt = async (
     // @ts-ignore
     const userId = req.user?.id;
 
-    // Check if user is enrolled in the course
+    // Get test details
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
@@ -337,6 +337,26 @@ export const startTestAttempt = async (
         },
       },
     });
+
+    if (!test) {
+      res.status(404).json({
+        status: "error",
+        message: "Test not found",
+      });
+      return;
+    }
+
+    // For STANDARD tests, check enrollment. For PSYCHOMETRIC/INTERVIEW, skip enrollment check
+    if (test.testType === "STANDARD" && test.courseId) {
+      if (!test.course?.enrollments || test.course.enrollments.length === 0) {
+        res.status(403).json({
+          status: "error",
+          message: "You must be enrolled in the course to take this test",
+        });
+        return;
+      }
+    }
+
     // Get questions
     const questions = await prisma.question.findMany({
       where: { testId, isActive: true },
@@ -397,6 +417,7 @@ export const startTestAttempt = async (
           duration: test?.duration,
           passingScore: test?.passingScore,
           showResults: test?.showResults,
+          testType: test?.testType,
         },
         questions: randomizedQuestions.map((q) => ({
           id: q.id,
@@ -676,8 +697,8 @@ export const submitTest = async (
       },
     });
 
-    // 4. Update user progress and record achievement if passed
-    if (isPassed) {
+    // 4. Update user progress and record achievement if passed (only for course-based tests)
+    if (isPassed && testAttempt.test.courseId) {
       await updateUserProgress(
         userId,
         testAttempt.test.courseId,
@@ -1110,7 +1131,7 @@ export const getOpenEndedResponses = async (
       throw new NotFoundError("Test not found");
     }
 
-    if (test.course.instructorId !== userId) {
+    if (test.course?.instructorId !== userId) {
       res.status(403).json({
         status: "error",
         message: "You don't have permission to view these responses"
@@ -1188,3 +1209,161 @@ export const getOpenEndedResponses = async (
     next(error);
   }
 };
+
+// Create standalone test (for PSYCHOMETRIC and INTERVIEW types)
+export const createStandaloneTest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const {
+      title,
+      description,
+      instructions,
+      duration,
+      passingScore,
+      maxAttempts,
+      randomizeQuestions,
+      showResults,
+      testType,
+    } = req.body;
+
+    // @ts-ignore
+    const userId = req.user?.id;
+
+    // Validate that only PSYCHOMETRIC and INTERVIEW tests can be standalone
+    if (testType === "STANDARD") {
+      res.status(400).json({
+        status: "error",
+        message: "STANDARD tests must be associated with a course. Use the /:courseId/tests endpoint instead.",
+      });
+      return;
+    }
+
+    if (!testType || (testType !== "PSYCHOMETRIC" && testType !== "INTERVIEW")) {
+      res.status(400).json({
+        status: "error",
+        message: "testType must be either PSYCHOMETRIC or INTERVIEW for standalone tests",
+      });
+      return;
+    }
+
+    // Create standalone test
+    const test = await prisma.test.create({
+      data: {
+        id: uuidv4(),
+        title,
+        description: description || null,
+        instructions: instructions || [],
+        duration: duration || null,
+        passingScore: passingScore || 70,
+        maxAttempts: maxAttempts || null,
+        randomizeQuestions: randomizeQuestions !== false,
+        showResults: showResults !== false,
+        testType,
+        courseId: null, // Explicitly set to null for standalone tests
+      },
+    });
+
+    res.status(201).json({
+      status: "success",
+      data: test,
+      message: "Standalone test created successfully",
+    });
+  } catch (error) {
+    logger.error(error);
+    next(error);
+  }
+};
+
+// Get all tests with optional filtering
+export const getAllTests = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { type, standalone, page = "1", limit = "10" } = req.query;
+    // @ts-ignore
+    const userId = req.user?.id;
+    // @ts-ignore
+    const userRole = req.user?.role;
+
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build filter conditions
+    const where: any = {};
+
+    // Filter by test type if provided
+    if (type && ["STANDARD", "PSYCHOMETRIC", "INTERVIEW"].includes(type as string)) {
+      where.testType = type;
+    }
+
+    // Filter by standalone status if provided
+    if (standalone === "true") {
+      where.courseId = null;
+    } else if (standalone === "false") {
+      where.courseId = { not: null };
+    }
+
+    // For instructors, only show their own tests (course-based) and all standalone tests
+    if (userRole === "INSTRUCTOR") {
+      where.OR = [
+        { courseId: null }, // All standalone tests
+        { course: { instructorId: userId } }, // Their own course tests
+      ];
+    }
+
+    // Get tests with pagination
+    const [tests, total] = await Promise.all([
+      prisma.test.findMany({
+        where,
+        include: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              instructor: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              questions: true,
+              testAttempts: true,
+            },
+          },
+        },
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.test.count({ where }),
+    ]);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        tests,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+        },
+      },
+    });
+  } catch (error) {
+    logger.error(error);
+    next(error);
+  }
+};
+
