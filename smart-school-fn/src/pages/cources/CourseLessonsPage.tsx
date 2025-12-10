@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { ArrowLeft, PlayCircle, List, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  PlayCircle,
+  List,
+  FileText,
+  Award,
+  MessageSquare,
+} from "lucide-react";
 import {
   clearLessons,
   fetchLessons,
@@ -9,7 +16,6 @@ import {
 } from "../../redux/features/lessons/lessonSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
 import type { AppDispatch, RootState } from "../../redux/stores";
-// import { FaQuestion } from 'react-icons/fa6';
 import {
   HeaderSkeleton,
   LessonSkeleton,
@@ -18,37 +24,54 @@ import {
   LoginRequestModal,
   PaymentRequestModal,
 } from "../../components/RequestModal";
-import { useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+
+const TEST_TYPES = {
+  GENERAL: "GENERAL",
+  PSYCHOMETRIC: "PSYCHOMETRIC",
+  OPENENDED: "OPENENDED",
+  INTERVIEW: "INTERVIEW",
+} as const;
+
+type TestType = keyof typeof TEST_TYPES;
+type TabType = "lessons" | TestType;
 
 const CourseLessonsPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-  const [activeTab, setActiveTab] = useState<"lessons" | "tests">("lessons");
+
+  const [activeTab, setActiveTab] = useState<TabType>("lessons");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+
   const queryParams = new URLSearchParams(location.search);
   const subscribed = queryParams.get("subscribed");
 
+  /** Redux state */
   const {
     items: lessons,
     pagination,
     loading: lessonsLoading,
     error: lessonsError,
   } = useSelector((state: RootState) => state.lessons);
+
   const {
-    tests,
+    tests = [],
     loading: testsLoading,
     error: testsError,
   } = useSelector((state: RootState) => state.test);
 
+  const filteredTests = tests.filter((test) => {
+    if (activeTab === "GENERAL") return !test.type || test.type === "GENERAL";
+    return test.type === activeTab;
+  });
+
+  /** Check token for login modal */
   useEffect(() => {
     const localToken = localStorage.getItem("accessToken");
-    if (!localToken) {
-      setIsModalOpen(true);
-    }
+    if (!localToken) setIsModalOpen(true);
   }, []);
 
   const handleClose = () => {
@@ -59,47 +82,45 @@ const CourseLessonsPage = () => {
     setIsModalOpen(false);
     navigate("/login");
   };
+
   const course = lessons[0]?.course;
   const token = localStorage.getItem("accessToken");
-  let decodedUser = null;
 
+  let decodedUser: any = null;
   if (token) {
     try {
-      const decoded = jwtDecode(token);
-      // If decoded is a JwtPayload, it will have the user data directly
-      // If it's a string, it's already the user data
-      decodedUser = typeof decoded === "string" ? JSON.parse(decoded) : decoded;
+      decodedUser = jwtDecode(token);
     } catch (error) {
       console.error("Error decoding token:", error);
     }
   }
 
+  /** Payment modal logic */
   useEffect(() => {
-    const user = localStorage.getItem("user") || decodedUser;
-    if (user) {
-      const userData = typeof user === "string" ? JSON.parse(user) : user;
-      const isRestrictedRole =
+    const storedUser = localStorage.getItem("user") || decodedUser;
+    if (storedUser) {
+      const userData =
+        typeof storedUser === "string" ? JSON.parse(storedUser) : storedUser;
+
+      const isRestricted =
         userData.role !== "ADMIN" && userData.role !== "INSTRUCTOR";
 
-      const requiresPayment =
-        course?.type === undefined || course.type !== "free";
+      const requiresPayment = course?.type !== "free";
 
-      if (isRestrictedRole && subscribed === "false" && requiresPayment) {
+      if (isRestricted && subscribed === "false" && requiresPayment) {
         setShowPaymentModal(true);
       }
     }
   }, [subscribed, decodedUser, course?.type]);
 
-  const handlePaymentContinue = () => {
-    setShowPaymentModal(false);
-    navigate(`/tuition`);
-  };
+  const handlePaymentContinue = () => navigate(`/tuition`);
 
   const handlePaymentClose = () => {
     setShowPaymentModal(false);
     navigate(-1);
   };
 
+  /** Fetch Lessons */
   useEffect(() => {
     if (courseId) {
       dispatch(
@@ -117,24 +138,26 @@ const CourseLessonsPage = () => {
     };
   }, [courseId, dispatch, pagination.page, pagination.limit]);
 
+  /** Fetch Tests */
   useEffect(() => {
-    if (activeTab === "tests" && courseId) {
+    if (activeTab !== "lessons" && courseId) {
       dispatch(fetchTestsByCourseId(courseId));
     }
   }, [activeTab, courseId, dispatch]);
 
   const handleStartLearning = (lessonId: string) =>
     navigate(`/lessons/${lessonId}`);
+
   const handleTakeTest = (testId: string) =>
     navigate(`/test/${testId}`, { state: { fromCourse: true } });
 
-  // Initial skeleton while first lessons are loading
-  if (lessonsLoading && !lessons.length) {
+  /** Loading Skeleton */
+  if (lessonsLoading && lessons.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto p-8">
           <HeaderSkeleton />
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
+          <div className="bg-white shadow sm:rounded-lg divide-y mt-4">
             {[...Array(6)].map((_, i) => (
               <LessonSkeleton key={i} />
             ))}
@@ -146,7 +169,8 @@ const CourseLessonsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
           className="flex items-center text-sm cursor-pointer hover:bg-blue-600 hover:text-white mb-6 border border-gray-200 rounded-md p-2 bg-blue-600 text-white"
@@ -154,220 +178,188 @@ const CourseLessonsPage = () => {
           <ArrowLeft className="w-4 h-4 mr-1" /> Back to courses
         </button>
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {course?.title}
-          </h1>
-          <p className="text-gray-600 mb-4">{course?.description}</p>
+        {/* Course Header */}
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          {course?.title}
+        </h1>
+        <p className="text-gray-600 mb-4">{course?.description}</p>
 
-          {/* Tabs */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab("lessons")}
-                className={`${activeTab === "lessons"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
-              >
-                <List className="w-4 h-4 mr-2" />
-                Lessons
-              </button>
-              <button
-                onClick={() => setActiveTab("tests")}
-                className={`${activeTab === "tests"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Tests
-              </button>
-            </nav>
-          </div>
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-6 text-center overflow-x-auto">
+          <nav className="-mb-px flex space-x-8 justify-center">
+            {[
+              { key: "lessons", label: "Lessons", icon: List },
+              { key: "GENERAL", label: "General Tests", icon: FileText },
+              { key: "PSYCHOMETRIC", label: "Psychometric", icon: Award },
+              { key: "OPENENDED", label: "Open Ended", icon: MessageSquare },
+              { key: "INTERVIEW", label: "Interview Exams", icon: FileText },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as TabType)}
+                  className={`${activeTab === tab.key
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-          {/* Tab Content */}
-          {activeTab === "lessons" ? (
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
-              {lessonsError ? (
-                <div className="p-6 text-center text-red-500">
-                  {lessonsError}
-                </div>
-              ) : lessons.length > 0 ? (
-                lessons.map((lesson, index) => (
-                  <div
-                    key={index}
-                    className="p-6 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                        {lesson.order}
-                      </div>
-                      <div className="ml-4 flex-1">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-medium text-gray-900">
-                            {lesson.title}
-                          </h3>
-                          {lesson.isPreview && (
-                            <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                              Preview
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1 text-sm text-gray-500">
-                          {lesson.description}
-                        </p>
+        {/* Lessons */}
+        {activeTab === "lessons" && (
+          <div className="bg-white shadow sm:rounded-lg divide-y">
+            {lessonsError && (
+              <div className="p-6 text-center text-red-500">{lessonsError}</div>
+            )}
 
-                        {lesson.content?.length > 0 && (
-                          <div className="mt-3 space-y-2">
-                            {lesson.content.map((content) => (
-                              <div
-                                key={content.id}
-                                className="flex items-center text-sm text-gray-600"
-                              >
-                                <PlayCircle className="h-4 w-4 mr-2 text-blue-600" />
-                                <span>{content.title || "Lesson Content"}</span>
-                              </div>
-                            ))}
-                          </div>
+            {lessons.length > 0 ? (
+              lessons.map((lesson) => (
+                <div
+                  key={lesson.id}
+                  className="p-6 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                      {lesson.order}
+                    </div>
+
+                    <div className="ml-4 flex-1">
+                      <div className="flex justify-between">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {lesson.title}
+                        </h3>
+
+                        {lesson.isPreview && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                            Preview
+                          </span>
                         )}
                       </div>
-                      <button
-                        onClick={() => handleStartLearning(lesson.id)}
-                        className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        Start
-                      </button>
+
+                      <p className="text-gray-500 mt-1">{lesson.description}</p>
+
+                      {lesson.content?.map((content) => (
+                        <div
+                          key={content.id}
+                          className="flex items-center text-sm text-gray-600 mt-2"
+                        >
+                          <PlayCircle className="w-4 h-4 mr-2 text-blue-600" />
+                          <span>{content.title || "Lesson Content"}</span>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-6 max-w-md mx-auto">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center h-12 w-12 mx-auto mb-4 rounded-full bg-gray-100 text-gray-500">
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                      No Lessons Available
-                    </h2>
-                    <p className="text-gray-600 text-sm">
-                      This course doesn’t have any lessons yet. Please check
-                      back later or explore other courses.
-                    </p>
+
+                    <button
+                      onClick={() => handleStartLearning(lesson.id)}
+                      className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Start
+                    </button>
                   </div>
                 </div>
-              )}
+              ))
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                No Lessons Available
+              </div>
+            )}
 
-              {/* Pagination */}
-              {pagination.totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-t mt-6 gap-2">
-                  {/* Previous Button */}
-                  <button
-                    disabled={pagination.page === 1}
-                    onClick={() => dispatch(setPage(pagination.page - 1))}
-                    className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100"
-                  >
-                    Previous
-                  </button>
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-between items-center px-6 py-4 border-t">
+                <button
+                  disabled={pagination.page === 1}
+                  onClick={() => dispatch(setPage(pagination.page - 1))}
+                  className="px-4 py-2 border rounded disabled:opacity-50"
+                >
+                  Previous
+                </button>
 
-                  {/* Page Numbers */}
-                  <div className="flex gap-2 overflow-x-auto">
-                    {Array.from(
-                      { length: pagination.totalPages },
-                      (_, i) => i + 1
-                    ).map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => dispatch(setPage(num))}
-                        className={`px-3 py-1 rounded-lg text-sm border whitespace-nowrap ${num === pagination.page
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                          }`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Next Button */}
-                  <button
-                    disabled={pagination.page === pagination.totalPages}
-                    onClick={() => dispatch(setPage(pagination.page + 1))}
-                    className="px-4 py-2 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-100"
-                  >
-                    Next
-                  </button>
+                <div className="flex gap-2">
+                  {Array.from(
+                    { length: pagination.totalPages },
+                    (_, i) => i + 1
+                  ).map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => dispatch(setPage(num))}
+                      className={`px-3 py-1 border rounded ${num === pagination.page
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-300"
+                        }`}
+                    >
+                      {num}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg divide-y divide-gray-200">
-              {testsError ? (
-                <div className="p-6 text-center text-red-500">{testsError}</div>
-              ) : testsLoading && !tests.length ? (
-                <div className="p-6">
-                  <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              ) : tests.length > 0 ? (
-                tests.map((test: any) => (
+
+                <button
+                  disabled={pagination.page === pagination.totalPages}
+                  onClick={() => dispatch(setPage(pagination.page + 1))}
+                  className="px-4 py-2 border rounded disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tests Section */}
+        {activeTab !== "lessons" && (
+          <div className="mt-8 max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 leading-tight">
+              {activeTab === "GENERAL" && "General Tests"}
+              {activeTab === "PSYCHOMETRIC" && "Psychometric Tests"}
+              {activeTab === "OPENENDED" && "Open Ended Tests"}
+              {activeTab === "INTERVIEW" && "Interview Tests"}
+            </h2>
+
+            {testsLoading ? (
+              <div className="text-center py-4 animate-pulse">Loading tests...</div>
+            ) : testsError ? (
+              <div className="text-center text-red-500">{testsError}</div>
+            ) : filteredTests.length > 0 ? (
+              <div className="grid gap-4 ">
+                {filteredTests.map((test) => (
                   <div
                     key={test.id}
-                    className="p-6 hover:bg-gray-50 transition-colors"
+                    className="bg-white p-4 rounded shadow hover:shadow-md cursor-pointer"
+                    onClick={() => handleTakeTest(test.id)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 pr-4">
+                        <h3 className="font-bold text-gray-900 text-lg leading-tight">
                           {test.title}
                         </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          {test.description}
+                        <p className="text-normal text-gray-500 mt-1 line-clamp-2 leading-tight">
+                          {test.description ? test.description.substring(0, 250) + (test.description.length > 250 ? '...' : '') : 'No description available'}
                         </p>
-                        {/* <div className="mt-2 text-sm text-gray-600 space-y-1">
-                          <p className="flex items-center">
-                            <Clock className="w-4 h-4 mr-2" />
-                            Duration: {test.duration} minutes
-                          </p>
-                          <p className="flex items-center">
-                            <Award className="w-4 h-4 mr-2" />
-                            Passing Score s rw: {test.passingScore}%
-                          </p>
-                          <p className="flex items-center">
-                            <FaQuestion className="w-4 h-4 mr-2" />
-                            Questions: {test.questions.length}
-                          </p>
-                          Max Attempts: {test.maxAttempts || 'Unlimited'}
-                        </div> */}
                       </div>
-                      <button
-                        onClick={() => handleTakeTest(test.id)}
-                        className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap"
-                      >
-                        Start Test
-                      </button>
+                      <div className="flex gap-1 px-2 py-2 rounded-md bg-blue-600 font-bold text-white text-sm mt-2 w-fit hover:bg-blue-900 transition-colors cursor-pointer items-center">
+                        <PlayCircle className="w-4 h-4" />
+                        <span className="font-semibold">Start Test</span>
+                      </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="p-6 max-w-md mx-auto">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center h-12 w-12 mx-auto mb-4 rounded-full bg-gray-100 text-gray-500">
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                      No Tests Available
-                    </h2>
-                    <p className="text-gray-600 text-sm">
-                      This course doesn’t have any tests yet. Please check back
-                      later or explore other courses.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No {activeTab.toLowerCase()} tests available.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Modals */}
         <LoginRequestModal
           isOpen={isModalOpen}
           onClose={handleClose}

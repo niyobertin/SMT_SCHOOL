@@ -179,9 +179,9 @@ const coursesSlice = createSlice({
       })
       .addCase(fetchCourses.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data.courses;
-        state.total = action.payload.data.pagination.total;
-        state.totalPages = action.payload.data.pagination.totalPages;
+        state.items = action.payload.data.courses || [];
+        state.total = action.payload.data.pagination.total || 0;
+        state.totalPages = action.payload.data.pagination.totalPages || 1;
       })
       .addCase(fetchCourses.rejected, (state, action) => {
         state.loading = false;

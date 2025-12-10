@@ -46,6 +46,7 @@ export const createTest = async (
       description,
       instructions,
       duration,
+      type,
       passingScore,
       maxAttempts,
       randomizeQuestions,
@@ -76,10 +77,11 @@ export const createTest = async (
         description: description || null,
         instructions: instructions || [],
         duration: duration || null,
+        type: type || "GENERAL",
         passingScore: passingScore || 70,
         maxAttempts: maxAttempts || null,
-        randomizeQuestions: randomizeQuestions !== false, // default true
-        showResults: showResults !== false, // default true
+        randomizeQuestions: randomizeQuestions !== false,
+        showResults: showResults !== false,
         course: {
           connect: { id: courseId },
         },

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, Save, X, BookOpen, Award, ImagePlus, Upload, Clock, Users, Trash, Loader2, Eye, ArrowLeft, FileQuestion } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, BookOpen, Award, ImagePlus, Upload, Clock, Trash, Loader2, Eye, ArrowLeft, FileQuestion } from 'lucide-react';
 import { fetchCourses } from "../../redux/features/courses/courseSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,6 +9,7 @@ import { Toast } from 'primereact/toast';
 import StatusMessage from '../../components/ui/loadingAndError';
 import { ConfirmDeleteModal } from '../Modals/ConfirmDeleteModal';
 import api from '../../redux/api/api';
+import { FaQuestion } from 'react-icons/fa';
 
 
 const TestQuestionManager = () => {
@@ -101,23 +102,49 @@ const TestQuestionManager = () => {
 
 
   const startCreatingTest = (courseId: string) => {
-    setCurrentTest({ ...defaultTest, courseId, id: Date.now().toString() });
+    if (!courseId) {
+      console.error("No course ID provided for test creation");
+      return;
+    }
+    setCurrentTest({
+      ...defaultTest,
+      courseId,
+      id: Date.now().toString()
+    });
+    setSelectedCourseId(courseId);
     setActiveTab('test-editor');
   };
 
   const saveTest = async () => {
     try {
+      if (!currentTest.courseId) {
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: "Please select a course for this test",
+          life: 3000,
+        });
+        return;
+      }
+
       if (isEditingTest) {
-        await dispatch(updateTest({ testData: currentTest, id: selectedTestId! })).unwrap();
+        await dispatch(updateTest({
+          testData: currentTest,
+          id: selectedTestId!
+        })).unwrap();
       } else {
         setCreatingTestLoading(true);
-        await dispatch(createTest({ testData: currentTest, courseId: selectedCourseId! })).unwrap();
+        await dispatch(createTest({
+          testData: currentTest,
+          courseId: currentTest.courseId
+        })).unwrap();
       }
-      await dispatch(fetchTestsByCourseId(selectedCourseId!)).unwrap();
+
+      await dispatch(fetchTestsByCourseId(currentTest.courseId)).unwrap();
       toast.current?.show({
         severity: "success",
-        summary: "Test Created",
-        detail: "Test created successfully!",
+        summary: isEditingTest ? "Test Updated" : "Test Created",
+        detail: isEditingTest ? "Test updated successfully!" : "Test created successfully!",
         life: 3000,
       });
       setActiveTab('tests');
@@ -359,7 +386,7 @@ const TestQuestionManager = () => {
                     className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     <Plus size={16} />
-                    Create Test
+                    <span className="whitespace-nowrap"> New Test</span>
                   </button>
                   <button
                     onClick={() => {
@@ -368,7 +395,7 @@ const TestQuestionManager = () => {
                     }}
                     className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer">
                     <Eye size={14} />
-                    View {course.tests && (course.tests || []).length} tests
+                    <span className="whitespace-nowrap">View {course.tests?.length || 0} tests</span>
                   </button>
                 </div>
               </div>
@@ -381,101 +408,136 @@ const TestQuestionManager = () => {
       {activeTab === 'tests' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold mb-4">All Tests</h2>
+            <h2 className="text-2xl font-bold">All Tests</h2>
             <button
               onClick={() => {
                 if (selectedCourseId) {
                   startCreatingTest(selectedCourseId);
-                  return;
+                } else {
+                  setActiveTab('courses');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
             >
               <Plus size={16} />
-              Create New Test
+              <span className="whitespace-nowrap">New Test</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {testsLoading && (
-              <div className="flex items-center justify-center p-4">
-                <StatusMessage type="loading" message="Loading tests..." />
-              </div>
-            )}
+          {testsLoading && (
+            <div className="flex items-center justify-center p-4">
+              <StatusMessage type="loading" message="Loading tests..." />
+            </div>
+          )}
 
-            {testsError && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
-                <StatusMessage type="error" message={`Error loading tests: ${testsError}`} />
-              </div>
-            )}
-            {(tests || []).map(test => {
-              const course = (courses || []).find(c => c.id === test.courseId);
-              return (
-                <div key={test.id} className="bg-white border rounded-lg p-4 shadow-sm">
-                  <h3 className="font-semibold text-lg mb-2">{test.title}</h3>
-                  <p className="text-gray-600 mb-2">{test.description}</p>
-                  {course && (
-                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded mb-2">
-                      {course.title}
-                    </span>
-                  )}
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                    <span className="flex items-center gap-1">
-                      <Users size={14} />
-                      {(test.questions || []).length} questions
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={14} />
-                      {test.duration} min
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Award size={14} />
-                      {test.passingScore}% to pass
-                    </span>
-                  </div>
-                  <div className="flex flex-col lg:flex-row gap-2">
-                    <button
-                      onClick={() => {
-                        setCurrentTest(test);
-                        setIsEditingTest(true);
-                        setSelectedTestId(test.id);
-                        setActiveTab('test-editor');
-                      }}
-                      className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
-                    >
-                      <Edit size={16} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedTestId(test.id);
-                        setActiveTab('test-questions');
-                      }}
-                      className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer"
-                    >
-                      <Eye size={16} />
-                      View Questions
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTestToDelete(test);
-                        setShowDeleteModal(true);
-                      }}
-                      className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
-                    >
-                      <Trash size={16} />
-                      Delete
-                    </button>
+          {testsError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <StatusMessage type="error" message={`Error loading tests: ${testsError}`} />
+            </div>
+          )}
 
-                  </div>
-                </div>
-              );
-            })}
+          <div className="overflow-x-auto bg-white rounded-lg shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-300 font-medium text-gray-700">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                    Test Title
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    Course
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    Questions
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    Duration
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    Passing Score
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {tests.map((test) => {
+                  const course = (courses || []).find(c => c.id === test.courseId);
+                  return (
+                    <tr key={test.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{test.title}</div>
+                        <div className="text-sm text-gray-500 w-64 truncate">{test.description ? test.description.substring(0, 100) + (test.description.length > 100 ? '...' : '') : ''}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {course && (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                            {course.title}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <FaQuestion size={14} />
+                          <span>{(test.questions || []).length}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          <span>{test.duration} min</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Award size={14} />
+                          <span>{test.passingScore}%</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium whitespace-nowrap">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setCurrentTest(test);
+                              setIsEditingTest(true);
+                              setSelectedTestId(test.id);
+                              setActiveTab('test-editor');
+                            }}
+                            className="p-2 text-blue-600 hover:text-blue-900"
+                            title="Edit Test"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedTestId(test.id);
+                              setActiveTab('test-questions');
+                            }}
+                            className="p-2 text-green-600 hover:text-green-900"
+                            title="View Questions"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setTestToDelete(test);
+                              setShowDeleteModal(true);
+                            }}
+                            className="p-2 text-red-600 hover:text-red-900"
+                            title="Delete Test"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
-
-      {/* Test Questions Tab */}
+      )}      {/* Test Questions Tab */}
       {activeTab === 'test-questions' && (
 
         <div className="bg-white p-6">
@@ -833,7 +895,7 @@ const TestQuestionManager = () => {
               {/* Test Settings */}
               <div className="bg-gray-50 p-6 rounded-lg">
                 <h3 className="text-xl font-semibold mb-4">Test Settings</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Test Title *</label>
                     <input
@@ -847,14 +909,37 @@ const TestQuestionManager = () => {
                   <div>
                     <label className="block text-sm font-medium mb-2">Course</label>
                     <select
-                      value={currentTest.courseId || ''}
-                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, courseId: parseInt(e.target.value) || null }))}
+                      value={currentTest.courseId || selectedCourseId || ''}
+                      onChange={(e) => {
+                        const courseId = e.target.value;
+                        setCurrentTest((prev: any) => ({
+                          ...prev,
+                          courseId: courseId ? courseId : null
+                        }));
+                      }}
+                      className="w-full p-2 border rounded"
+                      required
+                    >
+                      <option value="">Select Course</option>
+                      {(courses || []).map(course => (
+                        <option key={course.id} value={course.id}>
+                          {course.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Type</label>
+                    <select
+                      value={currentTest.type || ''}
+                      onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, type: e.target.value }))}
                       className="w-full p-2 border rounded"
                     >
-                      <option value="">No Course</option>
-                      {(courses || []).map(course => (
-                        <option key={course.id} value={course.id}>{course.title}</option>
-                      ))}
+                      <option value="">All</option>
+                      <option value="GENERAL">GENERAL</option>
+                      <option value="PSYCHOMETRIC">PSYCHOMETRIC</option>
+                      <option value="OPENENDED">OPENENDED</option>
+                      <option value="INTERVIEW">INTERVIEW</option>
                     </select>
                   </div>
                   <div className="md:col-span-2">
