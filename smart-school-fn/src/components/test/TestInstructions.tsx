@@ -49,7 +49,7 @@ export function TestInstructions({ test, onStart }: TestInstructionsProps) {
           onClick={onStart}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md cursor-pointer"
         >
-          Start Test
+          Start Exam
         </button>
       </div>
     </div>

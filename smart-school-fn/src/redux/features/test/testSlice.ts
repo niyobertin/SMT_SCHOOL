@@ -3,6 +3,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import api from '../../api/api';
 
 export interface Question {
+  explanation: any;
+  image: any;
   id: string;
   question: string;
   type: string;
@@ -132,7 +134,7 @@ export const startTest = createAsyncThunk(
       const response = await api.get(`/tests/${testId}`);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to start test');
+      return rejectWithValue(error.response?.data?.message || 'Failed to start exam');
     }
   }
 );
@@ -168,7 +170,7 @@ export const startTestAttempt = createAsyncThunk(
       return testAttempt;
     } catch (error: any) {
       return rejectWithValue({
-        message: error.response?.data?.message || 'Failed to start test attempt',
+        message: error.response?.data?.message || 'Failed to start exam attempt',
         status: error.response?.status
       });
     }
@@ -353,7 +355,7 @@ const testSlice = createSlice({
       })
       .addCase(startTestAttempt.rejected, (state, action) => {
         state.loading = false;
-        state.error = (action.payload as any)?.message || 'Failed to start test attempt';
+        state.error = (action.payload as any)?.message || 'Failed to start exam attempt';
       });
 
     // Submit Answer

@@ -18,6 +18,7 @@ const TestQuestionManager = () => {
   const [activeTab, setActiveTab] = useState('courses');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+  const [selectedTestType, setSelectedTestType] = useState<string>('GENERAL'); // Track test type
   const [isEditingTest, setIsEditingTest] = useState(false);
   const [creatingQuestionLoading, setCreatingQuestionLoading] = useState(false);
   const [creatingTestLoading, setCreatingTestLoading] = useState(false);
@@ -164,11 +165,16 @@ const TestQuestionManager = () => {
   useEffect(() => {
     if (selectedTestId) {
       dispatch(fetchQuestionsByTestId(selectedTestId)).unwrap().then(() => {
+        // Get the test type from the selected test
+        const selectedTest = tests.find(t => t.id === selectedTestId);
+        if (selectedTest) {
+          setSelectedTestType(selectedTest.type || 'GENERAL');
+        }
       }).catch((error) => {
         console.error("Error fetching questions:", error);
       });
     }
-  }, [dispatch, selectedTestId]);
+  }, [dispatch, selectedTestId, tests]);
 
 
   const startCreatingQuestion = () => {
@@ -223,38 +229,72 @@ const TestQuestionManager = () => {
   const saveQuestion = async () => {
     setCreatingQuestionLoading(true);
     try {
-      if (
-        !currentQuestion ||
-        !currentQuestion.question.trim() ||
-        !currentQuestion.options.some((opt: any) => opt.option.trim())
-      ) {
+      // Basic validation
+      if (!currentQuestion || !currentQuestion.question.trim()) {
         toast.current?.show({
           severity: "warn",
           summary: "Validation Error",
-          detail: "Please fill out the question and at least one option.",
+          detail: "Please fill out the question field.",
           life: 3000,
         });
+        setCreatingQuestionLoading(false);
         return;
       }
 
-      const correctAnswer =
-        currentQuestion.options.find((opt: any) => opt.isCorrect)?.option || "";
-      // Convert to FormData
+      // Validate based on test type
+      if (selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') {
+        // For PSYCHOMETRIC and GENERAL, validate options
+        if (!currentQuestion.options || !currentQuestion.options.some((opt: any) => opt.option.trim())) {
+          toast.current?.show({
+            severity: "warn",
+            summary: "Validation Error",
+            detail: "Please add at least one option.",
+            life: 3000,
+          });
+          setCreatingQuestionLoading(false);
+          return;
+        }
+      } else if (selectedTestType === 'INTERVIEW') {
+        // For INTERVIEW, validate solution/answer
+        if (!currentQuestion.explanation || !currentQuestion.explanation.trim()) {
+          toast.current?.show({
+            severity: "warn",
+            summary: "Validation Error",
+            detail: "Please provide a solution/answer for this interview question.",
+            life: 3000,
+          });
+          setCreatingQuestionLoading(false);
+          return;
+        }
+      }
+
+      // Prepare FormData
       const formData = new FormData();
       formData.append("question", currentQuestion.question);
-      formData.append("type", currentQuestion.type);
+      formData.append("type", currentQuestion.type || "MULTIPLE_CHOICE");
       formData.append("points", currentQuestion.points);
       formData.append("explanation", currentQuestion.explanation || "");
-      formData.append("correctAnswer", correctAnswer);
+
       // Add image if present
       if (currentQuestion.image) {
         formData.append("fileImage", currentQuestion.image);
       }
-      // Add options
-      currentQuestion.options.forEach((opt: any, index: number) => {
-        formData.append(`options[${index}][isCorrect]`, String(opt.isCorrect === true || opt.isCorrect === "true"));
-        formData.append(`options[${index}][option]`, opt.option);
-      });
+
+      // Add options and correctAnswer only for PSYCHOMETRIC and GENERAL tests
+      if (selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') {
+        const correctAnswer =
+          currentQuestion.options.find((opt: any) => opt.isCorrect)?.option || "";
+        formData.append("correctAnswer", correctAnswer);
+
+        // Add options
+        currentQuestion.options.forEach((opt: any, index: number) => {
+          formData.append(`options[${index}][isCorrect]`, String(opt.isCorrect === true || opt.isCorrect === "true"));
+          formData.append(`options[${index}][option]`, opt.option);
+        });
+      } else {
+        // For OPENENDED and INTERVIEW, set empty correctAnswer
+        formData.append("correctAnswer", "");
+      }
 
       if (isEditingQuestion && questionToEditId) {
         await dispatch(
@@ -447,6 +487,9 @@ const TestQuestionManager = () => {
                     Course
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    Type
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Questions
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
@@ -454,6 +497,9 @@ const TestQuestionManager = () => {
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Passing Score
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    Created
                   </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Actions
@@ -476,6 +522,15 @@ const TestQuestionManager = () => {
                           </span>
                         )}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded font-medium ${test.type === 'PSYCHOMETRIC' ? 'bg-purple-100 text-purple-800' :
+                          test.type === 'INTERVIEW' ? 'bg-green-100 text-green-800' :
+                            test.type === 'OPENENDED' ? 'bg-orange-100 text-orange-800' :
+                              'bg-gray-100 text-gray-800'
+                          }`}>
+                          {test.type || 'GENERAL'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <FaQuestion size={14} />
@@ -494,6 +549,13 @@ const TestQuestionManager = () => {
                           <span>{test.passingScore}%</span>
                         </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {test.createdAt ? new Date(test.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        }) : '-'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium whitespace-nowrap">
                         <div className="flex justify-end gap-2">
                           <button
@@ -511,6 +573,7 @@ const TestQuestionManager = () => {
                           <button
                             onClick={() => {
                               setSelectedTestId(test.id);
+                              setSelectedTestType(test.type || 'GENERAL');
                               setActiveTab('test-questions');
                             }}
                             className="p-2 text-green-600 hover:text-green-900"
@@ -628,249 +691,362 @@ const TestQuestionManager = () => {
           ))}
           {/* Question Creator Modal */}
           {isCreatingQuestion && (
-            <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold">Create Question</h3>
+            <div className="fixed inset-0 bg-gradient-to-br from-gray-900/80 to-blue-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                {/* Modal Header */}
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
+                  <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <FileQuestion className="w-6 h-6" />
+                    {isEditingQuestion ? 'Edit Question' : 'Create New Question'}
+                  </h3>
                   <button
                     onClick={() => {
                       setIsCreatingQuestion(false);
                       setCurrentQuestion(null);
+                      setIsEditingQuestion(false);
+                      setQuestionToEditId(null);
                     }}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200"
                   >
-                    <X size={20} />
+                    <X size={24} />
                   </button>
                 </div>
-                <div className="flex gap-2 items-center justify-center">
-                  <div className="relative group">
-                    <label
-                      htmlFor="excel-upload"
-                      className="cursor-pointer flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-                    >
+                {/* Scrollable Content Area */}
+                <div className="overflow-y-auto px-6 py-6 flex-1">
+                  {/* Bulk Upload Section */}
+                  <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                    <h4 className="text-sm font-semibold text-green-800 mb-3 flex items-center gap-2">
                       <Upload className="w-4 h-4" />
-                      Choose Excel
-                    </label>
-                    <input
-                      id="excel-upload"
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) setExcelFile(e.target.files[0]);
-                      }}
-                      className="hidden"
-                    />
-
-                    <div className="absolute mt-2 w-auto p-3 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <p className="font-semibold mb-2">Excel Format</p>
-                      <table className="w-full border border-gray-600 border-collapse text-[11px]">
-                        <thead className="bg-gray-700 text-white">
-                          <tr>
-                            <th className="border border-gray-600 py-1 px-2">question</th>
-                            <th className="border border-gray-600 py-1 px-2">type</th>
-                            <th className="border border-gray-600 py-1 px-2">points</th>
-                            <th className="border border-gray-600 py-1 px-2">explanation(optional)</th>
-                            <th className="border border-gray-600 py-1 px-2">options</th>
-                            <th className="border border-gray-600 py-1 px-2">correct</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="even:bg-gray-800/30">
-                            <td className="border border-gray-600 py-1 px-2 font-medium">Question?</td>
-                            <td className="border border-gray-600 py-1 px-2">Choice type</td>
-                            <td className="border border-gray-600 py-1 px-2 font-medium">2</td>
-                            <td className="border border-gray-600 py-1 px-2">Explanation</td>
-                            <td className="border border-gray-600 py-1 px-2">A,B,C,D</td>
-                            <td className="border border-gray-600 py-1 px-2">B</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      Bulk Upload from Excel
+                    </h4>
+                    <div className="flex gap-3 items-center">
+                      <div className="relative group flex-1">
+                        <label
+                          htmlFor="excel-upload"
+                          className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg text-sm font-medium"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Choose Excel File
+                        </label>
+                        <input
+                          id="excel-upload"
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) setExcelFile(e.target.files[0]);
+                          }}
+                          className="hidden"
+                        />
+                        <div className="absolute left-0 mt-2 w-auto p-3 bg-gray-800 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+                          <p className="font-semibold mb-2">Excel Format</p>
+                          <table className="w-full border border-gray-600 border-collapse text-[11px]">
+                            <thead className="bg-gray-700 text-white">
+                              <tr>
+                                <th className="border border-gray-600 py-1 px-2">question</th>
+                                <th className="border border-gray-600 py-1 px-2">type</th>
+                                <th className="border border-gray-600 py-1 px-2">points</th>
+                                <th className="border border-gray-600 py-1 px-2">explanation</th>
+                                <th className="border border-gray-600 py-1 px-2">options</th>
+                                <th className="border border-gray-600 py-1 px-2">correct</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="even:bg-gray-800/30">
+                                <td className="border border-gray-600 py-1 px-2">Question?</td>
+                                <td className="border border-gray-600 py-1 px-2">Choice</td>
+                                <td className="border border-gray-600 py-1 px-2">2</td>
+                                <td className="border border-gray-600 py-1 px-2">Explanation</td>
+                                <td className="border border-gray-600 py-1 px-2">A,B,C,D</td>
+                                <td className="border border-gray-600 py-1 px-2">B</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <button
+                        disabled={!excelFile || uploading}
+                        onClick={async () => {
+                          if (!excelFile) return;
+                          setUploading(true);
+                          try {
+                            const formData = new FormData();
+                            formData.append("file", excelFile);
+                            const response = await api.post(`/tests/${selectedTestId}/questions/upload`, formData, {
+                              headers: { "Content-Type": "multipart/form-data" },
+                            });
+                            toast.current?.show({
+                              severity: "success",
+                              summary: "Success",
+                              detail: response.data.message || "Questions uploaded successfully!",
+                              life: 3000,
+                            });
+                            setExcelFile(null);
+                            await dispatch(fetchQuestionsByTestId(selectedTestId!)).unwrap();
+                          } catch (err) {
+                            toast.current?.show({
+                              severity: "error",
+                              summary: "Error",
+                              detail: (err as any).response?.data?.message || "Upload failed.",
+                              life: 3000,
+                            });
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                        className={`px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${uploading || !excelFile ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                          }`}
+                      >
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            Upload
+                          </>
+                        )}
+                      </button>
                     </div>
-
-                  </div>
-                  <button
-                    disabled={!excelFile || uploading}
-                    onClick={async () => {
-                      if (!excelFile) return;
-                      setUploading(true);
-                      try {
-                        const formData = new FormData();
-                        formData.append("file", excelFile);
-                        const response = await api.post(`/tests/${selectedTestId}/questions/upload`, formData, {
-                          headers: { "Content-Type": "multipart/form-data" },
-                        });
-                        toast.current?.show({
-                          severity: "success",
-                          summary: "Success",
-                          detail: response.data.message || "Questions uploaded successfully!",
-                          life: 3000,
-                        });
-                        console.log(response.data);
-                        setExcelFile(null);
-                      } catch (err) {
-                        console.error(err);
-                        toast.current?.show({
-                          severity: "error",
-                          summary: "Error",
-                          detail: (err as any).response?.data?.message || "Upload failed. Check console for details.",
-                          life: 3000,
-                        });
-                      } finally {
-                        setUploading(false);
-                      }
-                    }}
-                    className={`px-4 py-2 cursor-pointer rounded text-white ${uploading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
-                  >
-                    {uploading ? "Uploading..." : "Send to Server"}
-                  </button>
-                </div>
-                {excelFile && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    Selected: <span className="font-medium">{excelFile.name}</span>
-                  </p>
-                )}
-                <div className="h-[200px] w-[150px]">
-                  <label
-                    htmlFor="image-upload"
-                    className="group relative w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
-                  >
-                    {previewUrl ? (
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="rounded-xl object-cover w-full h-full"
-                      />
-                    ) : (
-                      <>
-                        <ImagePlus className="h-12 w-12 text-gray-400 group-hover:text-blue-500 mb-3" />
-                        <p className="text-gray-600 group-hover:text-blue-600 font-normal text-sm text-center">
-                          Click to upload or drag & drop
-                        </p>
-                        <p className="text-xs text-gray-400 text-center">PNG, JPG, GIF up to 5 MB</p>
-                      </>
+                    {excelFile && (
+                      <p className="text-sm text-green-700 mt-3 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        Selected: <span className="font-semibold">{excelFile.name}</span>
+                      </p>
                     )}
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                  </label>
+                  </div>
 
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Question *</label>
+                  <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-6"></div>
+
+                  {/* Image Upload Section */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">Question Image (Optional)</label>
+                    <label
+                      htmlFor="image-upload"
+                      className="group relative w-full h-48 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gradient-to-br from-gray-50 to-blue-50 hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 overflow-hidden"
+                    >
+                      {previewUrl ? (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="w-full h-full object-contain"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <p className="text-white font-medium">Click to change image</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <ImagePlus className="h-12 w-12 text-gray-400 group-hover:text-blue-500 mb-3 transition-colors" />
+                          <p className="text-gray-600 group-hover:text-blue-600 font-medium text-sm transition-colors">
+                            Click to upload or drag & drop
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 5 MB</p>
+                        </>
+                      )}
+                      <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  {/* Question Text */}
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      Question Text
+                      <span className="text-red-500">*</span>
+                    </label>
                     <textarea
                       value={currentQuestion?.question}
                       onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, question: e.target.value }))}
-                      className="w-full p-2 border rounded h-20"
-                      placeholder="Enter your question"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
+                      placeholder="Enter your question here..."
+                      rows={3}
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Points and Type */}
+                  <div className="grid grid-cols-2 gap-4 mb-5">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Points</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Points</label>
                       <input
                         type="number"
                         value={currentQuestion?.points}
                         onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, points: parseInt(e.target.value) }))}
-                        className="w-full p-2 border rounded"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                        placeholder="0"
+                        min="0"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Type</label>
-                      <select
-                        value={currentQuestion?.type}
-                        onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, type: e.target.value }))}
-                        className="w-full p-2 border rounded"
-                      >
-                        <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-                        <option value="TRUE_FALSE">True/False</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Explanation</label>
-                    <textarea
-                      value={currentQuestion?.explanation}
-                      onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, explanation: e.target.value }))}
-                      className="w-full p-2 border rounded h-16"
-                      placeholder="Optional explanation shown after answering"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium">Options</label>
-                      <button
-                        onClick={addOption}
-                        className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white text-sm rounded"
-                      >
-                        <Plus size={14} />
-                        Add Option
-                      </button>
-                    </div>
-
-                    {(currentQuestion?.options || []).map((option: any, index: any) => (
-                      <div key={index} className="flex items-center gap-2 mb-2">
-                        <input
-                          type="radio"
-                          name="correct-option"
-                          checked={option.isCorrect}
-                          onChange={() => updateOption(index, 'isCorrect', true)}
-                        />
-                        <input
-                          type="text"
-                          value={option.option}
-                          onChange={(e) => updateOption(index, 'option', e.target.value)}
-                          className="flex-1 p-2 border rounded"
-                          placeholder={`Option ${index + 1}`}
-                        />
-                        {(currentQuestion?.options || []).length > 2 && (
-                          <button
-                            onClick={() => removeOption(index)}
-                            className="text-red-500 hover:text-red-700 cursor-pointer"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
+                    {(selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Question Type</label>
+                        <select
+                          value={currentQuestion?.type}
+                          onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, type: e.target.value }))}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white"
+                        >
+                          <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                          <option value="TRUE_FALSE">True/False</option>
+                        </select>
                       </div>
-                    ))}
+                    )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Correct Answer</label>
-                    <input
-                      type="text"
-                      value={currentQuestion?.correctAnswer}
-                      readOnly
-                      className="w-full p-2 border rounded bg-gray-100"
-                      placeholder={`${currentQuestion?.correctAnswer || ''} Automatically filled based on selected correct option`}
-                    />
-                  </div>
+                  {/* Explanation for PSYCHOMETRIC and GENERAL */}
+                  {(selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') && (
+                    <div className="mb-5">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Explanation <span className="text-gray-400 font-normal">(Optional)</span>
+                      </label>
+                      <textarea
+                        value={currentQuestion?.explanation}
+                        onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, explanation: e.target.value }))}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
+                        placeholder="Optional explanation shown after answering"
+                        rows={3}
+                      />
+                    </div>
+                  )}
 
-                  <div className="flex justify-end gap-2 pt-4">
-                    <button
-                      onClick={() => {
-                        setIsCreatingQuestion(false);
-                        setCurrentQuestion(null);
-                      }}
-                      className="px-4 py-2 border rounded hover:bg-gray-50 cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={saveQuestion}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                      <Save size={16} />
-                      {creatingQuestionLoading ? 'Saving...' : isCreatingQuestion ? 'Save Question' : 'Update Question'}
-                    </button>
-                  </div>
+                  {/* Solution/Answer for INTERVIEW tests */}
+                  {selectedTestType === 'INTERVIEW' && (
+                    <div className="mb-5">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                        Solution/Answer
+                        <span className="text-red-500">*</span>
+                        <span className="text-xs text-gray-500 font-normal ml-2">(Shown to students)</span>
+                      </label>
+                      <textarea
+                        value={currentQuestion?.explanation}
+                        onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, explanation: e.target.value }))}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
+                        placeholder="Enter the solution or answer for this question"
+                        rows={4}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {/* Options section - only for PSYCHOMETRIC and GENERAL tests */}
+                  {(selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') && (
+                    <>
+                      <div className="mb-5">
+                        <div className="flex justify-between items-center mb-3">
+                          <label className="block text-sm font-semibold text-gray-700">Answer Options</label>
+                          <button
+                            onClick={addOption}
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg"
+                          >
+                            <Plus size={16} />
+                            Add Option
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {(currentQuestion?.options || []).map((option: any, index: any) => {
+                            const letter = String.fromCharCode(65 + index);
+                            return (
+                              <div key={index} className="flex items-center gap-3 group">
+                                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold rounded-lg shadow-md">
+                                  {letter}
+                                </div>
+                                <div className="relative flex-1">
+                                  <input
+                                    type="radio"
+                                    name="correct-option"
+                                    checked={option.isCorrect}
+                                    onChange={() => updateOption(index, 'isCorrect', true)}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-600 focus:ring-2 focus:ring-green-500"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={option.option}
+                                    onChange={(e) => updateOption(index, 'option', e.target.value)}
+                                    className={`w-full pl-12 pr-4 py-3 border-2 rounded-xl transition-all duration-200 ${option.isCorrect
+                                      ? 'border-green-400 bg-green-50 focus:border-green-500 focus:ring-4 focus:ring-green-100'
+                                      : 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'
+                                      }`}
+                                    placeholder={`Enter option ${letter}`}
+                                  />
+                                </div>
+                                {(currentQuestion?.options || []).length > 2 && (
+                                  <button
+                                    onClick={() => removeOption(index)}
+                                    className="p-2.5 text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                    title="Remove option"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                          Select the radio button to mark the correct answer
+                        </p>
+                      </div>
+
+                      <div className="mb-5">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Correct Answer</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={currentQuestion?.options?.find((opt: any) => opt.isCorrect)?.option || ''}
+                            readOnly
+                            className="w-full px-4 py-3 border-2 border-green-200 rounded-xl bg-green-50 text-green-800 font-medium"
+                            placeholder="Automatically filled based on selected option"
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                            <Award size={20} />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                </div>
+
+                {/* Modal Footer */}
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setIsCreatingQuestion(false);
+                      setCurrentQuestion(null);
+                      setIsEditingQuestion(false);
+                      setQuestionToEditId(null);
+                    }}
+                    className="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-all duration-200 font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveQuestion}
+                    disabled={creatingQuestionLoading}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg ${creatingQuestionLoading
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                      }`}
+                  >
+                    {creatingQuestionLoading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={18} />
+                        {isEditingQuestion ? 'Update Question' : 'Save Question'}
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -893,21 +1069,27 @@ const TestQuestionManager = () => {
           ) : (
             <>
               {/* Test Settings */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-xl font-semibold mb-4">Test Settings</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 p-8 rounded-2xl border border-gray-200 shadow-sm">
+                <h3 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                  <Edit className="w-6 h-6 text-blue-600" />
+                  Test Configuration
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Test Title *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      Test Title
+                      <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
                       value={currentTest.title}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, title: e.target.value }))}
-                      className="w-full p-2 border rounded"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
                       placeholder="Enter test title"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Course</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Course</label>
                     <select
                       value={currentTest.courseId || selectedCourseId || ''}
                       onChange={(e) => {
@@ -917,7 +1099,7 @@ const TestQuestionManager = () => {
                           courseId: courseId ? courseId : null
                         }));
                       }}
-                      className="w-full p-2 border rounded"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white"
                       required
                     >
                       <option value="">Select Course</option>
@@ -929,11 +1111,11 @@ const TestQuestionManager = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Type</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Test Type</label>
                     <select
                       value={currentTest.type || ''}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, type: e.target.value }))}
-                      className="w-full p-2 border rounded"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white"
                     >
                       <option value="">All</option>
                       <option value="GENERAL">GENERAL</option>
@@ -942,15 +1124,18 @@ const TestQuestionManager = () => {
                       <option value="INTERVIEW">INTERVIEW</option>
                     </select>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium mb-2">Description</label>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                     <textarea
                       value={currentTest.description}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, description: e.target.value }))}
-                      className="w-full p-2 border rounded h-20"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
                       placeholder="Enter test description"
+                      rows={3}
                     />
-                    <label className="block text-sm font-medium mb-2">Instructions</label>
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Instructions</label>
                     <textarea
                       value={currentTest.instructions?.join('\n') || ''}
                       onChange={(e) =>
@@ -959,45 +1144,58 @@ const TestQuestionManager = () => {
                           instructions: e.target.value.split('\n'),
                         }))
                       }
-                      className="w-full p-2 border rounded h-20"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
                       placeholder="Enter test instructions (one per line)"
+                      rows={4}
                     />
-
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      <Clock className="w-4 h-4 text-blue-600" />
+                      Duration (minutes)
+                    </label>
                     <input
                       type="number"
                       value={currentTest.duration}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, duration: parseInt(e.target.value) }))}
-                      className="w-full p-2 border rounded"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                      placeholder="0"
+                      min="0"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Passing Score (%)</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                      <Award className="w-4 h-4 text-blue-600" />
+                      Passing Score (%)
+                    </label>
                     <input
                       type="number"
                       value={currentTest.passingScore}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, passingScore: parseInt(e.target.value) }))}
-                      className="w-full p-2 border rounded"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                      placeholder="0"
+                      min="0"
+                      max="100"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Max Attempts</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Max Attempts</label>
                     <input
                       type="number"
                       value={currentTest.maxAttempts}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, maxAttempts: parseInt(e.target.value) }))}
-                      className="w-full p-2 border rounded"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                      placeholder="0"
+                      min="0"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Show Results</label>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Show Results</label>
                     <select
                       value={currentTest.showResults}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, showResults: e.target.value }))}
-                      className="w-full p-2 border rounded"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-white"
                     >
                       <option value="AFTER_COMPLETION">After Completion</option>
                       <option value="IMMEDIATELY">Immediately</option>
@@ -1005,46 +1203,59 @@ const TestQuestionManager = () => {
                     </select>
                   </div>
                 </div>
-                <div className="mt-4 flex gap-4">
-                  <label className="flex items-center">
+                <div className="mt-6 flex gap-6 p-4 bg-white rounded-xl border border-gray-200">
+                  <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={currentTest.randomizeQuestions}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, randomizeQuestions: e.target.checked }))}
-                      className="mr-2"
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                     />
-                    Randomize Questions
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Randomize Questions</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center gap-3 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={currentTest.randomizeOptions}
                       onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, randomizeOptions: e.target.checked }))}
-                      className="mr-2"
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                     />
-                    Randomize Options
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">Randomize Options</span>
                   </label>
                 </div>
 
               </div>
 
               {/* Save Test */}
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => {
                     setCurrentTest(null);
                     setActiveTab('courses');
                   }}
-                  className="px-4 py-2 border rounded hover:bg-gray-50"
+                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-all duration-200 font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveTest}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={creatingTestLoading}
+                  className={`flex items-center gap-2 px-8 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg ${creatingTestLoading
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+                    }`}
                 >
-                  <Save size={16} />
-                  {creatingTestLoading ? 'Loading...' : 'Save Test'}
+                  {creatingTestLoading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={20} />
+                      Save Test
+                    </>
+                  )}
                 </button>
               </div>
             </>

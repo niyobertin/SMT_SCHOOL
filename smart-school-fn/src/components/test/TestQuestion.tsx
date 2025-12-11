@@ -36,13 +36,18 @@ export function TestQuestion({
   allAnswers = {},
   onQuestionNavigate,
   questions = [],
-  testTitle = "Examination Portal",
+  isLastQuestion,
 }: TestQuestionProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const { loading: isSubmittingAnswer } = useSelector(
     (state: RootState) => state.test
   );
+
+  // Scroll to top when question changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentQuestion]);
 
   const handleNext = async () => {
     if (!selectedAnswer) return;
@@ -131,13 +136,9 @@ export function TestQuestion({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">{testTitle}</h1>
-            </div>
-
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-center">
             <div className="flex items-center space-x-6">
               {/* Timer */}
               <div className="flex items-center space-x-4">
@@ -150,15 +151,6 @@ export function TestQuestion({
                   <div className="text-sm font-semibold text-gray-900">00:00:00</div>
                 </div>
               </div>
-
-              {/* Finish Exam Button */}
-              <button
-                onClick={handleSubmitTest}
-                disabled={isSubmitting || isSubmittingAnswer}
-                className="px-6 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting || isSubmittingAnswer ? "Submitting..." : "FINISH EXAM"}
-              </button>
             </div>
           </div>
         </div>
@@ -172,11 +164,8 @@ export function TestQuestion({
             {/* Question Header */}
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Question {currentQuestion}
+                {currentQuestion}. {question.question}
               </h2>
-              <p className="text-base text-gray-700">
-                {question.question}
-              </p>
             </div>
 
             {/* Question Image */}
@@ -185,7 +174,7 @@ export function TestQuestion({
                 <img
                   src={question.image}
                   alt="Question"
-                  className="max-w-full h-auto rounded-lg border border-gray-200"
+                  className="max-w-xs h-auto rounded-lg border border-gray-200"
                 />
               </div>
             )}
@@ -237,27 +226,48 @@ export function TestQuestion({
               </div>
             </div>
 
-            {/* Next Button */}
+
+            {/* Navigation Buttons */}
             <div className="flex justify-end pt-4 border-t border-gray-200">
-              <button
-                onClick={handleNext}
-                disabled={!selectedAnswer || isSubmitting}
-                className={`px-6 py-2 text-sm font-medium text-white rounded-md transition-colors flex items-center justify-center min-w-[100px] ${!selectedAnswer || isSubmitting
-                  ? "bg-blue-300 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  "NEXT"
-                )}
-              </button>
+              {!isLastQuestion ? (
+                <button
+                  onClick={handleNext}
+                  disabled={!selectedAnswer || isSubmitting}
+                  className={`px-6 py-2 text-sm font-medium text-white rounded-md transition-colors flex items-center justify-center min-w-[100px] ${!selectedAnswer || isSubmitting
+                    ? "bg-blue-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "NEXT"
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmitTest}
+                  disabled={!selectedAnswer || isSubmitting || isSubmittingAnswer}
+                  className={`px-6 py-2 text-sm font-medium text-white rounded-md transition-colors flex items-center justify-center min-w-[140px] ${!selectedAnswer || isSubmitting || isSubmittingAnswer
+                    ? "bg-green-300 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                    }`}
+                >
+                  {isSubmitting || isSubmittingAnswer ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "FINISH EXAM"
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
           {/* Question Navigation Sidebar */}
-          <div className="w-64 bg-white rounded-lg shadow-sm p-6">
+          <div className="w-64 bg-white rounded-lg shadow-sm p-6 overflow-y-auto">
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">All questions</h3>
               <p className="text-xs text-gray-500">

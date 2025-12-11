@@ -189,7 +189,7 @@ const CourseLessonsPage = () => {
           <nav className="-mb-px flex space-x-8 justify-center">
             {[
               { key: "lessons", label: "Lessons", icon: List },
-              { key: "GENERAL", label: "General Tests", icon: FileText },
+              { key: "GENERAL", label: "General Exams", icon: FileText },
               { key: "PSYCHOMETRIC", label: "Psychometric", icon: Award },
               { key: "OPENENDED", label: "Open Ended", icon: MessageSquare },
               { key: "INTERVIEW", label: "Interview Exams", icon: FileText },
@@ -345,7 +345,7 @@ const CourseLessonsPage = () => {
                       </div>
                       <div className="flex gap-1 px-2 py-2 rounded-md bg-blue-600 font-bold text-white text-sm mt-2 w-fit hover:bg-blue-900 transition-colors cursor-pointer items-center">
                         <PlayCircle className="w-4 h-4" />
-                        <span className="font-semibold">Start Test</span>
+                        <span className="font-semibold">Start Exam</span>
                       </div>
                     </div>
                   </div>
