@@ -326,6 +326,9 @@ export function TestPage() {
           timeRemaining={timeLeft}
           onSubmit={handleSubmit}
           testAttemptId={testAttempt?.id}
+          onQuestionNavigate={(index) => setCurrentQuestionIndex(index)}
+          allAnswers={answers}
+          questions={questions}
         />
       </div>
     );
