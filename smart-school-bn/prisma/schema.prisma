@@ -221,6 +221,7 @@ model Test {
   title              String
   description        String?
   instructions       String[]
+  type               TestType @default(GENERAL)
   duration           Int?
   passingScore       Float    @default(70)
   maxAttempts        Int?     @default(10)
@@ -239,6 +240,13 @@ model Test {
   notifications Notification[]
 
   @@map("tests")
+}
+
+enum TestType {
+  PSYCHOMETRIC
+  OPENENDED
+  INTERVIEW
+  GENERAL
 }
 
 model Question {

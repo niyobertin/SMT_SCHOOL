@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "xlsx";
 import { NotFoundError } from "../utils/errors";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
+import { sendTestResponseEmail } from "../services/testResponseEmail.service";
 
 const prisma = new PrismaClient();
 
@@ -46,6 +47,7 @@ export const createTest = async (
       description,
       instructions,
       duration,
+      type,
       passingScore,
       maxAttempts,
       randomizeQuestions,
@@ -76,10 +78,11 @@ export const createTest = async (
         description: description || null,
         instructions: instructions || [],
         duration: duration || null,
+        type: type || "GENERAL",
         passingScore: passingScore || 70,
         maxAttempts: maxAttempts || null,
-        randomizeQuestions: randomizeQuestions !== false, // default true
-        showResults: showResults !== false, // default true
+        randomizeQuestions: randomizeQuestions !== false,
+        showResults: showResults !== false,
         course: {
           connect: { id: courseId },
         },
@@ -568,9 +571,19 @@ export const submitTest = async (
       include: {
         test: {
           include: {
-            course: true,
+            course: {
+              include: {
+                instructor: true,
+              },
+            },
+            questions: {
+              include: {
+                options: true,
+              },
+            },
           },
         },
+        user: true,
         answers: {
           include: {
             question: true,
@@ -628,7 +641,15 @@ export const submitTest = async (
       );
     }
 
-    // 5. Generate results
+    // 5. Send email notification for INTERVIEW and OPENENDED tests
+    if (testAttempt.test.type === "INTERVIEW" || testAttempt.test.type === "OPENENDED") {
+      await sendTestResponseEmailNotification(
+        testAttempt,
+        userId
+      );
+    }
+
+    // 6. Generate results
     const response: any = {
       status: "success",
       data: {
@@ -649,7 +670,7 @@ export const submitTest = async (
       message: "Test submitted successfully",
     };
 
-    // 6. Include detailed results if showResults is enabled
+    // 7. Include detailed results if showResults is enabled
     if (testAttempt.test.showResults) {
       const detailedAnswers = await prisma.answer.findMany({
         where: { testAttemptId: attemptId },
@@ -679,7 +700,7 @@ export const submitTest = async (
       }));
     }
 
-    // 7. Send notifications
+    // 8. Send notifications
     await sendTestCompletionNotification(
       userId,
       testAttempt.test,
@@ -772,6 +793,62 @@ const sendTestCompletionNotification = async (
     }
   } catch (error) {
     logger.error("Error sending test completion notification:", error);
+  }
+};
+
+// Send email notification for INTERVIEW and OPENENDED test responses
+const sendTestResponseEmailNotification = async (
+  testAttempt: any,
+  userId: string
+) => {
+  try {
+    const instructor = testAttempt.test.course.instructor;
+    const student = testAttempt.user;
+
+    if (!instructor || !instructor.email) {
+      logger.warn(`No instructor email found for test ${testAttempt.test.title}`);
+      return;
+    }
+
+    // Get all answers with questions
+    const answersWithQuestions = await prisma.answer.findMany({
+      where: { testAttemptId: testAttempt.id },
+      include: {
+        question: true,
+      },
+      orderBy: {
+        question: {
+          order: 'asc',
+        },
+      },
+    });
+
+    // Format questions and responses for email
+    const questions = answersWithQuestions.map((answer) => ({
+      question: answer.question.question,
+      image: answer.question.image || undefined,
+      studentAnswer: answer.answerText || "No response provided",
+      solution: answer.question.explanation || undefined,
+      explanation: answer.question.explanation || undefined,
+    }));
+
+    // Send email
+    await sendTestResponseEmail({
+      instructorEmail: instructor.email,
+      studentName: `${student.firstName} ${student.lastName}`,
+      studentEmail: student.email,
+      testTitle: testAttempt.test.title,
+      testType: testAttempt.test.type,
+      submissionTime: testAttempt.endTime?.toISOString() || new Date().toISOString(),
+      questions,
+    });
+
+    logger.info(
+      `Test response email sent to ${instructor.email} for ${testAttempt.test.type} test: ${testAttempt.test.title}`
+    );
+  } catch (error) {
+    logger.error("Error sending test response email:", error);
+    // Don't throw - email failure shouldn't block test submission
   }
 };
 

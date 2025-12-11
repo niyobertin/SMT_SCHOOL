@@ -10,8 +10,8 @@ export const JobListing = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [jobs, setJobs] = useState<any[]>([]);
-    const [categories, setCategories] = useState<any[]>([]);
+    const [jobs, setJobs] = useState<any[]>([]);[]
+    const [categories, setCategories] = useState<any[]>([]);[]
     const navigate = useNavigate();
     const [pagination, setPagination] = useState({
         page: 1,
@@ -104,7 +104,7 @@ export const JobListing = () => {
                 {/* Search Bar */}
                 <div className="mb-6">
                     <div className="flex justify-start flex-wrap gap-2 items-center mb-4">
-                        {categories.map((category) => (
+                        {categories?.map((category) => (
                             <div key={category.id} className="flex items-center  relative">
                                 <button
                                     onClick={() => handleViewJob(category.name)}

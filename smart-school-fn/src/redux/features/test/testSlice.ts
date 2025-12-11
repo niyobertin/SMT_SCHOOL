@@ -3,6 +3,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import api from '../../api/api';
 
 export interface Question {
+  explanation: any;
+  image: any;
   id: string;
   question: string;
   type: string;
@@ -15,6 +17,7 @@ export interface Question {
 }
 
 export interface Test {
+  type: string;
   id: string;
   title: string;
   description: string;
@@ -76,45 +79,45 @@ export const fetchTestById = createAsyncThunk(
       if (!testId) {
         throw new Error('Test ID is required');
       }
-      
+
       // Add logging to debug the request
       console.log('Fetching test with ID:', testId);
-      
+
       const response = await api.get(`/tests/${testId}`);
       const responseData = response.data;
-      
+
       // Handle different response structures
       const testData = responseData.data || responseData;
-      
+
       if (!testData) {
         throw new Error('No test data received');
       }
-      
+
       // Process the test data
       return {
         ...testData,
         timeRemaining: testData.duration ? testData.duration * 60 : 0,
-        questions: Array.isArray(testData.questions) 
+        questions: Array.isArray(testData.questions)
           ? testData.questions.map((q: any) => ({
-              ...q,
-              options: Array.isArray(q.options) 
-                ? q.options.map((opt: any, i: number) => ({
-                    id: opt.id || `opt-${i}`,
-                    option: opt.text || opt,
-                    order: i
-                  }))
-                : []
-            }))
+            ...q,
+            options: Array.isArray(q.options)
+              ? q.options.map((opt: any, i: number) => ({
+                id: opt.id || `opt-${i}`,
+                option: opt.text || opt,
+                order: i
+              }))
+              : []
+          }))
           : []
       };
-      
+
     } catch (error: any) {
       console.error('Error in fetchTestById:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status
       });
-      
+
       return rejectWithValue({
         message: error.response?.data?.message || 'Failed to fetch test',
         status: error.response?.status,
@@ -131,7 +134,7 @@ export const startTest = createAsyncThunk(
       const response = await api.get(`/tests/${testId}`);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to start test');
+      return rejectWithValue(error.response?.data?.message || 'Failed to start exam');
     }
   }
 );
@@ -142,20 +145,20 @@ export const startTestAttempt = createAsyncThunk(
     try {
       const response = await api.post(`/tests/${testId}/start`);
       const responseData = response.data.data || response.data;
-    
-      const processedQuestions = Array.isArray(responseData.questions) 
+
+      const processedQuestions = Array.isArray(responseData.questions)
         ? responseData.questions.map((q: any) => ({
-            ...q,
-            options: Array.isArray(q.options)
-              ? q.options.map((opt: any) => ({
-                  id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
-                  option: opt.text || opt,
-                  order: opt.order || 0
-                }))
-              : []
-          }))
+          ...q,
+          options: Array.isArray(q.options)
+            ? q.options.map((opt: any) => ({
+              id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
+              option: opt.text || opt,
+              order: opt.order || 0
+            }))
+            : []
+        }))
         : [];
-      
+
       const testAttempt = {
         id: responseData.attemptId,
         startTime: responseData.startTime,
@@ -167,7 +170,7 @@ export const startTestAttempt = createAsyncThunk(
       return testAttempt;
     } catch (error: any) {
       return rejectWithValue({
-        message: error.response?.data?.message || 'Failed to start test attempt',
+        message: error.response?.data?.message || 'Failed to start exam attempt',
         status: error.response?.status
       });
     }
@@ -209,7 +212,7 @@ export const fetchTestsByCourseId = createAsyncThunk(
   async (courseId: string, { rejectWithValue }) => {
     try {
       const response = await api.get(`/tests/${courseId}/tests`);
-      return response.data.data; 
+      return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch tests');
     }
@@ -220,8 +223,8 @@ export const fetchTestsByCourseId = createAsyncThunk(
 export const submitAnswer = createAsyncThunk(
   'test/submitAnswer',
   async (
-    { attemptId, questionId, selectedOptions, answerText = '' }: 
-    { attemptId: string; questionId: string; selectedOptions: string[]; answerText?: string },
+    { attemptId, questionId, selectedOptions, answerText = '' }:
+      { attemptId: string; questionId: string; selectedOptions: string[]; answerText?: string },
     { rejectWithValue }
   ) => {
     try {
@@ -285,30 +288,30 @@ const testSlice = createSlice({
         state.loading = false;
         state.tests = action.payload;
         // Ensure questions and options are properly structured
-        state.questions = Array.isArray(action.payload.questions) 
+        state.questions = Array.isArray(action.payload.questions)
           ? action.payload.questions.map((q: any) => ({
-              ...q,
-              options: Array.isArray(q.options) 
-                ? q.options.map((opt: any) => ({
-                    id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
-                    option: opt.text || opt,
-                    order: opt.order || 0
-                  }))
-                : []
-            }))
+            ...q,
+            options: Array.isArray(q.options)
+              ? q.options.map((opt: any) => ({
+                id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
+                option: opt.text || opt,
+                order: opt.order || 0
+              }))
+              : []
+          }))
           : [];
       })
       .addCase(fetchTestById.rejected, (state, action) => {
         state.loading = false;
         state.error = (action.payload as any)?.message || 'Failed to load test';
       })
-      
+
       // Handle startTest pending
       .addCase(startTest.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      
+
       // Handle startTest fulfilled
       .addCase(startTest.fulfilled, (state, action) => {
         state.loading = false;
@@ -316,13 +319,13 @@ const testSlice = createSlice({
         state.questions = action.payload.questions || [];
         state.timeRemaining = action.payload.duration * 60; // Convert minutes to seconds
       })
-      
+
       // Handle startTest rejected
       .addCase(startTest.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Handle startTestAttempt
       .addCase(startTestAttempt.pending, (state) => {
         state.loading = true;
@@ -339,20 +342,20 @@ const testSlice = createSlice({
         // Ensure questions and options are properly structured
         state.questions = Array.isArray(action.payload.questions)
           ? action.payload.questions.map((q: any) => ({
-              ...q,
-              options: Array.isArray(q.options)
-                ? q.options.map((opt: any) => ({
-                    id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
-                    option: opt.text || opt,
-                    order: opt.order || 0
-                  }))
-                : []
-            }))
+            ...q,
+            options: Array.isArray(q.options)
+              ? q.options.map((opt: any) => ({
+                id: opt.id || `opt-${Math.random().toString(36).substr(2, 9)}`,
+                option: opt.text || opt,
+                order: opt.order || 0
+              }))
+              : []
+          }))
           : [];
       })
       .addCase(startTestAttempt.rejected, (state, action) => {
         state.loading = false;
-        state.error = (action.payload as any)?.message || 'Failed to start test attempt';
+        state.error = (action.payload as any)?.message || 'Failed to start exam attempt';
       });
 
     // Submit Answer

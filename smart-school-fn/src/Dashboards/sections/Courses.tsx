@@ -230,8 +230,6 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
       ? description.substring(0, maxLength) + '...'
       : description;
   };
-
-
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
@@ -339,7 +337,7 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course: any, index: number) => (
+                {Array.isArray(courses) && courses.map((course: any, index: number) => (
                   <div
                     key={index}
                     className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"

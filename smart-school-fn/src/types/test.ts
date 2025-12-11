@@ -17,6 +17,7 @@ export interface TestQuestion {
 export interface TestDetails {
   id: string;
   title: string;
+  type?: string;
   description?: string;
   duration: number; // in minutes
   instructions: string[];

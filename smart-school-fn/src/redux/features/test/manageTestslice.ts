@@ -23,7 +23,8 @@ export interface Question {
 
 export interface Test {
   id: string;
-  title: string;
+  title?: string;
+  type: string;
   description: string;
   instructions: string[];
   duration: number; // in minutes

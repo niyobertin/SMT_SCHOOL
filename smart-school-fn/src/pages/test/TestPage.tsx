@@ -4,6 +4,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { TestInstructions } from '../../components/test/TestInstructions';
 import { TestQuestion } from '../../components/test/TestQuestion';
+import { OpenEndedTestQuestion } from '../../components/test/OpenEndedTestQuestion';
+import { TestReviewPage } from '../../components/test/TestReviewPage';
+import { SubmissionSuccessModal } from '../../components/test/SubmissionSuccessModal';
+import { PsychometricTestPage } from './PsychometricTestPage';
+import { InterviewTestPage } from './InterviewTestPage';
 import { startTest, submitTestAttempt, saveAnswer, startTestAttempt } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { BackButton } from '../../components/common/BackButton';
@@ -16,9 +21,13 @@ export function TestPage() {
     (state: RootState) => state.test
   );
 
+  // Declare all hooks first (before any conditional returns)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [openEndedResponses, setOpenEndedResponses] = useState<Record<string, string>>({});
   const [testStarted, setTestStarted] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const timerRef = useRef<any | null>(null);
   const attemptIdRef = useRef<string | null>(null);
@@ -27,6 +36,7 @@ export function TestPage() {
     if (testId) {
       setCurrentQuestionIndex(0);
       setAnswers({});
+      setOpenEndedResponses({});
       setTestStarted(false);
       dispatch(startTest(testId));
     }
@@ -59,7 +69,7 @@ export function TestPage() {
         });
       }, 1000);
     } catch (err) {
-      console.error('Failed to start test attempt:', err);
+      console.error('Failed to start exam attempt:', err);
     }
   };
 
@@ -77,7 +87,7 @@ export function TestPage() {
       await dispatch(submitTestAttempt(attemptId));
       navigate(`/test/${testId}/results`);
     } catch (err) {
-      console.error('Failed to submit test:', err);
+      console.error('Failed to submit exam:', err);
     }
   };
 
@@ -98,16 +108,57 @@ export function TestPage() {
     if (currentQuestionIndex > 0) setCurrentQuestionIndex(prev => prev - 1);
   };
 
-  /** Submit test */
+  /** Submit exam */
   const handleSubmit = async () => {
     if (!testAttempt?.id || !testId) return;
     try {
       await dispatch(submitTestAttempt(testAttempt.id));
-      navigate(`/test/${testId}/results`);
+
+      // For OPENENDED tests, show success modal instead of navigating to results
+      if (isOpenEnded) {
+        setShowSuccessModal(true);
+      } else {
+        navigate(`/test/${testId}/results`);
+      }
     } catch (err) {
-      console.error('Failed to submit test:', err);
+      console.error('Failed to submit exam:', err);
     }
   };
+
+  const handleReviewSubmit = () => {
+    setShowReview(false);
+    handleSubmit();
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    navigate(-1);
+  };
+
+  const handleRetakeTest = () => {
+    setShowSuccessModal(false);
+    setCurrentQuestionIndex(0);
+    setOpenEndedResponses({});
+    setTestStarted(false);
+    if (testId) {
+      dispatch(startTest(testId));
+    }
+  };
+
+  // Check test type and route to appropriate component
+  const testType = test?.data?.type || 'GENERAL';
+
+  // Route to specific test type components
+  if (testType === 'PSYCHOMETRIC') {
+    return <PsychometricTestPage />;
+  }
+
+  if (testType === 'INTERVIEW') {
+    return <InterviewTestPage />;
+  }
+
+  // For OPENENDED and GENERAL, continue with existing rendering below
+  const isOpenEnded = testType === 'OPENENDED';
 
   /** Error */
   if (error) {
@@ -176,6 +227,85 @@ export function TestPage() {
   /** Questions */
   if (testStarted && questions.length > 0) {
     const currentQuestion = questions[currentQuestionIndex];
+
+    // Use OpenEndedTestQuestion for OPENENDED tests
+    if (isOpenEnded) {
+      // Show review page if requested
+      if (showReview) {
+        const reviewQuestions = questions.map((q: any) => ({
+          id: q.id,
+          question: q.question,
+          image: q.image || undefined,
+          response: openEndedResponses[q.id] || '',
+        }));
+
+        return (
+          <>
+            <TestReviewPage
+              testTitle={test.data.title}
+              questions={reviewQuestions}
+              onEdit={(index) => {
+                setShowReview(false);
+                setCurrentQuestionIndex(index);
+              }}
+              onSubmit={handleReviewSubmit}
+              onBack={() => setShowReview(false)}
+              isSubmitting={loading}
+            />
+            <SubmissionSuccessModal
+              isOpen={showSuccessModal}
+              testTitle={test.data.title}
+              testType="OPENENDED"
+              onClose={handleCloseSuccessModal}
+              onRetake={handleRetakeTest}
+              canRetake={true}
+            />
+          </>
+        );
+      }
+
+      return (
+        <div className="max-w-7xl mx-auto p-4">
+          <div className="mb-6 flex items-center gap-4">
+            <BackButton className="self-start border border-gray-300 rounded-md p-2" />
+            <h2 className="text-lg font-semibold text-gray-900">
+              {test.data.title}
+            </h2>
+          </div>
+          <OpenEndedTestQuestion
+            question={currentQuestion}
+            totalQuestions={questions.length}
+            currentQuestion={currentQuestionIndex + 1}
+            onNext={() => {
+              if (currentQuestionIndex < questions.length - 1) {
+                setCurrentQuestionIndex(prev => prev + 1);
+              } else {
+                // Show review page when reaching the last question
+                setShowReview(true);
+              }
+            }}
+            isLastQuestion={currentQuestionIndex === questions.length - 1}
+            timeRemaining={timeLeft}
+            onSubmit={() => setShowReview(true)}
+            testAttemptId={testAttempt?.id}
+            openEndedResponse={openEndedResponses[currentQuestion.id] || ''}
+            onOpenEndedChange={(text) => {
+              setOpenEndedResponses(prev => ({ ...prev, [currentQuestion.id]: text }));
+            }}
+          />
+          <SubmissionSuccessModal
+            isOpen={showSuccessModal}
+            testTitle={test.data.title}
+            testType="OPENENDED"
+            onClose={handleCloseSuccessModal}
+            onRetake={handleRetakeTest}
+            canRetake={true}
+          />
+        </div>
+      );
+    }
+
+    // Use TestQuestion for GENERAL tests
     return (
       <div className="max-w-7xl mx-auto p-4">
         <div className="mb-6 flex items-center gap-4">

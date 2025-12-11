@@ -95,8 +95,9 @@ export const CourseList = () => {
       })
     );
   };
-
-  const publishedCourses = courses?.filter((course) => course.isPublished);
+  const publishedCourses = Array.isArray(courses)
+    ? courses.filter((course) => course?.isPublished)
+    : [];
 
   const selectCategory = useCallback(
     (categoryId: string | null) => {
@@ -176,8 +177,8 @@ export const CourseList = () => {
                         key={cat.id}
                         onClick={() => selectCategory(cat.id)}
                         className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${categoryFilter === cat.id
-                            ? "bg-gray-100 font-medium"
-                            : ""
+                          ? "bg-gray-100 font-medium"
+                          : ""
                           }`}
                       >
                         {cat.name}
@@ -227,7 +228,7 @@ export const CourseList = () => {
             {publishedCourses?.map((course: any) => (
               <Link
                 to={`/courses/${course.id}/lessons?subscribed=${course.enrollments?.filter((e: any) => e.status === "ACTIVE")
-                    .length > 0
+                  .length > 0
                   }`}
               >
                 <div
@@ -260,8 +261,8 @@ export const CourseList = () => {
                     <div className="flex gap-2">
                       <h3
                         className={`text-sm font-semibold text-gray-700  px-2  rounded-full ${course.type === "free"
-                            ? "bg-green-200"
-                            : "bg-yellow-200"
+                          ? "bg-green-200"
+                          : "bg-yellow-200"
                           }`}
                       >
                         {course?.type}
