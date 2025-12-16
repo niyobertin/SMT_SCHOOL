@@ -99,6 +99,8 @@ async function handleProcessedTransaction(payload: PaypackWebhookPayload) {
             data: {
                 status: newStatus,
                 amount: data.amount,
+                isActive: newStatus === "COMPLETED" ? true : payment.isActive,
+                remainingPeriod: newStatus === "COMPLETED" ? (payment.subscriptionPeriod || 30) : payment.remainingPeriod,
             },
             include: { courses: true }
         });
