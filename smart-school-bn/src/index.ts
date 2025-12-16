@@ -38,7 +38,12 @@ app.use(
 app.use(compression());
 
 // Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({
+  limit: "10mb",
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({

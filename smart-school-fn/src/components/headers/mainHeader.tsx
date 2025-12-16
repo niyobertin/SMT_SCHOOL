@@ -1,57 +1,34 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, User, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../redux/stores";
+import { fetchCurrentUser, logout as logoutAction } from "../../redux/features/auth";
 import { useLanguage } from "../../hooks/useLanguage";
 import Logo from "../../assets/logo.jpg";
-import api from "../../redux/api/api";
-
-interface UserProfile {
-  username: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-}
 
 export function Header() {
   const { t } = useLanguage();
   // language, setLanguage, languages
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const { user, loading: loadingUser } = useSelector((state: RootState) => state.auth);
 
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (!token) {
-      setLoadingUser(false);
-      return;
+    if (token && !user) {
+      dispatch(fetchCurrentUser());
     }
-
-    setLoadingUser(true);
-    api
-      .get("/users/profile")
-      .then((res) => setUser(res.data.data))
-      .catch(() => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("user");
-        setUser(null);
-      })
-      .finally(() => setLoadingUser(false));
-  }, []);
+  }, [dispatch, user]);
 
   const logout = () => {
-    setLoadingUser(true);
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("user");
-    setUser(null);
+    dispatch(logoutAction());
     navigate("/");
-    setLoadingUser(false);
   };
   const navigationLinks = [
     { href: "/", label: t("home"), exact: true },

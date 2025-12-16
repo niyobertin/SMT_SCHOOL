@@ -6,6 +6,9 @@ import type { Variants } from "framer-motion";
 import { useEffect, useRef } from "react";
 import useLanguage from "../hooks/useLanguage";
 import backgroundImage from "../assets/background.jpg";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../redux/stores";
+import { fetchCurrentUser } from "../redux/features/auth";
 import { ourPrograms } from "../constants/programs";
 
 // Enhanced animation variants
@@ -80,13 +83,15 @@ export const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const ref = useRef(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
     if (token) {
       localStorage.setItem("accessToken", token);
-      localStorage.setItem("userRole", "STUDENT")
+      localStorage.setItem("userRole", "STUDENT");
+      dispatch(fetchCurrentUser());
       navigate("/courses");
     } else {
       navigate("/");
