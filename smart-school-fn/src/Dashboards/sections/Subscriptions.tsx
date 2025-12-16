@@ -43,14 +43,16 @@ export const SubscriptionsSection = () => {
   });
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchPayments = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/payments');
+        const response = await api.get(`/payments?page=${currentPage}&limit=${itemsPerPage}`);
         setPayments(response.data.payments);
+        setTotalPages(Math.ceil(response.data.total / itemsPerPage));
         setStats({
           total: response.data.total,
           active: response.data.active,
@@ -67,7 +69,7 @@ export const SubscriptionsSection = () => {
     };
 
     fetchPayments();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -98,12 +100,7 @@ export const SubscriptionsSection = () => {
     }
   };
 
-  const paginatedPayments = payments.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(payments.length / itemsPerPage);
+  const paginatedPayments = payments;
   if (loading) {
     return (
       <div className="space-y-8 animate-pulse">
@@ -293,7 +290,7 @@ export const SubscriptionsSection = () => {
                   <button
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="sr-only">First</span>
                     &laquo;
@@ -301,21 +298,24 @@ export const SubscriptionsSection = () => {
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === totalPages
+                        ? "border-gray-300 bg-white text-gray-400 cursor-not-allowed"
+                        : "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
                   >
                     Next
                   </button>
                   <button
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="sr-only">Last</span>
                     &raquo;
