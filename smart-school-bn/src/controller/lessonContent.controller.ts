@@ -13,6 +13,34 @@ const prisma = new PrismaClient();
 const tmpDir = path.join(process.cwd(), "tmp");
 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
+// Helper to check enrollment validity
+const checkEnrollmentValidity = async (userId: string, lessonId: string) => {
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: { courseId: true }
+  });
+
+  if (!lesson) return false;
+
+  const enrollment = await prisma.enrollment.findUnique({
+    where: {
+      userId_courseId: {
+        userId: userId,
+        courseId: lesson.courseId
+      }
+    }
+  });
+
+  if (!enrollment) return false;
+  if (enrollment.status !== 'ACTIVE') return false;
+
+  const enrollmentDate = new Date(enrollment.enrollmentDate);
+  const expirationDate = new Date(enrollmentDate);
+  expirationDate.setDate(expirationDate.getDate() + enrollment.enrollementPeriod);
+
+  return new Date() < expirationDate;
+};
+
 export const createLessonContent = async (
   req: Request,
   res: Response,
@@ -89,6 +117,32 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
     const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
     if (!lesson) {
       return res.status(404).json({ status: "error", message: "Lesson not found" });
+    }
+
+    // Check enrollment validity
+    // @ts-ignore
+    const userId = req.user?.id;
+    if (userId) {
+      // Allow admins or instructors to bypass? Maybe. 
+      // For now, assume student access flow.
+      // Actually, we should check role. But let's strictly enforce enrollment for content access if likely student.
+      const isValid = await checkEnrollmentValidity(userId, lessonId);
+
+      // Note: If user is admin/instructor they might not have enrollment. 
+      // We should check if they are the instructor of the course or ADMIN role.
+      // Fetch user role for robustness.
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+
+      if (user?.role === 'STUDENT' && !isValid) {
+        return res.status(403).json({
+          status: "error",
+          message: "Access denied. Active enrollment required."
+        });
+      }
+    } else {
+      // Unauthenticated access? authenticate middleware should handle this.
+      // If public route, this logic might block public content. 
+      // Assuming secure route.
     }
     // const page = req.query.page ? Number(req.query.page) : 1;
     // const limit = req.query.limit ? Number(req.query.limit) : 10;

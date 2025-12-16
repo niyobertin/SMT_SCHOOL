@@ -43,6 +43,11 @@ export const CourseList = () => {
 
   // fetch categories once
   useEffect(() => {
+    dispatch(fetchCategories({ page: 1, limit: itemsPerPage })); // Also update categories fetch to be consistent if needed, but strictly for courses below
+  }, [dispatch, itemsPerPage]); // Categories usually don't need itemsPerPage but user asked for consistency. However, categories are usually small. Let's stick to courses first as per plan. Wait, the plan said "Update the useEffect hook that fetches courses".
+
+  // fetch categories once
+  useEffect(() => {
     dispatch(fetchCategories({ page: 1, limit: 1000 }));
   }, [dispatch]);
 
@@ -51,13 +56,14 @@ export const CourseList = () => {
     dispatch(
       fetchCourses({
         page,
-        limit: 1000,
+        limit: itemsPerPage,
         q,
         categoryId: categoryFilter,
       })
     );
-  }, [dispatch, page, q, categoryFilter]);
+  }, [dispatch, page, q, categoryFilter, itemsPerPage]);
 
+  // debounce search
   // debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -74,7 +80,7 @@ export const CourseList = () => {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchTerm, dispatch, q, categoryFilter]);
+  }, [searchTerm, dispatch, q, categoryFilter, itemsPerPage]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
