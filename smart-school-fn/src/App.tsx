@@ -23,6 +23,18 @@ import { PaymentFlow } from "./components/common/Payment";
 import { JobListing } from "./pages/JobListing";
 import { JobDetails } from "./pages/JobDetails";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+// Exam Portal (Candidate Side)
+import ExamLogin from "./pages/exam-portal/ExamLogin";
+import ExamPage from "./pages/exam-portal/ExamPage";
+import ExamResult from "./pages/exam-portal/ExamResult";
+// Exam Admin Portal (Separate Admin System)
+import ExamAdminLogin from "./pages/exam-admin/ExamAdminLogin";
+import ExamAdminLayout from "./pages/exam-admin/ExamAdminLayout";
+import ExamAdminDashboard from "./pages/admin/ExamAdminDashboard";
+import Organizations from "./pages/exam-admin/Organizations";
+import Exams from "./pages/exam-admin/Exams";
+import Candidates from "./pages/exam-admin/Candidates";
+import Analytics from "./pages/exam-admin/Analytics";
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -35,6 +47,7 @@ function App() {
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
+          {/* Main Dashboard (Existing System) */}
           <Route
             path="/dashboard/*"
             element={
@@ -44,6 +57,30 @@ function App() {
             }
           />
 
+          {/* Exam Portal Routes (Candidate Side - No Layout) */}
+          <Route path="/exam-portal/login" element={<ExamLogin />} />
+          <Route path="/exam-portal/exam" element={<ExamPage />} />
+          <Route path="/exam-portal/result" element={<ExamResult />} />
+
+          {/* Exam Admin Portal (Separate Admin System) */}
+          <Route path="/exam-admin/login" element={<ExamAdminLogin />} />
+          <Route
+            path="/exam-admin/*"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+                <ExamAdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<ExamAdminDashboard />} />
+            <Route path="organizations" element={<Organizations />} />
+            <Route path="exams" element={<Exams />} />
+            <Route path="candidates" element={<Candidates />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="*" element={<Navigate to="/exam-admin/dashboard" replace />} />
+          </Route>
+
+          {/* Main Website Routes */}
           <Route
             element={
               <MainLayout>

@@ -472,3 +472,199 @@ model YouTubeToken {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ============================================
+// EXAMINATION SYSTEM MODELS
+// ============================================
+
+// Organization/Institution Management
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  logo         String?
+  contactEmail String?
+  contactPhone String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  exams      Exam[]
+  candidates Candidate[]
+
+  @@map("organizations")
+}
+
+// Candidate Management (separate from User)
+model Candidate {
+  id             String       @id @default(cuid())
+  candidateId    String       @unique // User-friendly ID for login
+  firstName      String
+  lastName       String
+  email          String?
+  phoneNumber    String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Relations
+  examAssignments ExamAssignment[]
+  examAttempts    ExamAttempt[]
+
+  @@index([organizationId])
+  @@map("candidates")
+}
+
+// Standalone Exam (independent of courses)
+model Exam {
+  id                 String       @id @default(cuid())
+  title              String
+  description        String?
+  instructions       String[]
+  duration           Int? // in minutes
+  passingScore       Float        @default(70)
+  examCode           String       @unique // Unique code for candidate access
+  startDate          DateTime?
+  endDate            DateTime?
+  maxAttempts        Int?         @default(3)
+  randomizeQuestions Boolean      @default(true)
+  showResults        Boolean      @default(true)
+  allowReview        Boolean      @default(true) // Allow candidate to review answers
+  isActive           Boolean      @default(true)
+  status             ExamStatus   @default(DRAFT)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organizationId     String
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Relations
+  questions   ExamQuestion[]
+  assignments ExamAssignment[]
+  attempts    ExamAttempt[]
+
+  @@index([organizationId])
+  @@index([examCode])
+  @@map("exams")
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  CLOSED
+}
+
+// Exam Questions (separate from course questions)
+model ExamQuestion {
+  id          String           @id @default(cuid())
+  question    String
+  image       String?
+  type        ExamQuestionType @default(MULTIPLE_CHOICE)
+  points      Float            @default(1)
+  explanation String?
+  order       Int
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  examId      String
+  exam        Exam             @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  // Relations
+  options ExamQuestionOption[]
+  answers ExamAnswer[]
+
+  @@index([examId])
+  @@map("exam_questions")
+}
+
+enum ExamQuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  FILL_BLANK
+}
+
+// Answer Options for Exam Questions
+model ExamQuestionOption {
+  id             String       @id @default(cuid())
+  option         String
+  isCorrect      Boolean      @default(false)
+  order          Int
+  createdAt      DateTime     @default(now())
+  examQuestionId String
+  examQuestion   ExamQuestion @relation(fields: [examQuestionId], references: [id], onDelete: Cascade)
+
+  @@index([examQuestionId])
+  @@map("exam_question_options")
+}
+
+// Exam Assignment (links candidates to exams)
+model ExamAssignment {
+  id          String    @id @default(cuid())
+  isActive    Boolean   @default(true)
+  assignedAt  DateTime  @default(now())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  examId      String
+  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, examId])
+  @@index([candidateId])
+  @@index([examId])
+  @@map("exam_assignments")
+}
+
+// Exam Attempt Records
+model ExamAttempt {
+  id             String            @id @default(cuid())
+  startTime      DateTime          @default(now())
+  endTime        DateTime?
+  score          Float?
+  totalQuestions Int
+  correctAnswers Int               @default(0)
+  status         ExamAttemptStatus @default(IN_PROGRESS)
+  timeSpent      Int? // in seconds
+  isPassed       Boolean           @default(false)
+  candidateId    String
+  candidate      Candidate         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  examId         String
+  exam           Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  // Relations
+  answers ExamAnswer[]
+
+  @@index([candidateId])
+  @@index([examId])
+  @@map("exam_attempts")
+}
+
+enum ExamAttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+  TIME_UP
+}
+
+// Candidate Answers
+model ExamAnswer {
+  id              String       @id @default(cuid())
+  answerText      String?
+  selectedOptions String[] // for multiple choice
+  userAnswer      String[] // for display
+  isCorrect       Boolean?
+  points          Float        @default(0)
+  timeSpent       Int? // time spent on this question in seconds
+  createdAt       DateTime     @default(now())
+  examAttemptId   String
+  examAttempt     ExamAttempt  @relation(fields: [examAttemptId], references: [id], onDelete: Cascade)
+  examQuestionId  String
+  examQuestion    ExamQuestion @relation(fields: [examQuestionId], references: [id], onDelete: Cascade)
+
+  @@index([examAttemptId])
+  @@index([examQuestionId])
+  @@map("exam_answers")
+}

@@ -10,6 +10,7 @@ import userRouter from "./users.routes";
 import paymentRouter from "./payment.route";
 import jobPostRoutes from "./jobPost.routes";
 import jobCategoriesRouter from "./jobCategories";
+import examRoutes from "./exam.routes";
 const router = Router();
 
 /**
@@ -25,6 +26,8 @@ const router = Router();
  *     description: Test management and taking endpoints
  *   - name: Job Posts
  *     description: Job post management endpoints
+ *   - name: Exams
+ *     description: Examination system endpoints
  */
 
 // Health check route (already handled in main app)
@@ -54,6 +57,7 @@ router.use("/users", userRouter);
 router.use("/payments", paymentRouter);
 router.use("/job-posts", jobPostRoutes);
 router.use("/job-categories", jobCategoriesRouter);
+router.use("/exams", examRoutes);
 
 // API info endpoint
 /**
