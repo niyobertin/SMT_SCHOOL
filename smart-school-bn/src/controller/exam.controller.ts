@@ -228,6 +228,67 @@ export const createCandidate = async (
     }
 };
 
+export const getAllCandidates = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { organizationId, search, page = 1, limit = 50 } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const where: any = {};
+
+        if (organizationId) {
+            where.organizationId = String(organizationId);
+        }
+
+        if (search) {
+            where.OR = [
+                { firstName: { contains: String(search), mode: 'insensitive' } },
+                { lastName: { contains: String(search), mode: 'insensitive' } },
+                { candidateId: { contains: String(search), mode: 'insensitive' } },
+                { email: { contains: String(search), mode: 'insensitive' } },
+            ];
+        }
+
+        const [candidates, total] = await Promise.all([
+            prisma.candidate.findMany({
+                where,
+                skip,
+                take: Number(limit),
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    organization: {
+                        select: { name: true }
+                    },
+                    _count: {
+                        select: {
+                            examAssignments: true,
+                            examAttempts: true,
+                        },
+                    },
+                },
+            }),
+            prisma.candidate.count({ where }),
+        ]);
+
+        res.status(200).json({
+            status: 'success',
+            data: candidates,
+            pagination: {
+                page: Number(page),
+                limit: Number(limit),
+                total,
+                pages: Math.ceil(total / Number(limit)),
+            },
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
 export const getCandidates = async (
     req: Request,
     res: Response,
@@ -444,6 +505,65 @@ export const getExams = async (
                 total,
                 pages: Math.ceil(total / Number(limit)),
             },
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const getAllExams = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { organizationId, status, search, date } = req.query;
+
+        const where: any = {};
+
+        if (organizationId) {
+            where.organizationId = String(organizationId);
+        }
+
+        if (status && status !== 'ALL') {
+            where.status = status;
+        }
+
+        if (search) {
+            where.OR = [
+                { title: { contains: String(search), mode: 'insensitive' } },
+                { examCode: { contains: String(search), mode: 'insensitive' } },
+            ];
+        }
+
+        if (date) {
+            const filterDate = new Date(String(date));
+            const nextDay = new Date(filterDate);
+            nextDay.setDate(filterDate.getDate() + 1);
+
+            where.createdAt = {
+                gte: filterDate,
+                lt: nextDay
+            };
+        }
+
+        const exams = await prisma.exam.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                organization: {
+                    select: { name: true }
+                },
+                _count: {
+                    select: { questions: true, attempts: true }
+                }
+            }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: exams,
         });
     } catch (error) {
         logger.error(error);
@@ -1518,7 +1638,7 @@ export const getExamResults = async (
                 where,
                 skip,
                 take: Number(limit),
-                orderBy: { startTime: 'desc' },
+                orderBy: { score: 'desc' }, // Updated to sort by score (rank)
                 include: {
                     candidate: {
                         select: {
@@ -1542,6 +1662,99 @@ export const getExamResults = async (
                 total,
                 pages: Math.ceil(total / Number(limit)),
             },
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const getGlobalExamResults = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { organizationId, examId, startDate, endDate, status, page, limit } = req.query;
+
+        const where: any = { status: 'COMPLETED' }; // Default to completed exams usually
+
+        if (organizationId) {
+            where.exam = { organizationId: String(organizationId) };
+        }
+
+        if (examId) {
+            where.examId = String(examId);
+            // If we have exam object constraint already, merge it
+            if (where.exam) {
+                // keep organization check implicit or explicit
+            }
+        }
+
+        if (startDate && endDate) {
+            where.endTime = {
+                gte: new Date(String(startDate)),
+                lte: new Date(String(endDate)),
+            };
+        }
+
+        if (status && status !== 'ALL') {
+            // Pass/Fail status
+            if (status === 'PASSED') where.isPassed = true;
+            if (status === 'FAILED') where.isPassed = false;
+        }
+
+        // Pagination
+        const isPaginationEnabled = page && limit;
+        const skip = isPaginationEnabled ? (Number(page) - 1) * Number(limit) : undefined;
+        const take = isPaginationEnabled ? Number(limit) : undefined;
+
+        const [attempts, total] = await Promise.all([
+            prisma.examAttempt.findMany({
+                where,
+                skip,
+                take,
+                orderBy: { score: 'desc' }, // Rank by score
+                include: {
+                    candidate: {
+                        select: {
+                            candidateId: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phoneNumber: true,
+                        },
+                    },
+                    exam: {
+                        select: {
+                            title: true,
+                            passingScore: true,
+                        }
+                    }
+                },
+            }),
+            prisma.examAttempt.count({ where }),
+        ]);
+
+        // Calculate Average Score for the set
+        const totalScore = await prisma.examAttempt.aggregate({
+            where,
+            _avg: { score: true }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: attempts,
+            meta: {
+                total,
+                averageScore: totalScore._avg.score || 0,
+            },
+            pagination: isPaginationEnabled ? {
+                page: Number(page),
+                limit: Number(limit),
+                total,
+                pages: Math.ceil(total / Number(limit)),
+            } : undefined,
         });
     } catch (error) {
         logger.error(error);
@@ -1579,27 +1792,64 @@ export const getExamDashboardStats = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { organizationId } = req.query;
+        const { organizationId, startDate, endDate } = req.query;
+
+        const dateFilter: any = {};
+        if (startDate && endDate) {
+            dateFilter.createdAt = {
+                gte: new Date(String(startDate)),
+                lte: new Date(String(endDate)),
+            };
+        }
 
         const whereOrg = organizationId ? { organizationId: String(organizationId) } : {};
+        const whereOrgWithDate = { ...whereOrg, ...dateFilter };
 
         // 1. Exam Counts
         const [totalExams, publishedExams, draftExams] = await Promise.all([
-            prisma.exam.count({ where: whereOrg }),
-            prisma.exam.count({ where: { ...whereOrg, status: 'PUBLISHED' } }),
-            prisma.exam.count({ where: { ...whereOrg, status: 'DRAFT' } }),
+            prisma.exam.count({ where: whereOrgWithDate }),
+            prisma.exam.count({ where: { ...whereOrgWithDate, status: 'PUBLISHED' } }),
+            prisma.exam.count({ where: { ...whereOrgWithDate, status: 'DRAFT' } }),
         ]);
 
-        // 2. Candidate Counts (for the org)
-        const totalCandidates = await prisma.candidate.count({ where: whereOrg });
+        // 2. Candidate Counts
+        const totalCandidates = await prisma.candidate.count({ where: whereOrgWithDate });
 
-        // 3. Attempt Stats (need to filter attempts by exams belonging to the org if orgId is present)
-        let attemptWhere = {};
+        // 3. Organization Count (Global Only)
+        let totalOrganizations = 0;
+        if (!organizationId) {
+            totalOrganizations = await prisma.organization.count({ where: dateFilter });
+        }
+
+        // 4. Question Count (Global or Org)
+        let totalQuestions = 0;
         if (organizationId) {
-            attemptWhere = {
-                exam: {
-                    organizationId: String(organizationId)
-                }
+            const exams = await prisma.exam.findMany({
+                where: whereOrg,
+                select: { id: true }
+            });
+            const examIds = exams.map(e => e.id);
+            totalQuestions = await prisma.examQuestion.count({
+                where: { examId: { in: examIds } } // Note: Questions don't have createdAt usually, so tough to filter by date
+            });
+        } else {
+            totalQuestions = await prisma.examQuestion.count();
+        }
+
+        // 5. Attempt Stats
+        let attemptWhere: any = {};
+
+        // Date filter for attempts applies to startTime
+        if (startDate && endDate) {
+            attemptWhere.startTime = {
+                gte: new Date(String(startDate)),
+                lte: new Date(String(endDate)),
+            };
+        }
+
+        if (organizationId) {
+            attemptWhere.exam = {
+                organizationId: String(organizationId)
             };
         }
 
@@ -1608,7 +1858,7 @@ export const getExamDashboardStats = async (
             where: { ...attemptWhere, isPassed: true }
         });
 
-        // 4. Recent Activity (last 5 attempts)
+        // 6. Recent Activity
         const recentActivity = await prisma.examAttempt.findMany({
             where: attemptWhere,
             take: 5,
@@ -1623,7 +1873,7 @@ export const getExamDashboardStats = async (
             }
         });
 
-        // 5. Avg Score (simple average of all completed attempts)
+        // 7. Avg Score
         const completedAttempts = await prisma.examAttempt.findMany({
             where: { ...attemptWhere, status: 'COMPLETED' },
             select: { score: true }
@@ -1633,10 +1883,51 @@ export const getExamDashboardStats = async (
             ? completedAttempts.reduce((acc, curr) => acc + (curr.score || 0), 0) / completedAttempts.length
             : 0;
 
+        // 8. Exam Duration Stats (Avg Time Spent per Exam) - Top 5 by attempts
+        // This is complex, we need to group by exam
+        // We will fetch all completed attempts with their exam titles and durations (endTime - startTime)
+        const durationAttempts = await prisma.examAttempt.findMany({
+            where: {
+                ...attemptWhere,
+                status: 'COMPLETED',
+                endTime: { not: null },
+            },
+            select: {
+                exam: { select: { title: true } },
+                startTime: true,
+                endTime: true
+            }
+        });
+
+        const examDurations: Record<string, { totalTime: number, count: number }> = {};
+
+        durationAttempts.forEach(attempt => {
+            const title = attempt.exam.title;
+            const start = new Date(attempt.startTime!).getTime();
+            const end = new Date(attempt.endTime!).getTime();
+            const durationMinutes = (end - start) / (1000 * 60);
+
+            if (!examDurations[title]) {
+                examDurations[title] = { totalTime: 0, count: 0 };
+            }
+            examDurations[title].totalTime += durationMinutes;
+            examDurations[title].count += 1;
+        });
+
+        const examDurationStats = Object.keys(examDurations).map(title => ({
+            examTitle: title,
+            avgTimeMinutes: Math.round(examDurations[title].totalTime / examDurations[title].count)
+        })).sort((a, b) => b.avgTimeMinutes - a.avgTimeMinutes).slice(0, 10); // Top 10 longest interactions
 
         res.status(200).json({
             status: 'success',
             data: {
+                organizations: {
+                    total: totalOrganizations
+                },
+                questions: {
+                    total: totalQuestions
+                },
                 exams: {
                     total: totalExams,
                     published: publishedExams,
@@ -1648,9 +1939,10 @@ export const getExamDashboardStats = async (
                 attempts: {
                     total: totalAttempts,
                     passed: passedAttempts,
-                    avgScore: Math.round(avgScore * 10) / 10, // Round to 1 decimal
+                    avgScore: Math.round(avgScore * 10) / 10,
                     passRate: totalAttempts > 0 ? Math.round((passedAttempts / totalAttempts) * 100) : 0
                 },
+                examDurationStats,
                 recentActivity: recentActivity.map(a => ({
                     id: a.id,
                     candidateName: `${a.candidate.firstName} ${a.candidate.lastName}`,

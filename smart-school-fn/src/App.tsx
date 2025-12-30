@@ -35,6 +35,7 @@ import Organizations from "./pages/exam-admin/Organizations";
 import Exams from "./pages/exam-admin/Exams";
 import Candidates from "./pages/exam-admin/Candidates";
 import Analytics from "./pages/exam-admin/Analytics";
+import Results from "./pages/exam-admin/Results";
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -77,6 +78,7 @@ function App() {
             <Route path="exams" element={<Exams />} />
             <Route path="candidates" element={<Candidates />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="results" element={<Results />} />
             <Route path="*" element={<Navigate to="/exam-admin/dashboard" replace />} />
           </Route>
 

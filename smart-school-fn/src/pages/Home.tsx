@@ -574,6 +574,71 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Exam Portal Section */}
+      <section className="py-20 bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div
+            className="text-center max-w-4xl mx-auto"
+            variants={bidirectionalFadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.3 }}
+          >
+            <motion.span
+              className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-800 text-sm font-semibold mb-4"
+              variants={bidirectionalScale}
+            >
+              {t("examPortal")}
+            </motion.span>
+
+            <motion.h2
+              className="text-3xl md:text-5xl font-bold mb-6 text-gray-900"
+              variants={bidirectionalSlide}
+            >
+              {t("examPortalTitle")}
+            </motion.h2>
+
+            <motion.p
+              className="text-xl text-gray-600 mb-10 leading-relaxed"
+              variants={bidirectionalSlide}
+            >
+              {t("examPortalDescription")}
+            </motion.p>
+
+            <motion.div
+              className="flex flex-col sm:flex-row gap-6 justify-center"
+              variants={bidirectionalScale}
+            >
+              <Link to="/exam-portal/login">
+                <motion.button
+                  className="group bg-blue-600 text-white text-lg rounded-xl px-8 py-4 font-semibold shadow-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="flex items-center justify-center">
+                    {t("joinAsCandidate")}
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </motion.button>
+              </Link>
+
+              <Link to="/exam-admin/login">
+                <motion.button
+                  className="group bg-white text-gray-800 text-lg rounded-xl px-8 py-4 font-semibold shadow-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all w-full sm:w-auto"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className="flex items-center justify-center">
+                    {t("joinAsExaminer")}
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </motion.button>
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Enhanced CTA Section */}
       <motion.section
         className="py-20 bg-gradient-to-br from-[#19459d] via-blue-600 to-blue-800 text-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-12 rounded-3xl relative overflow-hidden"

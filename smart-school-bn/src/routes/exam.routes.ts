@@ -44,6 +44,9 @@ import {
     getExamResults,
     getExamAnalytics,
     getExamDashboardStats,
+    getGlobalExamResults,
+    getAllExams,
+    getAllCandidates,
 } from '../controller/exam.controller';
 
 const router = express.Router();
@@ -153,6 +156,13 @@ router.get(
     catchAsync(getCandidates)
 );
 
+router.get(
+    '/candidates/all',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(getAllCandidates)
+);
+
 router.patch(
     '/candidates/:candidateId',
     authenticate,
@@ -183,6 +193,13 @@ router.get(
     authenticate,
     authorize('ADMIN', 'INSTRUCTOR'),
     catchAsync(getExams)
+);
+
+router.get(
+    '/all',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(getAllExams)
 );
 
 router.get(
@@ -329,6 +346,20 @@ router.get(
 // ============================================
 
 router.get(
+    '/stats/dashboard',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    getExamDashboardStats
+);
+
+router.get(
+    '/results/all',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    getGlobalExamResults
+);
+
+router.get(
     '/:examId/results',
     authenticate,
     authorize('ADMIN', 'INSTRUCTOR'),
@@ -340,13 +371,6 @@ router.get(
     authenticate,
     authorize('ADMIN', 'INSTRUCTOR'),
     catchAsync(getExamAnalytics)
-);
-
-router.get(
-    '/stats/dashboard',
-    authenticate,
-    authorize('admin', 'super_admin', 'org_admin'),
-    getExamDashboardStats
 );
 
 export default router;

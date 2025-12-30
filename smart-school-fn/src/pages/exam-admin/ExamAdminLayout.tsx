@@ -10,6 +10,7 @@ import {
     BarChart3,
     LogOut,
     Shield,
+    ClipboardList,
 } from 'lucide-react';
 
 const ExamAdminLayout = () => {
@@ -35,6 +36,7 @@ const ExamAdminLayout = () => {
         { path: '/exam-admin/organizations', icon: Building2, label: 'Organizations' },
         { path: '/exam-admin/exams', icon: FileText, label: 'Exams' },
         { path: '/exam-admin/candidates', icon: Users, label: 'Candidates' },
+        { path: '/exam-admin/results', icon: ClipboardList, label: 'Results' },
         { path: '/exam-admin/analytics', icon: BarChart3, label: 'Analytics' },
     ];
 
@@ -67,8 +69,8 @@ const ExamAdminLayout = () => {
                                     <button
                                         onClick={() => navigate(item.path)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                                                ? 'bg-white text-indigo-900 shadow-lg'
-                                                : 'text-indigo-100 hover:bg-indigo-800'
+                                            ? 'bg-white text-indigo-900 shadow-lg'
+                                            : 'text-indigo-100 hover:bg-indigo-800'
                                             }`}
                                     >
                                         <Icon className="w-5 h-5" />

@@ -1,0 +1,417 @@
+
+import React, { useEffect, useState, useRef } from 'react';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import {
+    fetchGlobalExamResults,
+    fetchOrganizations,
+    fetchExams,
+    setSelectedOrg,
+} from '../../redux/features/examAdminSlice';
+import { toast } from 'react-toastify';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import {
+    Building2,
+    Calendar,
+    Search,
+    Download,
+    Filter,
+    FileText,
+    CheckCircle,
+    XCircle,
+    User,
+    ChevronLeft,
+    ChevronRight,
+    Loader2
+} from 'lucide-react';
+
+const Results = () => {
+    const dispatch = useAppDispatch();
+    const {
+        organizations,
+        selectedOrg,
+        exams,
+        globalResults,
+        loading
+    } = useAppSelector((state) => state.examAdmin);
+
+    const [filters, setFilters] = useState({
+        organizationId: '',
+        examId: '',
+        startDate: '',
+        endDate: '',
+        status: 'ALL', // ALL, PASSED, FAILED
+    });
+
+    const [page, setPage] = useState(1);
+    const limit = 50; // Show more results per page for better overview
+
+    // Initialize
+    useEffect(() => {
+        dispatch(fetchOrganizations());
+    }, [dispatch]);
+
+    // Fetch exams when org changes
+    useEffect(() => {
+        if (filters.organizationId) {
+            dispatch(fetchExams(filters.organizationId));
+        }
+    }, [filters.organizationId, dispatch]);
+
+    // Fetch results when filters change (debounced slightly or manual trigger?)
+    // Manual trigger or auto-fetch on filter change is better.
+    // Let's do auto-fetch.
+    useEffect(() => {
+        const fetchParams: any = {
+            page,
+            limit,
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+            status: filters.status !== 'ALL' ? filters.status : undefined,
+            organizationId: filters.organizationId || undefined,
+            examId: filters.examId || undefined,
+        };
+
+        dispatch(fetchGlobalExamResults(fetchParams));
+    }, [dispatch, page, limit, filters.organizationId, filters.examId, filters.startDate, filters.endDate, filters.status]);
+
+    const handleOrgChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const orgId = e.target.value;
+        setFilters(prev => ({ ...prev, organizationId: orgId, examId: '' }));
+        // Also update redux selected org if needed for consistency, though this page manages local filter state mostly
+        const org = organizations.find(o => o.id === orgId);
+        if (org) dispatch(setSelectedOrg(org));
+    };
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+        setPage(1); // Reset to page 1 on filter change
+    };
+
+    // Export to Excel
+    const handleExportExcel = () => {
+        if (!globalResults?.data) return;
+
+        const dataToExport = globalResults.data.map((attempt: any, index: number) => ({
+            Position: index + 1,
+            'Candidate ID': attempt.candidate.candidateId,
+            'First Name': attempt.candidate.firstName,
+            'Last Name': attempt.candidate.lastName,
+            'Email': attempt.candidate.email || 'N/A',
+            'Exam Title': attempt.exam.title,
+            'Score (%)': attempt.score,
+            'Status': attempt.isPassed ? 'PASSED' : 'FAILED',
+            'Date': new Date(attempt.startTime).toLocaleDateString(),
+            'Duration (min)': attempt.timeSpent ? Math.round(attempt.timeSpent / 60) : 'N/A'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Exam Results");
+
+        // Add average score row
+        if (globalResults.meta) {
+            XLSX.utils.sheet_add_aoa(ws, [
+                [],
+                ['Average Score:', `${Math.round(globalResults.meta.averageScore * 10) / 10}%`]
+            ], { origin: -1 });
+        }
+
+        XLSX.writeFile(wb, `Exam_Results_${new Date().toISOString().split('T')[0]}.xlsx`);
+        toast.success('Excel export started');
+    };
+
+    // Export to PDF
+    const handleExportPDF = () => {
+        if (!globalResults?.data) return;
+
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.width;
+
+        // Title
+        doc.setFontSize(18);
+        doc.text('Exam Results Report', 14, 20);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        const dateStr = `Generated on: ${new Date().toLocaleDateString()}`;
+        doc.text(dateStr, 14, 28);
+
+        // Filter Context
+        let yPos = 35;
+        if (filters.organizationId) {
+            const orgName = organizations.find(o => o.id === filters.organizationId)?.name || 'Unknown Org';
+            doc.text(`Organization: ${orgName}`, 14, yPos);
+            yPos += 5;
+        }
+        if (filters.examId) {
+            const examTitle = exams.find(e => e.id === filters.examId)?.title || 'Unknown Exam';
+            doc.text(`Exam: ${examTitle}`, 14, yPos);
+            yPos += 5;
+        }
+
+        // Table
+        const tableColumn = ["Pos", "ID", "Candidate Name", "Exam", "Score", "Status"];
+        const tableRows = globalResults.data.map((attempt: any, index: number) => [
+            index + 1,
+            attempt.candidate.candidateId,
+            `${attempt.candidate.firstName} ${attempt.candidate.lastName}`,
+            attempt.exam.title,
+            `${attempt.score}%`,
+            attempt.isPassed ? 'PASS' : 'FAIL'
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: yPos + 5,
+            theme: 'grid',
+            headStyles: { fillColor: [79, 70, 229] }, // Indigo 600
+        });
+
+        // Summary Footer
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(11);
+        doc.setTextColor(0);
+        if (globalResults.meta) {
+            doc.text(`Average Score: ${Math.round(globalResults.meta.averageScore * 10) / 10}%`, 14, finalY);
+            doc.text(`Total Candidates: ${globalResults.meta.total}`, 14, finalY + 7);
+        }
+
+        doc.save(`Exam_Results_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast.success('PDF export started');
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 p-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Exam Results</h1>
+                    <p className="text-gray-600">View, filter, and export candidate performance reports.</p>
+                </div>
+
+                {/* Filters Section */}
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-end flex-wrap">
+
+                    {/* Organization Filter */}
+                    <div className="flex-1 min-w-[200px]">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                        <div className="relative">
+                            <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <select
+                                name="organizationId"
+                                value={filters.organizationId}
+                                onChange={handleOrgChange}
+                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            >
+                                <option value="">All Organizations</option>
+                                {organizations.map(org => (
+                                    <option key={org.id} value={org.id}>{org.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Exam Filter */}
+                    <div className="flex-1 min-w-[200px]">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Exam</label>
+                        <div className="relative">
+                            <FileText className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <select
+                                name="examId"
+                                value={filters.examId}
+                                onChange={handleFilterChange}
+                                disabled={!filters.organizationId} // Typically exams belong to org, so better to lock if no org selected, OR show all if backend supports it (but list might be huge)
+                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                            >
+                                <option value="">All Exams</option>
+                                {exams.map(exam => (
+                                    <option key={exam.id} value={exam.id}>{exam.title}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Date Range Start */}
+                    <div className="w-[150px]">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                name="startDate"
+                                value={filters.startDate}
+                                onChange={handleFilterChange}
+                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Date Range End */}
+                    <div className="w-[150px]">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={filters.endDate}
+                                onChange={handleFilterChange}
+                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="w-[150px]">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <div className="relative">
+                            <Filter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <select
+                                name="status"
+                                value={filters.status}
+                                onChange={handleFilterChange}
+                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            >
+                                <option value="ALL">All Status</option>
+                                <option value="PASSED">Passed</option>
+                                <option value="FAILED">Failed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleExportPDF}
+                            className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center gap-2 border border-red-200"
+                        >
+                            <Download className="w-4 h-4" /> PDF
+                        </button>
+                        <button
+                            onClick={handleExportExcel}
+                            className="bg-green-50 text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors flex items-center gap-2 border border-green-200"
+                        >
+                            <Download className="w-4 h-4" /> Excel
+                        </button>
+                    </div>
+                </div>
+
+                {/* Results Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {loading ? (
+                        <div className="p-12 flex justify-center items-center text-gray-500">
+                            <Loader2 className="w-8 h-8 animate-spin mr-2 text-blue-500" />
+                            Loading results...
+                        </div>
+                    ) : globalResults?.data && globalResults.data.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm text-gray-600">
+                                <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
+                                    <tr>
+                                        <th className="px-6 py-4">Pos</th>
+                                        <th className="px-6 py-4">ID</th>
+                                        <th className="px-6 py-4">Candidate Name</th>
+                                        <th className="px-6 py-4">Exam Info</th>
+                                        <th className="px-6 py-4">Score (%)</th>
+                                        <th className="px-6 py-4">Status</th>
+                                        <th className="px-6 py-4">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {globalResults.data.map((attempt: any, index: number) => (
+                                        <tr key={attempt.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-gray-900">
+                                                {(page - 1) * limit + index + 1}
+                                            </td>
+                                            <td className="px-6 py-4 font-mono text-xs text-indigo-600 bg-indigo-50/50">
+                                                {attempt.candidate.candidateId}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                                                        {attempt.candidate.firstName[0]}{attempt.candidate.lastName[0]}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">{attempt.candidate.firstName} {attempt.candidate.lastName}</p>
+                                                        <p className="text-xs text-gray-400">{attempt.candidate.email || attempt.candidate.phoneNumber || '-'}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <FileText className="w-4 h-4 text-gray-400" />
+                                                    <span className="text-gray-700 font-medium">{attempt.exam.title}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg font-bold text-gray-900">{attempt.score}%</span>
+                                                    <span className="text-[10px] text-gray-400">Pass: {attempt.exam.passingScore}%</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {attempt.isPassed ? (
+                                                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                                                        <CheckCircle className="w-3 h-3" />
+                                                        Pass
+                                                    </div>
+                                                ) : (
+                                                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+                                                        <XCircle className="w-3 h-3" />
+                                                        Fail
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-500">
+                                                {new Date(attempt.startTime).toLocaleDateString()}
+                                                <div className="text-xs text-gray-400">
+                                                    {new Date(attempt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="p-12 text-center">
+                            <div className="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                <Search className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-1">No Results Found</h3>
+                            <p className="text-gray-500">Try adjusting your filters to see candidate results.</p>
+                        </div>
+                    )}
+
+                    {/* Pagination */}
+                    {globalResults?.pagination && globalResults.pagination.pages > 1 && (
+                        <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                            <div className="text-sm text-gray-500">
+                                Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to <span className="font-medium">{Math.min(page * limit, globalResults.pagination.total)}</span> of <span className="font-medium">{globalResults.pagination.total}</span> results
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setPage(p => Math.min(globalResults?.pagination?.pages || 1, p + 1))}
+                                    disabled={page === (globalResults?.pagination?.pages || 1)}
+                                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Results;

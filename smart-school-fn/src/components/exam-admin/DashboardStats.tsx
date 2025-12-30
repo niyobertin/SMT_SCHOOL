@@ -14,6 +14,8 @@ import {
     Cell
 } from 'recharts';
 import {
+    Building2,
+    HelpCircle,
     FileText,
     Users,
     Activity,
@@ -24,6 +26,8 @@ import {
 
 interface DashboardStatsProps {
     stats: {
+        organizations?: { total: number };
+        questions?: { total: number };
         exams: {
             total: number;
             published: number;
@@ -45,6 +49,10 @@ interface DashboardStatsProps {
             score: number;
             status: string;
             date: string;
+        }>;
+        examDurationStats?: Array<{
+            examTitle: string;
+            avgTimeMinutes: number;
         }>;
     };
 }
@@ -68,6 +76,34 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
         <div className="space-y-6 mb-8">
             {/* 1. Comparison Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Global Stats - Only shown if available */}
+                {stats.organizations && (
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-gray-500 text-sm font-medium">Organizations</h3>
+                            <div className="p-2 bg-orange-50 rounded-lg">
+                                <Building2 className="w-5 h-5 text-orange-600" />
+                            </div>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900">{stats.organizations.total}</p>
+                        <p className="text-sm text-gray-500 mt-2">Active Organizations</p>
+                    </div>
+                )}
+
+                {/* Total Questions */}
+                {stats.questions && (
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-gray-500 text-sm font-medium">Questions Bank</h3>
+                            <div className="p-2 bg-teal-50 rounded-lg">
+                                <HelpCircle className="w-5 h-5 text-teal-600" />
+                            </div>
+                        </div>
+                        <p className="text-3xl font-bold text-gray-900">{stats.questions.total}</p>
+                        <p className="text-sm text-gray-500 mt-2">Total Questions</p>
+                    </div>
+                )}
+
                 {/* Total Exams */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-4">
@@ -127,6 +163,27 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
 
             {/* 2. Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Exam Duration Stats */}
+                {stats.examDurationStats && stats.examDurationStats.length > 0 && (
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 col-span-1 lg:col-span-2">
+                        <h3 className="font-bold text-gray-900 mb-6">Avg Time Spent per Exam (Minutes)</h3>
+                        <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.examDurationStats} layout="vertical" margin={{ left: 100 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                    <XAxis type="number" />
+                                    <YAxis dataKey="examTitle" type="category" width={150} tick={{ fontSize: 12 }} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        cursor={{ fill: 'transparent' }}
+                                    />
+                                    <Bar dataKey="avgTimeMinutes" fill="#8884d8" radius={[0, 4, 4, 0]} barSize={20} name="Minutes" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                )}
+
                 {/* Exam Status Chart */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h3 className="font-bold text-gray-900 mb-6">Exam Status Distribution</h3>

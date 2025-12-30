@@ -10,8 +10,15 @@ interface ExamAdminState {
     candidates: any[];
     assignedCandidateIds: string[];
     examResults: any[];
+    globalResults: {
+        data: any[];
+        meta: { total: number; averageScore: number };
+        pagination: { page: number; limit: number; total: number; pages: number } | undefined;
+    } | null;
     analytics: any | null;
     dashboardStats: {
+        organizations?: { total: number };
+        questions?: { total: number };
         exams: { total: number; published: number; draft: number };
         candidates: { total: number };
         attempts: { total: number; passed: number; avgScore: number; passRate: number };
@@ -22,6 +29,10 @@ interface ExamAdminState {
             score: number;
             status: string;
             date: string;
+        }>;
+        examDurationStats?: Array<{
+            examTitle: string;
+            avgTimeMinutes: number;
         }>;
     } | null;
     loading: boolean;
@@ -36,6 +47,7 @@ const initialState: ExamAdminState = {
     candidates: [],
     assignedCandidateIds: [],
     examResults: [],
+    globalResults: null,
     analytics: null,
     dashboardStats: null,
     loading: false,
@@ -46,10 +58,14 @@ const initialState: ExamAdminState = {
 
 export const fetchDashboardStats = createAsyncThunk(
     'examAdmin/fetchDashboardStats',
-    async (orgId: string | undefined, { rejectWithValue }) => {
+    async ({ orgId, startDate, endDate }: { orgId?: string; startDate?: string; endDate?: string }, { rejectWithValue }) => {
         try {
-            const query = orgId ? `?organizationId=${orgId}` : '';
-            const response = await api.get(`/exams/stats/dashboard${query}`);
+            const params = new URLSearchParams();
+            if (orgId) params.append('organizationId', orgId);
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+
+            const response = await api.get(`/exams/stats/dashboard?${params.toString()}`);
             return response.data.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard stats');
@@ -112,6 +128,32 @@ export const fetchExams = createAsyncThunk(
     async (orgId: string, { rejectWithValue }) => {
         try {
             const response = await api.get(`/exams/organizations/${orgId}/exams`);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch exams');
+        }
+    }
+);
+
+export const fetchAllExams = createAsyncThunk(
+    'examAdmin/fetchAllExams',
+    async (
+        params: {
+            organizationId?: string;
+            status?: string;
+            search?: string;
+            date?: string;
+        },
+        { rejectWithValue }
+    ) => {
+        try {
+            const query = new URLSearchParams();
+            if (params.organizationId) query.append('organizationId', params.organizationId);
+            if (params.status) query.append('status', params.status);
+            if (params.search) query.append('search', params.search);
+            if (params.date) query.append('date', params.date);
+
+            const response = await api.get(`/exams/all?${query.toString()}`);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch exams');
@@ -217,6 +259,32 @@ export const fetchCandidates = createAsyncThunk(
     }
 );
 
+export const fetchAllCandidates = createAsyncThunk(
+    'examAdmin/fetchAllCandidates',
+    async (
+        params: {
+            organizationId?: string;
+            search?: string;
+            page?: number;
+            limit?: number;
+        },
+        { rejectWithValue }
+    ) => {
+        try {
+            const query = new URLSearchParams();
+            if (params.organizationId) query.append('organizationId', params.organizationId);
+            if (params.search) query.append('search', params.search);
+            if (params.page) query.append('page', String(params.page));
+            if (params.limit) query.append('limit', String(params.limit));
+
+            const response = await api.get(`/exams/candidates/all?${query.toString()}`);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch candidates');
+        }
+    }
+);
+
 export const fetchExamAssignedCandidates = createAsyncThunk(
     'examAdmin/fetchExamAssignedCandidates',
     async (examId: string, { rejectWithValue }) => {
@@ -303,6 +371,38 @@ export const fetchExamResults = createAsyncThunk(
     }
 );
 
+export const fetchGlobalExamResults = createAsyncThunk(
+    'examAdmin/fetchGlobalExamResults',
+    async (
+        params: {
+            organizationId?: string;
+            examId?: string;
+            startDate?: string;
+            endDate?: string;
+            status?: string;
+            page?: number;
+            limit?: number;
+        },
+        { rejectWithValue }
+    ) => {
+        try {
+            const query = new URLSearchParams();
+            if (params.organizationId) query.append('organizationId', params.organizationId);
+            if (params.examId) query.append('examId', params.examId);
+            if (params.startDate) query.append('startDate', params.startDate);
+            if (params.endDate) query.append('endDate', params.endDate);
+            if (params.status) query.append('status', params.status);
+            if (params.page) query.append('page', String(params.page));
+            if (params.limit) query.append('limit', String(params.limit));
+
+            const response = await api.get(`/exams/results/all?${query.toString()}`);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch global results');
+        }
+    }
+);
+
 export const fetchExamAnalytics = createAsyncThunk(
     'examAdmin/fetchExamAnalytics',
     async (examId: string, { rejectWithValue }) => {
@@ -352,6 +452,19 @@ const examAdminSlice = createSlice({
                 state.organizations = action.payload.data;
             })
             .addCase(fetchOrganizations.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            // Fetch All Exams
+            .addCase(fetchAllExams.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchAllExams.fulfilled, (state, action) => {
+                state.loading = false;
+                state.exams = action.payload.data;
+            })
+            .addCase(fetchAllExams.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             })
@@ -419,6 +532,9 @@ const examAdminSlice = createSlice({
             .addCase(fetchCandidates.fulfilled, (state, action) => {
                 state.candidates = action.payload.data;
             })
+            .addCase(fetchAllCandidates.fulfilled, (state, action) => {
+                state.candidates = action.payload.data;
+            })
             .addCase(fetchExamAssignedCandidates.fulfilled, (state, action) => {
                 state.assignedCandidateIds = action.payload.data;
             })
@@ -430,6 +546,22 @@ const examAdminSlice = createSlice({
                 if (index !== -1) {
                     state.candidates[index] = action.payload.data;
                 }
+            })
+            // Global Results
+            .addCase(fetchGlobalExamResults.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchGlobalExamResults.fulfilled, (state, action) => {
+                state.loading = false;
+                state.globalResults = {
+                    data: action.payload.data,
+                    meta: action.payload.meta,
+                    pagination: action.payload.pagination,
+                };
+            })
+            .addCase(fetchGlobalExamResults.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             })
             .addCase(deleteCandidate.fulfilled, (state, action) => {
                 state.candidates = state.candidates.filter(c => c.id !== action.payload);
