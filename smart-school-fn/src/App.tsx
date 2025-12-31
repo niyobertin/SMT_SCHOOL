@@ -36,6 +36,8 @@ import Exams from "./pages/exam-admin/Exams";
 import Candidates from "./pages/exam-admin/Candidates";
 import Analytics from "./pages/exam-admin/Analytics";
 import Results from "./pages/exam-admin/Results";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -47,6 +49,7 @@ function App() {
     <TranslationProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <ToastContainer position="top-right" autoClose={5000} />
         <Routes>
           {/* Main Dashboard (Existing System) */}
           <Route

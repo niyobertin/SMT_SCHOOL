@@ -50,21 +50,16 @@ const ExamResult = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-white py-6 px-4">
+            <div className="max-w-3xl mx-auto">
                 {/* Result Card */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl shadow-2xl overflow-hidden"
+                    className="bg-white rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.05)] overflow-hidden border border-gray-100"
                 >
                     {/* Header */}
-                    <div
-                        className={`p-8 text-center ${isPassed
-                                ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-                                : 'bg-gradient-to-r from-red-500 to-rose-500'
-                            }`}
-                    >
+                    <div className="p-8 text-center border-b border-gray-50 bg-gray-50/20">
                         <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
@@ -72,166 +67,139 @@ const ExamResult = () => {
                             className="inline-block"
                         >
                             {isPassed ? (
-                                <div className="w-24 h-24 bg-white rounded-full  flex items-center justify-center mx-auto">
-                                    <Trophy className="w-12 h-12 text-green-600" />
+                                <div className="w-16 h-16 bg-green-50 rounded-2xl border border-green-100 flex items-center justify-center mx-auto shadow-sm">
+                                    <Trophy className="w-8 h-8 text-green-600" />
                                 </div>
                             ) : (
-                                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto">
-                                    <XCircle className="w-12 h-12 text-red-600" />
+                                <div className="w-16 h-16 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-center mx-auto shadow-sm">
+                                    <XCircle className="w-8 h-8 text-red-600" />
                                 </div>
                             )}
                         </motion.div>
 
-                        <h1 className="text-4xl font-bold text-white mt-4">
-                            {isPassed ? 'Congratulations!' : 'Exam Completed'}
-                        </h1>
-                        <p className="text-white text-lg mt-2">
-                            {isPassed
-                                ? 'You have successfully passed the examination'
-                                : 'Thank you for taking the examination'}
-                        </p>
+                        <div className="mt-4">
+                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border mb-3 ${isPassed ? 'bg-green-50 border-green-100 text-green-800' : 'bg-red-50 border-red-100 text-red-800'}`}>
+                                <div className={`w-1 h-1 rounded-full ${isPassed ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+                                <span className="text-[9px] font-black uppercase tracking-widest leading-none">
+                                    {isPassed ? 'Assessment Qualified' : 'Assessment Completed'}
+                                </span>
+                            </div>
+                            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+                                {isPassed ? 'Congratulations!' : 'Session Summary'}
+                            </h1>
+                            <p className="text-sm text-gray-500 font-medium mt-2 max-w-sm mx-auto leading-relaxed">
+                                {isPassed
+                                    ? 'You have successfully achieved the required proficiency level.'
+                                    : 'Your examination results have been recorded for final review.'}
+                            </p>
+                        </div>
                     </div>
 
                     {/* Score Section */}
-                    <div className="p-8">
-                        {/* Main Score */}
-                        <div className="text-center mb-8">
+                    <div className="p-6">
+                        {/* Main Score & Passing Mark Row */}
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-8">
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: 0.3 }}
                                 className="inline-block"
                             >
-                                <div className="relative w-48 h-48 mx-auto">
+                                <div className="relative w-32 h-32 mx-auto">
                                     {/* Circular Progress */}
                                     <svg className="w-full h-full transform -rotate-90">
                                         <circle
-                                            cx="96"
-                                            cy="96"
-                                            r="88"
-                                            stroke="#e5e7eb"
-                                            strokeWidth="12"
+                                            cx="64"
+                                            cy="64"
+                                            r="58"
+                                            stroke="#f1f5f9"
+                                            strokeWidth="8"
                                             fill="none"
                                         />
                                         <motion.circle
-                                            cx="96"
-                                            cy="96"
-                                            r="88"
+                                            cx="64"
+                                            cy="64"
+                                            r="58"
                                             stroke={isPassed ? '#10b981' : '#ef4444'}
-                                            strokeWidth="12"
+                                            strokeWidth="8"
                                             fill="none"
                                             strokeLinecap="round"
-                                            strokeDasharray={`${2 * Math.PI * 88}`}
-                                            initial={{ strokeDashoffset: 2 * Math.PI * 88 }}
+                                            strokeDasharray={`${2 * Math.PI * 58}`}
+                                            initial={{ strokeDashoffset: 2 * Math.PI * 58 }}
                                             animate={{
-                                                strokeDashoffset: 2 * Math.PI * 88 * (1 - score / 100),
+                                                strokeDashoffset: 2 * Math.PI * 58 * (1 - score / 100),
                                             }}
                                             transition={{ duration: 1, delay: 0.5 }}
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-5xl font-bold text-gray-900">
-                                            {Math.round(score)}%
+                                        <span className="text-2xl font-black text-gray-900">
+                                            {score.toFixed(1)}%
                                         </span>
-                                        <span className="text-sm text-gray-600 mt-1">Your Score</span>
+                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Final Score</span>
                                     </div>
                                 </div>
                             </motion.div>
 
-                            <div className="mt-6 flex items-center justify-center gap-2 text-gray-600">
-                                <FileText className="w-5 h-5" />
-                                <p className="text-lg">
-                                    Passing Score: <strong>{passingScore}%</strong>
-                                </p>
+                            <div className="flex flex-col items-center md:items-start gap-4">
+                                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
+                                    <Trophy className="w-4 h-4 text-amber-500" />
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Pass Mark Threshold</p>
+                                        <p className="text-lg font-black text-gray-900 leading-none">{passingScore}%</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Status Result</p>
+                                        <p className={`text-lg font-black leading-none ${isPassed ? 'text-green-600' : 'text-red-600'}`}>
+                                            {isPassed ? 'SUCCESS' : 'DISSATISFIED'}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <div className="bg-blue-50 rounded-xl p-6 text-center border-2 border-blue-100">
-                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <FileText className="w-6 h-6 text-blue-600" />
-                                </div>
-                                <p className="text-sm text-gray-600 mb-1">Total Questions</p>
-                                <p className="text-3xl font-bold text-blue-600">{totalQuestions}</p>
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            <div className="bg-blue-50/50 rounded-xl p-3 text-center border border-blue-100/50">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Questions</p>
+                                <p className="text-xl font-black text-blue-600 leading-none">{totalQuestions}</p>
                             </div>
 
-                            <div className="bg-green-50 rounded-xl p-6 text-center border-2 border-green-100">
-                                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <CheckCircle className="w-6 h-6 text-green-600" />
-                                </div>
-                                <p className="text-sm text-gray-600 mb-1">Correct Answers</p>
-                                <p className="text-3xl font-bold text-green-600">{correctAnswers}</p>
+                            <div className="bg-green-50/50 rounded-xl p-3 text-center border border-green-100/50">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Correct</p>
+                                <p className="text-xl font-black text-green-600 leading-none">{correctAnswers}</p>
                             </div>
 
-                            <div className="bg-purple-50 rounded-xl p-6 text-center border-2 border-purple-100">
-                                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <Clock className="w-6 h-6 text-purple-600" />
-                                </div>
-                                <p className="text-sm text-gray-600 mb-1">Time Spent</p>
-                                <p className="text-3xl font-bold text-purple-600">
+                            <div className="bg-purple-50/50 rounded-xl p-3 text-center border border-purple-100/50">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Duration</p>
+                                <p className="text-xl font-black text-purple-600 leading-none">
                                     {formatTime(timeSpent || 0)}
                                 </p>
                             </div>
                         </div>
 
                         {/* Exam Info */}
-                        <div className="bg-gray-50 rounded-xl p-6 mb-8">
-                            <h3 className="font-semibold text-gray-900 mb-2">Exam Information</h3>
-                            <p className="text-gray-700">
-                                <strong>Exam:</strong> {exam?.title}
-                            </p>
-                            <p className="text-gray-600 text-sm mt-1">
-                                Submitted at {new Date().toLocaleString()}
+                        <div className="bg-gray-50/50 rounded-xl p-4 mb-6 border border-gray-100/50 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">Identification</h3>
+                                <p className="text-xs font-bold text-gray-700 leading-none">{exam?.title}</p>
+                            </div>
+                            <p className="text-[9px] text-gray-400 font-medium">
+                                Submitted {new Date().toLocaleTimeString()}
                             </p>
                         </div>
 
-                        {/* Detailed Results (if available) */}
-                        {details && details.length > 0 && (
-                            <div className="border-t pt-8">
-                                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                                    Question Review
-                                </h3>
-                                <div className="space-y-4 max-h-96 overflow-y-auto">
-                                    {details.map((detail: any, index: number) => (
-                                        <div
-                                            key={detail.questionId}
-                                            className={`p-4 rounded-lg border-2 ${detail.isCorrect
-                                                    ? 'bg-green-50 border-green-200'
-                                                    : 'bg-red-50 border-red-200'
-                                                }`}
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                {detail.isCorrect ? (
-                                                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
-                                                ) : (
-                                                    <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-1" />
-                                                )}
-                                                <div className="flex-1">
-                                                    <p className="font-semibold text-gray-900 mb-2">
-                                                        Question {index + 1}: {detail.question}
-                                                    </p>
-                                                    {detail.explanation && (
-                                                        <p className="text-sm text-gray-600 italic">
-                                                            {detail.explanation}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* Actions */}
-                        <div className="mt-8 flex gap-4">
+                        <div className="flex gap-4">
                             <button
                                 onClick={handleLogout}
-                                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+                                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gray-900 text-white font-black text-xs rounded-2xl hover:bg-black transition-all shadow-xl shadow-gray-100 uppercase tracking-widest"
                             >
-                                <LogOut className="w-5 h-5" />
-                                Exit Portal
+                                <LogOut className="w-4 h-4" />
+                                Terminate Session
                             </button>
                         </div>
                     </div>

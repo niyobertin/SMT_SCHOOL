@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
 import api from '../../redux/api/api';
 
 interface ExamAdminState {
@@ -222,6 +221,18 @@ export const addQuestion = createAsyncThunk(
     }
 );
 
+export const bulkAddQuestions = createAsyncThunk(
+    'examAdmin/bulkAddQuestions',
+    async ({ examId, questions }: { examId: string; questions: any[] }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/exams/${examId}/questions/bulk`, { questions });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to bulk add questions');
+        }
+    }
+);
+
 export const updateQuestion = createAsyncThunk(
     'examAdmin/updateQuestion',
     async ({ examId, questionId, data }: { examId: string; questionId: string; data: any }, { rejectWithValue }) => {
@@ -309,6 +320,18 @@ export const createCandidate = createAsyncThunk(
     }
 );
 
+export const bulkCreateCandidates = createAsyncThunk(
+    'examAdmin/bulkCreateCandidates',
+    async ({ orgId, candidates }: { orgId: string; candidates: any[] }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/exams/organizations/${orgId}/candidates/bulk`, { candidates });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to bulk create candidates');
+        }
+    }
+);
+
 export const updateCandidate = createAsyncThunk(
     'examAdmin/updateCandidate',
     async ({ candidateId, data }: { candidateId: string; data: any }, { rejectWithValue }) => {
@@ -348,9 +371,9 @@ export const assignExam = createAsyncThunk(
 
 export const bulkAssignExam = createAsyncThunk(
     'examAdmin/bulkAssignExam',
-    async ({ examId, candidateIds }: { examId: string; candidateIds: string[] }, { rejectWithValue }) => {
+    async ({ examId, candidateIds, notify = true }: { examId: string; candidateIds: string[]; notify?: boolean }, { rejectWithValue }) => {
         try {
-            const response = await api.post(`/exams/${examId}/assign-bulk`, { candidateIds });
+            const response = await api.post(`/exams/${examId}/assign-bulk?notify=${notify}`, { candidateIds });
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to bulk assign exams');
@@ -411,6 +434,18 @@ export const fetchExamAnalytics = createAsyncThunk(
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch analytics');
+        }
+    }
+);
+
+export const authorizeRetake = createAsyncThunk(
+    'examAdmin/authorizeRetake',
+    async ({ assignmentId, allowRetake }: { assignmentId: string; allowRetake: boolean }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/exams/assignments/${assignmentId}/authorize-retake`, { allowRetake });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to authorize retake');
         }
     }
 );
@@ -490,44 +525,22 @@ const examAdminSlice = createSlice({
             .addCase(fetchExams.fulfilled, (state, action) => {
                 state.exams = action.payload.data;
             })
-            .addCase(createExam.fulfilled, (state, action) => {
-                state.exams.push(action.payload.data);
-            })
-            .addCase(updateExam.fulfilled, (state, action) => {
-                const index = state.exams.findIndex(e => e.id === action.payload.data.id);
-                if (index !== -1) {
-                    state.exams[index] = action.payload.data;
-                }
-            })
             .addCase(deleteExam.fulfilled, (state, action) => {
+                state.loading = false;
                 state.exams = state.exams.filter(e => e.id !== action.payload);
+            })
+            .addCase(deleteExam.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deleteExam.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             })
             // Exam Details
             .addCase(fetchExamDetails.fulfilled, (state, action) => {
                 state.selectedExam = action.payload.data;
             })
             // Questions
-            .addCase(addQuestion.fulfilled, (state, action) => {
-                if (state.selectedExam && state.selectedExam.id === action.meta.arg.examId) {
-                    // Optimistically add question if we have structure, otherwise maybe just re-fetch
-                    // Assuming backend returns the created question
-                    if (!state.selectedExam.questions) state.selectedExam.questions = [];
-                    state.selectedExam.questions.push(action.payload.data);
-                }
-            })
-            .addCase(updateQuestion.fulfilled, (state, action) => {
-                if (state.selectedExam && state.selectedExam.id === action.meta.arg.examId) {
-                    const qIndex = state.selectedExam.questions?.findIndex((q: any) => q.id === action.meta.arg.questionId);
-                    if (qIndex !== undefined && qIndex !== -1) {
-                        state.selectedExam.questions[qIndex] = action.payload.data;
-                    }
-                }
-            })
-            .addCase(deleteQuestion.fulfilled, (state, action) => {
-                if (state.selectedExam && state.selectedExam.id === action.meta.arg.examId) {
-                    state.selectedExam.questions = state.selectedExam.questions.filter((q: any) => q.id !== action.meta.arg.questionId);
-                }
-            })
             // Candidates
             .addCase(fetchCandidates.fulfilled, (state, action) => {
                 state.candidates = action.payload.data;
@@ -537,15 +550,6 @@ const examAdminSlice = createSlice({
             })
             .addCase(fetchExamAssignedCandidates.fulfilled, (state, action) => {
                 state.assignedCandidateIds = action.payload.data;
-            })
-            .addCase(createCandidate.fulfilled, (state, action) => {
-                state.candidates.push(action.payload.data);
-            })
-            .addCase(updateCandidate.fulfilled, (state, action) => {
-                const index = state.candidates.findIndex(c => c.id === action.payload.data.id);
-                if (index !== -1) {
-                    state.candidates[index] = action.payload.data;
-                }
             })
             // Global Results
             .addCase(fetchGlobalExamResults.pending, (state) => {
@@ -564,7 +568,121 @@ const examAdminSlice = createSlice({
                 state.error = action.payload as string;
             })
             .addCase(deleteCandidate.fulfilled, (state, action) => {
+                state.loading = false;
                 state.candidates = state.candidates.filter(c => c.id !== action.payload);
+            })
+            .addCase(deleteCandidate.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(deleteCandidate.rejected, (state) => {
+                state.loading = false;
+            })
+            // Bulk Candidates
+            .addCase(bulkCreateCandidates.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(bulkCreateCandidates.fulfilled, (state, action) => {
+                state.loading = false;
+                state.candidates = [...state.candidates, ...action.payload.data];
+            })
+            .addCase(bulkCreateCandidates.rejected, (state) => {
+                state.loading = false;
+            })
+            // Bulk Questions
+            .addCase(bulkAddQuestions.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(bulkAddQuestions.fulfilled, (state, action) => {
+                state.loading = false;
+                if (state.selectedExam && state.selectedExam.id === action.meta.arg.examId) {
+                    if (!state.selectedExam.questions) state.selectedExam.questions = [];
+                    state.selectedExam.questions = [...state.selectedExam.questions, ...action.payload.data];
+                }
+            })
+            .addCase(bulkAddQuestions.rejected, (state) => {
+                state.loading = false;
+            })
+            // mutation loading states
+            .addCase(createExam.pending, (state) => { state.loading = true; })
+            .addCase(createExam.fulfilled, (state, action) => {
+                state.loading = false;
+                state.exams.push(action.payload.data);
+            })
+            .addCase(createExam.rejected, (state) => { state.loading = false; })
+            .addCase(updateExam.pending, (state) => { state.loading = true; })
+            .addCase(updateExam.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.exams.findIndex(e => e.id === action.payload.data.id);
+                if (index !== -1) {
+                    state.exams[index] = action.payload.data;
+                }
+            })
+            .addCase(updateExam.rejected, (state) => { state.loading = false; })
+            .addCase(addQuestion.pending, (state) => { state.loading = true; })
+            .addCase(addQuestion.fulfilled, (state, action) => {
+                state.loading = false;
+                if (state.selectedExam && state.selectedExam.id === action.meta.arg.examId) {
+                    if (!state.selectedExam.questions) state.selectedExam.questions = [];
+                    state.selectedExam.questions.push(action.payload.data);
+                }
+            })
+            .addCase(addQuestion.rejected, (state) => { state.loading = false; })
+            .addCase(updateQuestion.pending, (state) => { state.loading = true; })
+            .addCase(updateQuestion.fulfilled, (state, action) => {
+                state.loading = false;
+                if (state.selectedExam && state.selectedExam.id === action.meta.arg.examId) {
+                    const qIndex = state.selectedExam.questions?.findIndex((q: any) => q.id === action.meta.arg.questionId);
+                    if (qIndex !== undefined && qIndex !== -1) {
+                        state.selectedExam.questions[qIndex] = action.payload.data;
+                    }
+                }
+            })
+            .addCase(updateQuestion.rejected, (state) => { state.loading = false; })
+            .addCase(deleteQuestion.pending, (state) => { state.loading = true; })
+            .addCase(deleteQuestion.fulfilled, (state, action) => {
+                state.loading = false;
+                if (state.selectedExam && state.selectedExam.id === action.meta.arg.examId) {
+                    state.selectedExam.questions = state.selectedExam.questions.filter((q: any) => q.id !== action.meta.arg.questionId);
+                }
+            })
+            .addCase(deleteQuestion.rejected, (state) => { state.loading = false; })
+            .addCase(createCandidate.pending, (state) => { state.loading = true; })
+            .addCase(createCandidate.fulfilled, (state, action) => {
+                state.loading = false;
+                state.candidates.push(action.payload.data);
+            })
+            .addCase(createCandidate.rejected, (state) => { state.loading = false; })
+            .addCase(updateCandidate.pending, (state) => { state.loading = true; })
+            .addCase(updateCandidate.fulfilled, (state, action) => {
+                state.loading = false;
+                const index = state.candidates.findIndex(c => c.id === action.payload.data.id);
+                if (index !== -1) {
+                    state.candidates[index] = action.payload.data;
+                }
+            })
+            .addCase(updateCandidate.rejected, (state) => { state.loading = false; })
+            .addCase(bulkAssignExam.rejected, (state) => { state.loading = false; })
+            .addCase(authorizeRetake.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(authorizeRetake.fulfilled, (state, action) => {
+                state.loading = false;
+                if (state.globalResults?.data) {
+                    const updatedAssignment = action.payload.data;
+                    state.globalResults.data = state.globalResults.data.map(attempt => {
+                        if (attempt.candidateId === updatedAssignment.candidateId && attempt.examId === updatedAssignment.examId) {
+                            return {
+                                ...attempt,
+                                assignment: updatedAssignment
+                            };
+                        }
+                        return attempt;
+                    });
+                }
+            })
+            .addCase(authorizeRetake.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             })
     },
 });

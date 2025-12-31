@@ -16,6 +16,7 @@ import {
     deleteOrganization,
     // Candidate Management
     createCandidate,
+    createCandidatesBulk,
     getCandidates,
     updateCandidate,
     deleteCandidate,
@@ -27,6 +28,7 @@ import {
     deleteExam,
     // Question Management
     addQuestionToExam,
+    addQuestionsBulk,
     updateExamQuestion,
     deleteExamQuestion,
     // Exam Assignment
@@ -47,6 +49,7 @@ import {
     getGlobalExamResults,
     getAllExams,
     getAllCandidates,
+    authorizeRetake,
 } from '../controller/exam.controller';
 
 const router = express.Router();
@@ -149,6 +152,13 @@ router.post(
     catchAsync(createCandidate)
 );
 
+router.post(
+    '/organizations/:orgId/candidates/bulk',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(createCandidatesBulk)
+);
+
 router.get(
     '/organizations/:orgId/candidates',
     authenticate,
@@ -234,6 +244,13 @@ router.post(
     catchAsync(addQuestionToExam)
 );
 
+router.post(
+    '/:examId/questions/bulk',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(addQuestionsBulk)
+);
+
 router.patch(
     '/questions/:questionId',
     authenticate,
@@ -278,6 +295,13 @@ router.post(
     authenticate,
     authorize('ADMIN', 'INSTRUCTOR'),
     catchAsync(bulkAssignExamToCandidates)
+);
+
+router.post(
+    '/assignments/:assignmentId/authorize-retake',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(authorizeRetake)
 );
 
 // ============================================

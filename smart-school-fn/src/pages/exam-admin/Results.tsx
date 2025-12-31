@@ -1,11 +1,12 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
     fetchGlobalExamResults,
     fetchOrganizations,
     fetchExams,
     setSelectedOrg,
+    authorizeRetake,
 } from '../../redux/features/examAdminSlice';
 import { toast } from 'react-toastify';
 import { jsPDF } from 'jspdf';
@@ -13,24 +14,24 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import {
     Building2,
-    Calendar,
     Search,
     Download,
     Filter,
     FileText,
     CheckCircle,
     XCircle,
-    User,
     ChevronLeft,
     ChevronRight,
-    Loader2
+    Loader2,
+    RotateCcw,
+    AlertTriangle
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const Results = () => {
     const dispatch = useAppDispatch();
     const {
         organizations,
-        selectedOrg,
         exams,
         globalResults,
         loading
@@ -45,8 +46,15 @@ const Results = () => {
     });
 
     const [page, setPage] = useState(1);
-    const limit = 50; // Show more results per page for better overview
+    const [limit] = useState(10);
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        assignmentId: string;
+        candidateName: string;
+        allowRetake: boolean;
+    }>({ show: false, assignmentId: '', candidateName: '', allowRetake: false });
 
+    // Local filter state
     // Initialize
     useEffect(() => {
         dispatch(fetchOrganizations());
@@ -101,7 +109,7 @@ const Results = () => {
             'Last Name': attempt.candidate.lastName,
             'Email': attempt.candidate.email || 'N/A',
             'Exam Title': attempt.exam.title,
-            'Score (%)': attempt.score,
+            'Score (%)': attempt.score?.toFixed(2),
             'Status': attempt.isPassed ? 'PASSED' : 'FAILED',
             'Date': new Date(attempt.startTime).toLocaleDateString(),
             'Duration (min)': attempt.timeSpent ? Math.round(attempt.timeSpent / 60) : 'N/A'
@@ -128,8 +136,6 @@ const Results = () => {
         if (!globalResults?.data) return;
 
         const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.width;
-
         // Title
         doc.setFontSize(18);
         doc.text('Exam Results Report', 14, 20);
@@ -159,7 +165,7 @@ const Results = () => {
             attempt.candidate.candidateId,
             `${attempt.candidate.firstName} ${attempt.candidate.lastName}`,
             attempt.exam.title,
-            `${attempt.score}%`,
+            `${attempt.score?.toFixed(2)}%`,
             attempt.isPassed ? 'PASS' : 'FAIL'
         ]);
 
@@ -176,7 +182,7 @@ const Results = () => {
         doc.setFontSize(11);
         doc.setTextColor(0);
         if (globalResults.meta) {
-            doc.text(`Average Score: ${Math.round(globalResults.meta.averageScore * 10) / 10}%`, 14, finalY);
+            doc.text(`Average Score: ${Math.round(globalResults.meta.averageScore * 100) / 100}%`, 14, finalY);
             doc.text(`Total Candidates: ${globalResults.meta.total}`, 14, finalY + 7);
         }
 
@@ -185,7 +191,7 @@ const Results = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-white p-6">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Exam Results</h1>
@@ -298,84 +304,142 @@ const Results = () => {
                 </div>
 
                 {/* Results Table */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    {loading ? (
-                        <div className="p-12 flex justify-center items-center text-gray-500">
-                            <Loader2 className="w-8 h-8 animate-spin mr-2 text-blue-500" />
-                            Loading results...
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative min-h-[400px]">
+                    {loading && (!globalResults?.data || globalResults.data.length === 0) ? (
+                        <div className="p-12 flex flex-col justify-center items-center text-gray-500 min-h-[400px]">
+                            <Loader2 className="w-12 h-12 animate-spin mb-4 text-indigo-500" />
+                            <p className="font-medium">Fetching examination results...</p>
                         </div>
                     ) : globalResults?.data && globalResults.data.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-gray-600">
-                                <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
-                                    <tr>
-                                        <th className="px-6 py-4">Pos</th>
-                                        <th className="px-6 py-4">ID</th>
-                                        <th className="px-6 py-4">Candidate Name</th>
-                                        <th className="px-6 py-4">Exam Info</th>
-                                        <th className="px-6 py-4">Score (%)</th>
-                                        <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {globalResults.data.map((attempt: any, index: number) => (
-                                        <tr key={attempt.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-gray-900">
-                                                {(page - 1) * limit + index + 1}
-                                            </td>
-                                            <td className="px-6 py-4 font-mono text-xs text-indigo-600 bg-indigo-50/50">
-                                                {attempt.candidate.candidateId}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
-                                                        {attempt.candidate.firstName[0]}{attempt.candidate.lastName[0]}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-semibold text-gray-900">{attempt.candidate.firstName} {attempt.candidate.lastName}</p>
-                                                        <p className="text-xs text-gray-400">{attempt.candidate.email || attempt.candidate.phoneNumber || '-'}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <FileText className="w-4 h-4 text-gray-400" />
-                                                    <span className="text-gray-700 font-medium">{attempt.exam.title}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="text-lg font-bold text-gray-900">{attempt.score}%</span>
-                                                    <span className="text-[10px] text-gray-400">Pass: {attempt.exam.passingScore}%</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {attempt.isPassed ? (
-                                                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                                                        <CheckCircle className="w-3 h-3" />
-                                                        Pass
-                                                    </div>
-                                                ) : (
-                                                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-                                                        <XCircle className="w-3 h-3" />
-                                                        Fail
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-gray-500">
-                                                {new Date(attempt.startTime).toLocaleDateString()}
-                                                <div className="text-xs text-gray-400">
-                                                    {new Date(attempt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </div>
-                                            </td>
+                        <>
+                            {loading && (
+                                <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                                    <div className="bg-white p-3 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 pr-5">
+                                        <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+                                        <span className="text-sm font-semibold text-gray-700">Updating...</span>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm text-gray-600">
+                                    <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-4">Pos</th>
+                                            <th className="px-6 py-4">ID</th>
+                                            <th className="px-6 py-4">Candidate Name</th>
+                                            <th className="px-6 py-4">Exam Info</th>
+                                            <th className="px-6 py-4">Score (%)</th>
+                                            <th className="px-6 py-4">Status</th>
+                                            <th className="px-6 py-4">Date</th>
+                                            <th className="px-6 py-4">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {globalResults.data.map((attempt: any, index: number) => (
+                                            <tr key={attempt.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 font-medium text-gray-900">
+                                                    {(page - 1) * limit + index + 1}
+                                                </td>
+                                                <td className="px-6 py-4 font-mono text-xs text-indigo-600 bg-indigo-50/50">
+                                                    {attempt.candidate.candidateId}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                                                            {attempt.candidate.firstName[0]}{attempt.candidate.lastName[0]}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900">{attempt.candidate.firstName} {attempt.candidate.lastName}</p>
+                                                            <p className="text-xs text-gray-400">{attempt.candidate.email || attempt.candidate.phoneNumber || '-'}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <FileText className="w-4 h-4 text-gray-400" />
+                                                        <span className="text-gray-700 font-medium">{attempt.exam.title}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-lg font-bold text-gray-900">{attempt.score?.toFixed(2)}%</span>
+                                                        <span className="text-[10px] text-gray-400">Pass: {attempt.exam.passingScore}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {attempt.isPassed ? (
+                                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                                                            <CheckCircle className="w-3 h-3" />
+                                                            Pass
+                                                        </div>
+                                                    ) : (
+                                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+                                                            <XCircle className="w-3 h-3" />
+                                                            Fail
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-500">
+                                                    {new Date(attempt.startTime).toLocaleDateString()}
+                                                    <div className="text-xs text-gray-400">
+                                                        {new Date(attempt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {attempt.assignment && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setConfirmModal({
+                                                                    show: true,
+                                                                    assignmentId: attempt.assignment.id,
+                                                                    candidateName: attempt.candidate.firstName,
+                                                                    allowRetake: !attempt.assignment.allowRetake
+                                                                });
+                                                            }}
+                                                            disabled={loading}
+                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${attempt.assignment.allowRetake
+                                                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
+                                                                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200'
+                                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                            title={attempt.assignment.allowRetake ? 'Unauthorized Retake' : 'Authorize Retake'}
+                                                        >
+                                                            <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                                                            {attempt.assignment.allowRetake ? 'Authorized' : 'Authorize Retake'}
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {/* Pagination only if data exists and not loading initial state */}
+                            {(!loading || (globalResults?.data && globalResults.data.length > 0)) && globalResults?.pagination && globalResults.pagination.pages > 1 && (
+                                <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                                    <div className="text-sm text-gray-500">
+                                        Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to <span className="font-medium">{Math.min(page * limit, globalResults.pagination.total)}</span> of <span className="font-medium">{globalResults.pagination.total}</span> results
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setPage(p => Math.min(globalResults?.pagination?.pages || 1, p + 1))}
+                                            disabled={page === (globalResults?.pagination?.pages || 1)}
+                                            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     ) : (
-                        <div className="p-12 text-center">
+                        <div className="p-12 text-center min-h-[400px] flex flex-col justify-center">
                             <div className="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                                 <Search className="w-8 h-8 text-gray-400" />
                             </div>
@@ -383,33 +447,58 @@ const Results = () => {
                             <p className="text-gray-500">Try adjusting your filters to see candidate results.</p>
                         </div>
                     )}
-
-                    {/* Pagination */}
-                    {globalResults?.pagination && globalResults.pagination.pages > 1 && (
-                        <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                            <div className="text-sm text-gray-500">
-                                Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to <span className="font-medium">{Math.min(page * limit, globalResults.pagination.total)}</span> of <span className="font-medium">{globalResults.pagination.total}</span> results
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => setPage(p => Math.min(globalResults?.pagination?.pages || 1, p + 1))}
-                                    disabled={page === (globalResults?.pagination?.pages || 1)}
-                                    className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
+
+            {/* Custom Confirmation Modal */}
+            <AnimatePresence>
+                {confirmModal.show && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 border border-gray-100"
+                        >
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <AlertTriangle className="w-8 h-8 text-amber-600" />
+                                </div>
+                                <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
+                                    {confirmModal.allowRetake ? 'Authorize Retake?' : 'Revoke Authorization?'}
+                                </h3>
+                                <p className="text-gray-500 font-medium mb-8 leading-relaxed">
+                                    Are you sure you want to {confirmModal.allowRetake ? 'grant an additional attempt' : 'remove retake permission'} for <strong>{confirmModal.candidateName}</strong>?
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                                        className="flex-1 px-6 py-3.5 border-2 border-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-50 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            dispatch(authorizeRetake({
+                                                assignmentId: confirmModal.assignmentId,
+                                                allowRetake: confirmModal.allowRetake
+                                            })).then((res: any) => {
+                                                if (res.payload?.status === 'success') {
+                                                    toast.success(res.payload.message);
+                                                }
+                                                setConfirmModal({ ...confirmModal, show: false });
+                                            });
+                                        }}
+                                        className={`flex-1 px-6 py-3.5 ${confirmModal.allowRetake ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-red-600 hover:bg-red-700'} text-white rounded-2xl font-bold transition-all shadow-lg active:scale-[0.98]`}
+                                    >
+                                        Confirm
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

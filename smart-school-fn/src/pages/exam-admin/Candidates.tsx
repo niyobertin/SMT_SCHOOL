@@ -5,8 +5,10 @@ import {
     createCandidate,
     updateCandidate,
     deleteCandidate,
+    bulkCreateCandidates,
     fetchOrganizations,
 } from '../../redux/features/examAdminSlice';
+import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,6 +21,8 @@ import {
     X,
     Search,
     Copy,
+    Upload,
+    Loader2
 } from 'lucide-react';
 
 const Candidates = () => {
@@ -124,10 +128,66 @@ const Candidates = () => {
         setSelectedCandidate(null);
     };
 
+    const downloadTemplate = () => {
+        const template = [
+            { FirstName: 'John', LastName: 'Doe', Email: 'john@example.com', PhoneNumber: '1234567890' },
+            { FirstName: 'Jane', LastName: 'Smith', Email: '', PhoneNumber: '0987654321' },
+        ];
+        const ws = XLSX.utils.json_to_sheet(template);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Candidates");
+        XLSX.writeFile(wb, "candidate_template.xlsx");
+    };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success('Copied to clipboard!');
+    };
+
+    const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        const orgId = selectedOrgId || formData.organizationId;
+
+        if (!file) return;
+        if (!orgId) {
+            toast.warning('Please select an organization first for bulk upload.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target?.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = XLSX.utils.sheet_to_json(ws);
+
+                // Expected columns: FirstName, LastName, Email, PhoneNumber
+                const formattedCandidates = data.map((row: any) => ({
+                    firstName: row.FirstName || row.firstName || '',
+                    lastName: row.LastName || row.lastName || '',
+                    email: row.Email || row.email || '',
+                    phoneNumber: row.PhoneNumber || row.phoneNumber || '',
+                })).filter(c => c.firstName && c.lastName);
+
+                if (formattedCandidates.length === 0) {
+                    toast.error('No valid candidates found in the Excel file.');
+                    return;
+                }
+
+                await dispatch(bulkCreateCandidates({ orgId, candidates: formattedCandidates })).unwrap();
+                toast.success(`Successfully uploaded ${formattedCandidates.length} candidates`);
+
+                // Refresh list
+                dispatch(fetchAllCandidates({ organizationId: orgId }));
+            } catch (error: any) {
+                toast.error('Failed to parse Excel file. Ensure it follows the required format (FirstName, LastName, Email, PhoneNumber).');
+                console.error(error);
+            }
+        };
+        reader.readAsBinaryString(file);
+        e.target.value = '';
     };
 
     // We use server side filtering now for search too, but kept local filter for super smooth feel if already loaded
@@ -169,16 +229,39 @@ const Candidates = () => {
                     </select>
                 </div>
 
-                <button
-                    onClick={() => {
-                        resetForm();
-                        setShowCreateModal(true);
-                    }}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg whitespace-nowrap"
-                >
-                    <Plus className="w-5 h-5" />
-                    Add Candidate
-                </button>
+                <div className="flex gap-2">
+                    <input
+                        type="file"
+                        id="candidate-excel-upload"
+                        className="hidden"
+                        accept=".xlsx, .xls"
+                        onChange={handleExcelUpload}
+                    />
+                    <button
+                        onClick={downloadTemplate}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all font-medium whitespace-nowrap"
+                    >
+                        Template
+                    </button>
+                    <button
+                        onClick={() => document.getElementById('candidate-excel-upload')?.click()}
+                        disabled={loading}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-indigo-600 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-all font-medium whitespace-nowrap"
+                    >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                        Bulk Upload
+                    </button>
+                    <button
+                        onClick={() => {
+                            resetForm();
+                            setShowCreateModal(true);
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg whitespace-nowrap"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Add Candidate
+                    </button>
+                </div>
             </div>
 
             {/* Candidates Table */}
@@ -207,7 +290,16 @@ const Candidates = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {filteredCandidates.length === 0 ? (
+                        {loading ? (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                    <div className="flex flex-col items-center justify-center">
+                                        <Loader2 className="w-8 h-8 animate-spin mb-2 text-indigo-600" />
+                                        <span>Loading candidates...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : filteredCandidates.length === 0 ? (
                             <tr>
                                 <td colSpan={5} className="px-6 py-12 text-center">
                                     <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
@@ -294,7 +386,7 @@ const Candidates = () => {
             {/* Create Candidate Modal */}
             <AnimatePresence>
                 {showCreateModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -348,13 +440,12 @@ const Candidates = () => {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Email *
+                                        Email
                                     </label>
                                     <input
                                         type="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        required
                                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     />
                                 </div>
@@ -404,8 +495,10 @@ const Candidates = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
+                                        disabled={loading}
+                                        className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center justify-center gap-2"
                                     >
+                                        {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                                         {isEditing ? 'Update Candidate' : 'Create Candidate'}
                                     </button>
                                 </div>
@@ -418,7 +511,7 @@ const Candidates = () => {
             {/* Delete Confirmation Modal */}
             <AnimatePresence>
                 {showDeleteModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -441,8 +534,10 @@ const Candidates = () => {
                                 </button>
                                 <button
                                     onClick={handleConfirmDelete}
-                                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium"
+                                    disabled={loading}
+                                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium flex items-center justify-center gap-2"
                                 >
+                                    {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                                     Delete
                                 </button>
                             </div>

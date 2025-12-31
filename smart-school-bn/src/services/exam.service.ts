@@ -108,6 +108,24 @@ export const hasRemainingAttempts = async (
 
     const attemptsRemaining = maxAttempts - attemptsUsed;
 
+    // Check if admin has authorized a retake
+    const assignment = await prisma.examAssignment.findUnique({
+        where: {
+            candidateId_examId: {
+                candidateId,
+                examId,
+            },
+        },
+    });
+
+    if (assignment?.allowRetake) {
+        return {
+            hasAttempts: true,
+            attemptsUsed,
+            attemptsRemaining: (attemptsRemaining > 0 ? attemptsRemaining : 1), // At least 1 if authorized
+        };
+    }
+
     return {
         hasAttempts: attemptsRemaining > 0,
         attemptsUsed,

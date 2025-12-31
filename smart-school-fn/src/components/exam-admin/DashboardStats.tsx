@@ -75,87 +75,85 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
     return (
         <div className="space-y-6 mb-8">
             {/* 1. Comparison Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {/* Global Stats - Only shown if available */}
                 {stats.organizations && (
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-gray-500 text-sm font-medium">Organizations</h3>
-                            <div className="p-2 bg-orange-50 rounded-lg">
-                                <Building2 className="w-5 h-5 text-orange-600" />
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Organizations</h3>
+                            <div className="p-1.5 bg-orange-50 rounded-lg">
+                                <Building2 className="w-4 h-4 text-orange-600" />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">{stats.organizations.total}</p>
-                        <p className="text-sm text-gray-500 mt-2">Active Organizations</p>
+                        <p className="text-2xl font-black text-gray-900 leading-tight">{stats.organizations.total}</p>
+                        <p className="text-[10px] text-gray-400 mt-1 truncate">Active Orgs</p>
                     </div>
                 )}
 
                 {/* Total Questions */}
                 {stats.questions && (
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-gray-500 text-sm font-medium">Questions Bank</h3>
-                            <div className="p-2 bg-teal-50 rounded-lg">
-                                <HelpCircle className="w-5 h-5 text-teal-600" />
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Question Bank</h3>
+                            <div className="p-1.5 bg-teal-50 rounded-lg">
+                                <HelpCircle className="w-4 h-4 text-teal-600" />
                             </div>
                         </div>
-                        <p className="text-3xl font-bold text-gray-900">{stats.questions.total}</p>
-                        <p className="text-sm text-gray-500 mt-2">Total Questions</p>
+                        <p className="text-2xl font-black text-gray-900 leading-tight">{stats.questions.total}</p>
+                        <p className="text-[10px] text-gray-400 mt-1 truncate">Total Items</p>
                     </div>
                 )}
 
                 {/* Total Exams */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-gray-500 text-sm font-medium">Total Exams</h3>
-                        <div className="p-2 bg-indigo-50 rounded-lg">
-                            <FileText className="w-5 h-5 text-indigo-600" />
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Total Exams</h3>
+                        <div className="p-1.5 bg-indigo-50 rounded-lg">
+                            <FileText className="w-4 h-4 text-indigo-600" />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">{stats.exams.total}</p>
-                    <div className="flex items-center gap-2 mt-2 text-sm">
-                        <span className="text-green-600 font-medium">{stats.exams.published} active</span>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-gray-500">{stats.exams.draft} drafts</span>
+                    <p className="text-2xl font-black text-gray-900 leading-tight">{stats.exams.total}</p>
+                    <div className="flex items-center gap-1 mt-1 text-[10px]">
+                        <span className="text-green-600 font-bold">{stats.exams.published} active</span>
                     </div>
                 </div>
 
                 {/* Total Candidates */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-gray-500 text-sm font-medium">Candidates</h3>
-                        <div className="p-2 bg-purple-50 rounded-lg">
-                            <Users className="w-5 h-5 text-purple-600" />
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Candidates</h3>
+                        <div className="p-1.5 bg-purple-50 rounded-lg">
+                            <Users className="w-4 h-4 text-purple-600" />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">{stats.candidates.total}</p>
-                    <p className="text-sm text-gray-500 mt-2">Registered in organization</p>
+                    <p className="text-2xl font-black text-gray-900 leading-tight">{stats.candidates.total}</p>
+                    <p className="text-[10px] text-gray-400 mt-1 truncate">Registered</p>
                 </div>
 
                 {/* Total Attempts */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-gray-500 text-sm font-medium">Total Attempts</h3>
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                            <Activity className="w-5 h-5 text-blue-600" />
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Attempts</h3>
+                        <div className="p-1.5 bg-blue-50 rounded-lg">
+                            <Activity className="w-4 h-4 text-blue-600" />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">{stats.attempts.total}</p>
-                    <p className="text-sm text-gray-500 mt-2">Exams taken so far</p>
+                    <p className="text-2xl font-black text-gray-900 leading-tight">{stats.attempts.total}</p>
+                    <p className="text-[10px] text-gray-400 mt-1 truncate">Total Taken</p>
                 </div>
 
                 {/* Average Score */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-gray-500 text-sm font-medium">Average Score</h3>
-                        <div className="p-2 bg-green-50 rounded-lg">
-                            <TrendingUp className="w-5 h-5 text-green-600" />
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-500 text-[10px] uppercase tracking-wider font-bold">Avg Score</h3>
+                        <div className="p-1.5 bg-green-50 rounded-lg">
+                            <TrendingUp className="w-4 h-4 text-green-600" />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">{stats.attempts.avgScore}%</p>
-                    <div className="flex items-center gap-1 mt-2">
-                        <span className={`text-sm font-medium ${stats.attempts.passRate >= 70 ? 'text-green-600' : 'text-yellow-600'}`}>
-                            {stats.attempts.passRate}% pass rate
+                    <p className="text-2xl font-black text-gray-900 leading-tight">{stats.attempts.avgScore}%</p>
+                    <div className="flex items-center gap-1 mt-1">
+                        <span className={`text-[10px] font-bold ${stats.attempts.passRate >= 70 ? 'text-green-600' : 'text-yellow-600'}`}>
+                            {stats.attempts.passRate}% pass
                         </span>
                     </div>
                 </div>
@@ -167,7 +165,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
                 {stats.examDurationStats && stats.examDurationStats.length > 0 && (
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 col-span-1 lg:col-span-2">
                         <h3 className="font-bold text-gray-900 mb-6">Avg Time Spent per Exam (Minutes)</h3>
-                        <div className="h-64">
+                        <div className="h-48 text-xs">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={stats.examDurationStats} layout="vertical" margin={{ left: 100 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
@@ -230,42 +228,6 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
                 </div>
             </div>
 
-            {/* 3. Recent Activity List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-6 border-b border-gray-200">
-                    <h3 className="font-bold text-gray-900">Recent Activity</h3>
-                </div>
-                <div className="divide-y divide-gray-200">
-                    {stats.recentActivity.length > 0 ? (
-                        stats.recentActivity.map((activity) => (
-                            <div key={activity.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-2 bg-gray-100 rounded-full">
-                                        <Clock className="w-5 h-5 text-gray-500" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-gray-900">{activity.candidateName}</p>
-                                        <p className="text-sm text-gray-500">completed <strong>{activity.examTitle}</strong></p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <span className="text-sm text-gray-500">
-                                        {new Date(activity.date).toLocaleDateString()}
-                                    </span>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${activity.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                                        }`}>
-                                        Score: {activity.score}%
-                                    </span>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="p-8 text-center text-gray-500">
-                            No recent activity found.
-                        </div>
-                    )}
-                </div>
-            </div>
         </div>
     );
 };

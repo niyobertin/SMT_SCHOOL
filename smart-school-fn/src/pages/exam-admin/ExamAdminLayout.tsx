@@ -7,7 +7,6 @@ import {
     Building2,
     Users,
     FileText,
-    BarChart3,
     LogOut,
     Shield,
     ClipboardList,
@@ -37,22 +36,21 @@ const ExamAdminLayout = () => {
         { path: '/exam-admin/exams', icon: FileText, label: 'Exams' },
         { path: '/exam-admin/candidates', icon: Users, label: 'Candidates' },
         { path: '/exam-admin/results', icon: ClipboardList, label: 'Results' },
-        { path: '/exam-admin/analytics', icon: BarChart3, label: 'Analytics' },
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="h-screen bg-white flex overflow-hidden">
             {/* Sidebar */}
-            <aside className="w-64 bg-gradient-to-b from-indigo-900 to-purple-900 text-white flex flex-col">
+            <aside className="w-64 bg-slate-900 text-white flex flex-col h-full flex-shrink-0">
                 {/* Logo */}
-                <div className="p-6 border-b border-indigo-800">
+                <div className="p-6 border-b border-slate-800">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white rounded-lg">
-                            <Shield className="w-6 h-6 text-indigo-600" />
+                        <div className="p-2 bg-white/10 rounded-lg">
+                            <Shield className="w-6 h-6 text-indigo-400" />
                         </div>
                         <div>
                             <h1 className="font-bold text-lg">Exam Admin</h1>
-                            <p className="text-xs text-indigo-300">Management Portal</p>
+                            <p className="text-xs text-slate-400">Management Portal</p>
                         </div>
                     </div>
                 </div>
@@ -69,8 +67,8 @@ const ExamAdminLayout = () => {
                                     <button
                                         onClick={() => navigate(item.path)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                                            ? 'bg-white text-indigo-900 shadow-lg'
-                                            : 'text-indigo-100 hover:bg-indigo-800'
+                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            : 'text-slate-300 hover:bg-white/5'
                                             }`}
                                     >
                                         <Icon className="w-5 h-5" />
@@ -83,13 +81,13 @@ const ExamAdminLayout = () => {
                 </nav>
 
                 {/* User Info & Logout */}
-                <div className="p-4 border-t border-indigo-800">
+                <div className="p-4 border-t border-slate-800">
                     <div className="mb-3 px-2">
                         <p className="text-sm font-semibold text-white truncate">
                             {user?.firstName} {user?.lastName}
                         </p>
-                        <p className="text-xs text-indigo-300">{user?.email}</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-indigo-800 text-indigo-200 text-xs rounded">
+                        <p className="text-xs text-slate-400">{user?.email}</p>
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-slate-800 text-slate-300 text-xs rounded">
                             {user?.role}
                         </span>
                     </div>
@@ -104,7 +102,7 @@ const ExamAdminLayout = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-y-auto h-full px-4 md:px-0">
                 <Outlet />
             </main>
         </div>

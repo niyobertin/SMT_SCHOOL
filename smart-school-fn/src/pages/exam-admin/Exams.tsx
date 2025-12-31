@@ -11,11 +11,13 @@ import {
     deleteQuestion,
     addQuestion,
     updateQuestion,
+    bulkAddQuestions,
     fetchCandidates,
     fetchExamAssignedCandidates,
     bulkAssignExam,
     fetchExamDetails,
 } from '../../redux/features/examAdminSlice';
+import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -35,12 +37,14 @@ import {
     Search,
     ChevronDown,
     HelpCircle,
-    AlertTriangle
+    AlertTriangle,
+    Upload,
+    Loader2
 } from 'lucide-react';
 
 const Exams = () => {
     const dispatch = useAppDispatch();
-    const { organizations, selectedOrg, exams, selectedExam, candidates, assignedCandidateIds, loading, dashboardStats } = useAppSelector(
+    const { organizations, selectedOrg, exams, selectedExam, candidates, assignedCandidateIds, loading } = useAppSelector(
         (state) => state.examAdmin
     );
 
@@ -101,6 +105,7 @@ const Exams = () => {
         duration: 60,
         passingScore: 70,
         maxAttempts: 3,
+        status: 'DRAFT',
     });
 
     const [questionForm, setQuestionForm] = useState({
@@ -127,6 +132,7 @@ const Exams = () => {
             duration: exam.duration,
             passingScore: exam.passingScore,
             maxAttempts: exam.maxAttempts || 3,
+            status: exam.status || 'DRAFT',
         });
         setSelectedExamId(exam.id);
         setIsEditingExam(true);
@@ -185,7 +191,7 @@ const Exams = () => {
     };
 
     const resetExamForm = () => {
-        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3 });
+        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3, status: 'DRAFT' });
         setIsEditingExam(false);
         setSelectedExamId('');
     };
@@ -236,13 +242,68 @@ const Exams = () => {
         setQuestionIdToEdit(null);
     };
 
-    const handleDeleteQuestionClick = (qid: string) => { setQuestionToDelete(qid); setShowDeleteQuestionModal(true); }
+    const handleDeleteQuestionClick = (questionId: string) => {
+        setQuestionToDelete(questionId);
+        setShowDeleteQuestionModal(true);
+    };
+
     const handleConfirmDeleteQuestion = async () => {
         if (questionToDelete && selectedExamId) {
-            await dispatch(deleteQuestion({ examId: selectedExamId, questionId: questionToDelete }));
-            setShowDeleteQuestionModal(false);
+            try {
+                await dispatch(deleteQuestion({ examId: selectedExamId, questionId: questionToDelete })).unwrap();
+                toast.success('Question deleted');
+                setShowDeleteQuestionModal(false);
+            } catch (error: any) {
+                toast.error(error || 'Failed to delete question');
+            }
         }
     }
+
+    const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedExamId) return;
+
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const bstr = evt.target?.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data = XLSX.utils.sheet_to_json(ws);
+
+                // Expected columns: Question, Type, Points, Explanation, Options (comma separated like: Opt1|true, Opt2|false)
+                const formattedQuestions = data.map((row: any) => {
+                    const optionsRaw = row.Options || '';
+                    const options = optionsRaw.split('|').map((optStr: string) => {
+                        const [text, correct] = optStr.split(',');
+                        return { option: text?.trim(), isCorrect: correct?.trim() === 'true' };
+                    }).filter((o: any) => o.option);
+
+                    return {
+                        question: row.Question || 'Untitled Question',
+                        type: row.Type || 'MULTIPLE_CHOICE',
+                        points: Number(row.Points || 1),
+                        explanation: row.Explanation || '',
+                        options: options.length > 0 ? options : [
+                            { option: 'Option 1', isCorrect: true },
+                            { option: 'Option 2', isCorrect: false }
+                        ]
+                    };
+                });
+
+                await dispatch(bulkAddQuestions({ examId: selectedExamId, questions: formattedQuestions })).unwrap();
+                toast.success(`Successfully uploaded ${formattedQuestions.length} questions`);
+                await dispatch(fetchExamDetails(selectedExamId));
+            } catch (error: any) {
+                toast.error('Failed to parse Excel file. Ensure it follows the required format.');
+                console.error(error);
+            }
+        };
+        reader.readAsBinaryString(file);
+        // Reset file input
+        e.target.value = '';
+    };
 
     // --- ASSIGNMENT HANDLERS ---
     const handleAssignCandidates = async () => {
@@ -268,6 +329,17 @@ const Exams = () => {
         } else {
             setSelectedCandidateIds(unassignedCandidates.map(c => c.id));
         }
+    };
+
+    const downloadQuestionTemplate = () => {
+        const template = [
+            { Question: 'What is the capital of France?', Type: 'MULTIPLE_CHOICE', Points: 1, Explanation: 'Paris is the capital.', Options: 'Paris,true | London,false | Berlin,false | Madrid,false' },
+            { Question: 'The earth is flat.', Type: 'TRUE_FALSE', Points: 1, Explanation: 'The earth is a sphere.', Options: 'True,false | False,true' },
+        ];
+        const ws = XLSX.utils.json_to_sheet(template);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Questions");
+        XLSX.writeFile(wb, "question_template.xlsx");
     };
 
     const copyToClipboard = (text: string) => { navigator.clipboard.writeText(text); toast.success('Copied!'); };
@@ -460,7 +532,7 @@ const Exams = () => {
             {/* Create Exam Modal */}
             <AnimatePresence>
                 {showCreateExamModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-bold">{isEditingExam ? 'Edit Exam' : 'Create Exam'}</h3>
@@ -473,7 +545,27 @@ const Exams = () => {
                                     <div><label className="block text-sm font-medium mb-1">Duration (min)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.duration} onChange={e => setExamForm({ ...examForm, duration: parseInt(e.target.value) })} required /></div>
                                     <div><label className="block text-sm font-medium mb-1">Pass Score (%)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.passingScore} onChange={e => setExamForm({ ...examForm, passingScore: parseInt(e.target.value) })} required /></div>
                                 </div>
-                                <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors">Save Exam</button>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Status</label>
+                                        <select
+                                            className="w-full border rounded-lg p-2 bg-white"
+                                            value={examForm.status}
+                                            onChange={e => setExamForm({ ...examForm, status: e.target.value })}
+                                        >
+                                            <option value="DRAFT">Draft</option>
+                                            <option value="PUBLISHED">Published</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                                    {isEditingExam ? 'Update Exam' : 'Save Exam'}
+                                </button>
                             </form>
                         </motion.div>
                     </div>
@@ -483,13 +575,20 @@ const Exams = () => {
             {/* Delete Exam Modal */}
             <AnimatePresence>
                 {showDeleteExamModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-xl p-6 text-center max-w-sm">
                             <h3 className="text-lg font-bold mb-2">Delete Exam?</h3>
                             <p className="text-gray-600 mb-6 text-sm">Cannot be undone.</p>
                             <div className="flex gap-2">
                                 <button onClick={() => setShowDeleteExamModal(false)} className="flex-1 py-2 border rounded-lg">Cancel</button>
-                                <button onClick={handleConfirmDeleteExam} className="flex-1 py-2 bg-red-600 text-white rounded-lg">Delete</button>
+                                <button
+                                    onClick={handleConfirmDeleteExam}
+                                    disabled={loading}
+                                    className="flex-1 py-2 bg-red-600 text-white rounded-lg flex items-center justify-center gap-2"
+                                >
+                                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Delete
+                                </button>
                             </div>
                         </motion.div>
                     </div>
@@ -499,7 +598,7 @@ const Exams = () => {
             {/* Manage Questions Modal (Simplified View for Context) */}
             <AnimatePresence>
                 {showManageQuestionsModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-xl shadow-xl max-w-4xl w-full h-[80vh] flex flex-col">
                             <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
                                 <div>
@@ -511,9 +610,34 @@ const Exams = () => {
                             <div className="flex-1 overflow-y-auto p-6">
                                 {questionViewMode === 'LIST' ? (
                                     <div className="space-y-4">
-                                        <button onClick={() => { resetQuestionForm(); setQuestionViewMode('FORM'); }} className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-500 hover:text-indigo-500 flex items-center justify-center gap-2 transition-colors">
-                                            <Plus className="w-5 h-5" /> Add New Question
-                                        </button>
+                                        <div className="flex gap-3">
+                                            <button onClick={() => { resetQuestionForm(); setQuestionViewMode('FORM'); }} className="flex-1 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-indigo-500 hover:text-indigo-500 flex items-center justify-center gap-2 transition-colors">
+                                                <Plus className="w-5 h-5" /> Add New Question
+                                            </button>
+                                            <button
+                                                onClick={downloadQuestionTemplate}
+                                                className="flex-1 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-blue-500 hover:text-blue-500 flex items-center justify-center gap-2 transition-colors"
+                                            >
+                                                Download Template
+                                            </button>
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="file"
+                                                    id="excel-upload"
+                                                    className="hidden"
+                                                    accept=".xlsx, .xls"
+                                                    onChange={handleExcelUpload}
+                                                />
+                                                <button
+                                                    onClick={() => document.getElementById('excel-upload')?.click()}
+                                                    disabled={loading}
+                                                    className="w-full h-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-green-500 hover:text-green-500 flex items-center justify-center gap-2 transition-colors"
+                                                >
+                                                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                                                    Upload from Excel
+                                                </button>
+                                            </div>
+                                        </div>
                                         {selectedExam?.questions && selectedExam.questions.length > 0 ? (
                                             <div className="space-y-4">
                                                 {selectedExam.questions.map((q: any, idx: number) => (
@@ -596,7 +720,14 @@ const Exams = () => {
                                         </div>
                                         <div className="flex gap-2 pt-4">
                                             <button type="button" onClick={() => setQuestionViewMode('LIST')} className="flex-1 py-2 border rounded">Cancel</button>
-                                            <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white rounded">Save</button>
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="flex-1 py-2 bg-indigo-600 text-white rounded flex items-center justify-center gap-2"
+                                            >
+                                                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                                Save
+                                            </button>
                                         </div>
                                     </form>
                                 )}
@@ -609,7 +740,7 @@ const Exams = () => {
             {/* Assign Modal */}
             <AnimatePresence>
                 {showAssignModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -707,9 +838,10 @@ const Exams = () => {
                                     </button>
                                     <button
                                         onClick={handleAssignCandidates}
-                                        disabled={selectedCandidateIds.length === 0}
-                                        className="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-200 transition-all active:scale-95"
+                                        disabled={selectedCandidateIds.length === 0 || loading}
+                                        className="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                                     >
+                                        {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                                         Assign {selectedCandidateIds.length > 0 && `(${selectedCandidateIds.length})`}
                                     </button>
                                 </div>
@@ -722,7 +854,7 @@ const Exams = () => {
             {/* Delete Question Confirmation Modal */}
             <AnimatePresence>
                 {showDeleteQuestionModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60] backdrop-blur-sm">
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -746,8 +878,10 @@ const Exams = () => {
                                     </button>
                                     <button
                                         onClick={handleConfirmDeleteQuestion}
-                                        className="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95"
+                                        disabled={loading}
+                                        className="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95 flex items-center justify-center gap-2"
                                     >
+                                        {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                                         Delete
                                     </button>
                                 </div>

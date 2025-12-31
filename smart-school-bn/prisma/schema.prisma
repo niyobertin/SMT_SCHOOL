@@ -611,6 +611,7 @@ model ExamAssignment {
   candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   examId      String
   exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  allowRetake Boolean   @default(false)
 
   @@unique([candidateId, examId])
   @@index([candidateId])

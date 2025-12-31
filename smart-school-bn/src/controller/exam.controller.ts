@@ -228,6 +228,59 @@ export const createCandidate = async (
     }
 };
 
+export const createCandidatesBulk = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { orgId } = req.params;
+        const { candidates } = req.body; // Array of { firstName, lastName, email, phoneNumber }
+
+        if (!Array.isArray(candidates) || candidates.length === 0) {
+            res.status(400).json({
+                status: 'error',
+                message: 'Please provide an array of candidates',
+            });
+            return;
+        }
+
+        const createdCandidates = [];
+        const errors = [];
+
+        for (const cand of candidates) {
+            try {
+                const candidateIdGenerated = await generateCandidateId(orgId);
+                const newCandidate = await prisma.candidate.create({
+                    data: {
+                        id: uuidv4(),
+                        candidateId: candidateIdGenerated,
+                        firstName: cand.firstName,
+                        lastName: cand.lastName,
+                        email: cand.email,
+                        phoneNumber: cand.phoneNumber,
+                        organizationId: orgId,
+                    },
+                });
+                createdCandidates.push(newCandidate);
+            } catch (err) {
+                logger.error(`Failed to create candidate ${cand.email}`, err);
+                errors.push({ candidate: cand, error: 'Failed to create' });
+            }
+        }
+
+        res.status(201).json({
+            status: 'success',
+            data: createdCandidates,
+            message: `Successfully created ${createdCandidates.length} candidates`,
+            errors: errors.length > 0 ? errors : undefined,
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
 export const getAllCandidates = async (
     req: Request,
     res: Response,
@@ -762,6 +815,82 @@ export const addQuestionToExam = async (
     }
 };
 
+export const addQuestionsBulk = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { examId } = req.params;
+        const { questions } = req.body; // Array of { question, type, points, explanation, options }
+
+        if (!Array.isArray(questions) || questions.length === 0) {
+            res.status(400).json({
+                status: 'error',
+                message: 'Please provide an array of questions',
+            });
+            return;
+        }
+
+        // Get current max order
+        const lastQuestion = await prisma.examQuestion.findFirst({
+            where: { examId },
+            orderBy: { order: 'desc' },
+        });
+
+        let currentOrder = lastQuestion ? lastQuestion.order + 1 : 0;
+
+        const results = await prisma.$transaction(async (tx) => {
+            const created = [];
+            for (const q of questions) {
+                const newQuestion = await tx.examQuestion.create({
+                    data: {
+                        id: uuidv4(),
+                        question: q.question,
+                        type: q.type,
+                        points: Number(q.points || 1),
+                        explanation: q.explanation || null,
+                        order: currentOrder++,
+                        examId,
+                    },
+                });
+
+                if (q.options && q.options.length > 0 && (q.type === 'MULTIPLE_CHOICE' || q.type === 'TRUE_FALSE')) {
+                    await Promise.all(
+                        q.options.map((opt: { option: string; isCorrect: any }, index: number) =>
+                            tx.examQuestionOption.create({
+                                data: {
+                                    id: uuidv4(),
+                                    option: opt.option,
+                                    isCorrect: opt.isCorrect === true || opt.isCorrect === 'true',
+                                    order: index,
+                                    examQuestionId: newQuestion.id,
+                                },
+                            })
+                        )
+                    );
+                }
+
+                const fullQuestion = await tx.examQuestion.findUnique({
+                    where: { id: newQuestion.id },
+                    include: { options: true },
+                });
+                created.push(fullQuestion);
+            }
+            return created;
+        });
+
+        res.status(201).json({
+            status: 'success',
+            data: results,
+            message: `Successfully added ${results.length} questions`,
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
 export const updateExamQuestion = async (
     req: Request,
     res: Response,
@@ -916,7 +1045,8 @@ export const assignExamToCandidate = async (
         });
 
         // Send Email Notification
-        if (assignment.candidate.email) {
+        const { notify } = req.query;
+        if (assignment.candidate.email && notify !== 'false') {
             try {
                 const examLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/exam-portal/login`;
                 const startDate = assignment.exam.startDate
@@ -962,7 +1092,9 @@ export const assignExamToCandidate = async (
         res.status(201).json({
             status: 'success',
             data: assignment,
-            message: 'Exam assigned to candidate successfully and email sent',
+            message: notify !== 'false'
+                ? 'Exam assigned to candidate successfully and email sent'
+                : 'Exam assigned to candidate successfully (No email sent)',
         });
     } catch (error) {
         logger.error(error);
@@ -978,6 +1110,7 @@ export const bulkAssignExamToCandidates = async (
     try {
         const { examId } = req.params;
         const { candidateIds } = req.body; // Array of string IDs
+        const { notify } = req.query;
 
         if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
             res.status(400).json({
@@ -1021,7 +1154,7 @@ export const bulkAssignExamToCandidates = async (
                 results.push(assignment);
 
                 // Send Email
-                if (assignment.candidate.email) {
+                if (assignment.candidate.email && notify !== 'false') {
                     const examLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/exam-portal/login`;
                     const startDate = assignment.exam.startDate
                         ? new Date(assignment.exam.startDate).toLocaleString()
@@ -1297,6 +1430,17 @@ export const startExamAttempt = async (
                 candidateId,
                 examId,
             },
+        });
+
+        // Reset allowRetake flag on assignment if it was used
+        await prisma.examAssignment.update({
+            where: {
+                candidateId_examId: {
+                    candidateId,
+                    examId,
+                },
+            },
+            data: { allowRetake: false },
         });
 
         // Calculate end time
@@ -1714,10 +1858,11 @@ export const getGlobalExamResults = async (
                 where,
                 skip,
                 take,
-                orderBy: { score: 'desc' }, // Rank by score
+                orderBy: { startTime: 'desc' }, // Usually show most recent first
                 include: {
                     candidate: {
                         select: {
+                            id: true, // Need UUID for assignment lookup
                             candidateId: true,
                             firstName: true,
                             lastName: true,
@@ -1727,6 +1872,7 @@ export const getGlobalExamResults = async (
                     },
                     exam: {
                         select: {
+                            id: true, // Need UUID for assignment lookup
                             title: true,
                             passingScore: true,
                         }
@@ -1736,18 +1882,35 @@ export const getGlobalExamResults = async (
             prisma.examAttempt.count({ where }),
         ]);
 
+        // Attach assignments to each attempt
+        const attemptsWithAssignments = await Promise.all(attempts.map(async (attempt) => {
+            const assignment = await prisma.examAssignment.findUnique({
+                where: {
+                    candidateId_examId: {
+                        candidateId: attempt.candidateId,
+                        examId: attempt.examId,
+                    }
+                }
+            });
+            return {
+                ...attempt,
+                assignment
+            };
+        }));
+
         // Calculate Average Score for the set
         const totalScore = await prisma.examAttempt.aggregate({
             where,
             _avg: { score: true }
         });
+        const averageScore = totalScore._avg.score || 0;
 
         res.status(200).json({
             status: 'success',
-            data: attempts,
+            data: attemptsWithAssignments,
             meta: {
                 total,
-                averageScore: totalScore._avg.score || 0,
+                averageScore,
             },
             pagination: isPaginationEnabled ? {
                 page: Number(page),
@@ -1952,6 +2115,35 @@ export const getExamDashboardStats = async (
                     date: a.startTime
                 }))
             }
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const authorizeRetake = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { assignmentId } = req.params;
+        const { allowRetake } = req.body;
+
+        const assignment = await prisma.examAssignment.update({
+            where: { id: assignmentId },
+            data: { allowRetake: allowRetake !== false },
+            include: {
+                candidate: true,
+                exam: true,
+            },
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: assignment,
+            message: `Retake ${assignment.allowRetake ? 'authorized' : 'deauthorized'} for ${assignment.candidate.firstName}`,
         });
     } catch (error) {
         logger.error(error);

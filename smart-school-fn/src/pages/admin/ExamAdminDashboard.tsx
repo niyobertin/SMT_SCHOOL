@@ -6,8 +6,6 @@ import {
     fetchDashboardStats,
 } from '../../redux/features/examAdminSlice';
 import DashboardStats from '../../components/exam-admin/DashboardStats';
-import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
 import {
     BarChart3,
     Calendar,
@@ -15,7 +13,7 @@ import {
 
 const ExamAdminDashboard = () => {
     const dispatch = useAppDispatch();
-    const { organizations, selectedOrg, dashboardStats, loading } = useAppSelector(
+    const { organizations, selectedOrg, dashboardStats } = useAppSelector(
         (state) => state.examAdmin
     );
 
