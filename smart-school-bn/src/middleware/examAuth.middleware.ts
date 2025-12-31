@@ -1,6 +1,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
+import { hasRemainingAttempts } from '../services/exam.service';
 
 const prisma = new PrismaClient();
 
@@ -168,19 +169,18 @@ export const checkExamAvailability = async (
         // Check remaining attempts
         // @ts-ignore
         const candidateId = req.candidate?.id;
-        if (candidateId && exam.maxAttempts) {
-            const attempts = await prisma.examAttempt.count({
-                where: {
-                    candidateId,
-                    examId,
-                },
-            });
+        if (candidateId) {
+            const attemptInfo = await hasRemainingAttempts(
+                candidateId,
+                examId,
+                exam.maxAttempts
+            );
 
-            if (attempts >= exam.maxAttempts) {
+            if (!attemptInfo.hasAttempts) {
                 return res.status(403).json({
                     success: false,
                     message: `You have reached the maximum number of attempts (${exam.maxAttempts})`,
-                    attemptsUsed: attempts,
+                    attemptsUsed: attemptInfo.attemptsUsed,
                     maxAttempts: exam.maxAttempts,
                 });
             }
