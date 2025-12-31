@@ -9,6 +9,7 @@ import { Lessons } from '../Dashboards/sections/Lessons';
 import { LessonContent } from '../Dashboards/sections/Content';
 import { Tests } from '../Dashboards/sections/Tests';
 import { JobBoard } from '../Dashboards/sections/Jobs';
+import ExamAdminDashboard from '../pages/admin/ExamAdminDashboard';
 
 export const dashboardRoutes: RouteObject[] = [
   {
@@ -56,6 +57,10 @@ export const dashboardRoutes: RouteObject[] = [
             ],
           },
         ],
+      },
+      {
+        path: 'exam-admin',
+        element: <ExamAdminDashboard />,
       },
       {
         path: '*',

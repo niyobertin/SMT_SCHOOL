@@ -92,6 +92,13 @@ export const translations = {
     joinThousands:
       "Join thousands of students who have transformed their careers with Smart school Learning Platform.",
 
+    // Exam Portal
+    examPortal: "Exam Portal",
+    examPortalTitle: "Smart School Exam Portal",
+    examPortalDescription: "Access our comprehensive examination system. Join as a Candidate to take exams or as an Examiner to manage assessments.",
+    joinAsCandidate: "Join as Candidate",
+    joinAsExaminer: "Join as Examiner",
+
     // Authentication
     login: "Login",
     register: "Register",
@@ -372,6 +379,13 @@ export const translations = {
     joinThousands:
       "Rejoignez des milliers d'étudiants qui ont transformé leur carrière avec la Plateforme d'Apprentissage Smart school.",
 
+    // Exam Portal
+    examPortal: "Portail d'Examen",
+    examPortalTitle: "Portail d'Examen Smart School",
+    examPortalDescription: "Accédez à notre système d'examen complet. Rejoignez en tant que candidat pour passer des examens ou en tant qu'examinateur pour gérer les évaluations.",
+    joinAsCandidate: "Rejoindre comme Candidat",
+    joinAsExaminer: "Rejoindre comme Examinateur",
+
     // Authentication
     login: "Connexion",
     register: "S'inscrire",
@@ -649,6 +663,13 @@ export const translations = {
     readyToStart: "Witeguye Gutangira Urugendo Rwawe rwo Kwiga?",
     joinThousands:
       "Jya mu bihumbi by'abanyeshuri bahinduye imyuga yabo hamwe n'Urubuga rw'Uburezi Smart school.",
+
+    // Exam Portal
+    examPortal: "Portal y'Ikizamini",
+    examPortalTitle: "Portal y'Ikizamini ya Smart School",
+    examPortalDescription: "Injira muri sisitemu yacu y'ibizamini yuzuye. Injira nka Kandida kugirango ukore ibizamini cyangwa nk'Umukosora kugirango ucunge ibizamini.",
+    joinAsCandidate: "Injira nka Kandida",
+    joinAsExaminer: "Injira nk'Umukosora",
 
     // Authentication
     login: "Kwinjira",

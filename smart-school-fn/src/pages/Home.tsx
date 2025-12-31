@@ -120,36 +120,8 @@ export const HomePage: React.FC = () => {
         animate={{ scale: 1 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
       >
-        {/* Animated overlay with gradient */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-blue-900/60"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        />
-
-        {/* Floating particles effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-white/20 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [-20, -100, -20],
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                duration: 3 + Math.random() * 2,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
-        </div>
+        {/* Simple overlay */}
+        <div className="absolute inset-0 bg-black/50" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
           <motion.div
@@ -227,35 +199,8 @@ export const HomePage: React.FC = () => {
 
       {/* What We Focus On - Interactive Mosaic Layout */}
       <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden">
-        {/* Dynamic Background Elements */}
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-10 left-1/4 w-72 h-72 bg-gradient-to-r from-blue-200/30 to-purple-200/30 rounded-full blur-3xl"
-            animate={{
-              x: [0, 100, 0],
-              y: [0, -50, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          <motion.div
-            className="absolute bottom-20 right-1/4 w-96 h-96 bg-gradient-to-r from-indigo-200/20 to-cyan-200/20 rounded-full blur-3xl"
-            animate={{
-              x: [0, -80, 0],
-              y: [0, 60, 0],
-              scale: [1.2, 1, 1.2],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </div>
+        {/* Static Background */}
+        <div className="absolute inset-0 bg-gray-50/50" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
@@ -324,33 +269,8 @@ export const HomePage: React.FC = () => {
       </section>
 
       <section className="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-1/4 left-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          <motion.div
-            className="absolute bottom-1/4 right-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.5, 0.3, 0.5],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </div>
+        {/* Static background */}
+        <div className="absolute inset-0 bg-slate-900" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
@@ -540,39 +460,10 @@ export const HomePage: React.FC = () => {
               ))}
             </div>
 
-            {/* Animated Connection Lines */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.2" />
-                </linearGradient>
-              </defs>
-              {[...Array(7)].map((_, i) => (
-                <motion.circle
-                  key={i}
-                  cx="50%"
-                  cy="50%"
-                  r={150 + i * 20}
-                  fill="none"
-                  stroke="url(#lineGradient)"
-                  strokeWidth="1"
-                  strokeDasharray="5,5"
-                  initial={{ pathLength: 0, rotate: 0 }}
-                  animate={{
-                    pathLength: 1,
-                    rotate: 360,
-                  }}
-                  transition={{
-                    pathLength: { duration: 2, delay: i * 0.2 },
-                    rotate: { duration: 20 + i * 5, repeat: Infinity, ease: "linear" }
-                  }}
-                />
-              ))}
-            </svg>
           </div>
         </div>
       </section>
+
 
       {/* Enhanced CTA Section */}
       <motion.section
@@ -582,33 +473,8 @@ export const HomePage: React.FC = () => {
         whileInView="visible"
         viewport={{ once: false, amount: 0.3 }}
       >
-        {/* Animated background elements */}
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.6, 0.3],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          <motion.div
-            className="absolute bottom-10 right-10 w-24 h-24 bg-white/10 rounded-full blur-xl"
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.6, 0.3, 0.6],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </div>
+        {/* Static background */}
+        <div className="absolute inset-0 bg-blue-800/20" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.h2

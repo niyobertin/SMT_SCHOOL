@@ -12,6 +12,7 @@ export function Header() {
   // language, setLanguage, languages
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showExamDropdown, setShowExamDropdown] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const { user, loading: loadingUser } = useSelector((state: RootState) => state.auth);
@@ -66,6 +67,40 @@ export function Header() {
                 </Link>
               );
             })}
+
+            {/* Exam Portal Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExamDropdown(!showExamDropdown)}
+                onMouseEnter={() => setShowExamDropdown(true)}
+                className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors py-2"
+              >
+                {t("examPortal")}
+                <ChevronDown className={`h-4 w-4 transition-transform ${showExamDropdown ? "rotate-180" : ""}`} />
+              </button>
+
+              {showExamDropdown && (
+                <div
+                  className="absolute left-0 mt-0 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200"
+                  onMouseLeave={() => setShowExamDropdown(false)}
+                >
+                  <Link
+                    to="/exam-admin/login"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    onClick={() => setShowExamDropdown(false)}
+                  >
+                    {t("joinAsExaminer")}
+                  </Link>
+                  <Link
+                    to="/exam-portal/login"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    onClick={() => setShowExamDropdown(false)}
+                  >
+                    {t("joinAsCandidate")}
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Right side */}
@@ -182,6 +217,19 @@ export function Header() {
                 </Link>
               );
             })}
+
+            {/* Mobile Exam Portal */}
+            <div className="border-t border-gray-100 my-1 pt-1">
+              <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                {t("examPortal")}
+              </div>
+              <Link to="/exam-admin/login" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50" onClick={() => setIsMobileMenuOpen(false)}>
+                {t("joinAsExaminer")}
+              </Link>
+              <Link to="/exam-portal/login" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50" onClick={() => setIsMobileMenuOpen(false)}>
+                {t("joinAsCandidate")}
+              </Link>
+            </div>
 
             {loadingUser ? (
               <div className="flex justify-center py-2">
