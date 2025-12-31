@@ -7,7 +7,6 @@ import {
     submitExam,
     setCurrentQuestion,
     saveAnswer,
-    updateTimeRemaining,
 } from '../../redux/features/examPortalSlice';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +18,6 @@ import {
     ChevronRight,
     Send,
     AlertTriangle,
-    Info,
     ShieldCheck,
     AlertCircle,
     Loader2,
@@ -128,7 +126,7 @@ const ExamPage = () => {
         await handleSaveAnswer();
 
         try {
-            const result = await dispatch(submitExam(attempt.attemptId)).unwrap();
+            await dispatch(submitExam(attempt.attemptId)).unwrap();
             toast.success('Exam submitted successfully!');
             navigate('/exam-portal/result');
         } catch (error: any) {

@@ -1,23 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
     fetchOrganizations,
-    fetchExams,
-    fetchExamAnalytics,
     fetchDashboardStats,
     setSelectedOrg,
 } from '../../redux/features/examAdminSlice';
 import DashboardStats from '../../components/exam-admin/DashboardStats';
-import { motion } from 'framer-motion';
+
 import {
-    Users,
+
     Building2,
     ChevronDown,
 } from 'lucide-react';
 
 const Analytics = () => {
     const dispatch = useAppDispatch();
-    const { organizations, selectedOrg, dashboardStats, loading } = useAppSelector(
+    const { organizations, selectedOrg, dashboardStats } = useAppSelector(
         (state) => state.examAdmin
     );
 

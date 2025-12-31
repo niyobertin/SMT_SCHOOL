@@ -20,8 +20,6 @@ import {
     Users,
     Activity,
     TrendingUp,
-    CheckCircle,
-    Clock
 } from 'lucide-react';
 
 interface DashboardStatsProps {
@@ -216,7 +214,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {passRateData.map((entry, index) => (
+                                    {passRateData.map((_entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index + 1]} /> // Green for pass, Orange for fail logic needs verify
                                     ))}
                                 </Pie>

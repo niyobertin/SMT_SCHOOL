@@ -6,10 +6,7 @@ import { motion } from 'framer-motion';
 import {
     CheckCircle,
     XCircle,
-    Clock,
     Trophy,
-    FileText,
-    Home,
     LogOut,
 } from 'lucide-react';
 
@@ -35,7 +32,6 @@ const ExamResult = () => {
         totalQuestions,
         correctAnswers,
         timeSpent,
-        details,
     } = result;
 
     const formatTime = (seconds: number) => {

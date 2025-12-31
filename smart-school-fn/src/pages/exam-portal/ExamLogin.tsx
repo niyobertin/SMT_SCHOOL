@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { candidateLogin, clearError } from '../../redux/features/examPortalSlice';
+import { candidateLogin } from '../../redux/features/examPortalSlice';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Key, LogIn, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
@@ -11,7 +11,7 @@ const ExamLogin = () => {
     const [examCode, setExamCode] = useState('');
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const { loading, error, exam } = useAppSelector((state) => state.examPortal);
+    const { loading, error } = useAppSelector((state) => state.examPortal);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
