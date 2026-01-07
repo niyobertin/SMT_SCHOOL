@@ -502,9 +502,12 @@ export const fetchExamAnalytics = createAsyncThunk(
 
 export const fetchOpenEndedResponses = createAsyncThunk(
     'examAdmin/fetchOpenEndedResponses',
-    async (examId: string, { rejectWithValue }) => {
+    async (examId: string | undefined, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/exams/${examId}/open-ended-responses`);
+            const url = examId && examId !== 'all'
+                ? `/exams/${examId}/open-ended-responses`
+                : '/exams/all/open-ended-responses';
+            const response = await api.get(url);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch responses');

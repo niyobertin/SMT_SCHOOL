@@ -47,7 +47,7 @@ const Results = () => {
     });
     const [isExportingPDF, setIsExportingPDF] = useState(false);
     const [isExportingExcel, setIsExportingExcel] = useState(false);
-    const [isExportingResponses, setIsExportingResponses] = useState(false);
+    const [isExportingDetailed, setIsExportingDetailed] = useState(false);
 
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
@@ -57,9 +57,6 @@ const Results = () => {
         candidateName: string;
         allowRetake: boolean;
     }>({ show: false, assignmentId: '', candidateName: '', allowRetake: false });
-
-    // Local filter state
-    // Initialize
     useEffect(() => {
         dispatch(fetchOrganizations());
     }, [dispatch]);
@@ -210,20 +207,18 @@ const Results = () => {
         }
     };
 
-    const handleExportOpenEndedPDF = async () => {
+    const handleExportDetailedPDF = async () => {
         if (!filters.examId) {
             toast.error('Please select an exam first');
             return;
         }
 
-        setIsExportingResponses(true);
+        setIsExportingDetailed(true);
         try {
             const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('accessToken');
 
-            // Constructing manually because we need Blob handling and Axios responseType can sometimes be tricky with thunks
-            // But we already have the baseUrl and token.
-            const response = await fetch(`${baseUrl}/api/exams/${filters.examId}/open-ended-responses/export`, {
+            const response = await fetch(`${baseUrl}/api/exams/${filters.examId}/results/detailed`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -238,16 +233,16 @@ const Results = () => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Open_Ended_Responses_${new Date().toISOString().split('T')[0]}.pdf`;
+            a.download = `Detailed_Results_${new Date().toISOString().split('T')[0]}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-            toast.success('Open-ended responses exported successfully');
+            toast.success('Detailed report exported successfully');
         } catch (error: any) {
             toast.error(error.message || 'Failed to export PDF');
         } finally {
-            setIsExportingResponses(false);
+            setIsExportingDetailed(false);
         }
     };
 
@@ -261,7 +256,6 @@ const Results = () => {
 
                 {/* Filters Section */}
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-end flex-wrap">
-
                     {/* Organization Filter */}
                     <div className="flex-1 min-w-[200px]">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
@@ -290,7 +284,7 @@ const Results = () => {
                                 name="examId"
                                 value={filters.examId}
                                 onChange={handleFilterChange}
-                                disabled={!filters.organizationId} // Typically exams belong to org, so better to lock if no org selected, OR show all if backend supports it (but list might be huge)
+                                disabled={!filters.organizationId}
                                 className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:text-gray-400"
                             >
                                 <option value="">All Exams</option>
@@ -301,32 +295,26 @@ const Results = () => {
                         </div>
                     </div>
 
-                    {/* Date Range Start */}
+                    {/* Date Range Filters */}
                     <div className="w-[150px]">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                name="startDate"
-                                value={filters.startDate}
-                                onChange={handleFilterChange}
-                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            />
-                        </div>
+                        <input
+                            type="date"
+                            name="startDate"
+                            value={filters.startDate}
+                            onChange={handleFilterChange}
+                            className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
                     </div>
-
-                    {/* Date Range End */}
                     <div className="w-[150px]">
                         <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                name="endDate"
-                                value={filters.endDate}
-                                onChange={handleFilterChange}
-                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            />
-                        </div>
+                        <input
+                            type="date"
+                            name="endDate"
+                            value={filters.endDate}
+                            onChange={handleFilterChange}
+                            className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
                     </div>
 
                     {/* Status Filter */}
@@ -338,27 +326,12 @@ const Results = () => {
                                 name="status"
                                 value={filters.status}
                                 onChange={handleFilterChange}
-                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                                 <option value="ALL">All Status</option>
                                 <option value="PASSED">Passed</option>
                                 <option value="FAILED">Failed</option>
                             </select>
-                        </div>
-                    </div>
-
-                    {/* Batch Filter */}
-                    <div className="w-[150px]">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Batch</label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                name="batch"
-                                placeholder="e.g. 2024A"
-                                value={filters.batch}
-                                onChange={handleFilterChange}
-                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            />
                         </div>
                     </div>
 
@@ -381,13 +354,13 @@ const Results = () => {
                             Excel
                         </button>
                         <button
-                            onClick={handleExportOpenEndedPDF}
-                            disabled={!filters.examId || isExportingResponses}
-                            className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors flex items-center gap-2 border border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={!filters.examId ? "Select an exam to export responses" : "Export Open-Ended Responses"}
+                            onClick={handleExportDetailedPDF}
+                            disabled={!filters.examId || isExportingDetailed}
+                            className="bg-purple-50 text-purple-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-100 transition-colors flex items-center gap-2 border border-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={!filters.examId ? "Select an exam to export detailed results" : "Export Detailed Results Report"}
                         >
-                            {isExportingResponses ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                            Responses
+                            {isExportingDetailed ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                            Report
                         </button>
                     </div>
                 </div>
@@ -456,17 +429,24 @@ const Results = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    {attempt.isPassed ? (
-                                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            Pass
-                                                        </div>
-                                                    ) : (
-                                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-                                                            <XCircle className="w-3 h-3" />
-                                                            Fail
-                                                        </div>
-                                                    )}
+                                                    <div className="flex flex-col gap-1.5 items-start">
+                                                        {attempt.isMarkingPending ? (
+                                                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                                Marking Pending
+                                                            </div>
+                                                        ) : attempt.isPassed ? (
+                                                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                                                                <CheckCircle className="w-3 h-3" />
+                                                                Pass
+                                                            </div>
+                                                        ) : (
+                                                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+                                                                <XCircle className="w-3 h-3" />
+                                                                Fail
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-500">
                                                     {new Date(attempt.startTime).toLocaleDateString()}
@@ -502,8 +482,8 @@ const Results = () => {
                                     </tbody>
                                 </table>
                             </div>
-                            {/* Pagination only if data exists and not loading initial state */}
-                            {(!loading || (globalResults?.data && globalResults.data.length > 0)) && globalResults?.pagination && globalResults.pagination.pages > 1 && (
+                            {/* Pagination */}
+                            {globalResults?.pagination && globalResults.pagination.pages > 1 && (
                                 <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                                     <div className="text-sm text-gray-500">
                                         Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to <span className="font-medium">{Math.min(page * limit, globalResults.pagination.total)}</span> of <span className="font-medium">{globalResults.pagination.total}</span> results
@@ -539,7 +519,7 @@ const Results = () => {
                 </div>
             </div>
 
-            {/* Custom Confirmation Modal */}
+            {/* Confirmation Modal */}
             <AnimatePresence>
                 {confirmModal.show && (
                     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">

@@ -69,3 +69,81 @@ export const generateOpenEndedPDF = (
 
     doc.end();
 };
+
+export const generateDetailedResultsPDF = (
+    attempts: any[],
+    examTitle: string,
+    res: Response
+) => {
+    const doc = new PDFDocument({ margin: 50 });
+
+    const filename = `${examTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_detailed_results.pdf`;
+    res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-type', 'application/pdf');
+
+    doc.pipe(res);
+
+    // Title
+    doc.fontSize(22).font('Helvetica-Bold').text('Detailed Examination Report', { align: 'center' });
+    doc.fontSize(16).font('Helvetica').text(examTitle, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.moveDown(2);
+
+    attempts.forEach((attempt, aIndex) => {
+        // Candidate Section Header (No background)
+        doc.fillColor('#000000').fontSize(14).font('Helvetica-Bold').text(
+            `Candidate: ${attempt.candidate.firstName} ${attempt.candidate.lastName} (${attempt.candidate.candidateId || 'N/A'})`,
+            50,
+            doc.y
+        );
+        doc.moveDown(1.5);
+
+        // Attempt Summary
+        doc.fontSize(12).font('Helvetica-Bold').text('Attempt Summary:');
+        doc.fontSize(10).font('Helvetica');
+        doc.text(`Score: ${attempt.score?.toFixed(2)}% (${attempt.isPassed ? 'PASSED' : 'FAILED'})`);
+        doc.text(`Total Questions: ${attempt.totalQuestions}`);
+        doc.text(`Completed at: ${attempt.endTime ? new Date(attempt.endTime).toLocaleString() : 'N/A'}`);
+        doc.moveDown();
+
+        // Answers
+        doc.fontSize(12).font('Helvetica-Bold').text('Detailed Answers:');
+        doc.moveDown(0.5);
+
+        attempt.answers.forEach((answer: any, qIndex: number) => {
+            const questionText = answer.examQuestion?.question || 'Unknown Question';
+            const points = answer.points || 0;
+            const maxPoints = answer.examQuestion?.points || 0;
+
+            doc.fontSize(11).font('Helvetica-Bold').text(`${qIndex + 1}. ${questionText}`);
+            doc.fontSize(10).font('Helvetica');
+
+            // Display User Answer
+            if (answer.examQuestion?.type === 'MULTIPLE_CHOICE' || answer.examQuestion?.type === 'TRUE_FALSE') {
+                doc.text('Answer: ', { continued: true }).font('Helvetica-Bold').text(answer.userAnswer?.join(', ') || 'N/A');
+            } else {
+                doc.text('Answer: ').font('Helvetica').text(answer.answerText || 'N/A', { indent: 15 });
+            }
+
+            doc.font('Helvetica').text(`Marks: ${points}/${maxPoints}`, { align: 'right' });
+
+            if (answer.feedback) {
+                doc.font('Helvetica-Oblique').text(`Examiner Feedback: ${answer.feedback}`, { indent: 15 });
+            }
+
+            doc.moveDown();
+
+            // Page break check (rough estimation)
+            if (doc.y > 700) {
+                doc.addPage();
+            }
+        });
+
+        if (aIndex < attempts.length - 1) {
+            doc.addPage();
+        }
+    });
+
+    doc.end();
+};

@@ -1880,19 +1880,32 @@ export const getGlobalExamResults = async (
             prisma.examAttempt.count({ where }),
         ]);
 
-        // Attach assignments to each attempt
+        // Attach assignments and marking status to each attempt
         const attemptsWithAssignments = await Promise.all(attempts.map(async (attempt) => {
-            const assignment = await prisma.examAssignment.findUnique({
-                where: {
-                    candidateId_examId: {
-                        candidateId: attempt.candidateId,
-                        examId: attempt.examId,
+            const [assignment, unmarkedCount] = await Promise.all([
+                prisma.examAssignment.findUnique({
+                    where: {
+                        candidateId_examId: {
+                            candidateId: attempt.candidateId,
+                            examId: attempt.examId,
+                        }
                     }
-                }
-            });
+                }),
+                prisma.examAnswer.count({
+                    where: {
+                        examAttemptId: attempt.id,
+                        manualScore: null,
+                        examQuestion: {
+                            type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+                        }
+                    }
+                })
+            ]);
+
             return {
                 ...attempt,
-                assignment
+                assignment,
+                isMarkingPending: unmarkedCount > 0
             };
         }));
 
@@ -2364,16 +2377,34 @@ export const getOpenEndedResponses = async (
 ): Promise<void> => {
     try {
         const { examId } = req.params;
+        const { organizationId } = req.query;
+        // @ts-ignore
+        const user = req.user;
         const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
+        const limit = parseInt(req.query.limit as string) || 50; // Larger default for "All"
         const skip = (page - 1) * limit;
+
+        const whereQuestion: any = {
+            type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+        };
+
+        if (examId && examId !== 'all') {
+            whereQuestion.examId = examId;
+        } else if (organizationId) {
+            whereQuestion.exam = { organizationId: String(organizationId) };
+        } else if ((user as any).role === 'EXAMINER') {
+            // Filter by examiner's assigned organizations
+            const examinerOrgs = await prisma.userOrganization.findMany({
+                where: { userId: (user as any).id },
+                select: { organizationId: true }
+            });
+            const orgIds = examinerOrgs.map(o => o.organizationId);
+            whereQuestion.exam = { organizationId: { in: orgIds } };
+        }
 
         // Fetch questions first to filter by type
         const openEndedQuestions = await prisma.examQuestion.findMany({
-            where: {
-                examId,
-                type: { in: ['ESSAY', 'SHORT_ANSWER'] }
-            },
+            where: whereQuestion,
             select: { id: true }
         });
 
@@ -2452,7 +2483,8 @@ export const markAnswer = async (
 ): Promise<void> => {
     try {
         const { answerId } = req.params;
-        const { score, feedback } = req.body;
+        const { manualScore, feedback } = req.body;
+        const score = manualScore;
         // @ts-ignore
         const userId = req.user.id;
 
@@ -2502,16 +2534,28 @@ export const markAnswer = async (
         // So we need to fetch the attempt with the exam
         const attempt = await prisma.examAttempt.findUnique({
             where: { id: answer.examAttemptId },
-            include: { exam: true }
+            include: {
+                exam: {
+                    include: {
+                        questions: true
+                    }
+                }
+            }
         });
 
         if (attempt) {
-            const isPassed = totalScore >= attempt.exam.passingScore;
+            const questions = attempt.exam.questions;
+            const totalPossiblePoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+
+            // Re-calculate based on ALL answers (some might be auto-graded, some manual)
+            // totalScore is already sum of attemptAnswers points
+            const scorePercentage = calculateExamScore(totalPossiblePoints, totalScore);
+            const isPassed = scorePercentage >= attempt.exam.passingScore;
 
             await prisma.examAttempt.update({
                 where: { id: answer.examAttemptId },
                 data: {
-                    score: totalScore,
+                    score: scorePercentage,
                     isPassed
                 }
             });
@@ -2529,8 +2573,9 @@ export const markAnswer = async (
 };
 
 import { generateOpenEndedPDF } from '../utils/pdfGenerator';
+import { generateDetailedResultsPDF } from '../utils/pdfGenerator';
 
-export const exportOpenEndedResponsesPDF = async (
+export const exportDetailedResultsPDF = async (
     req: Request,
     res: Response,
     next: NextFunction
@@ -2550,21 +2595,84 @@ export const exportOpenEndedResponsesPDF = async (
             return;
         }
 
-        // Fetch all open-ended answers
-        // Same logic as getOpenEndedResponses but no pagination? Or simplified.
-        // Let's fetch all for export.
-        const openEndedQuestions = await prisma.examQuestion.findMany({
+        const attempts = await prisma.examAttempt.findMany({
             where: {
                 examId,
-                type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+                status: 'COMPLETED'
             },
+            include: {
+                candidate: true,
+                answers: {
+                    include: {
+                        examQuestion: true
+                    }
+                }
+            },
+            orderBy: { score: 'desc' }
+        });
+
+        if (attempts.length === 0) {
+            res.status(404).json({
+                status: 'error',
+                message: 'No completed attempts found for this exam'
+            });
+            return;
+        }
+
+        generateDetailedResultsPDF(attempts, exam.title, res);
+
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const exportOpenEndedResponsesPDF = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { examId } = req.params;
+        // @ts-ignore
+        const user = req.user;
+
+        let examTitle = 'All Exams';
+        const whereQuestion: any = {
+            type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+        };
+
+        if (examId && examId !== 'all') {
+            const exam = await prisma.exam.findUnique({
+                where: { id: examId }
+            });
+            if (!exam) {
+                res.status(404).json({ status: 'error', message: 'Exam not found' });
+                return;
+            }
+            examTitle = exam.title;
+            whereQuestion.examId = examId;
+        } else if ((user as any).role === 'EXAMINER') {
+            const examinerOrgs = await prisma.userOrganization.findMany({
+                where: { userId: (user as any).id },
+                select: { organizationId: true }
+            });
+            const orgIds = examinerOrgs.map(o => o.organizationId);
+            whereQuestion.exam = { organizationId: { in: orgIds } };
+        }
+
+        const openEndedQuestions = await prisma.examQuestion.findMany({
+            where: whereQuestion,
             select: { id: true }
         });
 
         const questionIds = openEndedQuestions.map(q => q.id);
 
         if (questionIds.length === 0) {
-            res.status(400).json({ status: 'error', message: 'No open-ended questions found for this exam' });
+            res.status(404).json({
+                status: 'error',
+                message: 'No open-ended questions found'
+            });
             return;
         }
 
@@ -2593,12 +2701,13 @@ export const exportOpenEndedResponsesPDF = async (
             candidate: r.examAttempt.candidate
         }));
 
-        generateOpenEndedPDF(flatResponses, exam.title, res);
+        generateOpenEndedPDF(flatResponses as any, examTitle, res);
 
     } catch (error) {
         logger.error(error);
         next(error);
     }
 };
+
 
 

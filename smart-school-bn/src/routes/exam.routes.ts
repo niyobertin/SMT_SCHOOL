@@ -58,7 +58,8 @@ import {
     unarchiveExam,
     getOpenEndedResponses,
     markAnswer,
-    exportOpenEndedResponsesPDF
+    exportOpenEndedResponsesPDF,
+    exportDetailedResultsPDF
 } from '../controller/exam.controller';
 import { upload } from '../middleware/uploadFile';
 
@@ -407,6 +408,13 @@ router.get(
     catchAsync(getExamAnalytics)
 );
 
+router.get(
+    '/:examId/results/detailed',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(exportDetailedResultsPDF)
+);
+
 // ============================================
 // NEW FEATURE ROUTES
 // ============================================
@@ -417,6 +425,13 @@ router.post(
     authorize('ADMIN'),
     upload.single('logo'),
     catchAsync(uploadOrganizationLogo)
+);
+
+router.get(
+    '/all/open-ended-responses/export',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(exportOpenEndedResponsesPDF)
 );
 
 router.get(
@@ -455,6 +470,13 @@ router.patch(
 );
 
 // Marking
+router.get(
+    '/all/open-ended-responses',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(getOpenEndedResponses)
+);
+
 router.get(
     '/:examId/open-ended-responses',
     authenticate,

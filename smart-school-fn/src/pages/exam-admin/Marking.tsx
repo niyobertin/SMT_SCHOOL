@@ -15,7 +15,9 @@ import {
     AlertCircle,
     Save,
     Loader2,
-    HelpCircle
+    HelpCircle,
+    Printer,
+    Download
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -25,9 +27,11 @@ const Marking = () => {
         (state) => state.examAdmin
     );
 
+    const { user } = useAppSelector((state) => state.auth);
     const [selectedExamId, setSelectedExamId] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [markingData, setMarkingData] = useState<{ [key: string]: { score: number | string; feedback: string } }>({});
+    const [isExportingResponses, setIsExportingResponses] = useState(false);
 
     // Fetch Orgs on mount
     useEffect(() => {
@@ -41,10 +45,13 @@ const Marking = () => {
         }
     }, [selectedOrg, dispatch]);
 
-    // Fetch Responses when Exam changes
+    // Fetch Responses when Exam changes or on mount (for all)
     useEffect(() => {
         if (selectedExamId) {
             dispatch(fetchOpenEndedResponses(selectedExamId));
+        } else {
+            // By default, if admin or examiner, show all pending
+            dispatch(fetchOpenEndedResponses('all'));
         }
     }, [selectedExamId, dispatch]);
 
@@ -91,6 +98,41 @@ const Marking = () => {
             toast.success('Mark saved successfully');
         } catch (error: any) {
             toast.error(error);
+        }
+    };
+
+    const handleExportResponsesPDF = async () => {
+        setIsExportingResponses(true);
+        try {
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const token = localStorage.getItem('accessToken');
+
+            const endpoint = selectedExamId
+                ? `/api/exams/${selectedExamId}/open-ended-responses/export`
+                : `/api/exams/all/open-ended-responses/export`;
+
+            const response = await fetch(`${baseUrl}${endpoint}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Export failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Open_Ended_Responses_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Open-ended responses exported successfully');
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to export PDF');
+        } finally {
+            setIsExportingResponses(false);
         }
     };
 
@@ -171,20 +213,24 @@ const Marking = () => {
                             placeholder="Student name or question..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            disabled={!selectedExamId}
-                            className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
+                            className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
+                    </div>
+
+                    <div className="w-full md:w-auto">
+                        <button
+                            onClick={handleExportResponsesPDF}
+                            disabled={isExportingResponses || (!selectedExamId && sortedResponses.length === 0)}
+                            className="w-full bg-white text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 border border-gray-300 shadow-sm disabled:opacity-50"
+                        >
+                            {isExportingResponses ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                            Export PDF
+                        </button>
                     </div>
                 </div>
 
                 {/* Content */}
-                {!selectedExamId ? (
-                    <div className="bg-gray-50 rounded-xl p-12 text-center border-2 border-dashed border-gray-200">
-                        <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900">Select an exam to start marking</h3>
-                        <p className="text-gray-500 mt-1">Choose an organization and exam from the filters above.</p>
-                    </div>
-                ) : loading && !openEndedResponses?.length ? (
+                {loading && !openEndedResponses?.length ? (
                     <div className="flex justify-center p-12">
                         <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
                     </div>
