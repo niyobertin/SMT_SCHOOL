@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import api from "../../redux/api/api";
-import { Toast } from "primereact/toast";
 
 type ExaminerAssignmentModalProps = {
     isOpen: boolean;

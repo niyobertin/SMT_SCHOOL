@@ -16,8 +16,7 @@ import {
     Save,
     Loader2,
     HelpCircle,
-    Printer,
-    Download
+    Printer
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -27,7 +26,6 @@ const Marking = () => {
         (state) => state.examAdmin
     );
 
-    const { user } = useAppSelector((state) => state.auth);
     const [selectedExamId, setSelectedExamId] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [markingData, setMarkingData] = useState<{ [key: string]: { score: number | string; feedback: string } }>({});
