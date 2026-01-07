@@ -38,10 +38,11 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      // localStorage.removeItem("accessToken");
+      // localStorage.removeItem("userRole");
+      // localStorage.removeItem("user");
+      // window.location.href = "/login";
+      console.error("API 401 Error:", error);
     }
     return Promise.reject(error);
   }

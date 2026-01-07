@@ -36,6 +36,7 @@ import Exams from "./pages/exam-admin/Exams";
 import Candidates from "./pages/exam-admin/Candidates";
 import Analytics from "./pages/exam-admin/Analytics";
 import Results from "./pages/exam-admin/Results";
+import Marking from "./pages/exam-admin/Marking";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -71,7 +72,7 @@ function App() {
           <Route
             path="/exam-admin/*"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "EXAMINER"]}>
                 <ExamAdminLayout />
               </ProtectedRoute>
             }
@@ -80,6 +81,7 @@ function App() {
             <Route path="organizations" element={<Organizations />} />
             <Route path="exams" element={<Exams />} />
             <Route path="candidates" element={<Candidates />} />
+            <Route path="marking" element={<Marking />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="results" element={<Results />} />
             <Route path="*" element={<Navigate to="/exam-admin/dashboard" replace />} />

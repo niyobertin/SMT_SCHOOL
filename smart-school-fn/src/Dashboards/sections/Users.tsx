@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Shield } from "lucide-react";
 import { Toast } from "primereact/toast";
 import api from "../../redux/api/api";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
+import { ExaminerAssignmentModal } from "../Modals/ExaminerAssignmentModal";
 
 interface User {
   id: string;
@@ -29,8 +30,13 @@ export const UsersSection = () => {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, totalPages: 1 });
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const [isExaminerModalOpen, setIsExaminerModalOpen] = useState(false);
+  const [selectedUserForRole, setSelectedUserForRole] = useState<User | null>(null);
+
   const toast = useRef<Toast>(null);
 
   useEffect(() => {
@@ -79,10 +85,16 @@ export const UsersSection = () => {
     }
   };
 
-  const handleRoleChange = async (id: string, newRole: string) => {
-    setUpdatingRoleId(id);
+  const handleRoleChange = async (user: User, newRole: string) => {
+    if (newRole === 'EXAMINER') {
+      setSelectedUserForRole(user);
+      setIsExaminerModalOpen(true);
+      return;
+    }
+
+    setUpdatingRoleId(user.id);
     try {
-      await api.patch(`/users/${id}`, { role: newRole });
+      await api.patch(`/users/${user.id}/role`, { role: newRole });
       toast.current?.show({ severity: "success", summary: "Success", detail: "Role updated successfully" });
       fetchUsers();
     } catch {
@@ -91,6 +103,29 @@ export const UsersSection = () => {
       setUpdatingRoleId(null);
     }
   };
+
+  const confirmExaminerAssignment = async (orgIds: string[]) => {
+    if (!selectedUserForRole) return;
+
+    setUpdatingRoleId(selectedUserForRole.id); // Show loading on the row/modal?
+    // Since modal is open, we can pass loading prop to modal instead
+
+    try {
+      await api.post(`/users/${selectedUserForRole.id}/assign-examiner-role`, {
+        organizationIds: orgIds
+      });
+      toast.current?.show({ severity: "success", summary: "Success", detail: "Examiner role assigned successfully" });
+      fetchUsers();
+      setIsExaminerModalOpen(false);
+      setSelectedUserForRole(null);
+    } catch (error) {
+      toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to assign examiner role" });
+      console.error(error);
+    } finally {
+      setUpdatingRoleId(null);
+    }
+  };
+
   const handleStatusChange = async (id: string, active: boolean) => {
     try {
       await api.patch(`/users/${id}`, { isActive: active });
@@ -117,6 +152,11 @@ export const UsersSection = () => {
     } catch {
       toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to update verification" });
     }
+  };
+
+  const handleManageOrganizations = (user: User) => {
+    setSelectedUserForRole(user);
+    setIsExaminerModalOpen(true);
   };
 
   return (
@@ -158,11 +198,11 @@ export const UsersSection = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-6">Loading users...</td>
+                  <td colSpan={8} className="text-center py-6">Loading users...</td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-6">No users found</td>
+                  <td colSpan={8} className="text-center py-6">No users found</td>
                 </tr>
               ) : (
                 users.map((user) => (
@@ -178,16 +218,28 @@ export const UsersSection = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">{user.username}</td>
                     <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
                     <td className="px-6 py-4">
-                      <select
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                        disabled={updatingRoleId === user.id}
-                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
-                      >
-                        <option value="STUDENT">Student</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="INSTRUCTOR">Instructor</option>
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user, e.target.value)}
+                          disabled={updatingRoleId === user.id}
+                          className={`border border-gray-300 rounded-lg px-2 py-1 text-sm ${user.role === 'EXAMINER' ? 'bg-purple-50 border-purple-200' : ''}`}
+                        >
+                          <option value="STUDENT">Student</option>
+                          <option value="ADMIN">Admin</option>
+                          <option value="INSTRUCTOR">Instructor</option>
+                          <option value="EXAMINER">Examiner</option>
+                        </select>
+                        {user.role === 'EXAMINER' && (
+                          <button
+                            onClick={() => handleManageOrganizations(user)}
+                            className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50"
+                            title="Manage Organizations"
+                          >
+                            <Shield size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     {/* Status toggle */}
                     <td className="px-6 py-4">
@@ -259,6 +311,20 @@ export const UsersSection = () => {
         title="Delete User"
         message="Are you sure you want to delete this user? This action cannot be undone."
       />
+
+      {selectedUserForRole && (
+        <ExaminerAssignmentModal
+          isOpen={isExaminerModalOpen}
+          onClose={() => {
+            setIsExaminerModalOpen(false);
+            setSelectedUserForRole(null);
+          }}
+          onConfirm={confirmExaminerAssignment}
+          userId={selectedUserForRole.id}
+          loading={!!updatingRoleId}
+        />
+      )}
+
       <Toast ref={toast} position="top-right" />
     </div>
   );

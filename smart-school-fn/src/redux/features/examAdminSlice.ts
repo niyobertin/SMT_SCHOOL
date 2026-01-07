@@ -14,6 +14,7 @@ interface ExamAdminState {
         meta: { total: number; averageScore: number };
         pagination: { page: number; limit: number; total: number; pages: number } | undefined;
     } | null;
+    candidatesPagination: { page: number; limit: number; total: number; pages: number } | null;
     analytics: any | null;
     dashboardStats: {
         organizations?: { total: number };
@@ -36,6 +37,7 @@ interface ExamAdminState {
     } | null;
     loading: boolean;
     error: string | null;
+    openEndedResponses: any[];
 }
 
 const initialState: ExamAdminState = {
@@ -47,10 +49,12 @@ const initialState: ExamAdminState = {
     assignedCandidateIds: [],
     examResults: [],
     globalResults: null,
+    candidatesPagination: null,
     analytics: null,
     dashboardStats: null,
     loading: false,
     error: null,
+    openEndedResponses: [],
 };
 
 // Async Thunks
@@ -142,6 +146,7 @@ export const fetchAllExams = createAsyncThunk(
             status?: string;
             search?: string;
             date?: string;
+            archived?: boolean;
         },
         { rejectWithValue }
     ) => {
@@ -151,6 +156,7 @@ export const fetchAllExams = createAsyncThunk(
             if (params.status) query.append('status', params.status);
             if (params.search) query.append('search', params.search);
             if (params.date) query.append('date', params.date);
+            if (params.archived !== undefined) query.append('archived', String(params.archived));
 
             const response = await api.get(`/exams/all?${query.toString()}`);
             return response.data;
@@ -192,6 +198,30 @@ export const updateExam = createAsyncThunk(
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update exam');
+        }
+    }
+);
+
+export const archiveExam = createAsyncThunk(
+    'examAdmin/archiveExam',
+    async (examId: string, { rejectWithValue }) => {
+        try {
+            await api.patch(`/exams/${examId}/archive`);
+            return examId;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to archive exam');
+        }
+    }
+);
+
+export const unarchiveExam = createAsyncThunk(
+    'examAdmin/unarchiveExam',
+    async (examId: string, { rejectWithValue }) => {
+        try {
+            await api.patch(`/exams/${examId}/unarchive`);
+            return examId;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to unarchive exam');
         }
     }
 );
@@ -278,6 +308,10 @@ export const fetchAllCandidates = createAsyncThunk(
             search?: string;
             page?: number;
             limit?: number;
+            batch?: string;
+            grade?: string;
+            department?: string;
+            archived?: boolean;
         },
         { rejectWithValue }
     ) => {
@@ -287,6 +321,10 @@ export const fetchAllCandidates = createAsyncThunk(
             if (params.search) query.append('search', params.search);
             if (params.page) query.append('page', String(params.page));
             if (params.limit) query.append('limit', String(params.limit));
+            if (params.batch) query.append('batch', params.batch);
+            if (params.grade) query.append('grade', params.grade);
+            if (params.department) query.append('department', params.department);
+            if (params.archived !== undefined) query.append('archived', String(params.archived));
 
             const response = await api.get(`/exams/candidates/all?${query.toString()}`);
             return response.data;
@@ -352,6 +390,30 @@ export const deleteCandidate = createAsyncThunk(
             return candidateId;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to delete candidate');
+        }
+    }
+);
+
+export const archiveCandidate = createAsyncThunk(
+    'examAdmin/archiveCandidate',
+    async (candidateId: string, { rejectWithValue }) => {
+        try {
+            await api.patch(`/exams/candidates/${candidateId}/archive`);
+            return candidateId;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to archive candidate');
+        }
+    }
+);
+
+export const unarchiveCandidate = createAsyncThunk(
+    'examAdmin/unarchiveCandidate',
+    async (candidateId: string, { rejectWithValue }) => {
+        try {
+            await api.patch(`/exams/candidates/${candidateId}/unarchive`);
+            return candidateId;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to unarchive candidate');
         }
     }
 );
@@ -434,6 +496,33 @@ export const fetchExamAnalytics = createAsyncThunk(
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch analytics');
+        }
+    }
+);
+
+export const fetchOpenEndedResponses = createAsyncThunk(
+    'examAdmin/fetchOpenEndedResponses',
+    async (examId: string | undefined, { rejectWithValue }) => {
+        try {
+            const url = examId && examId !== 'all'
+                ? `/exams/${examId}/open-ended-responses`
+                : '/exams/all/open-ended-responses';
+            const response = await api.get(url);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch responses');
+        }
+    }
+);
+
+export const markAnswer = createAsyncThunk(
+    'examAdmin/markAnswer',
+    async ({ answerId, manualScore, feedback }: { answerId: string; manualScore: number; feedback?: string }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/exams/answers/${answerId}/mark`, { manualScore, feedback });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to submit mark');
         }
     }
 );
@@ -536,6 +625,21 @@ const examAdminSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             })
+            .addCase(archiveExam.fulfilled, (state, action) => {
+                const index = state.exams.findIndex(e => e.id === action.payload);
+                if (index !== -1) {
+                    state.exams[index].status = 'ARCHIVED'; // Assuming backend updates status to ARCHIVED or we just mark it
+                    // Or if we filter out archived:
+                    // state.exams = state.exams.filter(e => e.id !== action.payload);
+                }
+            })
+            .addCase(unarchiveExam.fulfilled, (state, action) => {
+                // Logic would depend on if we re-fetch or just update local
+                const index = state.exams.findIndex(e => e.id === action.payload);
+                if (index !== -1) {
+                    state.exams[index].status = 'DRAFT'; // Or whatever default unarchived status
+                }
+            })
             // Exam Details
             .addCase(fetchExamDetails.fulfilled, (state, action) => {
                 state.selectedExam = action.payload.data;
@@ -547,6 +651,7 @@ const examAdminSlice = createSlice({
             })
             .addCase(fetchAllCandidates.fulfilled, (state, action) => {
                 state.candidates = action.payload.data;
+                state.candidatesPagination = action.payload.pagination || null;
             })
             .addCase(fetchExamAssignedCandidates.fulfilled, (state, action) => {
                 state.assignedCandidateIds = action.payload.data;
@@ -576,6 +681,19 @@ const examAdminSlice = createSlice({
             })
             .addCase(deleteCandidate.rejected, (state) => {
                 state.loading = false;
+            })
+            .addCase(archiveCandidate.fulfilled, (state, action) => {
+                const index = state.candidates.findIndex(c => c.id === action.payload);
+                if (index !== -1) {
+                    state.candidates[index].isArchived = true;
+                    // Optionally remove from list if we are only showing active
+                }
+            })
+            .addCase(unarchiveCandidate.fulfilled, (state, action) => {
+                const index = state.candidates.findIndex(c => c.id === action.payload);
+                if (index !== -1) {
+                    state.candidates[index].isArchived = false;
+                }
             })
             // Bulk Candidates
             .addCase(bulkCreateCandidates.pending, (state) => {
@@ -683,6 +801,28 @@ const examAdminSlice = createSlice({
             .addCase(authorizeRetake.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            })
+            // Open Ended Responses
+            .addCase(fetchOpenEndedResponses.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchOpenEndedResponses.fulfilled, (state, action) => {
+                state.loading = false;
+                state.openEndedResponses = action.payload.data.responses;
+            })
+            .addCase(fetchOpenEndedResponses.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(markAnswer.fulfilled, (state, action) => {
+                // Update local state for immediate feedback
+                if (state.openEndedResponses) {
+                    const updatedAnswer = action.payload.data;
+                    const index = state.openEndedResponses.findIndex((a: any) => a.id === updatedAnswer.id);
+                    if (index !== -1) {
+                        state.openEndedResponses[index] = updatedAnswer;
+                    }
+                }
             })
     },
 });

@@ -36,6 +36,9 @@ model User {
   userCourseProgress UserCourseProgress[]
   notifications      Notification[]
   ActivityLog        ActivityLog[]
+  userOrganizations  UserOrganization[] // For EXAMINER role organization assignments
+  markedAnswers      ExamAnswer[]         @relation("MarkedBy") // Answers marked by this user
+  examAnswers        ExamAnswer[]
 
   @@map("users")
 }
@@ -44,6 +47,7 @@ enum UserRole {
   ADMIN
   INSTRUCTOR
   STUDENT
+  EXAMINER
 }
 
 // Course Management
@@ -490,31 +494,56 @@ model Organization {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  exams      Exam[]
-  candidates Candidate[]
+  exams             Exam[]
+  candidates        Candidate[]
+  userOrganizations UserOrganization[] // Users assigned to this organization
 
   @@map("organizations")
 }
 
-// Candidate Management (separate from User)
-model Candidate {
+// Junction table for User-Organization many-to-many relationship
+model UserOrganization {
   id             String       @id @default(cuid())
-  candidateId    String       @unique // User-friendly ID for login
-  firstName      String
-  lastName       String
-  email          String?
-  phoneNumber    String?
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignedAt     DateTime     @default(now())
+  assignedBy     String? // ID of admin who made the assignment
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("user_organizations")
+}
+
+// Candidate Management (separate from User)
+model Candidate {
+  id                String       @id @default(cuid())
+  candidateId       String       @unique // System-generated ID for login
+  customCandidateId String? // Optional user-defined ID
+  firstName         String
+  lastName          String
+  email             String?
+  phoneNumber       String?
+  batch             String? // e.g., "2026 Spring Batch", "Grade 10A"
+  grade             String? // Grade level
+  department        String? // Department/division
+  archived          Boolean      @default(false) // Soft delete flag
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Relations
   examAssignments ExamAssignment[]
   examAttempts    ExamAttempt[]
 
+  @@unique([customCandidateId, organizationId]) // Custom ID unique per organization
   @@index([organizationId])
+  @@index([batch])
+  @@index([archived])
   @@map("candidates")
 }
 
@@ -652,18 +681,30 @@ enum ExamAttemptStatus {
 
 // Candidate Answers
 model ExamAnswer {
-  id              String       @id @default(cuid())
-  answerText      String?
+  id              String   @id @default(cuid())
+  answerText      String? // For open-ended questions (ESSAY, SHORT_ANSWER)
   selectedOptions String[] // for multiple choice
   userAnswer      String[] // for display
   isCorrect       Boolean?
-  points          Float        @default(0)
-  timeSpent       Int? // time spent on this question in seconds
-  createdAt       DateTime     @default(now())
-  examAttemptId   String
-  examAttempt     ExamAttempt  @relation(fields: [examAttemptId], references: [id], onDelete: Cascade)
-  examQuestionId  String
-  examQuestion    ExamQuestion @relation(fields: [examQuestionId], references: [id], onDelete: Cascade)
+  points          Float    @default(0) // Auto-calculated points
+
+  // Manual marking fields
+  manualScore Float? // Manually assigned score for open-ended questions
+  feedback    String? // Examiner feedback
+  markedBy    String? // ID of user who marked this answer
+  markedAt    DateTime? // When the answer was marked
+
+  timeSpent      Int? // time spent on this question in seconds
+  createdAt      DateTime     @default(now())
+  examAttemptId  String
+  examAttempt    ExamAttempt  @relation(fields: [examAttemptId], references: [id], onDelete: Cascade)
+  examQuestionId String
+  examQuestion   ExamQuestion @relation(fields: [examQuestionId], references: [id], onDelete: Cascade)
+
+  // Relation to user who marked the answer
+  marker User?   @relation(name: "MarkedBy", fields: [markedBy], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
 
   @@index([examAttemptId])
   @@index([examQuestionId])

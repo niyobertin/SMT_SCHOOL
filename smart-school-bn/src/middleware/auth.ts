@@ -26,7 +26,18 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         firstName: true,
         lastName: true,
         role: true,
-        isActive: true
+        isActive: true,
+        userOrganizations: {
+          select: {
+            organizationId: true,
+            organization: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
       }
     });
 
@@ -39,10 +50,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     //@ts-ignore
     req.user = user;
     next();
-  } catch (error) {
+  } catch (error: any) {
     res.status(401).json({
       success: false,
-      message: 'Invalid token'
+      message: error.message || 'Invalid token'
     });
   }
 };

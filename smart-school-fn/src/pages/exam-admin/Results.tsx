@@ -36,6 +36,7 @@ const Results = () => {
         globalResults,
         loading
     } = useAppSelector((state) => state.examAdmin);
+    const { user } = useAppSelector((state) => state.auth);
 
     const [filters, setFilters] = useState({
         organizationId: '',
@@ -43,7 +44,11 @@ const Results = () => {
         startDate: '',
         endDate: '',
         status: 'ALL', // ALL, PASSED, FAILED
+        batch: ''
     });
+    const [isExportingPDF, setIsExportingPDF] = useState(false);
+    const [isExportingExcel, setIsExportingExcel] = useState(false);
+    const [isExportingDetailed, setIsExportingDetailed] = useState(false);
 
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
@@ -53,12 +58,12 @@ const Results = () => {
         candidateName: string;
         allowRetake: boolean;
     }>({ show: false, assignmentId: '', candidateName: '', allowRetake: false });
-
-    // Local filter state
-    // Initialize
     useEffect(() => {
         dispatch(fetchOrganizations());
-    }, [dispatch]);
+        if (user?.role === 'EXAMINER') {
+            dispatch(fetchExams('all')); // Or perhaps the backend handles fetching exams from all assigned orgs
+        }
+    }, [dispatch, user?.role]);
 
     // Fetch exams when org changes
     useEffect(() => {
@@ -79,6 +84,7 @@ const Results = () => {
             status: filters.status !== 'ALL' ? filters.status : undefined,
             organizationId: filters.organizationId || undefined,
             examId: filters.examId || undefined,
+            batch: filters.batch || undefined
         };
 
         dispatch(fetchGlobalExamResults(fetchParams));
@@ -101,93 +107,147 @@ const Results = () => {
     // Export to Excel
     const handleExportExcel = () => {
         if (!globalResults?.data) return;
+        setIsExportingExcel(true);
+        try {
+            const dataToExport = globalResults.data.map((attempt: any, index: number) => ({
+                Position: index + 1,
+                'Candidate ID': attempt.candidate.customCandidateId || attempt.candidate.candidateId,
+                'First Name': attempt.candidate.firstName,
+                'Last Name': attempt.candidate.lastName,
+                'Email': attempt.candidate.email || 'N/A',
+                'Exam Title': attempt.exam.title,
+                'Batch': attempt.candidate.batch || 'N/A',
+                'Score (%)': attempt.score?.toFixed(2),
+                'Status': attempt.status,
+                'Date': new Date(attempt.createdAt).toLocaleDateString(),
+            }));
 
-        const dataToExport = globalResults.data.map((attempt: any, index: number) => ({
-            Position: index + 1,
-            'Candidate ID': attempt.candidate.candidateId,
-            'First Name': attempt.candidate.firstName,
-            'Last Name': attempt.candidate.lastName,
-            'Email': attempt.candidate.email || 'N/A',
-            'Exam Title': attempt.exam.title,
-            'Score (%)': attempt.score?.toFixed(2),
-            'Status': attempt.isPassed ? 'PASSED' : 'FAILED',
-            'Date': new Date(attempt.startTime).toLocaleDateString(),
-            'Duration (min)': attempt.timeSpent ? Math.round(attempt.timeSpent / 60) : 'N/A'
-        }));
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Exam Results");
 
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Exam Results");
+            // Add average score row if meta exists
+            if (globalResults.meta) {
+                XLSX.utils.sheet_add_aoa(ws, [
+                    [],
+                    ['Average Score:', `${Math.round(globalResults.meta.averageScore * 10) / 10}%`],
+                    ['Total Candidates:', globalResults.meta.total]
+                ], { origin: -1 });
+            }
 
-        // Add average score row
-        if (globalResults.meta) {
-            XLSX.utils.sheet_add_aoa(ws, [
-                [],
-                ['Average Score:', `${Math.round(globalResults.meta.averageScore * 10) / 10}%`]
-            ], { origin: -1 });
+            XLSX.writeFile(wb, `Exam_Results_${new Date().toISOString().split('T')[0]}.xlsx`);
+            toast.success('Excel exported successfully');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to export Excel');
+        } finally {
+            setIsExportingExcel(false);
         }
-
-        XLSX.writeFile(wb, `Exam_Results_${new Date().toISOString().split('T')[0]}.xlsx`);
-        toast.success('Excel export started');
     };
 
     // Export to PDF
     const handleExportPDF = () => {
         if (!globalResults?.data) return;
+        setIsExportingPDF(true);
+        try {
+            const doc = new jsPDF();
+            // Title
+            doc.setFontSize(18);
+            doc.text('Exam Results Report', 14, 20);
 
-        const doc = new jsPDF();
-        // Title
-        doc.setFontSize(18);
-        doc.text('Exam Results Report', 14, 20);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            const dateStr = `Generated on: ${new Date().toLocaleDateString()}`;
+            doc.text(dateStr, 14, 28);
 
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        const dateStr = `Generated on: ${new Date().toLocaleDateString()}`;
-        doc.text(dateStr, 14, 28);
+            // Filter Context
+            let yPos = 35;
+            if (filters.organizationId) {
+                const orgName = organizations.find(o => o.id === filters.organizationId)?.name || 'Unknown Org';
+                doc.text(`Organization: ${orgName}`, 14, yPos);
+                yPos += 5;
+            }
+            if (filters.examId) {
+                const examTitle = exams.find(e => e.id === filters.examId)?.title || 'Unknown Exam';
+                doc.text(`Exam: ${examTitle}`, 14, yPos);
+                yPos += 5;
+            }
 
-        // Filter Context
-        let yPos = 35;
-        if (filters.organizationId) {
-            const orgName = organizations.find(o => o.id === filters.organizationId)?.name || 'Unknown Org';
-            doc.text(`Organization: ${orgName}`, 14, yPos);
-            yPos += 5;
+            // Table
+            const tableColumn = ["Pos", "ID", "Candidate Name", "Exam", "Score", "Status"];
+            const tableRows = globalResults.data.map((attempt: any, index: number) => [
+                index + 1,
+                attempt.candidate.customCandidateId || attempt.candidate.candidateId,
+                `${attempt.candidate.firstName} ${attempt.candidate.lastName}`,
+                attempt.exam.title,
+                `${attempt.score?.toFixed(2)}%`,
+                attempt.status
+            ]);
+
+            autoTable(doc, {
+                head: [tableColumn],
+                body: tableRows,
+                startY: yPos + 5,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229] }, // Indigo 600
+            });
+
+            // Summary Footer
+            const finalY = (doc as any).lastAutoTable.finalY + 10;
+            doc.setFontSize(11);
+            doc.setTextColor(0);
+            if (globalResults.meta) {
+                doc.text(`Average Score: ${Math.round(globalResults.meta.averageScore * 100) / 100}%`, 14, finalY);
+                doc.text(`Total Candidates: ${globalResults.meta.total}`, 14, finalY + 7);
+            }
+
+            doc.save(`Exam_Results_${new Date().toISOString().split('T')[0]}.pdf`);
+            toast.success('PDF exported successfully');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to export PDF');
+        } finally {
+            setIsExportingPDF(false);
         }
-        if (filters.examId) {
-            const examTitle = exams.find(e => e.id === filters.examId)?.title || 'Unknown Exam';
-            doc.text(`Exam: ${examTitle}`, 14, yPos);
-            yPos += 5;
+    };
+
+    const handleExportDetailedPDF = async () => {
+        if (!filters.examId) {
+            toast.error('Please select an exam first');
+            return;
         }
 
-        // Table
-        const tableColumn = ["Pos", "ID", "Candidate Name", "Exam", "Score", "Status"];
-        const tableRows = globalResults.data.map((attempt: any, index: number) => [
-            index + 1,
-            attempt.candidate.candidateId,
-            `${attempt.candidate.firstName} ${attempt.candidate.lastName}`,
-            attempt.exam.title,
-            `${attempt.score?.toFixed(2)}%`,
-            attempt.isPassed ? 'PASS' : 'FAIL'
-        ]);
+        setIsExportingDetailed(true);
+        try {
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const token = localStorage.getItem('accessToken');
 
-        autoTable(doc, {
-            head: [tableColumn],
-            body: tableRows,
-            startY: yPos + 5,
-            theme: 'grid',
-            headStyles: { fillColor: [79, 70, 229] }, // Indigo 600
-        });
+            const response = await fetch(`${baseUrl}/api/exams/${filters.examId}/results/detailed`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-        // Summary Footer
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
-        doc.setFontSize(11);
-        doc.setTextColor(0);
-        if (globalResults.meta) {
-            doc.text(`Average Score: ${Math.round(globalResults.meta.averageScore * 100) / 100}%`, 14, finalY);
-            doc.text(`Total Candidates: ${globalResults.meta.total}`, 14, finalY + 7);
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Export failed' }));
+                throw new Error(err.message || 'Export failed');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Detailed_Results_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Detailed report exported successfully');
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to export PDF');
+        } finally {
+            setIsExportingDetailed(false);
         }
-
-        doc.save(`Exam_Results_${new Date().toISOString().split('T')[0]}.pdf`);
-        toast.success('PDF export started');
     };
 
     return (
@@ -200,25 +260,26 @@ const Results = () => {
 
                 {/* Filters Section */}
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-end flex-wrap">
-
                     {/* Organization Filter */}
-                    <div className="flex-1 min-w-[200px]">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
-                        <div className="relative">
-                            <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <select
-                                name="organizationId"
-                                value={filters.organizationId}
-                                onChange={handleOrgChange}
-                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            >
-                                <option value="">All Organizations</option>
-                                {organizations.map(org => (
-                                    <option key={org.id} value={org.id}>{org.name}</option>
-                                ))}
-                            </select>
+                    {user?.role !== 'EXAMINER' && (
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                            <div className="relative">
+                                <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <select
+                                    name="organizationId"
+                                    value={filters.organizationId}
+                                    onChange={handleOrgChange}
+                                    className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="">All Organizations</option>
+                                    {organizations.map(org => (
+                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Exam Filter */}
                     <div className="flex-1 min-w-[200px]">
@@ -229,7 +290,7 @@ const Results = () => {
                                 name="examId"
                                 value={filters.examId}
                                 onChange={handleFilterChange}
-                                disabled={!filters.organizationId} // Typically exams belong to org, so better to lock if no org selected, OR show all if backend supports it (but list might be huge)
+                                disabled={!filters.organizationId}
                                 className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:text-gray-400"
                             >
                                 <option value="">All Exams</option>
@@ -240,32 +301,26 @@ const Results = () => {
                         </div>
                     </div>
 
-                    {/* Date Range Start */}
+                    {/* Date Range Filters */}
                     <div className="w-[150px]">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                name="startDate"
-                                value={filters.startDate}
-                                onChange={handleFilterChange}
-                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            />
-                        </div>
+                        <input
+                            type="date"
+                            name="startDate"
+                            value={filters.startDate}
+                            onChange={handleFilterChange}
+                            className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
                     </div>
-
-                    {/* Date Range End */}
                     <div className="w-[150px]">
                         <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                name="endDate"
-                                value={filters.endDate}
-                                onChange={handleFilterChange}
-                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            />
-                        </div>
+                        <input
+                            type="date"
+                            name="endDate"
+                            value={filters.endDate}
+                            onChange={handleFilterChange}
+                            className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
                     </div>
 
                     {/* Status Filter */}
@@ -277,7 +332,7 @@ const Results = () => {
                                 name="status"
                                 value={filters.status}
                                 onChange={handleFilterChange}
-                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                             >
                                 <option value="ALL">All Status</option>
                                 <option value="PASSED">Passed</option>
@@ -290,15 +345,28 @@ const Results = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={handleExportPDF}
-                            className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center gap-2 border border-red-200"
+                            disabled={isExportingPDF}
+                            className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center gap-2 border border-red-200 disabled:opacity-50"
                         >
-                            <Download className="w-4 h-4" /> PDF
+                            {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            PDF
                         </button>
                         <button
                             onClick={handleExportExcel}
-                            className="bg-green-50 text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors flex items-center gap-2 border border-green-200"
+                            disabled={isExportingExcel}
+                            className="bg-green-50 text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors flex items-center gap-2 border border-green-200 disabled:opacity-50"
                         >
-                            <Download className="w-4 h-4" /> Excel
+                            {isExportingExcel ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            Excel
+                        </button>
+                        <button
+                            onClick={handleExportDetailedPDF}
+                            disabled={!filters.examId || isExportingDetailed}
+                            className="bg-purple-50 text-purple-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-100 transition-colors flex items-center gap-2 border border-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={!filters.examId ? "Select an exam to export detailed results" : "Export Detailed Results Report"}
+                        >
+                            {isExportingDetailed ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                            Report
                         </button>
                     </div>
                 </div>
@@ -367,17 +435,24 @@ const Results = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    {attempt.isPassed ? (
-                                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
-                                                            <CheckCircle className="w-3 h-3" />
-                                                            Pass
-                                                        </div>
-                                                    ) : (
-                                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
-                                                            <XCircle className="w-3 h-3" />
-                                                            Fail
-                                                        </div>
-                                                    )}
+                                                    <div className="flex flex-col gap-1.5 items-start">
+                                                        {attempt.isMarkingPending ? (
+                                                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                                Marking Pending
+                                                            </div>
+                                                        ) : attempt.isPassed ? (
+                                                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                                                                <CheckCircle className="w-3 h-3" />
+                                                                Pass
+                                                            </div>
+                                                        ) : (
+                                                            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+                                                                <XCircle className="w-3 h-3" />
+                                                                Fail
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-500">
                                                     {new Date(attempt.startTime).toLocaleDateString()}
@@ -413,8 +488,8 @@ const Results = () => {
                                     </tbody>
                                 </table>
                             </div>
-                            {/* Pagination only if data exists and not loading initial state */}
-                            {(!loading || (globalResults?.data && globalResults.data.length > 0)) && globalResults?.pagination && globalResults.pagination.pages > 1 && (
+                            {/* Pagination */}
+                            {globalResults?.pagination && globalResults.pagination.pages > 1 && (
                                 <div className="bg-white px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                                     <div className="text-sm text-gray-500">
                                         Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to <span className="font-medium">{Math.min(page * limit, globalResults.pagination.total)}</span> of <span className="font-medium">{globalResults.pagination.total}</span> results
@@ -450,7 +525,7 @@ const Results = () => {
                 </div>
             </div>
 
-            {/* Custom Confirmation Modal */}
+            {/* Confirmation Modal */}
             <AnimatePresence>
                 {confirmModal.show && (
                     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">

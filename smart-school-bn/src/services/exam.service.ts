@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 /**
  * Generate a unique exam code
- * Format: XXXX-XXXX (8 characters)
+ * Format: XXXX (4 characters)
  */
 export const generateExamCode = async (): Promise<string> => {
     const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude similar-looking characters
@@ -14,8 +14,7 @@ export const generateExamCode = async (): Promise<string> => {
 
     while (!isUnique) {
         examCode = '';
-        for (let i = 0; i < 8; i++) {
-            if (i === 4) examCode += '-';
+        for (let i = 0; i < 4; i++) {
             examCode += characters.charAt(Math.floor(Math.random() * characters.length));
         }
 
@@ -34,16 +33,16 @@ export const generateExamCode = async (): Promise<string> => {
 
 /**
  * Generate a unique candidate ID
- * Format: CAND-XXXXXX
+ * Format: XXXX (4 characters)
  */
 export const generateCandidateId = async (organizationId: string): Promise<string> => {
-    const characters = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let candidateId = '';
     let isUnique = false;
 
     while (!isUnique) {
-        candidateId = 'CAND-';
-        for (let i = 0; i < 6; i++) {
+        candidateId = '';
+        for (let i = 0; i < 4; i++) {
             candidateId += characters.charAt(Math.floor(Math.random() * characters.length));
         }
 

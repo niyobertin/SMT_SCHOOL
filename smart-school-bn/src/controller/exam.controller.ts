@@ -60,7 +60,12 @@ export const getOrganizations = async (
         const { page = 1, limit = 10, search } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
 
-        const where = search
+        const user = req.user as any;
+        const examinerOrgIds = user.role === 'EXAMINER'
+            ? user.userOrganizations?.map((uo: any) => uo.organizationId) || []
+            : null;
+
+        const where: any = search
             ? {
                 OR: [
                     { name: { contains: search as string, mode: 'insensitive' as const } },
@@ -68,6 +73,10 @@ export const getOrganizations = async (
                 ],
             }
             : {};
+
+        if (examinerOrgIds) {
+            where.id = { in: examinerOrgIds };
+        }
 
         const [organizations, total] = await Promise.all([
             prisma.organization.findMany({
@@ -201,19 +210,56 @@ export const createCandidate = async (
 ): Promise<void> => {
     try {
         const { orgId } = req.params;
-        const { firstName, lastName, email, phoneNumber } = req.body;
+        const {
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            candidateId,
+            batch,
+            grade,
+            department
+        } = req.body;
+        const user = req.user as any;
 
-        const candidateIdGenerated = await generateCandidateId(orgId);
+        if (!candidateId) {
+            res.status(400).json({ status: 'error', message: 'Candidate ID is required' });
+            return;
+        }
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(orgId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s candidates'
+                });
+                return;
+            }
+        }
+
+        // Check if manually provided candidateId already exists
+        const existing = await prisma.candidate.findUnique({
+            where: { candidateId: candidateId }
+        });
+        if (existing) {
+            res.status(400).json({ status: 'error', message: 'Candidate ID already exists' });
+            return;
+        }
 
         const candidate = await prisma.candidate.create({
             data: {
                 id: uuidv4(),
-                candidateId: candidateIdGenerated,
+                candidateId: candidateId,
                 firstName,
                 lastName,
                 email,
                 phoneNumber,
                 organizationId: orgId,
+                batch: batch || null,
+                grade: grade !== undefined ? String(grade) : null,
+                department: department || null,
             },
         });
 
@@ -236,6 +282,19 @@ export const createCandidatesBulk = async (
     try {
         const { orgId } = req.params;
         const { candidates } = req.body; // Array of { firstName, lastName, email, phoneNumber }
+        const user = req.user as any;
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(orgId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s candidates'
+                });
+                return;
+            }
+        }
 
         if (!Array.isArray(candidates) || candidates.length === 0) {
             res.status(400).json({
@@ -287,12 +346,29 @@ export const getAllCandidates = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { organizationId, search, page = 1, limit = 50 } = req.query;
+        const { organizationId, search, page = 1, limit = 50, showArchived } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
+        const user = req.user as any;
 
         const where: any = {};
 
-        if (organizationId) {
+        // If examiner, restrict to their organizations
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s candidates'
+                });
+                return;
+            }
+
+            if (organizationId) {
+                where.organizationId = String(organizationId);
+            } else {
+                where.organizationId = { in: examinerOrgIds };
+            }
+        } else if (organizationId) {
             where.organizationId = String(organizationId);
         }
 
@@ -303,6 +379,11 @@ export const getAllCandidates = async (
                 { candidateId: { contains: String(search), mode: 'insensitive' } },
                 { email: { contains: String(search), mode: 'insensitive' } },
             ];
+        }
+
+        // Archive status
+        if (showArchived !== 'true') {
+            where.archived = false;
         }
 
         const [candidates, total] = await Promise.all([
@@ -349,25 +430,51 @@ export const getCandidates = async (
 ): Promise<void> => {
     try {
         const { orgId } = req.params;
-        const { page = 1, limit = 10, search } = req.query;
+        const user = req.user as any;
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(orgId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s candidates'
+                });
+                return;
+            }
+        }
+
+        const { page = 1, limit = 10, search, batch, grade, department, showArchived } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
 
         const where: any = { organizationId: orgId };
 
+        // Search filter
         if (search) {
             where.OR = [
                 { firstName: { contains: search as string, mode: 'insensitive' as const } },
                 { lastName: { contains: search as string, mode: 'insensitive' as const } },
                 { candidateId: { contains: search as string, mode: 'insensitive' as const } },
+                { customCandidateId: { contains: search as string, mode: 'insensitive' as const } },
                 { email: { contains: search as string, mode: 'insensitive' as const } },
             ];
+        }
+
+        // Additional filters
+        if (batch) where.batch = batch;
+        if (grade) where.grade = grade;
+        if (department) where.department = department;
+
+        // Archive status
+        if (showArchived !== 'true') {
+            where.archived = false;
         }
 
         const [candidates, total] = await Promise.all([
             prisma.candidate.findMany({
                 where,
-                skip,
-                take: Number(limit),
+                skip: Number(limit) === -1 ? undefined : skip,
+                take: Number(limit) === -1 ? undefined : Number(limit),
                 orderBy: { createdAt: 'desc' },
                 include: {
                     _count: {
@@ -388,7 +495,7 @@ export const getCandidates = async (
                 page: Number(page),
                 limit: Number(limit),
                 total,
-                pages: Math.ceil(total / Number(limit)),
+                pages: Number(limit) === -1 ? 1 : Math.ceil(total / Number(limit)),
             },
         });
     } catch (error) {
@@ -404,7 +511,39 @@ export const updateCandidate = async (
 ): Promise<void> => {
     try {
         const { candidateId } = req.params;
-        const { firstName, lastName, email, phoneNumber, isActive } = req.body;
+        const {
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            isActive,
+            batch,
+            grade,
+            department
+        } = req.body;
+        const user = req.user as any;
+
+        // Get candidate to check organization
+        const existingCandidate = await prisma.candidate.findUnique({
+            where: { id: candidateId }
+        });
+
+        if (!existingCandidate) {
+            res.status(404).json({ status: 'error', message: 'Candidate not found' });
+            return;
+        }
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(existingCandidate.organizationId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this candidate'
+                });
+                return;
+            }
+        }
 
         const candidate = await prisma.candidate.update({
             where: { id: candidateId },
@@ -414,6 +553,9 @@ export const updateCandidate = async (
                 email,
                 phoneNumber,
                 isActive,
+                batch: batch !== undefined ? batch : existingCandidate.batch,
+                grade: grade !== undefined ? String(grade) : existingCandidate.grade,
+                department: department !== undefined ? department : existingCandidate.department,
             },
         });
 
@@ -435,6 +577,29 @@ export const deleteCandidate = async (
 ): Promise<void> => {
     try {
         const { candidateId } = req.params;
+        const user = req.user as any;
+
+        // Get candidate to check organization
+        const existingCandidate = await prisma.candidate.findUnique({
+            where: { id: candidateId }
+        });
+
+        if (!existingCandidate) {
+            res.status(404).json({ status: 'error', message: 'Candidate not found' });
+            return;
+        }
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(existingCandidate.organizationId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this candidate'
+                });
+                return;
+            }
+        }
 
         await prisma.candidate.delete({
             where: { id: candidateId },
@@ -474,6 +639,19 @@ export const createExam = async (
             showResults,
             allowReview,
         } = req.body;
+        const user = req.user as any;
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(orgId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s exams'
+                });
+                return;
+            }
+        }
 
         const examCode = await generateExamCode();
 
@@ -514,50 +692,63 @@ export const getExams = async (
 ): Promise<void> => {
     try {
         const { orgId } = req.params;
-        const { page = 1, limit = 10, search, status } = req.query;
-        const skip = (Number(page) - 1) * Number(limit);
+        const { showArchived } = req.query;
+        const user = req.user as any;
 
-        const where: any = { organizationId: orgId };
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (orgId !== 'all' && !examinerOrgIds.includes(orgId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s exams'
+                });
+                return;
+            }
 
-        if (search) {
-            where.OR = [
-                { title: { contains: search as string, mode: 'insensitive' as const } },
-                { examCode: { contains: search as string, mode: 'insensitive' as const } },
-            ];
-        }
+            // If 'all', filter by all assigned orgs
+            if (orgId === 'all') {
+                const where: any = { organizationId: { in: examinerOrgIds } };
+                if (showArchived !== 'true') {
+                    where.status = { not: 'ARCHIVED' };
+                }
 
-        if (status) {
-            where.status = status;
-        }
-
-        const [exams, total] = await Promise.all([
-            prisma.exam.findMany({
-                where,
-                skip,
-                take: Number(limit),
-                orderBy: { createdAt: 'desc' },
-                include: {
-                    _count: {
-                        select: {
-                            questions: true,
-                            assignments: true,
-                            attempts: true,
-                        },
+                const exams = await prisma.exam.findMany({
+                    where,
+                    include: {
+                        organization: { select: { name: true } },
+                        _count: { select: { questions: true, assignments: true, attempts: true } }
                     },
+                    orderBy: { createdAt: 'desc' }
+                });
+                res.status(200).json({ status: 'success', data: exams });
+                return;
+            }
+        }
+
+        const where: any = orgId === 'all' ? {} : { organizationId: orgId };
+
+        // Filter out archived exams unless requested
+        if (showArchived !== 'true') {
+            where.status = { not: 'ARCHIVED' };
+        }
+
+        const exams = await prisma.exam.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                organization: {
+                    select: { name: true }
                 },
-            }),
-            prisma.exam.count({ where }),
-        ]);
+                _count: {
+                    select: { questions: true, attempts: true }
+                }
+            }
+        });
 
         res.status(200).json({
             status: 'success',
             data: exams,
-            pagination: {
-                page: Number(page),
-                limit: Number(limit),
-                total,
-                pages: Math.ceil(total / Number(limit)),
-            },
         });
     } catch (error) {
         logger.error(error);
@@ -571,11 +762,28 @@ export const getAllExams = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { organizationId, status, search, date } = req.query;
+        const { organizationId, status, search, date, showArchived } = req.query;
 
         const where: any = {};
+        const user = req.user as any;
 
-        if (organizationId) {
+        // If examiner, restrict to their organizations
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s exams'
+                });
+                return;
+            }
+
+            if (organizationId) {
+                where.organizationId = String(organizationId);
+            } else {
+                where.organizationId = { in: examinerOrgIds };
+            }
+        } else if (organizationId) {
             where.organizationId = String(organizationId);
         }
 
@@ -599,6 +807,11 @@ export const getAllExams = async (
                 gte: filterDate,
                 lt: nextDay
             };
+        }
+
+        // Archive status
+        if (showArchived !== 'true' && !status && status !== 'ARCHIVED') {
+            where.status = { not: 'ARCHIVED' };
         }
 
         const exams = await prisma.exam.findMany({
@@ -631,6 +844,7 @@ export const getExamById = async (
 ): Promise<void> => {
     try {
         const { examId } = req.params;
+        const user = req.user as any;
 
         const exam = await prisma.exam.findUnique({
             where: { id: examId },
@@ -659,6 +873,18 @@ export const getExamById = async (
 
         if (!exam) {
             throw new NotFoundError('Exam not found');
+        }
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(exam.organizationId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this exam'
+                });
+                return;
+            }
         }
 
         res.status(200).json({
@@ -692,6 +918,38 @@ export const updateExam = async (
             status,
             isActive,
         } = req.body;
+        const user = req.user as any;
+
+        // Get existing exam to check organization and archive status
+        const existingExam = await prisma.exam.findUnique({
+            where: { id: examId }
+        });
+
+        if (!existingExam) {
+            res.status(404).json({ status: 'error', message: 'Exam not found' });
+            return;
+        }
+
+        // Check archive status
+        if (existingExam.status === 'ARCHIVED') {
+            res.status(403).json({
+                status: 'fail',
+                message: 'This exam is archived and cannot be updated'
+            });
+            return;
+        }
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(existingExam.organizationId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this exam'
+                });
+                return;
+            }
+        }
 
         const exam = await prisma.exam.update({
             where: { id: examId },
@@ -730,6 +988,38 @@ export const deleteExam = async (
 ): Promise<void> => {
     try {
         const { examId } = req.params;
+        const user = req.user as any;
+
+        // Get existing exam to check organization and archive status
+        const existingExam = await prisma.exam.findUnique({
+            where: { id: examId }
+        });
+
+        if (!existingExam) {
+            res.status(404).json({ status: 'error', message: 'Exam not found' });
+            return;
+        }
+
+        // Check archive status
+        if (existingExam.status === 'ARCHIVED') {
+            res.status(403).json({
+                status: 'fail',
+                message: 'This exam is archived and cannot be deleted'
+            });
+            return;
+        }
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(existingExam.organizationId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this exam'
+                });
+                return;
+            }
+        }
 
         await prisma.exam.delete({
             where: { id: examId },
@@ -757,6 +1047,38 @@ export const addQuestionToExam = async (
     try {
         const { examId } = req.params;
         const { question, type, points, explanation, options } = req.body;
+        const user = req.user as any;
+
+        // Check if exam exists and get its organization
+        const exam = await prisma.exam.findUnique({
+            where: { id: examId }
+        });
+
+        if (!exam) {
+            res.status(404).json({ status: 'error', message: 'Exam not found' });
+            return;
+        }
+
+        // Check archive status
+        if (exam.status === 'ARCHIVED') {
+            res.status(403).json({
+                status: 'fail',
+                message: 'This exam is archived and cannot be modified'
+            });
+            return;
+        }
+
+        // If examiner, ensure they are assigned to this organization
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (!examinerOrgIds.includes(exam.organizationId)) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this exam'
+                });
+                return;
+            }
+        }
 
         // Get current max order
         const lastQuestion = await prisma.examQuestion.findFirst({
@@ -1819,12 +2141,34 @@ export const getGlobalExamResults = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { organizationId, examId, startDate, endDate, status, page, limit } = req.query;
+        const { organizationId, examId, startDate, endDate, status, page, limit, batch } = req.query;
+        const user = req.user as any;
 
         const where: any = { status: 'COMPLETED' }; // Default to completed exams usually
 
-        if (organizationId) {
+        // If examiner, restrict to their organizations
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s results'
+                });
+                return;
+            }
+
+            if (organizationId) {
+                where.exam = { organizationId: String(organizationId) };
+            } else {
+                where.exam = { organizationId: { in: examinerOrgIds } };
+            }
+        } else if (organizationId) {
             where.exam = { organizationId: String(organizationId) };
+        }
+
+        if (batch) {
+            // Merge with existing candidate where or create new
+            where.candidate = { ...where.candidate, batch: { contains: String(batch) } };
         }
 
         if (examId) {
@@ -1882,19 +2226,32 @@ export const getGlobalExamResults = async (
             prisma.examAttempt.count({ where }),
         ]);
 
-        // Attach assignments to each attempt
+        // Attach assignments and marking status to each attempt
         const attemptsWithAssignments = await Promise.all(attempts.map(async (attempt) => {
-            const assignment = await prisma.examAssignment.findUnique({
-                where: {
-                    candidateId_examId: {
-                        candidateId: attempt.candidateId,
-                        examId: attempt.examId,
+            const [assignment, unmarkedCount] = await Promise.all([
+                prisma.examAssignment.findUnique({
+                    where: {
+                        candidateId_examId: {
+                            candidateId: attempt.candidateId,
+                            examId: attempt.examId,
+                        }
                     }
-                }
-            });
+                }),
+                prisma.examAnswer.count({
+                    where: {
+                        examAttemptId: attempt.id,
+                        manualScore: null,
+                        examQuestion: {
+                            type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+                        }
+                    }
+                })
+            ]);
+
             return {
                 ...attempt,
-                assignment
+                assignment,
+                isMarkingPending: unmarkedCount > 0
             };
         }));
 
@@ -1956,6 +2313,7 @@ export const getExamDashboardStats = async (
 ): Promise<void> => {
     try {
         const { organizationId, startDate, endDate } = req.query;
+        const user = req.user as any;
 
         const dateFilter: any = {};
         if (startDate && endDate) {
@@ -1965,7 +2323,23 @@ export const getExamDashboardStats = async (
             };
         }
 
-        const whereOrg = organizationId ? { organizationId: String(organizationId) } : {};
+        let whereOrg: any = organizationId ? { organizationId: String(organizationId) } : {};
+
+        // If examiner, restrict to their organizations
+        if (user.role === 'EXAMINER') {
+            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization\'s statistics'
+                });
+                return;
+            }
+
+            if (!organizationId) {
+                whereOrg = { organizationId: { in: examinerOrgIds } };
+            }
+        }
         const whereOrgWithDate = { ...whereOrg, ...dateFilter };
 
         // 1. Exam Counts
@@ -2150,4 +2524,553 @@ export const authorizeRetake = async (
         next(error);
     }
 };
+
+// ============================================
+// NEW FEATURE ENDPOINTS
+// ============================================
+
+// --- Organization Management ---
+
+export const uploadOrganizationLogo = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+        // @ts-ignore
+        const file = req.file;
+
+        if (!file) {
+            res.status(400).json({
+                status: 'error',
+                message: 'No file uploaded'
+            });
+            return;
+        }
+
+        const organization = await prisma.organization.findUnique({
+            where: { id }
+        });
+
+        if (!organization) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Organization not found'
+            });
+            return;
+        }
+
+        // In a real implementation, you would upload to S3/Cloudinary here
+        // For now, we'll assume the file path/url is available from the upload middleware
+        // This depends on how the upload middleware is configured. 
+        // Assuming it sets file.path or file.location
+        const logoUrl = file.path || (file as any).location || file.filename;
+
+        const updatedOrg = await prisma.organization.update({
+            where: { id },
+            data: { logo: logoUrl }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Organization logo uploaded successfully',
+            data: updatedOrg
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+// --- Candidate Management ---
+
+export const archiveCandidate = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const candidate = await prisma.candidate.findUnique({
+            where: { id }
+        });
+
+        if (!candidate) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Candidate not found'
+            });
+            return;
+        }
+
+        const updatedCandidate = await prisma.candidate.update({
+            where: { id },
+            data: { archived: true }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Candidate archived successfully',
+            data: updatedCandidate
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const unarchiveCandidate = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const candidate = await prisma.candidate.findUnique({
+            where: { id }
+        });
+
+        if (!candidate) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Candidate not found'
+            });
+            return;
+        }
+
+        const updatedCandidate = await prisma.candidate.update({
+            where: { id },
+            data: { archived: false }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Candidate unarchived successfully',
+            data: updatedCandidate
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+// --- Exam Management ---
+
+export const archiveExam = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id }
+        });
+
+        if (!exam) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Exam not found'
+            });
+            return;
+        }
+
+        const updatedExam = await prisma.exam.update({
+            where: { id },
+            data: { status: 'ARCHIVED' }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Exam archived successfully',
+            data: updatedExam
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const unarchiveExam = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id }
+        });
+
+        if (!exam) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Exam not found'
+            });
+            return;
+        }
+
+        const updatedExam = await prisma.exam.update({
+            where: { id },
+            data: { status: 'DRAFT' } // Reset to draft or previous status
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Exam unarchived successfully',
+            data: updatedExam
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+// --- Manual Marking ---
+
+export const getOpenEndedResponses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { examId } = req.params;
+        const { organizationId } = req.query;
+        // @ts-ignore
+        const user = req.user;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 50; // Larger default for "All"
+        const skip = (page - 1) * limit;
+
+        const whereQuestion: any = {
+            type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+        };
+
+        if (examId && examId !== 'all') {
+            whereQuestion.examId = examId;
+        } else if (organizationId) {
+            whereQuestion.exam = { organizationId: String(organizationId) };
+        } else if ((user as any).role === 'EXAMINER') {
+            // Filter by examiner's assigned organizations
+            const examinerOrgs = await prisma.userOrganization.findMany({
+                where: { userId: (user as any).id },
+                select: { organizationId: true }
+            });
+            const orgIds = examinerOrgs.map(o => o.organizationId);
+            whereQuestion.exam = { organizationId: { in: orgIds } };
+        }
+
+        // Fetch questions first to filter by type
+        const openEndedQuestions = await prisma.examQuestion.findMany({
+            where: whereQuestion,
+            select: { id: true }
+        });
+
+        const questionIds = openEndedQuestions.map(q => q.id);
+
+        if (questionIds.length === 0) {
+            res.status(200).json({
+                status: 'success',
+                data: {
+                    responses: [],
+                    pagination: {
+                        page,
+                        limit,
+                        total: 0,
+                        totalPages: 0
+                    }
+                }
+            });
+            return;
+        }
+
+        const [responses, total] = await Promise.all([
+            prisma.examAnswer.findMany({
+                where: {
+                    examQuestionId: { in: questionIds }
+                },
+                include: {
+                    examQuestion: true,
+                    examAttempt: {
+                        include: {
+                            candidate: true
+                        }
+                    },
+                    marker: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            prisma.examAnswer.count({
+                where: {
+                    examQuestionId: { in: questionIds }
+                }
+            })
+        ]);
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Open-ended responses retrieved successfully',
+            data: {
+                responses,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            }
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const markAnswer = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { answerId } = req.params;
+        const { manualScore, feedback } = req.body;
+        const score = manualScore;
+        // @ts-ignore
+        const userId = req.user.id;
+
+        const answer = await prisma.examAnswer.findUnique({
+            where: { id: answerId },
+            include: { examQuestion: true }
+        });
+
+        if (!answer) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Answer not found'
+            });
+            return;
+        }
+
+        if (score > answer.examQuestion.points) {
+            res.status(400).json({
+                status: 'error',
+                message: `Score cannot exceed maximum points (${answer.examQuestion.points})`
+            });
+            return;
+        }
+
+        const updatedAnswer = await prisma.examAnswer.update({
+            where: { id: answerId },
+            data: {
+                manualScore: score,
+                feedback,
+                markedBy: userId,
+                markedAt: new Date(),
+                // Update total points (auto + manual, though usually one or the other)
+                // For open ended, points usually come from manual score
+                points: score
+            }
+        });
+
+        // Recalculate Exam Attempt Score
+        const attemptAnswers = await prisma.examAnswer.findMany({
+            where: { examAttemptId: answer.examAttemptId }
+        });
+
+        const totalScore = attemptAnswers.reduce((sum, a) => sum + (a.points || 0), 0);
+
+        // Check if passed
+        // We need the exam passing score, which is on the Exam model
+        // So we need to fetch the attempt with the exam
+        const attempt = await prisma.examAttempt.findUnique({
+            where: { id: answer.examAttemptId },
+            include: {
+                exam: {
+                    include: {
+                        questions: true
+                    }
+                }
+            }
+        });
+
+        if (attempt) {
+            const questions = attempt.exam.questions;
+            const totalPossiblePoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
+
+            // Re-calculate based on ALL answers (some might be auto-graded, some manual)
+            // totalScore is already sum of attemptAnswers points
+            const scorePercentage = calculateExamScore(totalPossiblePoints, totalScore);
+            const isPassed = scorePercentage >= attempt.exam.passingScore;
+
+            await prisma.examAttempt.update({
+                where: { id: answer.examAttemptId },
+                data: {
+                    score: scorePercentage,
+                    isPassed
+                }
+            });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Answer marked successfully',
+            data: updatedAnswer
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+import { generateOpenEndedPDF } from '../utils/pdfGenerator';
+import { generateDetailedResultsPDF } from '../utils/pdfGenerator';
+
+export const exportDetailedResultsPDF = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { examId } = req.params;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id: examId }
+        });
+
+        if (!exam) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Exam not found'
+            });
+            return;
+        }
+
+        const attempts = await prisma.examAttempt.findMany({
+            where: {
+                examId,
+                status: 'COMPLETED'
+            },
+            include: {
+                candidate: true,
+                answers: {
+                    include: {
+                        examQuestion: true
+                    }
+                }
+            },
+            orderBy: { score: 'desc' }
+        });
+
+        if (attempts.length === 0) {
+            res.status(404).json({
+                status: 'error',
+                message: 'No completed attempts found for this exam'
+            });
+            return;
+        }
+
+        generateDetailedResultsPDF(attempts, exam.title, res);
+
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const exportOpenEndedResponsesPDF = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { examId } = req.params;
+        // @ts-ignore
+        const user = req.user;
+
+        let examTitle = 'All Exams';
+        const whereQuestion: any = {
+            type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+        };
+
+        if (examId && examId !== 'all') {
+            const exam = await prisma.exam.findUnique({
+                where: { id: examId }
+            });
+            if (!exam) {
+                res.status(404).json({ status: 'error', message: 'Exam not found' });
+                return;
+            }
+            examTitle = exam.title;
+            whereQuestion.examId = examId;
+        } else if ((user as any).role === 'EXAMINER') {
+            const examinerOrgs = await prisma.userOrganization.findMany({
+                where: { userId: (user as any).id },
+                select: { organizationId: true }
+            });
+            const orgIds = examinerOrgs.map(o => o.organizationId);
+            whereQuestion.exam = { organizationId: { in: orgIds } };
+        }
+
+        const openEndedQuestions = await prisma.examQuestion.findMany({
+            where: whereQuestion,
+            select: { id: true }
+        });
+
+        const questionIds = openEndedQuestions.map(q => q.id);
+
+        if (questionIds.length === 0) {
+            res.status(404).json({
+                status: 'error',
+                message: 'No open-ended questions found'
+            });
+            return;
+        }
+
+        const responses = await prisma.examAnswer.findMany({
+            where: {
+                examQuestionId: { in: questionIds }
+            },
+            include: {
+                examQuestion: true,
+                examAttempt: {
+                    include: {
+                        candidate: true
+                    }
+                }
+            },
+            orderBy: [
+                { examQuestionId: 'asc' }, // Group by question
+                { createdAt: 'desc' }
+            ]
+        });
+
+        // Map to flat structure expected by generator
+        const flatResponses = responses.map(r => ({
+            ...r,
+            question: r.examQuestion,
+            candidate: r.examAttempt.candidate
+        }));
+
+        generateOpenEndedPDF(flatResponses as any, examTitle, res);
+
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+
 

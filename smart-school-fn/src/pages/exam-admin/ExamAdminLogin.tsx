@@ -25,11 +25,11 @@ const ExamAdminLogin = () => {
 
             // Check if user has admin or instructor role
             const userRole = result.data.user.role;
-            if (userRole === 'ADMIN' || userRole === 'INSTRUCTOR') {
+            if (userRole === 'ADMIN' || userRole === 'INSTRUCTOR' || userRole === 'EXAMINER') {
                 toast.success('Welcome to Exam Administration Portal!');
                 navigate('/exam-admin/dashboard');
             } else {
-                toast.error('Access denied. Admin or Instructor role required.');
+                toast.error('Access denied. Admin, Instructor, or Examiner role required.');
                 setLoading(false);
             }
         } catch (error: any) {

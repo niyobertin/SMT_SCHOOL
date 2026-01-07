@@ -95,6 +95,7 @@ export const translations = {
     // Exam Portal
     examPortal: "Exam Portal",
     examPortalTitle: "Smart School Exam Portal",
+    examinationPortal: "Examination Portal",
     examPortalDescription: "Access our comprehensive examination system. Join as a Candidate to take exams or as an Examiner to manage assessments.",
     joinAsCandidate: "Join as Candidate",
     joinAsExaminer: "Join as Examiner",
@@ -382,6 +383,7 @@ export const translations = {
     // Exam Portal
     examPortal: "Portail d'Examen",
     examPortalTitle: "Portail d'Examen Smart School",
+    examinationPortal: "Portail d'Examen",
     examPortalDescription: "Accédez à notre système d'examen complet. Rejoignez en tant que candidat pour passer des examens ou en tant qu'examinateur pour gérer les évaluations.",
     joinAsCandidate: "Rejoindre comme Candidat",
     joinAsExaminer: "Rejoindre comme Examinateur",
@@ -667,6 +669,7 @@ export const translations = {
     // Exam Portal
     examPortal: "Portal y'Ikizamini",
     examPortalTitle: "Portal y'Ikizamini ya Smart School",
+    examinationPortal: "Portal y'Ikizamini",
     examPortalDescription: "Injira muri sisitemu yacu y'ibizamini yuzuye. Injira nka Kandida kugirango ukore ibizamini cyangwa nk'Umukosora kugirango ucunge ibizamini.",
     joinAsCandidate: "Injira nka Kandida",
     joinAsExaminer: "Injira nk'Umukosora",
