@@ -11,11 +11,12 @@ import {
 
     Building2,
     ChevronDown,
+    Loader2,
 } from 'lucide-react';
 
 const Analytics = () => {
     const dispatch = useAppDispatch();
-    const { organizations, selectedOrg, dashboardStats } = useAppSelector(
+    const { organizations, selectedOrg, dashboardStats, loading } = useAppSelector(
         (state) => state.examAdmin
     );
 
@@ -65,7 +66,12 @@ const Analytics = () => {
                 </div>
             </div>
 
-            {dashboardStats ? (
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+                    <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+                    <p className="text-gray-500 font-medium">Loading analytics data...</p>
+                </div>
+            ) : dashboardStats ? (
                 <DashboardStats stats={dashboardStats} />
             ) : (
                 <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200">

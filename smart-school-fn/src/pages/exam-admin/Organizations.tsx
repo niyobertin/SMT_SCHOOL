@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import api from '../../redux/api/api';
 import {
     fetchOrganizations,
     createOrganization,
@@ -16,6 +17,8 @@ import {
     Mail,
     Phone,
     X,
+    Upload,
+    Image as ImageIcon
 } from 'lucide-react';
 
 const Organizations = () => {
@@ -30,6 +33,9 @@ const Organizations = () => {
         contactPhone: '',
         logo: '',
     });
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [isEditing, setIsEditing] = useState(false);
     const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
@@ -39,6 +45,15 @@ const Organizations = () => {
         dispatch(fetchOrganizations());
     }, [dispatch]);
 
+    // Clean up preview URL on unmount or change
+    useEffect(() => {
+        return () => {
+            if (logoPreview && logoPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(logoPreview);
+            }
+        };
+    }, [logoPreview]);
+
     const handleEdit = (org: any) => {
         setFormData({
             name: org.name,
@@ -47,6 +62,8 @@ const Organizations = () => {
             contactPhone: org.contactPhone || '',
             logo: org.logo || '',
         });
+        setLogoPreview(org.logo || null);
+        setLogoFile(null);
         setSelectedOrgId(org.id);
         setIsEditing(true);
         setShowCreateModal(true);
@@ -69,22 +86,63 @@ const Organizations = () => {
         }
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setLogoFile(file);
+            setLogoPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const uploadLogo = async (orgId: string) => {
+        if (!logoFile) return;
+
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+
+        try {
+            // The backend endpoint is POST /exams/organizations/:id/logo
+            // Verify the route in exam.routes.ts: router.post('/organizations/:id/logo', ...)
+            await api.post(`/exams/organizations/${orgId}/logo`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+        } catch (error) {
+            console.error("Failed to upload logo", error);
+            toast.warning('Organization saved but logo upload failed');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
+            let orgId = selectedOrgId;
+
             if (isEditing && selectedOrgId) {
                 await dispatch(updateOrganization({ id: selectedOrgId, data: formData })).unwrap();
                 toast.success('Organization updated successfully!');
             } else {
-                await dispatch(createOrganization(formData)).unwrap();
-                toast.success('Organization created successfully!');
+                const resultAction = await dispatch(createOrganization(formData));
+                if (createOrganization.fulfilled.match(resultAction)) {
+                    orgId = resultAction.payload.data.id; // access the new ID
+                    toast.success('Organization created successfully!');
+                } else {
+                    throw new Error('Failed to create');
+                }
             }
+
+            // Handle Logo Upload if file exists and we have an ID
+            if (logoFile && orgId) {
+                await uploadLogo(orgId);
+            }
+
             setShowCreateModal(false);
             resetForm();
-            dispatch(fetchOrganizations());
+            dispatch(fetchOrganizations()); // Refresh to get updated logo URL
         } catch (error: any) {
-            toast.error(error || `Failed to ${isEditing ? 'update' : 'create'} organization`);
+            toast.error(error.message || `Failed to ${isEditing ? 'update' : 'create'} organization`);
         }
     };
 
@@ -96,8 +154,13 @@ const Organizations = () => {
             contactPhone: '',
             logo: '',
         });
+        setLogoFile(null);
+        setLogoPreview(null);
         setIsEditing(false);
         setSelectedOrgId(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     return (
@@ -150,8 +213,12 @@ const Organizations = () => {
                             className="bg-white rounded-xl shadow-md border-2 border-gray-200 hover:border-indigo-300 transition-all p-6"
                         >
                             <div className="flex items-start justify-between mb-4">
-                                <div className="p-3 bg-indigo-100 rounded-lg">
-                                    <Building2 className="w-8 h-8 text-indigo-600" />
+                                <div className="p-3 bg-indigo-50 rounded-lg overflow-hidden w-16 h-16 flex items-center justify-center border border-indigo-100">
+                                    {org.logo ? (
+                                        <img src={org.logo} alt={org.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Building2 className="w-8 h-8 text-indigo-600" />
+                                    )}
                                 </div>
                                 <div className="flex gap-2">
                                     <button
@@ -204,7 +271,7 @@ const Organizations = () => {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8"
+                            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto"
                         >
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-2xl font-bold text-gray-900">
@@ -219,6 +286,30 @@ const Organizations = () => {
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                {/* Logo Upload Section */}
+                                <div className="flex justify-center mb-6">
+                                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                        <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-indigo-500 transition-colors">
+                                            {logoPreview ? (
+                                                <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ImageIcon className="w-8 h-8 text-gray-400" />
+                                            )}
+                                        </div>
+                                        <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <Upload className="w-6 h-6 text-white" />
+                                        </div>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-center text-gray-500 mt-2 absolute transform translate-y-24">Click to upload logo</p>
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                                         Organization Name *
@@ -277,7 +368,7 @@ const Organizations = () => {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Logo URL (optional)
+                                        Logo URL (Manual Entry - Optional)
                                     </label>
                                     <input
                                         type="url"
@@ -286,6 +377,7 @@ const Organizations = () => {
                                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                         placeholder="https://example.com/logo.png"
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">Faster to upload above, but you can also paste a URL here.</p>
                                 </div>
 
                                 <div className="flex gap-3 pt-4">
@@ -309,6 +401,7 @@ const Organizations = () => {
                     </div>
                 )}
             </AnimatePresence>
+
 
             {/* Delete Confirmation Modal */}
             <AnimatePresence>

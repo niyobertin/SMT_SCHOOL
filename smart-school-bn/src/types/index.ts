@@ -1,21 +1,30 @@
-type UserRole = "admin" | "user" | "guest";
+type UserRole = "ADMIN" | "INSTRUCTOR" | "STUDENT" | "EXAMINER";
+
 export interface User {
-  email: string;
-  phoneNumber: string;
+  id: string;
+  email: string | null;
+  phoneNumber: string | null;
   username: string;
   firstName: string;
   lastName: string;
   password: string;
   role: UserRole;
-  avatar?: string;
+  avatar?: string | null;
   isActive: boolean;
   isVerified: boolean;
-  verificationToken?: string;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
+  verificationCode?: number | null;
+  resetPasswordToken?: string | null;
+  resetPasswordExpires?: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  lastLogin?: Date;
+  lastLogin?: Date | null;
+  userOrganizations?: Array<{
+    organizationId: string;
+    organization: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 export interface EmailOptions {

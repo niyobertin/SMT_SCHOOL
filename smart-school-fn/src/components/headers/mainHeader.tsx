@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, User, LogOut, LayoutDashboard, Loader2 } from "lucide-react";
+import { ChevronDown, User, LogOut, LayoutDashboard, Loader2, Shield } from "lucide-react";
+
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../redux/stores";
 import { fetchCurrentUser, logout as logoutAction } from "../../redux/features/auth";
@@ -162,10 +163,15 @@ export function Header() {
                     <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
                       <User className="h-4 w-4" /> {t("profile")}
                     </Link>
-                    {(user.role === "ADMIN" || user.role === "INSTRUCTOR") && (
-                      <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
-                        <LayoutDashboard className="h-4 w-4" /> {t("dashboard")}
-                      </Link>
+                    {(user.role === "ADMIN" || user.role === "INSTRUCTOR" || user.role === "EXAMINER") && (
+                      <>
+                        <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
+                          <LayoutDashboard className="h-4 w-4" /> {t("dashboard")}
+                        </Link>
+                        <Link to="/exam-admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
+                          <Shield className="h-4 w-4" /> {t("Examination Portal") || "Examination Portal"}
+                        </Link>
+                      </>
                     )}
                     <button
                       onClick={logout}

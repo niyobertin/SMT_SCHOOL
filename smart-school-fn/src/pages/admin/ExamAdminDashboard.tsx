@@ -9,11 +9,12 @@ import DashboardStats from '../../components/exam-admin/DashboardStats';
 import {
     BarChart3,
     Calendar,
+    Loader2,
 } from 'lucide-react';
 
 const ExamAdminDashboard = () => {
     const dispatch = useAppDispatch();
-    const { organizations, selectedOrg, dashboardStats } = useAppSelector(
+    const { organizations, selectedOrg, dashboardStats, loading } = useAppSelector(
         (state) => state.examAdmin
     );
 
@@ -113,14 +114,19 @@ const ExamAdminDashboard = () => {
                 </div>
 
                 {/* Global Dashboard Stats */}
-                {dashboardStats && (
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+                        <p className="text-gray-500 font-medium text-lg">Loading dashboard overview...</p>
+                    </div>
+                ) : dashboardStats ? (
                     <div className="mb-12">
                         <h2 className="text-xl font-semibold text-gray-900 mb-4">
                             {selectedOrg ? `Analytics: ${selectedOrg.name}` : 'Global Overview'}
                         </h2>
                         <DashboardStats stats={dashboardStats} />
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
     );

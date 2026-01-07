@@ -10,6 +10,7 @@ import {
     LogOut,
     Shield,
     ClipboardList,
+    PenTool,
 } from 'lucide-react';
 
 const ExamAdminLayout = () => {
@@ -20,7 +21,7 @@ const ExamAdminLayout = () => {
     useEffect(() => {
         if (!isAuthenticated) {
             navigate('/exam-admin/login');
-        } else if (user?.role !== 'ADMIN' && user?.role !== 'INSTRUCTOR') {
+        } else if (user?.role !== 'ADMIN' && user?.role !== 'INSTRUCTOR' && user?.role !== 'EXAMINER') {
             navigate('/exam-admin/login');
         }
     }, [isAuthenticated, user, navigate]);
@@ -35,6 +36,7 @@ const ExamAdminLayout = () => {
         { path: '/exam-admin/organizations', icon: Building2, label: 'Organizations' },
         { path: '/exam-admin/exams', icon: FileText, label: 'Exams' },
         { path: '/exam-admin/candidates', icon: Users, label: 'Candidates' },
+        { path: '/exam-admin/marking', icon: PenTool, label: 'Marking' },
         { path: '/exam-admin/results', icon: ClipboardList, label: 'Results' },
     ];
 

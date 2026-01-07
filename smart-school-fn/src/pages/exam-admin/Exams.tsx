@@ -11,11 +11,13 @@ import {
     deleteQuestion,
     addQuestion,
     updateQuestion,
-    bulkAddQuestions,
-    fetchCandidates,
-    fetchExamAssignedCandidates,
-    bulkAssignExam,
     fetchExamDetails,
+    fetchAllCandidates,
+    archiveExam,
+    unarchiveExam,
+    bulkAssignExam,
+    fetchExamAssignedCandidates,
+    bulkAddQuestions,
 } from '../../redux/features/examAdminSlice';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
@@ -39,12 +41,15 @@ import {
     HelpCircle,
     AlertTriangle,
     Upload,
-    Loader2
+    Loader2,
+    Archive,
+    Undo,
+    MoreVertical
 } from 'lucide-react';
 
 const Exams = () => {
     const dispatch = useAppDispatch();
-    const { organizations, selectedOrg, exams, selectedExam, candidates, assignedCandidateIds, loading } = useAppSelector(
+    const { organizations, selectedOrg, exams, selectedExam, candidates, assignedCandidateIds, loading, candidatesPagination } = useAppSelector(
         (state) => state.examAdmin
     );
 
@@ -53,9 +58,10 @@ const Exams = () => {
         organizationId: '',
         search: '',
         status: '', // ALL, DRAFT, PUBLISHED
-        date: ''
+        date: '',
+        archived: false
     });
-
+    const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
     // Modal States
     const [showCreateExamModal, setShowCreateExamModal] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -68,6 +74,15 @@ const Exams = () => {
     const [showDeleteQuestionModal, setShowDeleteQuestionModal] = useState(false);
     const [selectedExamForAssign, setSelectedExamForAssign] = useState<any>(null);
     const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
+    // Assignment Filters
+    const [assignFilters, setAssignFilters] = useState({
+        search: '',
+        batch: '',
+        grade: '',
+        department: '',
+        page: 1,
+        limit: 20
+    });
 
     // Exam CRUD States
     const [isEditingExam, setIsEditingExam] = useState(false);
@@ -85,7 +100,8 @@ const Exams = () => {
             organizationId: filters.organizationId || undefined,
             status: filters.status || undefined,
             search: filters.search || undefined,
-            date: filters.date || undefined
+            date: filters.date || undefined,
+            archived: filters.archived
         };
         dispatch(fetchAllExams(fetchParams));
     }, [dispatch, filters]);
@@ -106,6 +122,7 @@ const Exams = () => {
         passingScore: 70,
         maxAttempts: 3,
         status: 'DRAFT',
+        examCode: '',
     });
 
     const [questionForm, setQuestionForm] = useState({
@@ -133,6 +150,7 @@ const Exams = () => {
             passingScore: exam.passingScore,
             maxAttempts: exam.maxAttempts || 3,
             status: exam.status || 'DRAFT',
+            examCode: exam.examCode || '',
         });
         setSelectedExamId(exam.id);
         setIsEditingExam(true);
@@ -191,7 +209,7 @@ const Exams = () => {
     };
 
     const resetExamForm = () => {
-        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3, status: 'DRAFT' });
+        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3, status: 'DRAFT', examCode: '' });
         setIsEditingExam(false);
         setSelectedExamId('');
     };
@@ -410,16 +428,16 @@ const Exams = () => {
                     </div>
                 </div>
 
-                {/* Date Filter */}
-                <div className="col-span-1 md:col-span-1">
-                    <div className="relative">
+                <div className="col-span-1 md:col-span-1 flex items-center">
+                    <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
                         <input
-                            type="date"
-                            value={filters.date}
-                            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                            className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            type="checkbox"
+                            checked={filters.archived}
+                            onChange={(e) => setFilters({ ...filters, archived: e.target.checked })}
+                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                         />
-                    </div>
+                        <span className="text-sm font-medium text-gray-700">Show Archived</span>
+                    </label>
                 </div>
             </div>
 
@@ -484,41 +502,94 @@ const Exams = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => handleOpenManageQuestions(exam.id)}
-                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="Manage Questions"
-                                            >
-                                                <FileText className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedExamForAssign(exam);
-                                                    dispatch(fetchCandidates(exam.organizationId));
-                                                    dispatch(fetchExamAssignedCandidates(exam.id));
-                                                    setShowAssignModal(true);
-                                                    setSelectedCandidateIds([]);
-                                                }}
-                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                title="Assign Candidates"
-                                            >
-                                                <UserPlus className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleEditExam(exam)}
-                                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteExamClick(exam.id)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                        <div className="flex items-center justify-end">
+                                            <div className="relative">
+                                                <button
+                                                    onClick={() => setActionMenuOpen(actionMenuOpen === exam.id ? null : exam.id)}
+                                                    className={`p-2 rounded-lg transition-colors ${actionMenuOpen === exam.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                                                >
+                                                    <MoreVertical className="w-5 h-5" />
+                                                </button>
+
+                                                {actionMenuOpen === exam.id && (
+                                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in slide-in-from-top-2">
+                                                        <button
+                                                            onClick={() => { setActionMenuOpen(null); handleOpenManageQuestions(exam.id); }}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                                        >
+                                                            <FileText className="w-4 h-4" /> Manage Questions
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setActionMenuOpen(null);
+                                                                setSelectedExamForAssign(exam);
+                                                                setAssignFilters({
+                                                                    search: '',
+                                                                    batch: '',
+                                                                    grade: '',
+                                                                    department: '',
+                                                                    page: 1,
+                                                                    limit: 20
+                                                                });
+                                                                dispatch(fetchAllCandidates({
+                                                                    organizationId: exam.organizationId,
+                                                                    page: 1,
+                                                                    limit: 20
+                                                                }));
+                                                                dispatch(fetchExamAssignedCandidates(exam.id));
+                                                                setShowAssignModal(true);
+                                                                setSelectedCandidateIds([]);
+                                                            }}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                                        >
+                                                            <UserPlus className="w-4 h-4" /> Assign Candidates
+                                                        </button>
+                                                        <div className="my-1 border-t border-gray-100" />
+                                                        <button
+                                                            onClick={() => { setActionMenuOpen(null); handleEditExam(exam); }}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                        >
+                                                            <Edit className="w-4 h-4" /> Edit Exam
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                setActionMenuOpen(null);
+                                                                try {
+                                                                    if (exam.status === 'ARCHIVED') {
+                                                                        await dispatch(unarchiveExam(exam.id)).unwrap();
+                                                                        toast.success('Exam unarchived');
+                                                                    } else {
+                                                                        await dispatch(archiveExam(exam.id)).unwrap();
+                                                                        toast.success('Exam archived');
+                                                                    }
+                                                                    const fetchParams: any = {
+                                                                        organizationId: filters.organizationId || undefined,
+                                                                        status: filters.status || undefined,
+                                                                        search: filters.search || undefined,
+                                                                        date: filters.date || undefined,
+                                                                        archived: filters.archived
+                                                                    };
+                                                                    dispatch(fetchAllExams(fetchParams));
+                                                                } catch (e: any) { toast.error(e); }
+                                                            }}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                        >
+                                                            {exam.status === 'ARCHIVED' ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
+                                                            {exam.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { setActionMenuOpen(null); handleDeleteExamClick(exam.id); }}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" /> Delete
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {/* Overlay to close when clicking outside */}
+                                                {actionMenuOpen === exam.id && (
+                                                    <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -540,14 +611,9 @@ const Exams = () => {
                             </div>
                             <form onSubmit={handleExamSubmit} className="space-y-4">
                                 <div><label className="block text-sm font-medium mb-1">Title</label><input className="w-full border rounded-lg p-2" value={examForm.title} onChange={e => setExamForm({ ...examForm, title: e.target.value })} required /></div>
-                                <div><label className="block text-sm font-medium mb-1">Description</label><textarea className="w-full border rounded-lg p-2" rows={2} value={examForm.description} onChange={e => setExamForm({ ...examForm, description: e.target.value })} /></div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="block text-sm font-medium mb-1">Duration (min)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.duration} onChange={e => setExamForm({ ...examForm, duration: parseInt(e.target.value) })} required /></div>
-                                    <div><label className="block text-sm font-medium mb-1">Pass Score (%)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.passingScore} onChange={e => setExamForm({ ...examForm, passingScore: parseInt(e.target.value) })} required /></div>
-                                </div>
-                                <div className="grid grid-cols-1 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-1">Status</label>
+                                    <div><label className="block text-sm font-medium mb-1">Exam Code (Max 4)</label><input className="w-full border rounded-lg p-2 font-mono uppercase" maxLength={4} value={examForm.examCode} onChange={e => setExamForm({ ...examForm, examCode: e.target.value.toUpperCase() })} /></div>
+                                    <div><label className="block text-sm font-medium mb-1">Status</label>
                                         <select
                                             className="w-full border rounded-lg p-2 bg-white"
                                             value={examForm.status}
@@ -557,6 +623,11 @@ const Exams = () => {
                                             <option value="PUBLISHED">Published</option>
                                         </select>
                                     </div>
+                                </div>
+                                <div><label className="block text-sm font-medium mb-1">Description</label><textarea className="w-full border rounded-lg p-2" rows={2} value={examForm.description} onChange={e => setExamForm({ ...examForm, description: e.target.value })} /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="block text-sm font-medium mb-1">Duration (min)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.duration} onChange={e => setExamForm({ ...examForm, duration: parseInt(e.target.value) })} required /></div>
+                                    <div><label className="block text-sm font-medium mb-1">Pass Score (%)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.passingScore} onChange={e => setExamForm({ ...examForm, passingScore: parseInt(e.target.value) })} required /></div>
                                 </div>
                                 <button
                                     type="submit"
@@ -702,22 +773,24 @@ const Exams = () => {
                                         <div><label className="block text-sm font-medium">Question Text</label><textarea className="w-full border rounded p-2" value={questionForm.question} onChange={e => setQuestionForm({ ...questionForm, question: e.target.value })} required /></div>
                                         <div className="flex gap-4">
                                             <div className="flex-1"><label className="block text-sm font-medium">Points</label><input type="number" className="w-full border rounded p-2" value={questionForm.points} onChange={e => setQuestionForm({ ...questionForm, points: Number(e.target.value) })} /></div>
-                                            <div className="flex-1"><label className="block text-sm font-medium">Type</label><select className="w-full border rounded p-2" value={questionForm.type} onChange={e => setQuestionForm({ ...questionForm, type: e.target.value })}><option value="MULTIPLE_CHOICE">Multiple Choice</option><option value="TRUE_FALSE">True/False</option></select></div>
+                                            <div className="flex-1"><label className="block text-sm font-medium">Type</label><select className="w-full border rounded p-2" value={questionForm.type} onChange={e => setQuestionForm({ ...questionForm, type: e.target.value })}><option value="MULTIPLE_CHOICE">Multiple Choice</option><option value="TRUE_FALSE">True/False</option><option value="SHORT_ANSWER">Short Answer</option><option value="ESSAY">Essay</option></select></div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium">Options</label>
-                                            {questionForm.options.map((opt, idx) => (
-                                                <div key={idx} className="flex gap-2">
-                                                    <input className="flex-1 border rounded p-2" placeholder={`Option ${idx + 1}`} value={opt.option} onChange={e => {
-                                                        const newOpts = [...questionForm.options]; newOpts[idx].option = e.target.value; setQuestionForm({ ...questionForm, options: newOpts });
-                                                    }} />
-                                                    <input type="checkbox" checked={opt.isCorrect} onChange={e => {
-                                                        const newOpts = [...questionForm.options]; newOpts[idx].isCorrect = e.target.checked; setQuestionForm({ ...questionForm, options: newOpts });
-                                                    }} className="w-6 h-6 my-auto accent-green-600" />
-                                                </div>
-                                            ))}
-                                            <button type="button" onClick={() => setQuestionForm({ ...questionForm, options: [...questionForm.options, { option: '', isCorrect: false }] })} className="text-sm text-indigo-600">+ Add Option</button>
-                                        </div>
+                                        {(questionForm.type === 'MULTIPLE_CHOICE' || questionForm.type === 'TRUE_FALSE') && (
+                                            <div className="space-y-2">
+                                                <label className="block text-sm font-medium">Options</label>
+                                                {questionForm.options.map((opt, idx) => (
+                                                    <div key={idx} className="flex gap-2">
+                                                        <input className="flex-1 border rounded p-2" placeholder={`Option ${idx + 1}`} value={opt.option} onChange={e => {
+                                                            const newOpts = [...questionForm.options]; newOpts[idx].option = e.target.value; setQuestionForm({ ...questionForm, options: newOpts });
+                                                        }} />
+                                                        <input type="checkbox" checked={opt.isCorrect} onChange={e => {
+                                                            const newOpts = [...questionForm.options]; newOpts[idx].isCorrect = e.target.checked; setQuestionForm({ ...questionForm, options: newOpts });
+                                                        }} className="w-6 h-6 my-auto accent-green-600" />
+                                                    </div>
+                                                ))}
+                                                <button type="button" onClick={() => setQuestionForm({ ...questionForm, options: [...questionForm.options, { option: '', isCorrect: false }] })} className="text-sm text-indigo-600">+ Add Option</button>
+                                            </div>
+                                        )}
                                         <div className="flex gap-2 pt-4">
                                             <button type="button" onClick={() => setQuestionViewMode('LIST')} className="flex-1 py-2 border rounded">Cancel</button>
                                             <button
@@ -755,6 +828,54 @@ const Exams = () => {
                                 <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                                     <X className="w-6 h-6 text-gray-400" />
                                 </button>
+                            </div>
+
+                            {/* Filters */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="border rounded-lg p-2 text-sm"
+                                    value={assignFilters.search}
+                                    onChange={e => {
+                                        const newFilters = { ...assignFilters, search: e.target.value, page: 1 };
+                                        setAssignFilters(newFilters);
+                                        dispatch(fetchAllCandidates({ ...newFilters, organizationId: selectedExamForAssign?.organizationId }));
+                                    }}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Batch (e.g. 2025-A)"
+                                    className="border rounded-lg p-2 text-sm"
+                                    value={assignFilters.batch}
+                                    onChange={e => {
+                                        const newFilters = { ...assignFilters, batch: e.target.value, page: 1 };
+                                        setAssignFilters(newFilters);
+                                        dispatch(fetchAllCandidates({ ...newFilters, organizationId: selectedExamForAssign?.organizationId }));
+                                    }}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Grade"
+                                    className="border rounded-lg p-2 text-sm"
+                                    value={assignFilters.grade}
+                                    onChange={e => {
+                                        const newFilters = { ...assignFilters, grade: e.target.value, page: 1 };
+                                        setAssignFilters(newFilters);
+                                        dispatch(fetchAllCandidates({ ...newFilters, organizationId: selectedExamForAssign?.organizationId }));
+                                    }}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Dept"
+                                    className="border rounded-lg p-2 text-sm"
+                                    value={assignFilters.department}
+                                    onChange={e => {
+                                        const newFilters = { ...assignFilters, department: e.target.value, page: 1 };
+                                        setAssignFilters(newFilters);
+                                        dispatch(fetchAllCandidates({ ...newFilters, organizationId: selectedExamForAssign?.organizationId }));
+                                    }}
+                                />
                             </div>
 
                             <div className="flex-1 overflow-y-auto mb-6 pr-2 -mr-2 custom-scrollbar">
@@ -818,6 +939,37 @@ const Exams = () => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Pagination */}
+                            {candidatesPagination && (
+                                <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-2">
+                                    <button
+                                        onClick={() => {
+                                            const newPage = Math.max(1, assignFilters.page - 1);
+                                            setAssignFilters({ ...assignFilters, page: newPage });
+                                            dispatch(fetchAllCandidates({ ...assignFilters, page: newPage, organizationId: selectedExamForAssign?.organizationId }));
+                                        }}
+                                        disabled={assignFilters.page === 1 || loading}
+                                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Previous
+                                    </button>
+                                    <span className="text-sm font-medium text-gray-600">
+                                        Page {candidatesPagination.page} of {candidatesPagination.pages} ({candidatesPagination.total} candidates)
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            const newPage = Math.min(candidatesPagination.pages, assignFilters.page + 1);
+                                            setAssignFilters({ ...assignFilters, page: newPage });
+                                            dispatch(fetchAllCandidates({ ...assignFilters, page: newPage, organizationId: selectedExamForAssign?.organizationId }));
+                                        }}
+                                        disabled={assignFilters.page >= candidatesPagination.pages || loading}
+                                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
 
                             <div className="flex items-center justify-between pt-6 border-t border-gray-100">
                                 <button

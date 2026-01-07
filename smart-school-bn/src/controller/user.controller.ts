@@ -608,3 +608,504 @@ export const callbackUrlHandler = (req: Request, res: Response) => {
     return;
   }
 };
+
+// ============================================
+// USER ROLE & ORGANIZATION MANAGEMENT
+// ============================================
+
+/**
+ * Assign a role to a user (Admin only)
+ */
+export const assignUserRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    // Validate role
+    const validRoles = ['ADMIN', 'INSTRUCTOR', 'STUDENT', 'EXAMINER'];
+    if (!validRoles.includes(role)) {
+      res.status(400).json({
+        status: 'error',
+        message: `Invalid role. Must be one of: ${validRoles.join(', ')}`
+      });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { role }
+    });
+
+    // @ts-ignore
+    logActivity(req.user.id, 'ASSIGN_ROLE', `Assigned role ${role} to user ${userId}`, req.ip || '');
+
+    res.status(200).json({
+      status: 'success',
+      message: 'User role updated successfully',
+      data: {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        role: updatedUser.role
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Assign a user to an organization (Admin only)
+ */
+export const assignUserToOrganization = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId, organizationId } = req.params;
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    // Check if organization exists
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId }
+    });
+
+    if (!organization) {
+      res.status(404).json({
+        status: 'error',
+        message: 'Organization not found'
+      });
+      return;
+    }
+
+    // Check if assignment already exists
+    const existing = await prisma.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId
+        }
+      }
+    });
+
+    if (existing) {
+      res.status(409).json({
+        status: 'error',
+        message: 'User is already assigned to this organization'
+      });
+      return;
+    }
+
+    // Create assignment
+    const assignment = await prisma.userOrganization.create({
+      data: {
+        userId,
+        organizationId,
+        // @ts-ignore
+        assignedBy: req.user.id
+      },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    // @ts-ignore
+    logActivity(req.user.id, 'ASSIGN_ORGANIZATION', `Assigned user ${userId} to organization ${organizationId}`, req.ip || '');
+
+    res.status(201).json({
+      status: 'success',
+      message: 'User assigned to organization successfully',
+      data: assignment
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Remove a user from an organization (Admin only)
+ */
+export const removeUserFromOrganization = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId, organizationId } = req.params;
+
+    const assignment = await prisma.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId
+        }
+      }
+    });
+
+    if (!assignment) {
+      res.status(404).json({
+        status: 'error',
+        message: 'User is not assigned to this organization'
+      });
+      return;
+    }
+
+    await prisma.userOrganization.delete({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId
+        }
+      }
+    });
+
+    // @ts-ignore
+    logActivity(req.user.id, 'REMOVE_ORGANIZATION', `Removed user ${userId} from organization ${organizationId}`, req.ip || '');
+
+    res.status(200).json({
+      status: 'success',
+      message: 'User removed from organization successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get all organizations for a user
+ */
+export const getUserOrganizations = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        userOrganizations: {
+          include: {
+            organization: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'User organizations retrieved successfully',
+      data: {
+        userId: user.id,
+        username: user.username,
+        role: user.role,
+        organizations: user.userOrganizations.map(uo => ({
+          id: uo.organization.id,
+          name: uo.organization.name,
+          assignedAt: uo.assignedAt
+        }))
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get all examiners (Admin only)
+ */
+export const getExaminers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const [examiners, total] = await Promise.all([
+      prisma.user.findMany({
+        where: { role: 'EXAMINER' },
+        include: {
+          userOrganizations: {
+            include: {
+              organization: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      prisma.user.count({
+        where: { role: 'EXAMINER' }
+      })
+    ]);
+
+    const examinersData = examiners.map(examiner => ({
+      id: examiner.id,
+      username: examiner.username,
+      firstName: examiner.firstName,
+      lastName: examiner.lastName,
+      email: examiner.email,
+      phoneNumber: examiner.phoneNumber,
+      isActive: examiner.isActive,
+      createdAt: examiner.createdAt,
+      organizations: examiner.userOrganizations.map(uo => ({
+        id: uo.organization.id,
+        name: uo.organization.name,
+        assignedAt: uo.assignedAt
+      }))
+    }));
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Examiners retrieved successfully',
+      data: {
+        examiners: examinersData,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Assign examiner role and organization in one operation (Admin only)
+ */
+export const assignExaminerRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { organizationIds } = req.body; // Array of organization IDs
+
+    if (!Array.isArray(organizationIds) || organizationIds.length === 0) {
+      res.status(400).json({
+        status: 'error',
+        message: 'At least one organization ID is required'
+      });
+      return;
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    // Verify all organizations exist
+    const organizations = await prisma.organization.findMany({
+      where: {
+        id: { in: organizationIds }
+      }
+    });
+
+    if (organizations.length !== organizationIds.length) {
+      res.status(404).json({
+        status: 'error',
+        message: 'One or more organizations not found'
+      });
+      return;
+    }
+
+    // Update user role to EXAMINER and assign organizations in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Update role
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { role: 'EXAMINER' }
+      });
+
+      // Remove existing organization assignments
+      await tx.userOrganization.deleteMany({
+        where: { userId }
+      });
+
+      // Create new organization assignments
+      const assignments = await tx.userOrganization.createMany({
+        data: organizationIds.map(orgId => ({
+          userId,
+          organizationId: orgId,
+          // @ts-ignore
+          assignedBy: req.user.id
+        }))
+      });
+
+      return { updatedUser, assignments };
+    });
+
+    // @ts-ignore
+    logActivity(req.user.id, 'ASSIGN_EXAMINER_ROLE', `Assigned EXAMINER role to user ${userId} with ${organizationIds.length} organization(s)`, req.ip || '');
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Examiner role assigned successfully',
+      data: {
+        userId: result.updatedUser.id,
+        username: result.updatedUser.username,
+        role: result.updatedUser.role,
+        organizationsAssigned: organizationIds.length
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update examiner's organization assignments (Admin only)
+ */
+export const updateExaminerOrganizations = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { organizationIds } = req.body; // Array of organization IDs
+
+    if (!Array.isArray(organizationIds)) {
+      res.status(400).json({
+        status: 'error',
+        message: 'organizationIds must be an array'
+      });
+      return;
+    }
+
+    // Check if user exists and is an examiner
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+      return;
+    }
+
+    if (user.role !== 'EXAMINER') {
+      res.status(400).json({
+        status: 'error',
+        message: 'User is not an examiner'
+      });
+      return;
+    }
+
+    // Verify all organizations exist
+    if (organizationIds.length > 0) {
+      const organizations = await prisma.organization.findMany({
+        where: {
+          id: { in: organizationIds }
+        }
+      });
+
+      if (organizations.length !== organizationIds.length) {
+        res.status(404).json({
+          status: 'error',
+          message: 'One or more organizations not found'
+        });
+        return;
+      }
+    }
+
+    // Update organization assignments in a transaction
+    await prisma.$transaction(async (tx) => {
+      // Remove existing assignments
+      await tx.userOrganization.deleteMany({
+        where: { userId }
+      });
+
+      // Create new assignments if any
+      if (organizationIds.length > 0) {
+        await tx.userOrganization.createMany({
+          data: organizationIds.map(orgId => ({
+            userId,
+            organizationId: orgId,
+            // @ts-ignore
+            assignedBy: req.user.id
+          }))
+        });
+      }
+    });
+
+    // @ts-ignore
+    logActivity(req.user.id, 'UPDATE_EXAMINER_ORGS', `Updated organization assignments for examiner ${userId}`, req.ip || '');
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Examiner organizations updated successfully',
+      data: {
+        userId,
+        organizationsAssigned: organizationIds.length
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

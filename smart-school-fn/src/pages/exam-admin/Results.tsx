@@ -43,7 +43,11 @@ const Results = () => {
         startDate: '',
         endDate: '',
         status: 'ALL', // ALL, PASSED, FAILED
+        batch: ''
     });
+    const [isExportingPDF, setIsExportingPDF] = useState(false);
+    const [isExportingExcel, setIsExportingExcel] = useState(false);
+    const [isExportingResponses, setIsExportingResponses] = useState(false);
 
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
@@ -79,6 +83,7 @@ const Results = () => {
             status: filters.status !== 'ALL' ? filters.status : undefined,
             organizationId: filters.organizationId || undefined,
             examId: filters.examId || undefined,
+            batch: filters.batch || undefined
         };
 
         dispatch(fetchGlobalExamResults(fetchParams));
@@ -101,93 +106,149 @@ const Results = () => {
     // Export to Excel
     const handleExportExcel = () => {
         if (!globalResults?.data) return;
+        setIsExportingExcel(true);
+        try {
+            const dataToExport = globalResults.data.map((attempt: any, index: number) => ({
+                Position: index + 1,
+                'Candidate ID': attempt.candidate.customCandidateId || attempt.candidate.candidateId,
+                'First Name': attempt.candidate.firstName,
+                'Last Name': attempt.candidate.lastName,
+                'Email': attempt.candidate.email || 'N/A',
+                'Exam Title': attempt.exam.title,
+                'Batch': attempt.candidate.batch || 'N/A',
+                'Score (%)': attempt.score?.toFixed(2),
+                'Status': attempt.status,
+                'Date': new Date(attempt.createdAt).toLocaleDateString(),
+            }));
 
-        const dataToExport = globalResults.data.map((attempt: any, index: number) => ({
-            Position: index + 1,
-            'Candidate ID': attempt.candidate.candidateId,
-            'First Name': attempt.candidate.firstName,
-            'Last Name': attempt.candidate.lastName,
-            'Email': attempt.candidate.email || 'N/A',
-            'Exam Title': attempt.exam.title,
-            'Score (%)': attempt.score?.toFixed(2),
-            'Status': attempt.isPassed ? 'PASSED' : 'FAILED',
-            'Date': new Date(attempt.startTime).toLocaleDateString(),
-            'Duration (min)': attempt.timeSpent ? Math.round(attempt.timeSpent / 60) : 'N/A'
-        }));
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Exam Results");
 
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Exam Results");
+            // Add average score row if meta exists
+            if (globalResults.meta) {
+                XLSX.utils.sheet_add_aoa(ws, [
+                    [],
+                    ['Average Score:', `${Math.round(globalResults.meta.averageScore * 10) / 10}%`],
+                    ['Total Candidates:', globalResults.meta.total]
+                ], { origin: -1 });
+            }
 
-        // Add average score row
-        if (globalResults.meta) {
-            XLSX.utils.sheet_add_aoa(ws, [
-                [],
-                ['Average Score:', `${Math.round(globalResults.meta.averageScore * 10) / 10}%`]
-            ], { origin: -1 });
+            XLSX.writeFile(wb, `Exam_Results_${new Date().toISOString().split('T')[0]}.xlsx`);
+            toast.success('Excel exported successfully');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to export Excel');
+        } finally {
+            setIsExportingExcel(false);
         }
-
-        XLSX.writeFile(wb, `Exam_Results_${new Date().toISOString().split('T')[0]}.xlsx`);
-        toast.success('Excel export started');
     };
 
     // Export to PDF
     const handleExportPDF = () => {
         if (!globalResults?.data) return;
+        setIsExportingPDF(true);
+        try {
+            const doc = new jsPDF();
+            // Title
+            doc.setFontSize(18);
+            doc.text('Exam Results Report', 14, 20);
 
-        const doc = new jsPDF();
-        // Title
-        doc.setFontSize(18);
-        doc.text('Exam Results Report', 14, 20);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            const dateStr = `Generated on: ${new Date().toLocaleDateString()}`;
+            doc.text(dateStr, 14, 28);
 
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        const dateStr = `Generated on: ${new Date().toLocaleDateString()}`;
-        doc.text(dateStr, 14, 28);
+            // Filter Context
+            let yPos = 35;
+            if (filters.organizationId) {
+                const orgName = organizations.find(o => o.id === filters.organizationId)?.name || 'Unknown Org';
+                doc.text(`Organization: ${orgName}`, 14, yPos);
+                yPos += 5;
+            }
+            if (filters.examId) {
+                const examTitle = exams.find(e => e.id === filters.examId)?.title || 'Unknown Exam';
+                doc.text(`Exam: ${examTitle}`, 14, yPos);
+                yPos += 5;
+            }
 
-        // Filter Context
-        let yPos = 35;
-        if (filters.organizationId) {
-            const orgName = organizations.find(o => o.id === filters.organizationId)?.name || 'Unknown Org';
-            doc.text(`Organization: ${orgName}`, 14, yPos);
-            yPos += 5;
+            // Table
+            const tableColumn = ["Pos", "ID", "Candidate Name", "Exam", "Score", "Status"];
+            const tableRows = globalResults.data.map((attempt: any, index: number) => [
+                index + 1,
+                attempt.candidate.customCandidateId || attempt.candidate.candidateId,
+                `${attempt.candidate.firstName} ${attempt.candidate.lastName}`,
+                attempt.exam.title,
+                `${attempt.score?.toFixed(2)}%`,
+                attempt.status
+            ]);
+
+            autoTable(doc, {
+                head: [tableColumn],
+                body: tableRows,
+                startY: yPos + 5,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229] }, // Indigo 600
+            });
+
+            // Summary Footer
+            const finalY = (doc as any).lastAutoTable.finalY + 10;
+            doc.setFontSize(11);
+            doc.setTextColor(0);
+            if (globalResults.meta) {
+                doc.text(`Average Score: ${Math.round(globalResults.meta.averageScore * 100) / 100}%`, 14, finalY);
+                doc.text(`Total Candidates: ${globalResults.meta.total}`, 14, finalY + 7);
+            }
+
+            doc.save(`Exam_Results_${new Date().toISOString().split('T')[0]}.pdf`);
+            toast.success('PDF exported successfully');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to export PDF');
+        } finally {
+            setIsExportingPDF(false);
         }
-        if (filters.examId) {
-            const examTitle = exams.find(e => e.id === filters.examId)?.title || 'Unknown Exam';
-            doc.text(`Exam: ${examTitle}`, 14, yPos);
-            yPos += 5;
+    };
+
+    const handleExportOpenEndedPDF = async () => {
+        if (!filters.examId) {
+            toast.error('Please select an exam first');
+            return;
         }
 
-        // Table
-        const tableColumn = ["Pos", "ID", "Candidate Name", "Exam", "Score", "Status"];
-        const tableRows = globalResults.data.map((attempt: any, index: number) => [
-            index + 1,
-            attempt.candidate.candidateId,
-            `${attempt.candidate.firstName} ${attempt.candidate.lastName}`,
-            attempt.exam.title,
-            `${attempt.score?.toFixed(2)}%`,
-            attempt.isPassed ? 'PASS' : 'FAIL'
-        ]);
+        setIsExportingResponses(true);
+        try {
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const token = localStorage.getItem('accessToken');
 
-        autoTable(doc, {
-            head: [tableColumn],
-            body: tableRows,
-            startY: yPos + 5,
-            theme: 'grid',
-            headStyles: { fillColor: [79, 70, 229] }, // Indigo 600
-        });
+            // Constructing manually because we need Blob handling and Axios responseType can sometimes be tricky with thunks
+            // But we already have the baseUrl and token.
+            const response = await fetch(`${baseUrl}/api/exams/${filters.examId}/open-ended-responses/export`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-        // Summary Footer
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
-        doc.setFontSize(11);
-        doc.setTextColor(0);
-        if (globalResults.meta) {
-            doc.text(`Average Score: ${Math.round(globalResults.meta.averageScore * 100) / 100}%`, 14, finalY);
-            doc.text(`Total Candidates: ${globalResults.meta.total}`, 14, finalY + 7);
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Export failed' }));
+                throw new Error(err.message || 'Export failed');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Open_Ended_Responses_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Open-ended responses exported successfully');
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to export PDF');
+        } finally {
+            setIsExportingResponses(false);
         }
-
-        doc.save(`Exam_Results_${new Date().toISOString().split('T')[0]}.pdf`);
-        toast.success('PDF export started');
     };
 
     return (
@@ -286,19 +347,47 @@ const Results = () => {
                         </div>
                     </div>
 
+                    {/* Batch Filter */}
+                    <div className="w-[150px]">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Batch</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="batch"
+                                placeholder="e.g. 2024A"
+                                value={filters.batch}
+                                onChange={handleFilterChange}
+                                className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            />
+                        </div>
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="flex gap-2">
                         <button
                             onClick={handleExportPDF}
-                            className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center gap-2 border border-red-200"
+                            disabled={isExportingPDF}
+                            className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center gap-2 border border-red-200 disabled:opacity-50"
                         >
-                            <Download className="w-4 h-4" /> PDF
+                            {isExportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            PDF
                         </button>
                         <button
                             onClick={handleExportExcel}
-                            className="bg-green-50 text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors flex items-center gap-2 border border-green-200"
+                            disabled={isExportingExcel}
+                            className="bg-green-50 text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors flex items-center gap-2 border border-green-200 disabled:opacity-50"
                         >
-                            <Download className="w-4 h-4" /> Excel
+                            {isExportingExcel ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            Excel
+                        </button>
+                        <button
+                            onClick={handleExportOpenEndedPDF}
+                            disabled={!filters.examId || isExportingResponses}
+                            className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors flex items-center gap-2 border border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={!filters.examId ? "Select an exam to export responses" : "Export Open-Ended Responses"}
+                        >
+                            {isExportingResponses ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            Responses
                         </button>
                     </div>
                 </div>

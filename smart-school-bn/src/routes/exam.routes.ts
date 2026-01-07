@@ -50,7 +50,17 @@ import {
     getAllExams,
     getAllCandidates,
     authorizeRetake,
+    // New Feature Imports
+    uploadOrganizationLogo,
+    archiveCandidate,
+    unarchiveCandidate,
+    archiveExam,
+    unarchiveExam,
+    getOpenEndedResponses,
+    markAnswer,
+    exportOpenEndedResponsesPDF
 } from '../controller/exam.controller';
+import { upload } from '../middleware/uploadFile';
 
 const router = express.Router();
 
@@ -116,7 +126,7 @@ router.post(
 router.get(
     '/organizations',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getOrganizations)
 );
 
@@ -372,7 +382,7 @@ router.get(
 router.get(
     '/stats/dashboard',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     getExamDashboardStats
 );
 
@@ -395,6 +405,68 @@ router.get(
     authenticate,
     authorize('ADMIN', 'INSTRUCTOR'),
     catchAsync(getExamAnalytics)
+);
+
+// ============================================
+// NEW FEATURE ROUTES
+// ============================================
+
+router.post(
+    '/organizations/:id/logo',
+    authenticate,
+    authorize('ADMIN'),
+    upload.single('logo'),
+    catchAsync(uploadOrganizationLogo)
+);
+
+router.get(
+    '/:examId/open-ended-responses/export',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(exportOpenEndedResponsesPDF)
+);
+
+router.patch(
+    '/candidates/:id/archive',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(archiveCandidate)
+);
+
+router.patch(
+    '/candidates/:id/unarchive',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(unarchiveCandidate)
+);
+
+router.patch(
+    '/:id/archive', // exam id
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(archiveExam)
+);
+
+router.patch(
+    '/:id/unarchive',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR'),
+    catchAsync(unarchiveExam)
+);
+
+// Marking
+router.get(
+    '/:examId/open-ended-responses',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(getOpenEndedResponses)
+);
+
+router.post(
+    '/answers/:answerId/mark',
+    authenticate,
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(markAnswer)
 );
 
 export default router;

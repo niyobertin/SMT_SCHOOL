@@ -1,5 +1,20 @@
 import Router from "express";
-import { callbackUrlHandler, deleteUser, getProfile, getUserById, getUsers, updateUserPassword, updateUserProfile } from "../controller/user.controller";
+import {
+    callbackUrlHandler,
+    deleteUser,
+    getProfile,
+    getUserById,
+    getUsers,
+    updateUserPassword,
+    updateUserProfile,
+    assignUserRole,
+    assignUserToOrganization,
+    removeUserFromOrganization,
+    getUserOrganizations,
+    getExaminers,
+    assignExaminerRole,
+    updateExaminerOrganizations
+} from "../controller/user.controller";
 import { authenticate, authorize } from "../middleware/auth";
 import { getDashboardStats } from "../controller/dashbord.controller";
 import passport from "passport";
@@ -307,6 +322,72 @@ userRouter.get(
     "/auth/facebook/callback",
     passport.authenticate("facebook", { failureRedirect: "/login" }),
     callbackUrlHandler,
+);
+
+// ============================================
+// EXAMINER MANAGEMENT ROUTES
+// ============================================
+
+/**
+ * Get all examiners (Admin only)
+ */
+userRouter.get("/examiners",
+    authenticate,
+    authorize("ADMIN"),
+    getExaminers
+);
+
+/**
+ * Assign examiner role and organizations (Admin only)
+ */
+userRouter.post("/:userId/assign-examiner-role",
+    authenticate,
+    authorize("ADMIN"),
+    assignExaminerRole
+);
+
+/**
+ * Update examiner's organization assignments (Admin only)
+ */
+userRouter.patch("/:userId/examiner-organizations",
+    authenticate,
+    authorize("ADMIN"),
+    updateExaminerOrganizations
+);
+
+/**
+ * Assign user role (Admin only)
+ */
+userRouter.patch("/:userId/role",
+    authenticate,
+    authorize("ADMIN"),
+    assignUserRole
+);
+
+/**
+ * Assign user to organization (Admin only)
+ */
+userRouter.post("/:userId/organizations/:organizationId",
+    authenticate,
+    authorize("ADMIN"),
+    assignUserToOrganization
+);
+
+/**
+ * Remove user from organization (Admin only)
+ */
+userRouter.delete("/:userId/organizations/:organizationId",
+    authenticate,
+    authorize("ADMIN"),
+    removeUserFromOrganization
+);
+
+/**
+ * Get user's organizations
+ */
+userRouter.get("/:userId/organizations",
+    authenticate,
+    getUserOrganizations
 );
 
 export default userRouter;

@@ -349,25 +349,37 @@ export const getCandidates = async (
 ): Promise<void> => {
     try {
         const { orgId } = req.params;
-        const { page = 1, limit = 10, search } = req.query;
+        const { page = 1, limit = 10, search, batch, grade, department, showArchived } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
 
         const where: any = { organizationId: orgId };
 
+        // Search filter
         if (search) {
             where.OR = [
                 { firstName: { contains: search as string, mode: 'insensitive' as const } },
                 { lastName: { contains: search as string, mode: 'insensitive' as const } },
                 { candidateId: { contains: search as string, mode: 'insensitive' as const } },
+                { customCandidateId: { contains: search as string, mode: 'insensitive' as const } },
                 { email: { contains: search as string, mode: 'insensitive' as const } },
             ];
+        }
+
+        // Additional filters
+        if (batch) where.batch = batch;
+        if (grade) where.grade = grade;
+        if (department) where.department = department;
+
+        // Archive status
+        if (showArchived !== 'true') {
+            where.archived = false;
         }
 
         const [candidates, total] = await Promise.all([
             prisma.candidate.findMany({
                 where,
-                skip,
-                take: Number(limit),
+                skip: Number(limit) === -1 ? undefined : skip,
+                take: Number(limit) === -1 ? undefined : Number(limit),
                 orderBy: { createdAt: 'desc' },
                 include: {
                     _count: {
@@ -388,7 +400,7 @@ export const getCandidates = async (
                 page: Number(page),
                 limit: Number(limit),
                 total,
-                pages: Math.ceil(total / Number(limit)),
+                pages: Number(limit) === -1 ? 1 : Math.ceil(total / Number(limit)),
             },
         });
     } catch (error) {
@@ -514,50 +526,31 @@ export const getExams = async (
 ): Promise<void> => {
     try {
         const { orgId } = req.params;
-        const { page = 1, limit = 10, search, status } = req.query;
-        const skip = (Number(page) - 1) * Number(limit);
+        const { showArchived } = req.query;
 
         const where: any = { organizationId: orgId };
 
-        if (search) {
-            where.OR = [
-                { title: { contains: search as string, mode: 'insensitive' as const } },
-                { examCode: { contains: search as string, mode: 'insensitive' as const } },
-            ];
+        // Filter out archived exams unless requested
+        if (showArchived !== 'true') {
+            where.status = { not: 'ARCHIVED' };
         }
 
-        if (status) {
-            where.status = status;
-        }
-
-        const [exams, total] = await Promise.all([
-            prisma.exam.findMany({
-                where,
-                skip,
-                take: Number(limit),
-                orderBy: { createdAt: 'desc' },
-                include: {
-                    _count: {
-                        select: {
-                            questions: true,
-                            assignments: true,
-                            attempts: true,
-                        },
-                    },
+        const exams = await prisma.exam.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                organization: {
+                    select: { name: true }
                 },
-            }),
-            prisma.exam.count({ where }),
-        ]);
+                _count: {
+                    select: { questions: true, attempts: true }
+                }
+            }
+        });
 
         res.status(200).json({
             status: 'success',
             data: exams,
-            pagination: {
-                page: Number(page),
-                limit: Number(limit),
-                total,
-                pages: Math.ceil(total / Number(limit)),
-            },
         });
     } catch (error) {
         logger.error(error);
@@ -1819,12 +1812,17 @@ export const getGlobalExamResults = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { organizationId, examId, startDate, endDate, status, page, limit } = req.query;
+        const { organizationId, examId, startDate, endDate, status, page, limit, batch } = req.query;
 
         const where: any = { status: 'COMPLETED' }; // Default to completed exams usually
 
         if (organizationId) {
             where.exam = { organizationId: String(organizationId) };
+        }
+
+        if (batch) {
+            // Merge with existing candidate where or create new
+            where.candidate = { ...where.candidate, batch: { contains: String(batch) } };
         }
 
         if (examId) {
@@ -2150,4 +2148,457 @@ export const authorizeRetake = async (
         next(error);
     }
 };
+
+// ============================================
+// NEW FEATURE ENDPOINTS
+// ============================================
+
+// --- Organization Management ---
+
+export const uploadOrganizationLogo = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+        // @ts-ignore
+        const file = req.file;
+
+        if (!file) {
+            res.status(400).json({
+                status: 'error',
+                message: 'No file uploaded'
+            });
+            return;
+        }
+
+        const organization = await prisma.organization.findUnique({
+            where: { id }
+        });
+
+        if (!organization) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Organization not found'
+            });
+            return;
+        }
+
+        // In a real implementation, you would upload to S3/Cloudinary here
+        // For now, we'll assume the file path/url is available from the upload middleware
+        // This depends on how the upload middleware is configured. 
+        // Assuming it sets file.path or file.location
+        const logoUrl = file.path || (file as any).location || file.filename;
+
+        const updatedOrg = await prisma.organization.update({
+            where: { id },
+            data: { logo: logoUrl }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Organization logo uploaded successfully',
+            data: updatedOrg
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+// --- Candidate Management ---
+
+export const archiveCandidate = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const candidate = await prisma.candidate.findUnique({
+            where: { id }
+        });
+
+        if (!candidate) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Candidate not found'
+            });
+            return;
+        }
+
+        const updatedCandidate = await prisma.candidate.update({
+            where: { id },
+            data: { archived: true }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Candidate archived successfully',
+            data: updatedCandidate
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const unarchiveCandidate = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const candidate = await prisma.candidate.findUnique({
+            where: { id }
+        });
+
+        if (!candidate) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Candidate not found'
+            });
+            return;
+        }
+
+        const updatedCandidate = await prisma.candidate.update({
+            where: { id },
+            data: { archived: false }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Candidate unarchived successfully',
+            data: updatedCandidate
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+// --- Exam Management ---
+
+export const archiveExam = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id }
+        });
+
+        if (!exam) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Exam not found'
+            });
+            return;
+        }
+
+        const updatedExam = await prisma.exam.update({
+            where: { id },
+            data: { status: 'ARCHIVED' }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Exam archived successfully',
+            data: updatedExam
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const unarchiveExam = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id }
+        });
+
+        if (!exam) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Exam not found'
+            });
+            return;
+        }
+
+        const updatedExam = await prisma.exam.update({
+            where: { id },
+            data: { status: 'DRAFT' } // Reset to draft or previous status
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Exam unarchived successfully',
+            data: updatedExam
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+// --- Manual Marking ---
+
+export const getOpenEndedResponses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { examId } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
+
+        // Fetch questions first to filter by type
+        const openEndedQuestions = await prisma.examQuestion.findMany({
+            where: {
+                examId,
+                type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+            },
+            select: { id: true }
+        });
+
+        const questionIds = openEndedQuestions.map(q => q.id);
+
+        if (questionIds.length === 0) {
+            res.status(200).json({
+                status: 'success',
+                data: {
+                    responses: [],
+                    pagination: {
+                        page,
+                        limit,
+                        total: 0,
+                        totalPages: 0
+                    }
+                }
+            });
+            return;
+        }
+
+        const [responses, total] = await Promise.all([
+            prisma.examAnswer.findMany({
+                where: {
+                    examQuestionId: { in: questionIds }
+                },
+                include: {
+                    examQuestion: true,
+                    examAttempt: {
+                        include: {
+                            candidate: true
+                        }
+                    },
+                    marker: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            prisma.examAnswer.count({
+                where: {
+                    examQuestionId: { in: questionIds }
+                }
+            })
+        ]);
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Open-ended responses retrieved successfully',
+            data: {
+                responses,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            }
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const markAnswer = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { answerId } = req.params;
+        const { score, feedback } = req.body;
+        // @ts-ignore
+        const userId = req.user.id;
+
+        const answer = await prisma.examAnswer.findUnique({
+            where: { id: answerId },
+            include: { examQuestion: true }
+        });
+
+        if (!answer) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Answer not found'
+            });
+            return;
+        }
+
+        if (score > answer.examQuestion.points) {
+            res.status(400).json({
+                status: 'error',
+                message: `Score cannot exceed maximum points (${answer.examQuestion.points})`
+            });
+            return;
+        }
+
+        const updatedAnswer = await prisma.examAnswer.update({
+            where: { id: answerId },
+            data: {
+                manualScore: score,
+                feedback,
+                markedBy: userId,
+                markedAt: new Date(),
+                // Update total points (auto + manual, though usually one or the other)
+                // For open ended, points usually come from manual score
+                points: score
+            }
+        });
+
+        // Recalculate Exam Attempt Score
+        const attemptAnswers = await prisma.examAnswer.findMany({
+            where: { examAttemptId: answer.examAttemptId }
+        });
+
+        const totalScore = attemptAnswers.reduce((sum, a) => sum + (a.points || 0), 0);
+
+        // Check if passed
+        // We need the exam passing score, which is on the Exam model
+        // So we need to fetch the attempt with the exam
+        const attempt = await prisma.examAttempt.findUnique({
+            where: { id: answer.examAttemptId },
+            include: { exam: true }
+        });
+
+        if (attempt) {
+            const isPassed = totalScore >= attempt.exam.passingScore;
+
+            await prisma.examAttempt.update({
+                where: { id: answer.examAttemptId },
+                data: {
+                    score: totalScore,
+                    isPassed
+                }
+            });
+        }
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Answer marked successfully',
+            data: updatedAnswer
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+import { generateOpenEndedPDF } from '../utils/pdfGenerator';
+
+export const exportOpenEndedResponsesPDF = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { examId } = req.params;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id: examId }
+        });
+
+        if (!exam) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Exam not found'
+            });
+            return;
+        }
+
+        // Fetch all open-ended answers
+        // Same logic as getOpenEndedResponses but no pagination? Or simplified.
+        // Let's fetch all for export.
+        const openEndedQuestions = await prisma.examQuestion.findMany({
+            where: {
+                examId,
+                type: { in: ['ESSAY', 'SHORT_ANSWER'] }
+            },
+            select: { id: true }
+        });
+
+        const questionIds = openEndedQuestions.map(q => q.id);
+
+        if (questionIds.length === 0) {
+            res.status(400).json({ status: 'error', message: 'No open-ended questions found for this exam' });
+            return;
+        }
+
+        const responses = await prisma.examAnswer.findMany({
+            where: {
+                examQuestionId: { in: questionIds }
+            },
+            include: {
+                examQuestion: true,
+                examAttempt: {
+                    include: {
+                        candidate: true
+                    }
+                }
+            },
+            orderBy: [
+                { examQuestionId: 'asc' }, // Group by question
+                { createdAt: 'desc' }
+            ]
+        });
+
+        // Map to flat structure expected by generator
+        const flatResponses = responses.map(r => ({
+            ...r,
+            question: r.examQuestion,
+            candidate: r.examAttempt.candidate
+        }));
+
+        generateOpenEndedPDF(flatResponses, exam.title, res);
+
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
 
