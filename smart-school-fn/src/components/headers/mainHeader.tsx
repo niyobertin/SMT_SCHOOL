@@ -13,7 +13,6 @@ export function Header() {
   // language, setLanguage, languages
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showExamDropdown, setShowExamDropdown] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const { user, loading: loadingUser } = useSelector((state: RootState) => state.auth);
@@ -69,39 +68,13 @@ export function Header() {
               );
             })}
 
-            {/* Exam Portal Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowExamDropdown(!showExamDropdown)}
-                onMouseEnter={() => setShowExamDropdown(true)}
-                className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors py-2"
-              >
-                {t("examPortal")}
-                <ChevronDown className={`h-4 w-4 transition-transform ${showExamDropdown ? "rotate-180" : ""}`} />
-              </button>
-
-              {showExamDropdown && (
-                <div
-                  className="absolute left-0 mt-0 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200"
-                  onMouseLeave={() => setShowExamDropdown(false)}
-                >
-                  <Link
-                    to="/exam-admin/login"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setShowExamDropdown(false)}
-                  >
-                    {t("joinAsExaminer")}
-                  </Link>
-                  <Link
-                    to="/exam-portal/login"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setShowExamDropdown(false)}
-                  >
-                    {t("joinAsCandidate")}
-                  </Link>
-                </div>
-              )}
-            </div>
+            {/* Exam Portal Link */}
+            <Link
+              to="/exam-portal/login"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2"
+            >
+              {t("examPortal")}
+            </Link>
           </nav>
 
           {/* Right side */}
@@ -163,15 +136,15 @@ export function Header() {
                     <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
                       <User className="h-4 w-4" /> {t("profile")}
                     </Link>
+                    {user.role !== "EXAMINER" && (user.role === "ADMIN" || user.role === "INSTRUCTOR") && (
+                      <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
+                        <LayoutDashboard className="h-4 w-4" /> {t("dashboard")}
+                      </Link>
+                    )}
                     {(user.role === "ADMIN" || user.role === "INSTRUCTOR" || user.role === "EXAMINER") && (
-                      <>
-                        <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
-                          <LayoutDashboard className="h-4 w-4" /> {t("dashboard")}
-                        </Link>
-                        <Link to="/exam-admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
-                          <Shield className="h-4 w-4" /> {t("Examination Portal") || "Examination Portal"}
-                        </Link>
-                      </>
+                      <Link to="/exam-admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-base text-gray-700 hover:bg-gray-200">
+                        <Shield className="h-4 w-4" /> {t("examinationPortal")}
+                      </Link>
                     )}
                     <button
                       onClick={logout}

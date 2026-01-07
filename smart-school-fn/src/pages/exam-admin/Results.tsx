@@ -36,6 +36,7 @@ const Results = () => {
         globalResults,
         loading
     } = useAppSelector((state) => state.examAdmin);
+    const { user } = useAppSelector((state) => state.auth);
 
     const [filters, setFilters] = useState({
         organizationId: '',
@@ -59,7 +60,10 @@ const Results = () => {
     }>({ show: false, assignmentId: '', candidateName: '', allowRetake: false });
     useEffect(() => {
         dispatch(fetchOrganizations());
-    }, [dispatch]);
+        if (user?.role === 'EXAMINER') {
+            dispatch(fetchExams('all')); // Or perhaps the backend handles fetching exams from all assigned orgs
+        }
+    }, [dispatch, user?.role]);
 
     // Fetch exams when org changes
     useEffect(() => {
@@ -257,23 +261,25 @@ const Results = () => {
                 {/* Filters Section */}
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-end flex-wrap">
                     {/* Organization Filter */}
-                    <div className="flex-1 min-w-[200px]">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
-                        <div className="relative">
-                            <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                            <select
-                                name="organizationId"
-                                value={filters.organizationId}
-                                onChange={handleOrgChange}
-                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            >
-                                <option value="">All Organizations</option>
-                                {organizations.map(org => (
-                                    <option key={org.id} value={org.id}>{org.name}</option>
-                                ))}
-                            </select>
+                    {user?.role !== 'EXAMINER' && (
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                            <div className="relative">
+                                <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                                <select
+                                    name="organizationId"
+                                    value={filters.organizationId}
+                                    onChange={handleOrgChange}
+                                    className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="">All Organizations</option>
+                                    {organizations.map(org => (
+                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Exam Filter */}
                     <div className="flex-1 min-w-[200px]">

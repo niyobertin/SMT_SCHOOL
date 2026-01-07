@@ -36,6 +36,7 @@ const Candidates = () => {
     const { candidates, organizations, loading } = useAppSelector(
         (state) => state.examAdmin
     );
+    const { user } = useAppSelector((state) => state.auth);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
@@ -56,7 +57,7 @@ const Candidates = () => {
         email: '',
         phoneNumber: '',
         organizationId: '',
-        customCandidateId: '',
+        candidateId: '',
         batch: '',
         grade: '',
         department: '',
@@ -69,6 +70,13 @@ const Candidates = () => {
     useEffect(() => {
         dispatch(fetchOrganizations());
     }, [dispatch]);
+
+    // Auto-select first org for examiners if none selected
+    useEffect(() => {
+        if (user?.role === 'EXAMINER' && !selectedOrgId && organizations.length > 0) {
+            setSelectedOrgId(organizations[0].id);
+        }
+    }, [user?.role, organizations, selectedOrgId]);
 
     useEffect(() => {
         const fetchParams: any = {
@@ -90,7 +98,7 @@ const Candidates = () => {
             email: candidate.email,
             phoneNumber: candidate.phoneNumber || '',
             organizationId: candidate.organizationId || '',
-            customCandidateId: candidate.customCandidateId || '',
+            candidateId: candidate.candidateId || '',
             batch: candidate.batch || '',
             grade: candidate.grade || '',
             department: candidate.department || '',
@@ -180,7 +188,7 @@ const Candidates = () => {
     const resetForm = () => {
         setFormData({
             firstName: '', lastName: '', email: '', phoneNumber: '', organizationId: '',
-            customCandidateId: '', batch: '', grade: '', department: ''
+            candidateId: '', batch: '', grade: '', department: ''
         });
         setIsEditing(false);
         setSelectedCandidate(null);
@@ -188,8 +196,26 @@ const Candidates = () => {
 
     const downloadTemplate = () => {
         const template = [
-            { FirstName: 'John', LastName: 'Doe', Email: 'john@example.com', PhoneNumber: '1234567890' },
-            { FirstName: 'Jane', LastName: 'Smith', Email: '', PhoneNumber: '0987654321' },
+            {
+                FirstName: 'John',
+                LastName: 'Doe',
+                Email: 'john@example.com',
+                PhoneNumber: '1234567890',
+                CustomID: 'CAND-001',
+                Batch: '2025-A',
+                Grade: '12',
+                Department: 'Engineering'
+            },
+            {
+                FirstName: 'Jane',
+                LastName: 'Smith',
+                Email: 'jane@example.com',
+                PhoneNumber: '0987654321',
+                CustomID: 'CAND-002',
+                Batch: '2025-A',
+                Grade: '12',
+                Department: 'Product'
+            },
         ];
         const ws = XLSX.utils.json_to_sheet(template);
         const wb = XLSX.utils.book_new();
@@ -221,12 +247,16 @@ const Candidates = () => {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                // Expected columns: FirstName, LastName, Email, PhoneNumber
+                // Mapping columns to expected backend fields
                 const formattedCandidates = data.map((row: any) => ({
                     firstName: row.FirstName || row.firstName || '',
                     lastName: row.LastName || row.lastName || '',
                     email: row.Email || row.email || '',
                     phoneNumber: row.PhoneNumber || row.phoneNumber || '',
+                    customCandidateId: row.CustomID || row.customCandidateId || '',
+                    batch: row.Batch || row.batch || '',
+                    grade: row.Grade || row.grade || (row.Grade !== undefined ? String(row.Grade) : ''),
+                    department: row.Department || row.department || '',
                 })).filter(c => c.firstName && c.lastName);
 
                 if (formattedCandidates.length === 0) {
@@ -273,20 +303,22 @@ const Candidates = () => {
                         />
                     </div>
 
-                    <div className="min-w-[240px]">
-                        <select
-                            value={selectedOrgId}
-                            onChange={(e) => setSelectedOrgId(e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white font-medium text-gray-700"
-                        >
-                            <option value="">All Organizations</option>
-                            {organizations.map((org) => (
-                                <option key={org.id} value={org.id}>
-                                    {org.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {user?.role !== 'EXAMINER' && (
+                        <div className="min-w-[240px]">
+                            <select
+                                value={selectedOrgId}
+                                onChange={(e) => setSelectedOrgId(e.target.value)}
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white font-medium text-gray-700"
+                            >
+                                <option value="">All Organizations</option>
+                                {organizations.map((org) => (
+                                    <option key={org.id} value={org.id}>
+                                        {org.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <button
                         onClick={() => setShowFilters(!showFilters)}
@@ -562,10 +594,10 @@ const Candidates = () => {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.9 }}
-                                className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-8"
+                                className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6"
                             >
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-2xl font-bold text-gray-900">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xl font-bold text-gray-900">
                                         {isEditing ? 'Edit Candidate' : 'Add New Candidate'}
                                     </h3>
                                     <button
@@ -576,10 +608,10 @@ const Candidates = () => {
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
+                                <form onSubmit={handleSubmit} className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 First Name *
                                             </label>
                                             <input
@@ -589,12 +621,12 @@ const Candidates = () => {
                                                     setFormData({ ...formData, firstName: e.target.value })
                                                 }
                                                 required
-                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 Last Name *
                                             </label>
                                             <input
@@ -604,31 +636,32 @@ const Candidates = () => {
                                                     setFormData({ ...formData, lastName: e.target.value })
                                                 }
                                                 required
-                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Custom Candidate ID (Optional)
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            Login ID *
                                         </label>
                                         <input
                                             type="text"
-                                            value={formData.customCandidateId}
+                                            value={formData.candidateId}
                                             onChange={(e) =>
-                                                setFormData({ ...formData, customCandidateId: e.target.value })
+                                                setFormData({ ...formData, candidateId: e.target.value })
                                             }
-                                            placeholder="e.g. CAND-2025-001"
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                                            disabled={isEditing}
+                                            required
+                                            placeholder="Enter Login ID (e.g. 2024-001)"
+                                            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">If blank, a system ID will be generated.</p>
                                     </div>
 
                                     {/* Academic Info */}
-                                    <div className="grid grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-3 gap-3">
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 Batch
                                             </label>
                                             <input
@@ -636,11 +669,11 @@ const Candidates = () => {
                                                 value={formData.batch}
                                                 onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
                                                 placeholder="2025-A"
-                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
                                                 Grade
                                             </label>
                                             <input
@@ -648,45 +681,58 @@ const Candidates = () => {
                                                 value={formData.grade}
                                                 onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
                                                 placeholder="10"
-                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                Department
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                                Dept
                                             </label>
                                             <input
                                                 type="text"
                                                 value={formData.department}
                                                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                                placeholder="Sci/Arts"
-                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                placeholder="Sci"
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Email
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                            Contact Info
                                         </label>
-                                        <input
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input
+                                                type="email"
+                                                placeholder="Email Address"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            />
+                                            <input
+                                                type="tel"
+                                                placeholder="Phone Number"
+                                                value={formData.phoneNumber}
+                                                onChange={(e) =>
+                                                    setFormData({ ...formData, phoneNumber: e.target.value })
+                                                }
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            />
+                                        </div>
                                     </div>
 
-                                    {!isEditing && !selectedOrgId && (
+                                    {((!isEditing && !selectedOrgId) || (user?.role === 'EXAMINER' && !isEditing)) && (
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                Organization *
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                                Assign Organization *
                                             </label>
                                             <select
-                                                value={formData.organizationId}
+                                                value={formData.organizationId || selectedOrgId}
                                                 onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}
                                                 required
-                                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                                                disabled={user?.role === 'EXAMINER'}
+                                                className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white disabled:bg-gray-100"
                                             >
                                                 <option value="">Select an organization...</option>
                                                 {organizations.map((org) => (
@@ -697,20 +743,6 @@ const Candidates = () => {
                                             </select>
                                         </div>
                                     )}
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Phone Number
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            value={formData.phoneNumber}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, phoneNumber: e.target.value })
-                                            }
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        />
-                                    </div>
 
                                     <div className="flex gap-3 pt-4">
                                         <button

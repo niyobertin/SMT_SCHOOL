@@ -28,12 +28,12 @@ const ExamAdminLayout = () => {
 
     const handleLogout = () => {
         dispatch(logout());
-        navigate('/exam-admin/login');
+        window.location.href = '/';
     };
 
     const navItems = [
         { path: '/exam-admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/exam-admin/organizations', icon: Building2, label: 'Organizations' },
+        ...(user?.role !== 'EXAMINER' ? [{ path: '/exam-admin/organizations', icon: Building2, label: 'Organizations' }] : []),
         { path: '/exam-admin/exams', icon: FileText, label: 'Exams' },
         { path: '/exam-admin/candidates', icon: Users, label: 'Candidates' },
         { path: '/exam-admin/marking', icon: PenTool, label: 'Marking' },

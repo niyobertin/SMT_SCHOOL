@@ -52,6 +52,7 @@ const Exams = () => {
     const { organizations, selectedOrg, exams, selectedExam, candidates, assignedCandidateIds, loading, candidatesPagination } = useAppSelector(
         (state) => state.examAdmin
     );
+    const { user } = useAppSelector((state) => state.auth);
 
     // Filter State
     const [filters, setFilters] = useState({
@@ -290,23 +291,26 @@ const Exams = () => {
                 const ws = wb.Sheets[wsname];
                 const data = XLSX.utils.sheet_to_json(ws);
 
-                // Expected columns: Question, Type, Points, Explanation, Options (comma separated like: Opt1|true, Opt2|false)
+                // Mapping columns to expected backend fields
                 const formattedQuestions = data.map((row: any) => {
                     const optionsRaw = row.Options || '';
-                    const options = optionsRaw.split('|').map((optStr: string) => {
-                        const [text, correct] = optStr.split(',');
-                        return { option: text?.trim(), isCorrect: correct?.trim() === 'true' };
+                    const options = optionsRaw.toString().split('|').map((optStr: string) => {
+                        const lastCommaIndex = optStr.lastIndexOf(',');
+                        if (lastCommaIndex === -1) return { option: optStr.trim(), isCorrect: false };
+
+                        const text = optStr.substring(0, lastCommaIndex).trim();
+                        const correct = optStr.substring(lastCommaIndex + 1).trim().toLowerCase();
+                        return { option: text, isCorrect: correct === 'true' || correct === '1' || correct === 'yes' };
                     }).filter((o: any) => o.option);
 
+                    const type = (row.Type || 'MULTIPLE_CHOICE').toString().toUpperCase().replace(/\s+/g, '_');
+
                     return {
-                        question: row.Question || 'Untitled Question',
-                        type: row.Type || 'MULTIPLE_CHOICE',
-                        points: Number(row.Points || 1),
-                        explanation: row.Explanation || '',
-                        options: options.length > 0 ? options : [
-                            { option: 'Option 1', isCorrect: true },
-                            { option: 'Option 2', isCorrect: false }
-                        ]
+                        question: row.Question || row.question || 'Untitled Question',
+                        type: type,
+                        points: Number(row.Points || row.points || 1),
+                        explanation: row.Explanation || row.explanation || '',
+                        options: options.length > 0 ? options : []
                     };
                 });
 
@@ -351,8 +355,27 @@ const Exams = () => {
 
     const downloadQuestionTemplate = () => {
         const template = [
-            { Question: 'What is the capital of France?', Type: 'MULTIPLE_CHOICE', Points: 1, Explanation: 'Paris is the capital.', Options: 'Paris,true | London,false | Berlin,false | Madrid,false' },
-            { Question: 'The earth is flat.', Type: 'TRUE_FALSE', Points: 1, Explanation: 'The earth is a sphere.', Options: 'True,false | False,true' },
+            {
+                Question: 'What is the capital of France?',
+                Type: 'MULTIPLE_CHOICE',
+                Points: 1,
+                Explanation: 'Paris is the capital of France.',
+                Options: 'Paris,true | London,false | Berlin,false | Madrid,false'
+            },
+            {
+                Question: 'The earth is flat.',
+                Type: 'TRUE_FALSE',
+                Points: 1,
+                Explanation: 'The earth is an oblate spheroid.',
+                Options: 'True,false | False,true'
+            },
+            {
+                Question: 'Explain the process of photosynthesis.',
+                Type: 'ESSAY',
+                Points: 5,
+                Explanation: 'Photosynthesis is the process used by plants to convert light energy into chemical energy.',
+                Options: ''
+            },
         ];
         const ws = XLSX.utils.json_to_sheet(template);
         const wb = XLSX.utils.book_new();
@@ -394,22 +417,24 @@ const Exams = () => {
                 </div>
 
                 {/* Organization Filter */}
-                <div className="col-span-1 md:col-span-1">
-                    <div className="relative">
-                        <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                        <select
-                            value={filters.organizationId}
-                            onChange={(e) => handleOrgFilterChange(e.target.value)}
-                            className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none appearance-none bg-white"
-                        >
-                            <option value="">All Organizations</option>
-                            {organizations.map(org => (
-                                <option key={org.id} value={org.id}>{org.name}</option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+                {user?.role !== 'EXAMINER' && (
+                    <div className="col-span-1 md:col-span-1">
+                        <div className="relative">
+                            <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <select
+                                value={filters.organizationId}
+                                onChange={(e) => handleOrgFilterChange(e.target.value)}
+                                className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none appearance-none bg-white"
+                            >
+                                <option value="">All Organizations</option>
+                                {organizations.map(org => (
+                                    <option key={org.id} value={org.id}>{org.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Status Filter */}
                 <div className="col-span-1 md:col-span-1">
@@ -612,7 +637,15 @@ const Exams = () => {
                             <form onSubmit={handleExamSubmit} className="space-y-4">
                                 <div><label className="block text-sm font-medium mb-1">Title</label><input className="w-full border rounded-lg p-2" value={examForm.title} onChange={e => setExamForm({ ...examForm, title: e.target.value })} required /></div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="block text-sm font-medium mb-1">Exam Code (Max 4)</label><input className="w-full border rounded-lg p-2 font-mono uppercase" maxLength={4} value={examForm.examCode} onChange={e => setExamForm({ ...examForm, examCode: e.target.value.toUpperCase() })} /></div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Exam Code</label>
+                                        <input
+                                            className="w-full border rounded-lg p-2 font-mono uppercase bg-gray-50 cursor-not-allowed"
+                                            value={isEditingExam ? examForm.examCode : 'AUTO-GEN'}
+                                            disabled
+                                            placeholder="System Generated"
+                                        />
+                                    </div>
                                     <div><label className="block text-sm font-medium mb-1">Status</label>
                                         <select
                                             className="w-full border rounded-lg p-2 bg-white"

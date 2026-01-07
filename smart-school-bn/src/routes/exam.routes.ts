@@ -134,7 +134,7 @@ router.get(
 router.get(
     '/organizations/:id',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getOrganizationById)
 );
 
@@ -159,42 +159,42 @@ router.delete(
 router.post(
     '/organizations/:orgId/candidates',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(createCandidate)
 );
 
 router.post(
     '/organizations/:orgId/candidates/bulk',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(createCandidatesBulk)
 );
 
 router.get(
     '/organizations/:orgId/candidates',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getCandidates)
 );
 
 router.get(
     '/candidates/all',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getAllCandidates)
 );
 
 router.patch(
     '/candidates/:candidateId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(updateCandidate)
 );
 
 router.delete(
     '/candidates/:candidateId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(deleteCandidate)
 );
 
@@ -205,42 +205,42 @@ router.delete(
 router.post(
     '/organizations/:orgId/exams',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(createExam)
 );
 
 router.get(
     '/organizations/:orgId/exams',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getExams)
 );
 
 router.get(
     '/all',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getAllExams)
 );
 
 router.get(
     '/:examId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getExamById)
 );
 
 router.patch(
     '/:examId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(updateExam)
 );
 
 router.delete(
     '/:examId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(deleteExam)
 );
 
@@ -251,28 +251,28 @@ router.delete(
 router.post(
     '/:examId/questions',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(addQuestionToExam)
 );
 
 router.post(
     '/:examId/questions/bulk',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(addQuestionsBulk)
 );
 
 router.patch(
     '/questions/:questionId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(updateExamQuestion)
 );
 
 router.delete(
     '/questions/:questionId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(deleteExamQuestion)
 );
 
@@ -283,35 +283,35 @@ router.delete(
 router.get(
     '/:examId/assigned-candidates',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getExamAssignedCandidates)
 );
 
 router.post(
     '/:examId/assign/:candidateId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(assignExamToCandidate)
 );
 
 router.delete(
     '/:examId/assign/:candidateId',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(unassignExamFromCandidate)
 );
 
 router.post(
     '/:examId/assign-bulk',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(bulkAssignExamToCandidates)
 );
 
 router.post(
     '/assignments/:assignmentId/authorize-retake',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(authorizeRetake)
 );
 
@@ -390,21 +390,21 @@ router.get(
 router.get(
     '/results/all',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     getGlobalExamResults
 );
 
 router.get(
     '/:examId/results',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getExamResults)
 );
 
 router.get(
     '/:examId/analytics',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getExamAnalytics)
 );
 
@@ -444,28 +444,28 @@ router.get(
 router.patch(
     '/candidates/:id/archive',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(archiveCandidate)
 );
 
 router.patch(
     '/candidates/:id/unarchive',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(unarchiveCandidate)
 );
 
 router.patch(
     '/:id/archive', // exam id
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(archiveExam)
 );
 
 router.patch(
     '/:id/unarchive',
     authenticate,
-    authorize('ADMIN', 'INSTRUCTOR'),
+    authorize('ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(unarchiveExam)
 );
 
