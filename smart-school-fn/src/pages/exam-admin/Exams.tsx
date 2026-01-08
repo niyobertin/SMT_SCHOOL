@@ -467,16 +467,16 @@ const Exams = () => {
             </div>
 
             {/* List View Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-visible">
                 <table className="w-full text-left text-sm text-gray-600">
                     <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
                         <tr>
-                            <th className="px-6 py-4">Exam Title</th>
+                            <th className="px-6 py-4 rounded-tl-xl">Exam Title</th>
                             <th className="px-6 py-4">Organization</th>
                             <th className="px-6 py-4">Duration</th>
                             <th className="px-6 py-4">Questions</th>
                             <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-right">Actions</th>
+                            <th className="px-6 py-4 text-right rounded-tr-xl">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -495,134 +495,138 @@ const Exams = () => {
                                 </td>
                             </tr>
                         ) : (
-                            exams.map((exam: any) => (
-                                <tr key={exam.id} className="hover:bg-gray-50 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold text-gray-900">{exam.title}</span>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{exam.examCode}</code>
-                                                <button onClick={() => copyToClipboard(exam.examCode)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-200 rounded">
-                                                    <Copy className="w-3 h-3 text-gray-400" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {exam.organization?.name || 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1">
-                                            <Clock className="w-4 h-4 text-gray-400" />
-                                            {exam.duration}m
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {exam._count?.questions || 0}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${exam.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                            }`}>
-                                            {exam.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end">
-                                            <div className="relative">
-                                                <button
-                                                    onClick={() => setActionMenuOpen(actionMenuOpen === exam.id ? null : exam.id)}
-                                                    className={`p-2 rounded-lg transition-colors ${actionMenuOpen === exam.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-                                                >
-                                                    <MoreVertical className="w-5 h-5" />
-                                                </button>
 
-                                                {actionMenuOpen === exam.id && (
-                                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in slide-in-from-top-2">
-                                                        <button
-                                                            onClick={() => { setActionMenuOpen(null); handleOpenManageQuestions(exam.id); }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
-                                                        >
-                                                            <FileText className="w-4 h-4" /> Manage Questions
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                setActionMenuOpen(null);
-                                                                setSelectedExamForAssign(exam);
-                                                                setAssignFilters({
-                                                                    search: '',
-                                                                    batch: '',
-                                                                    grade: '',
-                                                                    department: '',
-                                                                    page: 1,
-                                                                    limit: 20
-                                                                });
-                                                                dispatch(fetchAllCandidates({
-                                                                    organizationId: exam.organizationId,
-                                                                    page: 1,
-                                                                    limit: 20
-                                                                }));
-                                                                dispatch(fetchExamAssignedCandidates(exam.id));
-                                                                setShowAssignModal(true);
-                                                                setSelectedCandidateIds([]);
-                                                            }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
-                                                        >
-                                                            <UserPlus className="w-4 h-4" /> Assign Candidates
-                                                        </button>
-                                                        <div className="my-1 border-t border-gray-100" />
-                                                        <button
-                                                            onClick={() => { setActionMenuOpen(null); handleEditExam(exam); }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                        >
-                                                            <Edit className="w-4 h-4" /> Edit Exam
-                                                        </button>
-                                                        <button
-                                                            onClick={async () => {
-                                                                setActionMenuOpen(null);
-                                                                try {
-                                                                    if (exam.status === 'ARCHIVED') {
-                                                                        await dispatch(unarchiveExam(exam.id)).unwrap();
-                                                                        toast.success('Exam unarchived');
-                                                                    } else {
-                                                                        await dispatch(archiveExam(exam.id)).unwrap();
-                                                                        toast.success('Exam archived');
-                                                                    }
-                                                                    const fetchParams: any = {
-                                                                        organizationId: filters.organizationId || undefined,
-                                                                        status: filters.status || undefined,
-                                                                        search: filters.search || undefined,
-                                                                        date: filters.date || undefined,
-                                                                        archived: filters.archived
-                                                                    };
-                                                                    dispatch(fetchAllExams(fetchParams));
-                                                                } catch (e: any) { toast.error(e); }
-                                                            }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                        >
-                                                            {exam.status === 'ARCHIVED' ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
-                                                            {exam.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => { setActionMenuOpen(null); handleDeleteExamClick(exam.id); }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" /> Delete
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {/* Overlay to close when clicking outside */}
-                                                {actionMenuOpen === exam.id && (
-                                                    <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
-                                                )}
+                            exams.map((exam: any, index: number) => {
+                                const isLastItem = index >= exams.length - 1;
+                                return (
+                                    <tr key={exam.id} className="hover:bg-gray-50 transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold text-gray-900">{exam.title}</span>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{exam.examCode}</code>
+                                                    <button onClick={() => copyToClipboard(exam.examCode)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-200 rounded">
+                                                        <Copy className="w-3 h-3 text-gray-400" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {exam.organization?.name || 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-1">
+                                                <Clock className="w-4 h-4 text-gray-400" />
+                                                {exam.duration}m
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {exam._count?.questions || 0}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${exam.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                {exam.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end">
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setActionMenuOpen(actionMenuOpen === exam.id ? null : exam.id)}
+                                                        className={`p-2 rounded-lg transition-colors ${actionMenuOpen === exam.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                                                    >
+                                                        <MoreVertical className="w-5 h-5" />
+                                                    </button>
+
+                                                    {actionMenuOpen === exam.id && (
+                                                        <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in ${isLastItem ? 'bottom-full mb-1 slide-in-from-bottom-2' : 'top-full mt-1 slide-in-from-top-2'}`}>
+                                                            <button
+                                                                onClick={() => { setActionMenuOpen(null); handleOpenManageQuestions(exam.id); }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                                            >
+                                                                <FileText className="w-4 h-4" /> Manage Questions
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setActionMenuOpen(null);
+                                                                    setSelectedExamForAssign(exam);
+                                                                    setAssignFilters({
+                                                                        search: '',
+                                                                        batch: '',
+                                                                        grade: '',
+                                                                        department: '',
+                                                                        page: 1,
+                                                                        limit: 20
+                                                                    });
+                                                                    dispatch(fetchAllCandidates({
+                                                                        organizationId: exam.organizationId,
+                                                                        page: 1,
+                                                                        limit: 20
+                                                                    }));
+                                                                    dispatch(fetchExamAssignedCandidates(exam.id));
+                                                                    setShowAssignModal(true);
+                                                                    setSelectedCandidateIds([]);
+                                                                }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
+                                                            >
+                                                                <UserPlus className="w-4 h-4" /> Assign Candidates
+                                                            </button>
+                                                            <div className="my-1 border-t border-gray-100" />
+                                                            <button
+                                                                onClick={() => { setActionMenuOpen(null); handleEditExam(exam); }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                            >
+                                                                <Edit className="w-4 h-4" /> Edit Exam
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    setActionMenuOpen(null);
+                                                                    try {
+                                                                        if (exam.status === 'ARCHIVED') {
+                                                                            await dispatch(unarchiveExam(exam.id)).unwrap();
+                                                                            toast.success('Exam unarchived');
+                                                                        } else {
+                                                                            await dispatch(archiveExam(exam.id)).unwrap();
+                                                                            toast.success('Exam archived');
+                                                                        }
+                                                                        const fetchParams: any = {
+                                                                            organizationId: filters.organizationId || undefined,
+                                                                            status: filters.status || undefined,
+                                                                            search: filters.search || undefined,
+                                                                            date: filters.date || undefined,
+                                                                            archived: filters.archived
+                                                                        };
+                                                                        dispatch(fetchAllExams(fetchParams));
+                                                                    } catch (e: any) { toast.error(e); }
+                                                                }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                            >
+                                                                {exam.status === 'ARCHIVED' ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
+                                                                {exam.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => { setActionMenuOpen(null); handleDeleteExamClick(exam.id); }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" /> Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {/* Overlay to close when clicking outside */}
+                                                    {actionMenuOpen === exam.id && (
+                                                        <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })
                         )}
                     </tbody>
-                </table>
-            </div>
+                </table >
+            </div >
 
             {/* Modals are kept below (CreateExam, Assign, ManageQuestions, DeleteConfirms) */}
             {/* Create Exam Modal */}
@@ -1076,7 +1080,7 @@ const Exams = () => {
                 )}
             </AnimatePresence>
 
-        </div>
+        </div >
     );
 };
 

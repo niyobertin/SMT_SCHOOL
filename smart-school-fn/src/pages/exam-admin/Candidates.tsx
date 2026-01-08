@@ -421,11 +421,11 @@ const Candidates = () => {
             </div>
 
             {/* Candidates Table */}
-            <div className="bg-white rounded-xl shadow-md border-2 border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-md border-2 border-gray-200 overflow-visible">
                 <table className="w-full">
                     <thead className="bg-gray-50 border-b-2 border-gray-200">
                         <tr>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 rounded-tl-xl">
                                 Candidate ID
                             </th>
                             <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
@@ -443,7 +443,7 @@ const Candidates = () => {
                             <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                                 Organization
                             </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 rounded-tr-xl">
                                 Actions
                             </th>
                         </tr>
@@ -466,123 +466,126 @@ const Candidates = () => {
                                 </td>
                             </tr>
                         ) : (
-                            filteredCandidates.map((candidate) => (
-                                <tr key={candidate.id} className={`hover:bg-gray-50 transition-colors ${candidate.isArchived ? 'opacity-75 bg-gray-50' : ''}`}>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded font-mono">
-                                                    {candidate.customCandidateId || candidate.candidateId}
-                                                </code>
-                                                <button
-                                                    onClick={() => copyToClipboard(candidate.customCandidateId || candidate.candidateId)}
-                                                    className="p-1 hover:bg-gray-200 rounded"
-                                                >
-                                                    <Copy className="w-4 h-4 text-gray-600" />
-                                                </button>
-                                            </div>
-                                            {candidate.customCandidateId && (
-                                                <span className="text-xs text-gray-400">Sys: {candidate.candidateId}</span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div>
-                                            <p className="font-semibold text-gray-900">
-                                                {candidate.firstName} {candidate.lastName}
-                                            </p>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-600">
-                                            {candidate.batch && <div className="inline-flex mr-2 px-2 py-0.5 rounded bg-purple-100 text-purple-700 text-xs">Batch: {candidate.batch}</div>}
-                                            {candidate.grade && <div className="inline-flex mr-2 px-2 py-0.5 rounded bg-orange-100 text-orange-700 text-xs">Gr: {candidate.grade}</div>}
-                                            {candidate.department && <div className="block mt-1 text-xs text-gray-500">{candidate.department}</div>}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="space-y-1 text-sm text-gray-600">
-                                            <div className="flex items-center gap-2">
-                                                <Mail className="w-4 h-4" />
-                                                <span className="truncate max-w-[150px]" title={candidate.email}>{candidate.email}</span>
-                                            </div>
-                                            {candidate.phoneNumber && (
-                                                <div className="flex items-center gap-2">
-                                                    <Phone className="w-4 h-4" />
-                                                    <span>{candidate.phoneNumber}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span
-                                                className={`px-3 py-1 rounded-full text-xs font-medium w-fit ${candidate.isActive
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-gray-100 text-gray-700'
-                                                    }`}
-                                            >
-                                                {candidate.isActive ? 'Active' : 'Inactive'}
-                                            </span>
-                                            {candidate.isArchived && (
-                                                <span className="px-3 py-1 rounded-full text-xs font-medium w-fit bg-red-100 text-red-700 flex items-center gap-1">
-                                                    <Archive className="w-3 h-3" /> Archived
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-sm text-gray-600 font-medium">
-                                            {candidate.organization?.name || 'N/A'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end">
-                                            <div className="relative">
-                                                <button
-                                                    onClick={() => setActionMenuOpen(actionMenuOpen === candidate.id ? null : candidate.id)}
-                                                    className={`p-2 rounded-lg transition-colors ${actionMenuOpen === candidate.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-                                                >
-                                                    <MoreVertical className="w-5 h-5" />
-                                                </button>
 
-                                                {actionMenuOpen === candidate.id && (
-                                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in slide-in-from-top-2">
-                                                        <button
-                                                            onClick={() => { setActionMenuOpen(null); handleEdit(candidate); }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                        >
-                                                            <Edit className="w-4 h-4" /> Edit Details
-                                                        </button>
-                                                        <button
-                                                            onClick={() => { setActionMenuOpen(null); handleArchiveToggle(candidate); }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                        >
-                                                            {candidate.isArchived ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
-                                                            {candidate.isArchived ? 'Unarchive' : 'Archive'}
-                                                        </button>
-                                                        <div className="my-1 border-t border-gray-100" />
-                                                        <button
-                                                            onClick={() => { setActionMenuOpen(null); handleDeleteClick(candidate.id); }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" /> Delete Candidate
-                                                        </button>
+                            filteredCandidates.map((candidate, index) => {
+                                const isLastItem = index >= filteredCandidates.length - 1;
+                                return (
+                                    <tr key={candidate.id} className={`hover:bg-gray-50 transition-colors ${candidate.isArchived ? 'opacity-75 bg-gray-50' : ''}`}>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <code className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded font-mono">
+                                                        {candidate.customCandidateId || candidate.candidateId}
+                                                    </code>
+                                                    <button
+                                                        onClick={() => copyToClipboard(candidate.customCandidateId || candidate.candidateId)}
+                                                        className="p-1 hover:bg-gray-200 rounded"
+                                                    >
+                                                        <Copy className="w-4 h-4 text-gray-600" />
+                                                    </button>
+                                                </div>
+                                                {candidate.customCandidateId && (
+                                                    <span className="text-xs text-gray-400">Sys: {candidate.candidateId}</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div>
+                                                <p className="font-semibold text-gray-900">
+                                                    {candidate.firstName} {candidate.lastName}
+                                                </p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-gray-600">
+                                                {candidate.batch && <div className="inline-flex mr-2 px-2 py-0.5 rounded bg-purple-100 text-purple-700 text-xs">Batch: {candidate.batch}</div>}
+                                                {candidate.grade && <div className="inline-flex mr-2 px-2 py-0.5 rounded bg-orange-100 text-orange-700 text-xs">Gr: {candidate.grade}</div>}
+                                                {candidate.department && <div className="block mt-1 text-xs text-gray-500">{candidate.department}</div>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="space-y-1 text-sm text-gray-600">
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="w-4 h-4" />
+                                                    <span className="truncate max-w-[150px]" title={candidate.email}>{candidate.email}</span>
+                                                </div>
+                                                {candidate.phoneNumber && (
+                                                    <div className="flex items-center gap-2">
+                                                        <Phone className="w-4 h-4" />
+                                                        <span>{candidate.phoneNumber}</span>
                                                     </div>
                                                 )}
-                                                {/* Overlay to close when clicking outside */}
-                                                {actionMenuOpen === candidate.id && (
-                                                    <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span
+                                                    className={`px-3 py-1 rounded-full text-xs font-medium w-fit ${candidate.isActive
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                >
+                                                    {candidate.isActive ? 'Active' : 'Inactive'}
+                                                </span>
+                                                {candidate.isArchived && (
+                                                    <span className="px-3 py-1 rounded-full text-xs font-medium w-fit bg-red-100 text-red-700 flex items-center gap-1">
+                                                        <Archive className="w-3 h-3" /> Archived
+                                                    </span>
                                                 )}
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-sm text-gray-600 font-medium">
+                                                {candidate.organization?.name || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end">
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setActionMenuOpen(actionMenuOpen === candidate.id ? null : candidate.id)}
+                                                        className={`p-2 rounded-lg transition-colors ${actionMenuOpen === candidate.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                                                    >
+                                                        <MoreVertical className="w-5 h-5" />
+                                                    </button>
 
-                            ))
+                                                    {actionMenuOpen === candidate.id && (
+                                                        <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in ${isLastItem ? 'bottom-full mb-1 slide-in-from-bottom-2' : 'top-full mt-1 slide-in-from-top-2'}`}>
+                                                            <button
+                                                                onClick={() => { setActionMenuOpen(null); handleEdit(candidate); }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                            >
+                                                                <Edit className="w-4 h-4" /> Edit Details
+                                                            </button>
+                                                            <button
+                                                                onClick={() => { setActionMenuOpen(null); handleArchiveToggle(candidate); }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                            >
+                                                                {candidate.isArchived ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
+                                                                {candidate.isArchived ? 'Unarchive' : 'Archive'}
+                                                            </button>
+                                                            <div className="my-1 border-t border-gray-100" />
+                                                            <button
+                                                                onClick={() => { setActionMenuOpen(null); handleDeleteClick(candidate.id); }}
+                                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" /> Delete Candidate
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {/* Overlay to close when clicking outside */}
+                                                    {actionMenuOpen === candidate.id && (
+                                                        <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })
                         )}
                     </tbody>
-                </table>
+                </table >
             </div >
 
             {/* Create Candidate Modal */}
