@@ -48,7 +48,7 @@ const Candidates = () => {
     const [filterGrade, setFilterGrade] = useState('');
     const [filterDepartment, setFilterDepartment] = useState('');
     const [showArchived, setShowArchived] = useState(false);
-    const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+    const [actionMenuOpen, setActionMenuOpen] = useState<any>(null);
     const [showFilters, setShowFilters] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -467,8 +467,7 @@ const Candidates = () => {
                             </tr>
                         ) : (
 
-                            filteredCandidates.map((candidate, index) => {
-                                const isLastItem = index >= filteredCandidates.length - 1;
+                            filteredCandidates.map((candidate) => {
                                 return (
                                     <tr key={candidate.id} className={`hover:bg-gray-50 transition-colors ${candidate.isArchived ? 'opacity-75 bg-gray-50' : ''}`}>
                                         <td className="px-6 py-4">
@@ -543,38 +542,57 @@ const Candidates = () => {
                                             <div className="flex items-center justify-end">
                                                 <div className="relative">
                                                     <button
-                                                        onClick={() => setActionMenuOpen(actionMenuOpen === candidate.id ? null : candidate.id)}
-                                                        className={`p-2 rounded-lg transition-colors ${actionMenuOpen === candidate.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                                                        onClick={(e) => {
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            const spaceBelow = window.innerHeight - rect.bottom;
+                                                            const position = spaceBelow < 250 ? 'up' : 'down';
+                                                            setActionMenuOpen(actionMenuOpen?.id === candidate.id ? null : { id: candidate.id, position });
+                                                        }}
+                                                        className={`p-2 rounded-lg transition-colors ${actionMenuOpen?.id === candidate.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
                                                     >
                                                         <MoreVertical className="w-5 h-5" />
                                                     </button>
 
-                                                    {actionMenuOpen === candidate.id && (
-                                                        <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in ${isLastItem ? 'bottom-full mb-1 slide-in-from-bottom-2' : 'top-full mt-1 slide-in-from-top-2'}`}>
-                                                            <button
-                                                                onClick={() => { setActionMenuOpen(null); handleEdit(candidate); }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                            >
-                                                                <Edit className="w-4 h-4" /> Edit Details
-                                                            </button>
-                                                            <button
-                                                                onClick={() => { setActionMenuOpen(null); handleArchiveToggle(candidate); }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                            >
-                                                                {candidate.isArchived ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
-                                                                {candidate.isArchived ? 'Unarchive' : 'Archive'}
-                                                            </button>
-                                                            <div className="my-1 border-t border-gray-100" />
-                                                            <button
-                                                                onClick={() => { setActionMenuOpen(null); handleDeleteClick(candidate.id); }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" /> Delete Candidate
-                                                            </button>
+                                                    {actionMenuOpen?.id === candidate.id && (
+                                                        <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in ${actionMenuOpen.position === 'up' ? 'bottom-full mb-1 slide-in-from-bottom-2' : 'top-full mt-1 slide-in-from-top-2'
+                                                            }`}>
+                                                            <div className="p-2 border-b border-gray-50 flex flex-col gap-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setActionMenuOpen(null);
+                                                                        handleEdit(candidate);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    <Edit className="w-4 h-4" /> Edit Details
+                                                                </button>
+                                                            </div>
+                                                            <div className="p-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setActionMenuOpen(null);
+                                                                        handleArchiveToggle(candidate);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    {candidate.isArchived ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
+                                                                    {candidate.isArchived ? 'Unarchive' : 'Archive'}
+                                                                </button>
+                                                                <div className="my-1 border-t border-gray-100" />
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setActionMenuOpen(null);
+                                                                        handleDeleteClick(candidate.id);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" /> Delete Candidate
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                     {/* Overlay to close when clicking outside */}
-                                                    {actionMenuOpen === candidate.id && (
+                                                    {actionMenuOpen?.id === candidate.id && (
                                                         <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
                                                     )}
                                                 </div>

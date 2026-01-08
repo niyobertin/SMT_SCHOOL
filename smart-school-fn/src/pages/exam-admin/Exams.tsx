@@ -62,7 +62,7 @@ const Exams = () => {
         date: '',
         archived: false
     });
-    const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+    const [actionMenuOpen, setActionMenuOpen] = useState<any>(null);
     // Modal States
     const [showCreateExamModal, setShowCreateExamModal] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -510,8 +510,7 @@ const Exams = () => {
                             </tr>
                         ) : (
 
-                            exams.map((exam: any, index: number) => {
-                                const isLastItem = index >= exams.length - 1;
+                            exams.map((exam: any) => {
                                 return (
                                     <tr key={exam.id} className="hover:bg-gray-50 transition-colors group">
                                         <td className="px-6 py-4">
@@ -547,88 +546,98 @@ const Exams = () => {
                                             <div className="flex items-center justify-end">
                                                 <div className="relative">
                                                     <button
-                                                        onClick={() => setActionMenuOpen(actionMenuOpen === exam.id ? null : exam.id)}
-                                                        className={`p-2 rounded-lg transition-colors ${actionMenuOpen === exam.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                                                        onClick={(e) => {
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            const spaceBelow = window.innerHeight - rect.bottom;
+                                                            const position = spaceBelow < 250 ? 'up' : 'down';
+                                                            setActionMenuOpen(actionMenuOpen?.id === exam.id ? null : { id: exam.id, position });
+                                                        }}
+                                                        className={`p-2 rounded-lg transition-colors ${actionMenuOpen?.id === exam.id ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
                                                     >
                                                         <MoreVertical className="w-5 h-5" />
                                                     </button>
 
-                                                    {actionMenuOpen === exam.id && (
-                                                        <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in ${isLastItem ? 'bottom-full mb-1 slide-in-from-bottom-2' : 'top-full mt-1 slide-in-from-top-2'}`}>
-                                                            <button
-                                                                onClick={() => { setActionMenuOpen(null); handleOpenManageQuestions(exam.id); }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
-                                                            >
-                                                                <FileText className="w-4 h-4" /> Manage Questions
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setActionMenuOpen(null);
-                                                                    setSelectedExamForAssign(exam);
-                                                                    setAssignFilters({
-                                                                        search: '',
-                                                                        batch: '',
-                                                                        grade: '',
-                                                                        department: '',
-                                                                        page: 1,
-                                                                        limit: 20
-                                                                    });
-                                                                    dispatch(fetchAllCandidates({
-                                                                        organizationId: exam.organizationId,
-                                                                        page: 1,
-                                                                        limit: 20
-                                                                    }));
-                                                                    dispatch(fetchExamAssignedCandidates(exam.id));
-                                                                    setShowAssignModal(true);
-                                                                    setSelectedCandidateIds([]);
-                                                                }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2"
-                                                            >
-                                                                <UserPlus className="w-4 h-4" /> Assign Candidates
-                                                            </button>
-                                                            <div className="my-1 border-t border-gray-100" />
-                                                            <button
-                                                                onClick={() => { setActionMenuOpen(null); handleEditExam(exam); }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                            >
-                                                                <Edit className="w-4 h-4" /> Edit Exam
-                                                            </button>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    setActionMenuOpen(null);
-                                                                    try {
-                                                                        if (exam.status === 'ARCHIVED') {
-                                                                            await dispatch(unarchiveExam(exam.id)).unwrap();
-                                                                            toast.success('Exam unarchived');
-                                                                        } else {
-                                                                            await dispatch(archiveExam(exam.id)).unwrap();
-                                                                            toast.success('Exam archived');
-                                                                        }
-                                                                        const fetchParams: any = {
-                                                                            organizationId: filters.organizationId || undefined,
-                                                                            status: filters.status || undefined,
-                                                                            search: filters.search || undefined,
-                                                                            date: filters.date || undefined,
-                                                                            archived: filters.archived
-                                                                        };
-                                                                        dispatch(fetchAllExams(fetchParams));
-                                                                    } catch (e: any) { toast.error(e); }
-                                                                }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                            >
-                                                                {exam.status === 'ARCHIVED' ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
-                                                                {exam.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => { setActionMenuOpen(null); handleDeleteExamClick(exam.id); }}
-                                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" /> Delete
-                                                            </button>
+                                                    {actionMenuOpen?.id === exam.id && (
+                                                        <div className={`absolute right-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 animate-in fade-in ${actionMenuOpen.position === 'up' ? 'bottom-full mb-1 slide-in-from-bottom-2' : 'top-full mt-1 slide-in-from-top-2'
+                                                            }`}>
+                                                            <div className="p-2 border-b border-gray-50 flex flex-col gap-1">
+                                                                <button
+                                                                    onClick={() => { setActionMenuOpen(null); handleOpenManageQuestions(exam.id); }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    <FileText className="w-4 h-4" /> Manage Questions
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setActionMenuOpen(null);
+                                                                        setSelectedExamForAssign(exam);
+                                                                        setAssignFilters({
+                                                                            search: '',
+                                                                            batch: '',
+                                                                            grade: '',
+                                                                            department: '',
+                                                                            page: 1,
+                                                                            limit: 20
+                                                                        });
+                                                                        dispatch(fetchAllCandidates({
+                                                                            organizationId: exam.organizationId,
+                                                                            page: 1,
+                                                                            limit: 20
+                                                                        }));
+                                                                        dispatch(fetchExamAssignedCandidates(exam.id));
+                                                                        setShowAssignModal(true);
+                                                                        setSelectedCandidateIds([]);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    <UserPlus className="w-4 h-4" /> Assign Candidates
+                                                                </button>
+                                                            </div>
+                                                            <div className="p-1">
+                                                                <button
+                                                                    onClick={() => { setActionMenuOpen(null); handleEditExam(exam); }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    <Edit className="w-4 h-4" /> Edit Exam
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        setActionMenuOpen(null);
+                                                                        try {
+                                                                            if (exam.status === 'ARCHIVED') {
+                                                                                await dispatch(unarchiveExam(exam.id)).unwrap();
+                                                                                toast.success('Exam unarchived');
+                                                                            } else {
+                                                                                await dispatch(archiveExam(exam.id)).unwrap();
+                                                                                toast.success('Exam archived');
+                                                                            }
+                                                                            const fetchParams: any = {
+                                                                                organizationId: filters.organizationId || undefined,
+                                                                                status: filters.status || undefined,
+                                                                                search: filters.search || undefined,
+                                                                                date: filters.date || undefined,
+                                                                                archived: filters.archived
+                                                                            };
+                                                                            dispatch(fetchAllExams(fetchParams));
+                                                                        } catch (e: any) { toast.error(e); }
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    {exam.status === 'ARCHIVED' ? <Undo className="w-4 h-4 text-green-600" /> : <Archive className="w-4 h-4 text-amber-600" />}
+                                                                    {exam.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                                                                </button>
+                                                                <div className="my-1 border-t border-gray-100" />
+                                                                <button
+                                                                    onClick={() => { setActionMenuOpen(null); handleDeleteExamClick(exam.id); }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-lg"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" /> Delete
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                     {/* Overlay to close when clicking outside */}
-                                                    {actionMenuOpen === exam.id && (
+                                                    {actionMenuOpen?.id === exam.id && (
                                                         <div className="fixed inset-0 z-10" onClick={() => setActionMenuOpen(null)} />
                                                     )}
                                                 </div>
@@ -647,48 +656,73 @@ const Exams = () => {
             <AnimatePresence>
                 {showCreateExamModal && (
                     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-                            <div className="flex justify-between items-center mb-6">
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col max-h-[90vh]">
+                            <div className="flex justify-between items-center p-6 border-b border-gray-100 flex-shrink-0">
                                 <h3 className="text-xl font-bold">{isEditingExam ? 'Edit Exam' : 'Create Exam'}</h3>
-                                <button onClick={() => setShowCreateExamModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+                                <button onClick={() => setShowCreateExamModal(false)} className="p-1 hover:bg-gray-100 rounded text-gray-500"><X className="w-5 h-5" /></button>
                             </div>
-                            <form onSubmit={handleExamSubmit} className="space-y-4">
-                                <div><label className="block text-sm font-medium mb-1">Title</label><input className="w-full border rounded-lg p-2" value={examForm.title} onChange={e => setExamForm({ ...examForm, title: e.target.value })} required /></div>
-                                <div className="grid grid-cols-2 gap-4">
+                            <div className="p-6 overflow-y-auto flex-1">
+                                <form id="exam-form" onSubmit={handleExamSubmit} className="space-y-4">
+                                    <div><label className="block text-sm font-medium mb-1">Title</label><input className="w-full border rounded-lg p-2" value={examForm.title} onChange={e => setExamForm({ ...examForm, title: e.target.value })} required /></div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Exam Code</label>
+                                            <input
+                                                className="w-full border rounded-lg p-2 font-mono uppercase bg-gray-50 cursor-not-allowed"
+                                                value={isEditingExam ? examForm.examCode : 'AUTO-GEN'}
+                                                disabled
+                                                placeholder="System Generated"
+                                            />
+                                        </div>
+                                        <div><label className="block text-sm font-medium mb-1">Status</label>
+                                            <select
+                                                className="w-full border rounded-lg p-2 bg-white"
+                                                value={examForm.status}
+                                                onChange={e => setExamForm({ ...examForm, status: e.target.value })}
+                                            >
+                                                <option value="DRAFT">Draft</option>
+                                                <option value="PUBLISHED">Published</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div><label className="block text-sm font-medium mb-1">Description</label><textarea className="w-full border rounded-lg p-2" rows={2} value={examForm.description} onChange={e => setExamForm({ ...examForm, description: e.target.value })} /></div>
+
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">Exam Code</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-mono uppercase bg-gray-50 cursor-not-allowed"
-                                            value={isEditingExam ? examForm.examCode : 'AUTO-GEN'}
-                                            disabled
-                                            placeholder="System Generated"
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Instructions (Optional)</label>
+                                        <textarea
+                                            rows={4}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                                            placeholder="Enter instructions, one per line..."
+                                            value={examForm.instructions}
+                                            onChange={(e) => setExamForm({ ...examForm, instructions: e.target.value })}
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">Each line will be shown as a separate bullet point.</p>
                                     </div>
-                                    <div><label className="block text-sm font-medium mb-1">Status</label>
-                                        <select
-                                            className="w-full border rounded-lg p-2 bg-white"
-                                            value={examForm.status}
-                                            onChange={e => setExamForm({ ...examForm, status: e.target.value })}
-                                        >
-                                            <option value="DRAFT">Draft</option>
-                                            <option value="PUBLISHED">Published</option>
-                                        </select>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div><label className="block text-sm font-medium mb-1">Duration (min)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.duration} onChange={e => setExamForm({ ...examForm, duration: parseInt(e.target.value) })} required /></div>
+                                        <div><label className="block text-sm font-medium mb-1">Pass Score (%)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.passingScore} onChange={e => setExamForm({ ...examForm, passingScore: parseInt(e.target.value) })} required /></div>
                                     </div>
-                                </div>
-                                <div><label className="block text-sm font-medium mb-1">Description</label><textarea className="w-full border rounded-lg p-2" rows={2} value={examForm.description} onChange={e => setExamForm({ ...examForm, description: e.target.value })} /></div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div><label className="block text-sm font-medium mb-1">Duration (min)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.duration} onChange={e => setExamForm({ ...examForm, duration: parseInt(e.target.value) })} required /></div>
-                                    <div><label className="block text-sm font-medium mb-1">Pass Score (%)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.passingScore} onChange={e => setExamForm({ ...examForm, passingScore: parseInt(e.target.value) })} required /></div>
-                                </div>
+                                </form>
+                            </div>
+                            <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-xl flex-shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowCreateExamModal(false); resetExamForm(); }}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                                >
+                                    Cancel
+                                </button>
                                 <button
                                     type="submit"
+                                    form="exam-form"
                                     disabled={loading}
-                                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
                                 >
                                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                                     {isEditingExam ? 'Update Exam' : 'Save Exam'}
                                 </button>
-                            </form>
+                            </div>
                         </motion.div>
                     </div>
                 )}
