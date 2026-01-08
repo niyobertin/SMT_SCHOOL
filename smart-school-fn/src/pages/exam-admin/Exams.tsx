@@ -124,6 +124,7 @@ const Exams = () => {
         maxAttempts: 3,
         status: 'DRAFT',
         examCode: '',
+        instructions: '',
     });
 
     const [questionForm, setQuestionForm] = useState({
@@ -152,6 +153,7 @@ const Exams = () => {
             maxAttempts: exam.maxAttempts || 3,
             status: exam.status || 'DRAFT',
             examCode: exam.examCode || '',
+            instructions: Array.isArray(exam.instructions) ? exam.instructions.join('\n') : (exam.instructions || ''),
         });
         setSelectedExamId(exam.id);
         setIsEditingExam(true);
@@ -192,12 +194,24 @@ const Exams = () => {
 
         try {
             if (isEditingExam && selectedExamId) {
-                await dispatch(updateExam({ examId: selectedExamId, data: examForm })).unwrap();
+                await dispatch(updateExam({
+                    examId: selectedExamId,
+                    data: {
+                        ...examForm,
+                        instructions: examForm.instructions.split('\n').filter(line => line.trim() !== '')
+                    }
+                })).unwrap();
                 toast.success('Exam updated!');
             } else {
                 await dispatch(createExam({
                     orgId: orgId!,
-                    data: { ...examForm, randomizeQuestions: true, showResults: true, allowReview: true }
+                    data: {
+                        ...examForm,
+                        instructions: examForm.instructions.split('\n').filter(line => line.trim() !== ''),
+                        randomizeQuestions: true,
+                        showResults: true,
+                        allowReview: true
+                    }
                 })).unwrap();
                 toast.success('Exam created!');
             }
@@ -210,7 +224,7 @@ const Exams = () => {
     };
 
     const resetExamForm = () => {
-        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3, status: 'DRAFT', examCode: '' });
+        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3, status: 'DRAFT', examCode: '', instructions: '' });
         setIsEditingExam(false);
         setSelectedExamId('');
     };
