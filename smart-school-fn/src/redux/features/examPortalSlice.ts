@@ -14,6 +14,8 @@ interface ExamPortalState {
     loading: boolean;
     error: string | null;
     result: any | null;
+    isWaiting: boolean;
+    scheduledStartTime: string | null;
 }
 
 const initialState: ExamPortalState = {
@@ -28,6 +30,8 @@ const initialState: ExamPortalState = {
     loading: false,
     error: null,
     result: null,
+    isWaiting: false,
+    scheduledStartTime: null,
 };
 
 interface CandidateLoginCredentials {
@@ -157,6 +161,8 @@ const examPortalSlice = createSlice({
             state.answers = {};
             state.timeRemaining = null;
             state.result = null;
+            state.isWaiting = false;
+            state.scheduledStartTime = null;
         },
         clearError: (state) => {
             state.error = null;
@@ -174,6 +180,8 @@ const examPortalSlice = createSlice({
                 state.token = action.payload.data.token;
                 state.candidate = action.payload.data.candidate;
                 state.exam = action.payload.data.exam;
+                state.isWaiting = action.payload.data.isWaiting || false;
+                state.scheduledStartTime = action.payload.data.exam?.startDate || null;
                 state.error = null;
             })
             .addCase(candidateLogin.rejected, (state, action) => {

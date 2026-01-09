@@ -198,34 +198,54 @@ export function PsychometricTestPage() {
         const selectedAnswer = answers[currentQuestion?.id];
 
         return (
-            <div className="flex flex-col bg-gray-50">
+            <div className="flex flex-col min-h-screen bg-gray-50">
                 {/* Fixed Header */}
-                <div className="border-b border-gray-200 flex-shrink-0">
-                    <div className="max-w-7xl mx-auto px-4">
-                        <div className="flex items-center justify-center gap-4">
+                <div className="bg-white shadow-sm border-b sticky top-0 z-20">
+                    <div className="max-w-7xl mx-auto px-4 py-4">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div>
-                                <p className="text-lg font-semibold text-gray-900">
+                                <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">Psychometric Session</h1>
+                                <p className="text-xs sm:text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
                                     Question {currentQuestionIndex + 1} of {questions.length}
                                 </p>
                             </div>
 
-                            <div className="flex items-center space-x-4">
+                            <div className="flex items-center gap-6">
                                 {/* Timer */}
-                                <div className="flex items-center space-x-2">
-                                    <div className="flex gap-2">
-                                        <div className="text-sm text-gray-600">Time Left :</div>
-                                        <div className={`text-sm font-semibold ${questionTimeLeft <= 10 ? "text-red-600" : "text-gray-900"}`}>
+                                <div className="flex items-center space-x-4 bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100">
+                                    <div>
+                                        <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-0.5">Time Remaining</div>
+                                        <div className={`text-lg sm:text-xl font-black tabular-nums ${questionTimeLeft <= 10 ? "text-red-600 animate-pulse" : "text-blue-600"}`}>
                                             {questionTimeLeft}s
                                         </div>
                                     </div>
                                 </div>
+
+                                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full border border-green-100">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                    <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Secure Portal</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Progress Bar Area */}
+                        <div className="mt-6">
+                            <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                <span>Progress</span>
+                                <span>{currentQuestionIndex + 1} / {questions.length}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50">
+                                <div
+                                    className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(37,99,235,0.3)]"
+                                    style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                                />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="bg-white rounded-lg shadow-sm p-8">
+                <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-8">
                         <div className="mb-6">
                             <h2 className="text-lg font-semibold text-gray-900 mb-4">
                                 {currentQuestion.question}
@@ -290,7 +310,7 @@ export function PsychometricTestPage() {
                                 <span>Progress</span>
                                 <span>{currentQuestionIndex + 1} / {questions.length}</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden hidden">
                                 <div
                                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                                     style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
@@ -301,10 +321,10 @@ export function PsychometricTestPage() {
                                 <button
                                     onClick={handleNext}
                                     disabled={isSubmitting}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                    className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-[0.98] flex items-center justify-center gap-2"
                                 >
-                                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                                    {currentQuestionIndex === questions.length - 1 ? 'Submit Test' : 'Next Question'}
+                                    {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                                    {currentQuestionIndex === questions.length - 1 ? 'SUBMIT TEST' : 'NEXT QUESTION'}
                                 </button>
                             </div>
                         </div>

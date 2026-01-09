@@ -1,14 +1,25 @@
 import { Users, Target, Eye, Heart, Award, Lightbulb } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import type { Variants } from 'framer-motion';
+import { useRef } from 'react';
 import backgroundImage from "../assets/aboutimage.jpg";
 import { Link } from "react-router-dom";
 import cto from "../assets/cto.jpeg";
 import ceo from "../assets/Picture1.png";
 import olivessfd from "../assets/olive.png";
 import enock from "../assets/Enock.png";
+import useLanguage from '../hooks/useLanguage';
 
 export const About = () => {
+  const { } = useLanguage();
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+
   const teamMembers = [
     {
       name: "Damascene Sibomana",
@@ -38,22 +49,22 @@ export const About = () => {
 
   const values = [
     {
-      icon: <Heart className="w-8 h-8" />,
+      icon: Heart,
       title: "Lifelong Learning",
       description: "Promoting continuous growth beyond classrooms and careers."
     },
     {
-      icon: <Lightbulb className="w-8 h-8" />,
+      icon: Lightbulb,
       title: "Innovation",
       description: "Using creativity and technology to deliver modern, practical learning."
     },
     {
-      icon: <Users className="w-8 h-8" />,
+      icon: Users,
       title: "Impact",
       description: "Focusing on real results that transform learners, workplaces, and the nation."
     },
     {
-      icon: <Award className="w-8 h-8" />,
+      icon: Award,
       title: "Excellence",
       description: "Striving for the highest quality in education and skills development."
     }
@@ -61,8 +72,8 @@ export const About = () => {
 
   // Animation variants
   const fadeInUp: Variants = {
-    initial: { opacity: 0, y: 60 },
-    animate: {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
       opacity: 1,
       y: 0,
       transition: {
@@ -72,53 +83,18 @@ export const About = () => {
     },
   };
 
-  const fadeInLeft: Variants = {
-    initial: { opacity: 0, x: -60 },
-    animate: {
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
       opacity: 1,
-      x: 0,
       transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
-    },
-  };
-
-  const fadeInRight: Variants = {
-    initial: { opacity: 0, x: 60 },
-    animate: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
-    },
-  };
-
-  const staggerContainer: Variants = {
-    initial: {},
-    animate: {
-      transition: {
-        staggerChildren: 0.2
+        staggerChildren: 0.1
       }
     }
   };
 
-  const scaleIn: Variants = {
-    initial: { opacity: 0, scale: 0.8 },
-    animate: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
-    },
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div ref={ref} className="bg-white">
       {/* Hero Section */}
       <motion.section
         style={{
@@ -126,259 +102,221 @@ export const About = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
+          y,
         }}
-        className="relative py-20 lg:py-32 h-[80vh] flex items-center overflow-hidden"
-        initial={{ scale: 1.1 }}
+        className="relative py-24 lg:py-32 h-[70vh] flex items-center justify-center overflow-hidden"
+        initial={{ scale: 1.05 }}
         animate={{ scale: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
       >
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-blue-900/60"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        />
+        <div className="absolute inset-0 bg-black/65" />
 
-        <div className="relative max-w-6xl mx-auto px-6 text-center text-white">
-          <p className="text-2xl font-bold mb-6">About Smart School</p>
-          <motion.p
-            className="text-xl opacity-90 max-w-3xl mx-auto leading-relaxed"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 0.9, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 w-full text-center">
+          <motion.div
+            className="max-w-3xl mx-auto"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
-            Welcome to <span className="font-bold text-yellow-600">Smart School</span>, the future of learning where education goes beyond classroom walls and adapts to the demands of today’s fast-changing world.
-            Here, continuous learning is not just encouraged but made accessible through flexible, interactive, and personalized experiences designed to fit seamlessly into your life.
-            Whether you are a student aiming to strengthen your studies, a professional looking to enhance your skills, or an individual pursuing a new passion,
-            Smart School is here to walk with you every step of your learning journey.
-          </motion.p>
-        </div>
-        {/* Floating particles effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-white/20 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [-20, -100, -20],
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                duration: 3 + Math.random() * 2,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
+            <motion.p
+              variants={fadeInUp}
+              className="text-[#6cb9cc] font-black uppercase tracking-[0.3em] text-[12px] mb-4"
+            >
+              Elite Education
+            </motion.p>
+            <motion.h1
+              variants={fadeInUp}
+              className="text-3xl md:text-5xl font-bold text-white mb-8 leading-tight tracking-tight uppercase"
+            >
+              About Smart School
+            </motion.h1>
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg text-gray-100 mb-10 leading-relaxed font-medium max-w-2xl mx-auto"
+            >
+              The future of learning where education goes beyond classroom walls and adapts to the demands of today’s fast-changing world.
+            </motion.p>
+          </motion.div>
         </div>
       </motion.section>
 
-      <p className="text-2xl font-bold pt-6 text-center">Mission and vision</p>
+      {/* Intro Section */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-10 rounded-full" />
+            <p className="text-xl md:text-2xl text-slate-700 leading-relaxed font-medium">
+              Welcome to <span className="text-[#1a7ea5] font-bold">Smart School</span>. Here, continuous learning is made accessible through flexible, interactive, and personalized experiences designed to fit seamlessly into your life.
+            </p>
+          </motion.div>
+        </div>
+      </section>
 
-      <motion.div
-        className="py-16 bg-gray-50"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={staggerContainer}
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12">
+      {/* Mission and Vision - Asymmetrical Grid Pattern */}
+      <section className="py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             {/* Mission */}
             <motion.div
-              className="bg-white rounded-2xl p-8 shadow-lg"
-              variants={fadeInLeft}
-              whileHover={{
-                y: -10,
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                transition: { duration: 0.3 }
-              }}
+              className="lg:col-span-7 group bg-white p-12 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
             >
-              <motion.div
-                whileHover={{ rotate: 360, scale: 1.1 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Target className="w-12 h-12 text-blue-600 mb-6" />
-              </motion.div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Our Mission</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Our mission is to close Rwanda’s skills gap by equipping graduates and employees with practical,
+              <div className="w-16 h-16 bg-[#6cb9cc]/10 text-[#1a7ea5] rounded-3xl flex items-center justify-center mb-10 group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-500">
+                <Target size={32} />
+              </div>
+              <h3 className="text-3xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Our Mission</h3>
+              <p className="text-lg text-slate-500 leading-relaxed font-medium">
+                To close Rwanda’s skills gap by equipping graduates and employees with practical,
                 market-relevant knowledge and continuous training that enhances workplace readiness, boosts productivity,
-                fosters innovation, and strengthens the nation’s competitiveness in the global economy.
+                fosters innovation, and strengthens national competitiveness.
               </p>
             </motion.div>
 
             {/* Vision */}
             <motion.div
-              className="bg-white rounded-2xl p-8 shadow-lg"
-              variants={fadeInRight}
-              whileHover={{
-                y: -10,
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                transition: { duration: 0.3 }
-              }}
+              className="lg:col-span-5 group bg-[#1a7ea5] p-12 rounded-3xl shadow-[0_20px_50px_rgba(26,126,165,0.2)] hover:shadow-[0_40px_80px_rgba(26,126,165,0.3)] transition-all duration-500 text-white"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
             >
-              <motion.div
-                whileHover={{ rotate: 360, scale: 1.1 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Eye className="w-12 h-12 text-purple-600 mb-6" />
-              </motion.div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Our Vision</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Our vision is to build a future where every Rwandan learner and professional has access to practical,
-                lifelong education that empowers them to succeed in the workplace, drive innovation, and
-                contribute to a thriving, competitive national economy.
+              <div className="w-16 h-16 bg-white/10 text-white rounded-3xl flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
+                <Eye size={32} />
+              </div>
+              <h3 className="text-3xl font-bold mb-6 uppercase tracking-tight">Our Vision</h3>
+              <p className="text-lg text-white/90 leading-relaxed font-medium">
+                To build a future where every Rwandan learner has access to practical,
+                lifelong education that empowers them to drive innovation and contribute to a thriving national economy.
               </p>
             </motion.div>
           </div>
         </div>
-      </motion.div>
+      </section>
 
-      {/* Values */}
-      <motion.div
-        className="py-16 bg-white"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={staggerContainer}
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div className="text-center mb-12" variants={fadeInUp}>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Core Values</h2>
-            <p className="text-lg text-gray-600">The principles that guide everything we do</p>
-          </motion.div>
+      {/* Core Values */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <motion.h2
+              className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight"
+              {...fadeInUp}
+              initial="hidden"
+              whileInView="visible"
+            >
+              Our Core Values
+            </motion.h2>
+            <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-8 rounded-full" />
+            <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium">The principles that guide everything we do.</p>
+          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <motion.div
                 key={index}
-                className="text-center group"
-                variants={scaleIn}
+                className="p-10 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-[#1a7ea5] group transition-all duration-500"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -10 }}
-                transition={{ duration: 0.3 }}
               >
-                <motion.div
-                  className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 mb-4 group-hover:from-blue-100 group-hover:to-purple-100 transition-colors duration-300"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <motion.div
-                    className="text-blue-600 mb-4 flex justify-center"
-                    whileHover={{ rotate: 360, scale: 1.2 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    {value.icon}
-                  </motion.div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">{value.title}</h3>
-                  <p className="text-gray-600 text-base leading-relaxed">{value.description}</p>
-                </motion.div>
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                  <value.icon size={26} className="text-[#1a7ea5]" />
+                </div>
+                <h4 className="font-bold text-slate-900 text-lg mb-4 group-hover:text-white transition-colors uppercase tracking-tight">{value.title}</h4>
+                <p className="text-slate-500 text-[15px] leading-relaxed group-hover:text-white/80 transition-colors font-medium">
+                  {value.description}
+                </p>
               </motion.div>
             ))}
           </div>
         </div>
-      </motion.div>
+      </section>
 
       {/* Team Section */}
-      <motion.div
-        className="py-16 bg-gray-50"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={staggerContainer}
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div className="text-center mb-12" variants={fadeInUp}>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Meet Our Team</h2>
-            <p className="text-lg text-gray-600">The passionate individuals behind Smart School</p>
-          </motion.div>
+      <section className="py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Meet Our Team</h2>
+            <p className="text-lg text-slate-500 font-medium">The passionate individuals behind Smart School.</p>
+          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {teamMembers.map((member, index) => (
               <motion.div
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg"
-                variants={scaleIn}
-                whileHover={{
-                  y: -15,
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                  transition: { duration: 0.3 }
-                }}
+                className="bg-white rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group transition-all duration-500 text-center"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -10 }}
               >
-                <div className="text-center">
-                  <motion.img
+                <div className="relative mb-8 inline-block">
+                  <div className="absolute inset-0 bg-[#6cb9cc] rounded-full scale-105 opacity-0 group-hover:opacity-20 transition-opacity" />
+                  <img
                     src={member.image}
                     alt={member.name}
-                    loading="lazy"
-                    className="w-44 h-44 rounded-full mx-auto mb-4 object-cover border-4 border-blue-100"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ duration: 0.3 }}
+                    className="w-40 h-40 rounded-full mx-auto object-cover border-4 border-white shadow-md relative z-10"
                   />
-                  <h3 className="text-xl font-bold text-gray-800 mb-1">{member.name}</h3>
-                  <p className="text-blue-600 font-semibold mb-3">{member.position}</p>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4">{member.bio}</p>
                 </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-tight uppercase">{member.name}</h3>
+                <p className="text-[#1a7ea5] font-black text-[12px] uppercase tracking-widest mb-4">{member.position}</p>
+                <p className="text-slate-500 text-sm font-medium">{member.bio}</p>
               </motion.div>
             ))}
           </div>
         </div>
-      </motion.div>
-      {/* CTA Section */}
-      <motion.div
-        className="py-16 bg-white"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={staggerContainer}
-      >
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.h2
-            className="text-3xl font-bold text-gray-800 mb-6"
-            variants={fadeInUp}
-          >
-            Ready to Start Learning?
-          </motion.h2>
+      </section>
 
-          <motion.p
-            className="text-lg text-gray-600 mb-8"
-            variants={fadeInUp}
-          >
-            Join thousands of learners who are already transforming their lives through our platform.
-          </motion.p>
-
+      {/* Enhanced CTA Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="space-x-4"
+            className="bg-[#1a7ea5] rounded-3xl p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
             variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
           >
-            <motion.button
-              className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg"
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 20px 40px -12px rgba(59, 130, 246, 0.5)",
-                transition: { duration: 0.3 }
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link to="/courses">Browse Courses</Link>
-            </motion.button>
-
-            <motion.button
-              className="border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-xl font-semibold hover:bg-blue-600 hover:text-white transition-all duration-300"
-              whileHover={{
-                scale: 1.05,
-                transition: { duration: 0.3 }
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link to="/contact">Contact Us</Link>
-            </motion.button>
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a7ea5] via-[#6cb9cc] to-[#1a7ea5] opacity-60" />
+            <div className="relative z-10">
+              <h2 className="text-2xl md:text-4xl font-bold mb-6 uppercase tracking-tight">
+                Ready to Start Learning?
+              </h2>
+              <p className="text-lg text-white/80 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+                Join thousands of learners who are already transforming their lives through our platform.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-5 justify-center">
+                <Link to="/courses">
+                  <motion.button
+                    className="bg-white text-[#1a7ea5] px-12 py-5 rounded-full text-[14px] font-black uppercase tracking-widest shadow-2xl hover:bg-slate-50 transition-all w-full sm:w-auto"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Browse Courses
+                  </motion.button>
+                </Link>
+                <Link to="/contact">
+                  <motion.button
+                    className="bg-white/10 backdrop-blur-md border border-white/40 text-white px-12 py-5 rounded-full text-[14px] font-black uppercase tracking-widest hover:bg-white/20 transition-all w-full sm:w-auto"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Contact Us
+                  </motion.button>
+                </Link>
+              </div>
+            </div>
           </motion.div>
         </div>
-      </motion.div>
+      </section>
     </div>
   );
 };

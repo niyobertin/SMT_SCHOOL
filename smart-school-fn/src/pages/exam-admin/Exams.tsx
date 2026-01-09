@@ -125,6 +125,7 @@ const Exams = () => {
         status: 'DRAFT',
         examCode: '',
         instructions: '',
+        startDate: '',
     });
 
     const [questionForm, setQuestionForm] = useState({
@@ -154,6 +155,11 @@ const Exams = () => {
             status: exam.status || 'DRAFT',
             examCode: exam.examCode || '',
             instructions: Array.isArray(exam.instructions) ? exam.instructions.join('\n') : (exam.instructions || ''),
+            startDate: exam.startDate ? (() => {
+                const d = new Date(exam.startDate);
+                const pad = (n: number) => n.toString().padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            })() : '',
         });
         setSelectedExamId(exam.id);
         setIsEditingExam(true);
@@ -224,7 +230,7 @@ const Exams = () => {
     };
 
     const resetExamForm = () => {
-        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3, status: 'DRAFT', examCode: '', instructions: '' });
+        setExamForm({ title: '', description: '', duration: 60, passingScore: 70, maxAttempts: 3, status: 'DRAFT', examCode: '', instructions: '', startDate: '' });
         setIsEditingExam(false);
         setSelectedExamId('');
     };
@@ -702,6 +708,17 @@ const Exams = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div><label className="block text-sm font-medium mb-1">Duration (min)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.duration} onChange={e => setExamForm({ ...examForm, duration: parseInt(e.target.value) })} required /></div>
                                         <div><label className="block text-sm font-medium mb-1">Pass Score (%)</label><input type="number" className="w-full border rounded-lg p-2" value={examForm.passingScore} onChange={e => setExamForm({ ...examForm, passingScore: parseInt(e.target.value) })} required /></div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Start Time (Optional)</label>
+                                        <input
+                                            type="datetime-local"
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-sans"
+                                            value={examForm.startDate}
+                                            onChange={(e) => setExamForm({ ...examForm, startDate: e.target.value })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">If set, candidates will see a waiting screen until this time.</p>
                                     </div>
                                 </form>
                             </div>

@@ -779,6 +779,8 @@ const examAdminSlice = createSlice({
                 }
             })
             .addCase(updateCandidate.rejected, (state) => { state.loading = false; })
+            .addCase(bulkAssignExam.pending, (state) => { state.loading = true; })
+            .addCase(bulkAssignExam.fulfilled, (state) => { state.loading = false; })
             .addCase(bulkAssignExam.rejected, (state) => { state.loading = false; })
             .addCase(authorizeRetake.pending, (state) => {
                 state.loading = true;

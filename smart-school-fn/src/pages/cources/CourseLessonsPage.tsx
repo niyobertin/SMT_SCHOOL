@@ -173,20 +173,20 @@ const CourseLessonsPage = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-sm cursor-pointer hover:bg-blue-600 hover:text-white mb-6 border border-gray-200 rounded-md p-2 bg-blue-600 text-white"
+          className="flex items-center text-sm cursor-pointer border border-slate-200 rounded-full px-5 py-2.5 bg-white text-slate-600 hover:bg-slate-50 transition-all mb-8 font-semibold uppercase tracking-wider text-[11px]"
         >
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back to courses
+          <ArrowLeft className="w-4 h-4 mr-2 text-[#1a7ea5]" /> Back to courses
         </button>
 
         {/* Course Header */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">
           {course?.title}
         </h1>
-        <p className="text-gray-600 mb-4">{course?.description}</p>
+        <p className="text-slate-500 mb-8 font-medium leading-relaxed max-w-3xl">{course?.description}</p>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6 text-center overflow-x-auto">
-          <nav className="-mb-px flex space-x-8 justify-center">
+        <div className="border-b border-gray-200 mb-6 overflow-x-auto no-scrollbar scroll-smooth">
+          <nav className="-mb-px flex space-x-6 sm:space-x-8 lg:justify-center justify-start px-2">
             {[
               { key: "lessons", label: "Lessons", icon: List },
               { key: "GENERAL", label: "General Exams", icon: FileText },
@@ -200,11 +200,11 @@ const CourseLessonsPage = () => {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as TabType)}
                   className={`${activeTab === tab.key
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                    ? "border-[#1a7ea5] text-[#1a7ea5] bg-[#1a7ea5]/5"
+                    : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-200 hover:bg-slate-50/50"
+                    } whitespace-nowrap py-4 px-4 border-b-2 font-bold text-[11px] sm:text-xs flex items-center transition-all duration-200 rounded-t-xl uppercase tracking-widest`}
                 >
-                  <Icon className="w-4 h-4 mr-2" />
+                  <Icon className={`w-4 h-4 mr-2 ${activeTab === tab.key ? 'text-[#1a7ea5]' : 'text-slate-300'}`} />
                   {tab.label}
                 </button>
               );
@@ -226,18 +226,18 @@ const CourseLessonsPage = () => {
                   className="p-6 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-start">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <div className="h-10 w-10 rounded-xl bg-[#1a7ea5]/10 flex items-center justify-center text-[#1a7ea5] font-bold">
                       {lesson.order}
                     </div>
 
                     <div className="ml-4 flex-1">
                       <div className="flex justify-between">
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-bold text-slate-900">
                           {lesson.title}
                         </h3>
 
                         {lesson.isPreview && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                          <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full bg-amber-50 text-amber-600 border border-amber-100">
                             Preview
                           </span>
                         )}
@@ -248,9 +248,9 @@ const CourseLessonsPage = () => {
                       {lesson.content?.map((content) => (
                         <div
                           key={content.id}
-                          className="flex items-center text-sm text-gray-600 mt-2"
+                          className="flex items-center text-[13px] text-slate-500 font-medium mt-3"
                         >
-                          <PlayCircle className="w-4 h-4 mr-2 text-blue-600" />
+                          <PlayCircle className="w-4 h-4 mr-2 text-[#1a7ea5]/60" />
                           <span>{content.title || "Lesson Content"}</span>
                         </div>
                       ))}
@@ -258,7 +258,7 @@ const CourseLessonsPage = () => {
 
                     <button
                       onClick={() => handleStartLearning(lesson.id)}
-                      className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      className="ml-4 px-6 py-2.5 bg-[#1a7ea5] text-white rounded-full hover:bg-[#156d8f] transition-all font-bold uppercase tracking-widest text-[11px]"
                     >
                       Start
                     </button>
@@ -290,9 +290,9 @@ const CourseLessonsPage = () => {
                     <button
                       key={num}
                       onClick={() => dispatch(setPage(num))}
-                      className={`px-3 py-1 border rounded ${num === pagination.page
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-700 border-gray-300"
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl font-bold text-xs transition-all ${num === pagination.page
+                        ? "bg-[#1a7ea5] text-white"
+                        : "bg-white text-slate-400 border border-slate-100 hover:border-[#1a7ea5] hover:text-[#1a7ea5]"
                         }`}
                     >
                       {num}
@@ -343,9 +343,9 @@ const CourseLessonsPage = () => {
                           {test.description ? test.description.substring(0, 250) + (test.description.length > 250 ? '...' : '') : 'No description available'}
                         </p>
                       </div>
-                      <div className="flex gap-1 px-2 py-2 rounded-md bg-blue-600 font-bold text-white text-sm mt-2 w-fit hover:bg-blue-900 transition-colors cursor-pointer items-center">
+                      <div className="flex gap-2 px-6 py-3 rounded-full bg-[#1a7ea5] font-bold text-white text-[11px] uppercase tracking-widest hover:bg-[#156d8f] transition-all cursor-pointer items-center">
                         <PlayCircle className="w-4 h-4" />
-                        <span className="font-semibold">Start Exam</span>
+                        <span>Start Exam</span>
                       </div>
                     </div>
                   </div>

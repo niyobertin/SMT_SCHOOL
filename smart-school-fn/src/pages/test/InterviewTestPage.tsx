@@ -255,13 +255,13 @@ export function InterviewTestPage() {
         const currentAnswer = answers[currentQuestion?.id] || '';
 
         return (
-            <div className="min-h-screen bg-gray-50 flex">
+            <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
 
-                {/* Side Panel */}
-                <div className="w-64 bg-white border-r border-gray-200 p-6 flex flex-col">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Questions</h3>
-                    <div className="overflow-y-auto">
-                        <div className="space-y-2">
+                {/* Question Navigation Sidebar */}
+                <div className="w-full lg:w-72 bg-white border-b lg:border-r border-gray-200 p-4 sm:p-6 flex flex-col order-2 lg:order-1">
+                    <h3 className="text-xs font-black text-gray-900 mb-4 uppercase tracking-[0.1em]">Navigation</h3>
+                    <div className="flex-1 overflow-y-auto max-h-[300px] lg:max-h-full no-scrollbar">
+                        <div className="grid grid-cols-6 sm:grid-cols-10 lg:grid-cols-5 gap-2 pb-4">
                             {questions.map((q: any, index: number) => {
                                 const isAnswered = answers[q.id] && answers[q.id].trim().length > 0;
                                 const isCurrent = index === currentQuestionIndex;
@@ -269,58 +269,81 @@ export function InterviewTestPage() {
                                     <button
                                         key={q.id}
                                         onClick={() => handleNavigateToQuestion(index)}
-                                        className={`w-full text-left px-4 py-3 rounded-lg transition-all ${isCurrent
-                                            ? 'bg-blue-600 text-white'
+                                        className={`w-7 h-7 rounded-lg transition-all border flex items-center justify-center text-[9px] font-black relative ${isCurrent
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-50'
                                             : isAnswered
-                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                ? 'bg-green-50 border-green-100 text-green-800 hover:bg-green-100'
+                                                : 'bg-white border-gray-100 text-gray-400 hover:border-blue-200'
                                             }`}
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-medium">Question {index + 1}</span>
-                                            {isAnswered && !isCurrent && (
-                                                <span className="text-xs">✓</span>
-                                            )}
-                                        </div>
+                                        {index + 1}
+                                        {isAnswered && !isCurrent && (
+                                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-white" />
+                                        )}
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
-                    <div className="mt-28 pt-6 border-t border-gray-200">
-                        <div className="text-sm text-gray-600 mb-2">
-                            Progress: {Object.keys(answers).filter(k => answers[k]?.trim()).length} / {questions.length}
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                        <div className="flex justify-between items-center mb-4">
+                            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Progress</span>
+                            <span className="text-sm font-black text-blue-600">
+                                {Object.keys(answers).filter(k => answers[k]?.trim()).length} / {questions.length}
+                            </span>
                         </div>
                         <button
                             onClick={handleSubmit}
-                            className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                            disabled={loading || isSubmitting}
+                            className="w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-100 active:scale-[0.98] flex items-center justify-center gap-2"
                         >
-                            {loading || isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit'}
+                            {loading || isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'FINISH TEST'}
                         </button>
                     </div>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex-1 flex flex-col">
-                    {/* Header */}
-                    <div className="border-b border-gray-200 flex-shrink-0">
-                        <div className="px-4 py-2">
-                            <div className="flex items-center justify-center gap-4">
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col order-1 lg:order-2">
+                    {/* Sticky Header */}
+                    <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+                        <div className="px-4 py-4 sm:px-6">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div>
-                                    <p className="text-lg font-semibold text-gray-900">
+                                    <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">Interview Session</h1>
+                                    <p className="text-xs sm:text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
                                         Question {currentQuestionIndex + 1} of {questions.length}
                                     </p>
                                 </div>
 
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                        <div className="flex gap-2">
-                                            <div className="text-sm text-gray-600">Time Left :</div>
-                                            <div className={`text-sm font-semibold ${questionTimeLeft <= 30 ? "text-red-600" : "text-gray-900"}`}>
+                                <div className="flex items-center gap-6">
+                                    {/* Timer */}
+                                    <div className="flex items-center space-x-4 bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100">
+                                        <div>
+                                            <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-0.5">Time Remaining</div>
+                                            <div className={`text-lg sm:text-xl font-black tabular-nums ${questionTimeLeft <= 30 ? "text-red-600 animate-pulse" : "text-blue-600"}`}>
                                                 {formatTime(questionTimeLeft)}
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full border border-green-100">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                        <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Secure Portal</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Progress Bar Area */}
+                            <div className="mt-6">
+                                <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                    <span>Progress</span>
+                                    <span>{currentQuestionIndex + 1} / {questions.length}</span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50">
+                                    <div
+                                        className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(37,99,235,0.3)]"
+                                        style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -360,12 +383,17 @@ export function InterviewTestPage() {
                                     <textarea
                                         value={currentAnswer}
                                         onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
-                                        rows={10}
-                                        placeholder="Type your answer here..."
+                                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-base"
+                                        rows={8}
+                                        placeholder="Type your response here..."
                                     />
-                                    <div className="text-xs text-gray-500 mt-2">
-                                        {currentAnswer.length} characters
+                                    <div className="flex justify-between items-center mt-3">
+                                        <div className="text-xs font-bold text-gray-400">
+                                            {currentAnswer.length} characters
+                                        </div>
+                                        <div className="text-[10px] text-gray-400 italic">
+                                            Auto-saves as you type
+                                        </div>
                                     </div>
                                 </div>
 
