@@ -1,4 +1,4 @@
-import { Award, ArrowRight, Play, Star } from "lucide-react";
+import { ArrowRight, Play, Star, Award, Users, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import type { Variants } from "framer-motion";
@@ -39,36 +39,10 @@ const itemVariants: Variants = {
   },
 };
 
-// Bidirectional animation variants
 const bidirectionalFadeUp: Variants = {
-  hidden: { y: 50, opacity: 0 },
+  hidden: { y: 30, opacity: 0 },
   visible: {
     y: 0,
-    opacity: 1,
-    transition: {
-      duration: 0.6,
-      ease: "easeOut"
-    }
-  }
-};
-
-const bidirectionalScale: Variants = {
-  hidden: { scale: 0.8, opacity: 0 },
-  visible: {
-    scale: 1,
-    opacity: 1,
-    transition: {
-      duration: 0.8,
-      type: "spring",
-      stiffness: 100
-    }
-  }
-};
-
-const bidirectionalSlide: Variants = {
-  hidden: { x: -30, opacity: 0 },
-  visible: {
-    x: 0,
     opacity: 1,
     transition: {
       duration: 0.6,
@@ -105,8 +79,8 @@ export const HomePage: React.FC = () => {
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   return (
-    <div ref={ref}>
-      {/* Hero Section with Parallax */}
+    <div ref={ref} className="bg-white">
+      {/* Hero Section - Refined Headline Size */}
       <motion.section
         style={{
           backgroundImage: `url(${backgroundImage})`,
@@ -115,30 +89,29 @@ export const HomePage: React.FC = () => {
           backgroundRepeat: "no-repeat",
           y,
         }}
-        className="relative py-20 lg:py-32 h-[80vh] flex items-center overflow-hidden"
-        initial={{ scale: 1.1 }}
+        className="relative py-24 lg:py-32 h-[80vh] flex items-center justify-center overflow-hidden"
+        initial={{ scale: 1.05 }}
         animate={{ scale: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
       >
-        {/* Simple overlay */}
-        <div className="absolute inset-0 bg-black/50" />
+        {/* Refined overlay */}
+        <div className="absolute inset-0 bg-black/60" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 w-full text-center">
           <motion.div
-            className="text-center max-w-4xl mx-auto"
+            className="max-w-3xl mx-auto"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-
             <motion.h1
               variants={itemVariants}
-              className="text-2xl md:text-4xl font-bold text-white mb-6 leading-tight"
+              className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight tracking-tight"
             >
               <motion.span
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.7, duration: 0.8 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
               >
                 {t("transformYourFuture")}
               </motion.span>
@@ -146,48 +119,39 @@ export const HomePage: React.FC = () => {
 
             <motion.p
               variants={itemVariants}
-              className="text-base md:text-lg text-gray-200 mb-8 leading-relaxed font-light"
+              className="text-lg text-gray-100 mb-10 leading-relaxed font-medium max-w-3xl mx-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1, duration: 0.8 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
             >
               {t("homeSubtitle")}
             </motion.p>
 
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 font-medium justify-center"
+              className="flex flex-col sm:flex-row gap-5 font-bold justify-center"
               variants={itemVariants}
             >
               <Link to="/register">
                 <motion.button
-                  className="group bg-[#19459d] text-white text-lg rounded-full px-8 py-4 relative overflow-hidden shadow-lg"
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: "0 20px 40px rgba(25, 69, 157, 0.4)"
-                  }}
+                  className="group bg-[#1a7ea5] text-white text-[14px] uppercase tracking-wider rounded-full px-10 py-4 relative overflow-hidden shadow-xl transition-all"
+                  whileHover={{ scale: 1.05, backgroundColor: "#156d8f" }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500"
-                    initial={{ x: "-100%" }}
-                    whileHover={{ x: "0%" }}
-                    transition={{ duration: 0.3 }}
-                  />
-                  <span className="relative flex items-center">
+                  <span className="relative flex items-center justify-center">
                     {t("getStarted")}
-                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </motion.button>
               </Link>
 
               <Link to="/courses">
                 <motion.button
-                  className="group text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-full border border-white/20 hover:bg-white hover:text-gray-900 transition-all duration-300"
+                  className="group text-[14px] uppercase tracking-wider px-10 py-4 bg-white/10 backdrop-blur-md text-white rounded-full border border-white/40 hover:bg-white hover:text-[#1a7ea5] transition-all duration-300 shadow-lg"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <span className="flex items-center">
-                    <Play className="w-5 h-5 mr-2" />
+                  <span className="flex items-center justify-center">
+                    <Play size={18} className="mr-2 fill-current" />
                     {t("exploreCourses")}
                   </span>
                 </motion.button>
@@ -197,334 +161,174 @@ export const HomePage: React.FC = () => {
         </div>
       </motion.section>
 
-      {/* What We Focus On - Interactive Mosaic Layout */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden">
-        {/* Static Background */}
-        <div className="absolute inset-0 bg-gray-50/50" />
-
+      {/* What We Focus On - Asymmetrical Grid */}
+      <section className="py-24 bg-slate-50 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             className="text-center mb-20"
             variants={bidirectionalFadeUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, amount: 0.3 }}
+            viewport={{ once: true, amount: 0.3 }}
           >
-            <motion.div
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full text-blue-800 text-sm font-medium mb-6"
-              initial={{ scale: 0, rotate: -10 }}
-              whileInView={{ scale: 1, rotate: 0 }}
-              viewport={{ once: false, amount: 0.3 }}
-              transition={{ type: "spring", stiffness: 200 }}
-            >
-              What We Focus On
-            </motion.div>
-
-            <motion.h2
-              className="text-4xl md:text-6xl font-bold mb-6"
-              variants={bidirectionalSlide}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.3 }}
-            >
-              <span className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
-                {t("featuredCourses")}
-              </span>
-            </motion.h2>
-
-            <motion.p
-              className="text-xl text-gray-600 max-w-3xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.3 }}
-              transition={{ delay: 0.3 }}
-            >
-              Discover our comprehensive programs designed to transform your career and future
-            </motion.p>
+            <h2 className="text-2xl md:text-4xl font-bold mb-6 uppercase tracking-tight text-slate-900">
+              {t("featuredCourses")}
+            </h2>
+            <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-8 rounded-full" />
+            <p className="text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed">
+              Industry-leading programs designed for the modern workforce. We bridge the gap between education and professional excellence.
+            </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 md:gap-8 px-4 md:px-8">
-            {ourPrograms.map((program, i) => (
+          {/* Asymmetrical layout using 12-column grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {ourPrograms.map((program, i) => {
+              // Create alternating pattern: Big/Small, then Small/Big
+              const isFirstInPair = i % 2 === 0;
+              const isEvenRow = Math.floor(i / 2) % 2 === 0;
+              const colSpan = isEvenRow
+                ? (isFirstInPair ? "lg:col-span-7" : "lg:col-span-5")
+                : (isFirstInPair ? "lg:col-span-5" : "lg:col-span-7");
+
+              return (
+                <motion.div
+                  key={program.id}
+                  className={`group relative bg-white ${colSpan} p-8 md:p-12 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100/50 flex flex-col justify-between`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.1 }}
+                  whileHover={{ y: -8 }}
+                >
+                  <div>
+                    <div className="w-12 h-12 bg-[#6cb9cc]/10 text-[#1a7ea5] rounded-2xl flex items-center justify-center mb-10 group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-500">
+                      <Star size={20} />
+                    </div>
+                    <h3 className="font-bold text-xl md:text-2xl mb-4 tracking-tight group-hover:text-[#1a7ea5] transition-colors leading-tight">
+                      {program.title}
+                    </h3>
+                    <p className="text-[16px] md:text-[16px] text-slate-500 leading-relaxed mb-10">
+                      {program.description}
+                    </p>
+                  </div>
+                  <Link to="/courses" className="inline-flex items-center gap-2 text-[14px] font-black uppercase tracking-[0.2em] text-[#1a7ea5] hover:gap-4 transition-all group/link">
+                    Explore Details <ArrowRight size={14} />
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us - Enhanced Readability */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <motion.h2
+              className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              {t("whyChooseUs")} Smart school?
+            </motion.h2>
+            <p className="text-slate-500 max-w-2xl mx-auto text-lg">Discover the pillars of our educational excellence and student support system.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { icon: Award, title: "Reliable Solution", desc: "Modern assessment methods with user-focused design." },
+              { icon: Users, title: "Expert Instructors", desc: "Industry professionals with proven track records." },
+              { icon: Clock, title: "Flexible Schedule", desc: "24/7 access with lifetime course availability." },
+              { icon: Star, title: "Certified Excellence", desc: "Gain industry-recognized credentials for your success." },
+              { icon: Play, title: "Interactive Learning", desc: "Engage with dynamic content and real-world projects." },
+              { icon: ArrowRight, title: "Career Support", desc: "Guidance and opportunities beyond the classroom." }
+            ].map((item, i) => (
               <motion.div
-                key={program.id}
-                className="relative rounded-2xl overflow-hidden  flex flex-col h-full"
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                key={i}
+                className="p-6 rounded-[20px] bg-slate-50 border border-slate-100 hover:bg-[#1a7ea5] group transition-all duration-500"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.15 }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -8 }}
               >
-                {/* Card Content */}
-                <div className="relative z-10 flex flex-col justify-end h-full p-6 md:p-8 text-black">
-                  <h3 className="font-bold text-2xl md:text-3xl mb-3 leading-tight">
-                    {program.title}
-                  </h3>
-                  <p className="text-black/90 text-sm md:text-base mb-6 leading-relaxed">
-                    {program.description}
-                  </p>
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                  <item.icon size={24} className="text-[#1a7ea5]" />
                 </div>
+                <h4 className="font-bold text-slate-900 text-lg mb-2 group-hover:text-white transition-colors uppercase tracking-tight">{item.title}</h4>
+                <p className="text-slate-500 text-[15px] leading-relaxed group-hover:text-white/80 transition-colors font-medium">
+                  {item.desc}
+                </p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden">
-        {/* Static background */}
-        <div className="absolute inset-0 bg-slate-900" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Impact Section - Visual "98%" Hook */}
+      <section className="py-20 bg-[#6cb9cc] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <motion.div
-            className="text-center mb-20"
-            variants={bidirectionalFadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.3 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-block p-1 bg-white/20 rounded-[50px] backdrop-blur-md mb-8"
           >
-            <motion.h2
-              className="text-4xl md:text-6xl font-bold text-white mb-6"
-              variants={bidirectionalScale}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.3 }}
-            >
-              {t("whyChooseUs")}{" "}
-              <motion.span
-                className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent relative"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: false, amount: 0.3 }}
-                transition={{ delay: 0.3 }}
-              >
-                Smart School?
-              </motion.span>
-            </motion.h2>
-            <motion.p
-              className="text-xl text-blue-200 max-w-3xl mx-auto"
-              variants={bidirectionalSlide}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.3 }}
-            >
-              Experience learning like never before with our innovative approach to education
-            </motion.p>
-          </motion.div>
-          <div className="relative">
-            <motion.div
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-[#19459d] to-blue-500 rounded-full flex items-center justify-center shadow-2xl z-20"
-              initial={{ scale: 0, rotate: -180 }}
-              whileInView={{ scale: 1, rotate: 0 }}
-              viewport={{ once: false, amount: 0.3 }}
-              transition={{ duration: 1, type: "spring", stiffness: 100 }}
-              whileHover={{
-                scale: 1.1,
-                boxShadow: "0 0 50px rgba(25, 69, 157, 0.8)",
-                rotate: 360
-              }}
-            >
-              <Star className="w-12 h-12 text-white" />
-            </motion.div>
-            <div className="relative w-full h-[800px] flex items-center justify-center">
-              {[
-                {
-                  icon: Award,
-                  title: "Comprehensive Learning",
-                  description: "Education tailored to Rwanda's context with practical relevance",
-                  position: { top: "8%", left: "40%", transform: "translateX(-50%)" },
-                  delay: 0.1
-                },
-                {
-                  icon: Award,
-                  title: "Variety of Resources",
-                  description: "Diverse study materials for multiple career paths",
-                  position: { top: "25%", right: "20%" },
-                  delay: 0.2
-                },
-                {
-                  icon: Award,
-                  title: "Reliable Solution",
-                  description: "Modern assessment methods with user-focused design",
-                  position: { top: "50%", right: "5%" },
-                  delay: 0.3
-                },
-                {
-                  icon: Award,
-                  title: "Multi-Format Learning",
-                  description: "Videos, audio, and PDFs tailored to your style",
-                  position: { top: "10%", right: "2%" },
-                  delay: 0.4
-                },
-                {
-                  icon: Award,
-                  title: "Expert Instructors",
-                  description: "Industry professionals with proven track records",
-                  position: { bottom: "10%", left: "50%", transform: "translateX(-50%)" },
-                  delay: 0.5
-                },
-                {
-                  icon: Award,
-                  title: "Flexible Schedule",
-                  description: "24/7 access with lifetime course availability",
-                  position: { bottom: "25%", left: "15%" },
-                  delay: 0.6
-                },
-                {
-                  icon: Award,
-                  title: "Affordable Cost",
-                  description: "Quality learning accessible to everyone",
-                  position: { top: "20%", left: "5%" },
-                  delay: 0.7
-                }
-              ].map((feature, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute group cursor-pointer"
-                  style={feature.position}
-                  initial={{
-                    opacity: 0,
-                    scale: 0,
-                    x: feature.position.left === "50%" ? 0 : (feature.position.left ? -100 : 100),
-                    y: feature.position.top === "50%" ? 0 : (feature.position.top ? -50 : 50)
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    scale: 1,
-                    x: 0,
-                    y: 0
-                  }}
-                  viewport={{ once: false, amount: 0.2 }}
-                  transition={{
-                    delay: feature.delay,
-                    duration: 0.8,
-                    type: "spring",
-                    stiffness: 100
-                  }}
-                  whileHover={{
-                    scale: 1.1,
-                    zIndex: 30,
-                    transition: { duration: 0.2 }
-                  }}
-                >
-                  {/* Connection Line */}
-                  <motion.div
-                    className="absolute w-1 h-24 bg-gradient-to-b from-blue-400/50 to-transparent"
-                    style={{
-                      top: "50%",
-                      left: "50%",
-                      transformOrigin: "top center",
-                      transform: `translateX(-50%) rotate(${i * (360 / 7) - 90
-                        }deg)`
-                    }}
-                    initial={{ scaleY: 0 }}
-                    whileInView={{ scaleY: 1 }}
-                    viewport={{ once: false, amount: 0.2 }}
-                    transition={{ delay: feature.delay + 0.3, duration: 0.6 }}
-                  />
-
-                  {/* Feature Bubble */}
-                  <motion.div
-                    className="relative w-48 bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20 shadow-2xl"
-                    whileHover={{
-                      backgroundColor: "rgba(255,255,255,0.15)",
-                      borderColor: "rgba(25, 69, 157, 0.5)",
-                      boxShadow: "0 25px 50px rgba(0,0,0,0.3)"
-                    }}
-                  >
-                    {/* Glowing Icon */}
-                    <motion.div
-                      className="w-14 h-14 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg"
-                      whileHover={{
-                        rotate: 360,
-                        boxShadow: "0 0 30px rgba(59, 130, 246, 0.8)"
-                      }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <feature.icon className="w-7 h-7 text-white" />
-                    </motion.div>
-
-                    <h3 className="font-bold text-lg mb-3 text-white text-center group-hover:text-blue-300 transition-colors">
-                      {feature.title}
-                    </h3>
-
-                    <p className="text-blue-100 text-sm leading-relaxed text-center opacity-90">
-                      {feature.description}
-                    </p>
-
-                    {/* Hover Effect Overlay */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      initial={{ scale: 0.8 }}
-                      whileHover={{ scale: 1 }}
-                    />
-                  </motion.div>
-                </motion.div>
-              ))}
+            <div className="bg-white/10 px-10 py-16 rounded-[48px] border border-white/30 backdrop-blur-xl">
+              <span className="text-7xl md:text-9xl font-black text-white italic block mb-2 leading-none">98%</span>
+              <p className="text-white text-lg font-bold uppercase tracking-[0.3em]">Student Success Rate</p>
             </div>
-
+          </motion.div>
+          <div className="grid md:grid-cols-3 gap-12 mt-12 max-w-4xl mx-auto">
+            {[
+              { label: "Active Users", val: "25K+" },
+              { label: "Global Partners", val: "85+" },
+              { label: "Course Modules", val: "450+" }
+            ].map((stat, i) => (
+              <div key={i}>
+                <div className="text-3xl font-bold text-white mb-1 tracking-tight">{stat.val}</div>
+                <div className="text-white/60 text-[11px] font-bold uppercase tracking-widest">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-
       {/* Enhanced CTA Section */}
-      <motion.section
-        className="py-20 bg-gradient-to-br from-[#19459d] via-blue-600 to-blue-800 text-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-12 rounded-3xl relative overflow-hidden"
-        variants={bidirectionalScale}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: false, amount: 0.3 }}
-      >
-        {/* Static background */}
-        <div className="absolute inset-0 bg-blue-800/20" />
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.h2
-            className="text-4xl md:text-5xl font-bold text-white mb-6"
+      <section className="py-24">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            className="bg-[#1a7ea5] rounded-[48px] p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
             variants={bidirectionalFadeUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: false, amount: 0.3 }}
+            viewport={{ once: true }}
           >
-            {t("readyToStart")}
-          </motion.h2>
-
-          <motion.p
-            className="text-xl text-blue-100 mb-8 leading-relaxed"
-            variants={bidirectionalSlide}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: false, amount: 0.3 }}
-          >
-            {t("joinThousands")}
-          </motion.p>
-
-          <Link to="/register">
-            <motion.button
-              className="group bg-white text-blue-600 hover:bg-gray-100 rounded-full text-lg px-10 py-4 font-semibold shadow-xl relative overflow-hidden"
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 25px 50px rgba(255,255,255,0.2)"
-              }}
-              whileTap={{ scale: 0.95 }}
-              variants={bidirectionalFadeUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.3 }}
-              transition={{ delay: 0.3 }}
-            >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-blue-50 to-white"
-                initial={{ x: "-100%" }}
-                whileHover={{ x: "0%" }}
-                transition={{ duration: 0.3 }}
-              />
-              <span className="relative flex items-center justify-center">
-                {t("getStarted")}
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </motion.button>
-          </Link>
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a7ea5] via-[#6cb9cc] to-[#1a7ea5] opacity-60" />
+            <div className="relative z-10">
+              <h2 className="text-2xl md:text-4xl font-bold mb-6 uppercase tracking-tight">
+                {t("readyToStart")}
+              </h2>
+              <p className="text-lg md:text-lg text-white/80 mb-12 max-w-2xl mx-auto leading-relaxed">
+                {t("joinThousands")}
+              </p>
+              <Link to="/register">
+                <motion.button
+                  className="bg-white text-[#1a7ea5] px-12 py-5 rounded-full text-[14px] font-black uppercase tracking-widest shadow-2xl hover:bg-slate-50 transition-all"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Create Account Now
+                </motion.button>
+              </Link>
+            </div>
+          </motion.div>
         </div>
-      </motion.section>
+      </section>
     </div>
   );
 };
+
+// do yur best in desig and desgin home page for mordern website and reduce a lot of corol just make thing very good and more attractive with less color but vyery clear

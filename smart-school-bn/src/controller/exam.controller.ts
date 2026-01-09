@@ -37,6 +37,7 @@ export const createOrganization = async (
                 logo,
                 contactEmail,
                 contactPhone,
+                creatorId: (req.user as any)?.id,
             },
         });
 
@@ -61,21 +62,26 @@ export const getOrganizations = async (
         const skip = (Number(page) - 1) * Number(limit);
 
         const user = req.user as any;
-        const examinerOrgIds = user.role === 'EXAMINER'
-            ? user.userOrganizations?.map((uo: any) => uo.organizationId) || []
-            : null;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
 
-        const where: any = search
-            ? {
+        const where: any = {
+            AND: [
+                {
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            ]
+        };
+
+        if (search) {
+            where.AND.push({
                 OR: [
                     { name: { contains: search as string, mode: 'insensitive' as const } },
                     { description: { contains: search as string, mode: 'insensitive' as const } },
-                ],
-            }
-            : {};
-
-        if (examinerOrgIds) {
-            where.id = { in: examinerOrgIds };
+                ]
+            });
         }
 
         const [organizations, total] = await Promise.all([
@@ -120,8 +126,17 @@ export const getOrganizationById = async (
     try {
         const { id } = req.params;
 
-        const organization = await prisma.organization.findUnique({
-            where: { id },
+        const user = req.user as any;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            },
             include: {
                 _count: {
                     select: {
@@ -154,6 +169,25 @@ export const updateOrganization = async (
         const { id } = req.params;
         const { name, description, logo, contactEmail, contactPhone, isActive } = req.body;
 
+        const user = req.user as any;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+
+        // verify access
+        const existingOrg = await prisma.organization.findFirst({
+            where: {
+                id,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!existingOrg) {
+            res.status(403).json({ status: 'error', message: 'You do not have access to this organization' });
+            return;
+        }
+
         const organization = await prisma.organization.update({
             where: { id },
             data: {
@@ -184,6 +218,25 @@ export const deleteOrganization = async (
 ): Promise<void> => {
     try {
         const { id } = req.params;
+
+        const user = req.user as any;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+
+        // verify access
+        const existingOrg = await prisma.organization.findFirst({
+            where: {
+                id,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!existingOrg) {
+            res.status(403).json({ status: 'error', message: 'You do not have access to this organization' });
+            return;
+        }
 
         await prisma.organization.delete({
             where: { id },
@@ -227,16 +280,23 @@ export const createCandidate = async (
             return;
         }
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(orgId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this organization\'s candidates'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: orgId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this organization'
+            });
+            return;
         }
 
         // Check if manually provided candidateId already exists
@@ -284,16 +344,23 @@ export const createCandidatesBulk = async (
         const { candidates } = req.body; // Array of { firstName, lastName, email, phoneNumber }
         const user = req.user as any;
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(orgId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this organization\'s candidates'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: orgId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this organization'
+            });
+            return;
         }
 
         if (!Array.isArray(candidates) || candidates.length === 0) {
@@ -350,26 +417,40 @@ export const getAllCandidates = async (
         const skip = (Number(page) - 1) * Number(limit);
         const user = req.user as any;
 
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
         const where: any = {};
 
-        // If examiner, restrict to their organizations
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+        if (organizationId) {
+            const organization = await prisma.organization.findFirst({
+                where: {
+                    id: String(organizationId),
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
+
+            if (!organization) {
                 res.status(403).json({
                     status: 'fail',
-                    message: 'You do not have access to this organization\'s candidates'
+                    message: 'You do not have access to this organization'
                 });
                 return;
             }
-
-            if (organizationId) {
-                where.organizationId = String(organizationId);
-            } else {
-                where.organizationId = { in: examinerOrgIds };
-            }
-        } else if (organizationId) {
             where.organizationId = String(organizationId);
+        } else {
+            const authorizedOrgIds = await prisma.organization.findMany({
+                where: {
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                },
+                select: { id: true }
+            }).then(orgs => orgs.map(o => o.id));
+
+            where.organizationId = { in: authorizedOrgIds };
         }
 
         if (search) {
@@ -381,7 +462,6 @@ export const getAllCandidates = async (
             ];
         }
 
-        // Archive status
         if (showArchived !== 'true') {
             where.archived = false;
         }
@@ -432,16 +512,23 @@ export const getCandidates = async (
         const { orgId } = req.params;
         const user = req.user as any;
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(orgId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this organization\'s candidates'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: orgId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this organization'
+            });
+            return;
         }
 
         const { page = 1, limit = 10, search, batch, grade, department, showArchived } = req.query;
@@ -533,16 +620,23 @@ export const updateCandidate = async (
             return;
         }
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(existingCandidate.organizationId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this candidate'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: existingCandidate.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this candidate'
+            });
+            return;
         }
 
         const candidate = await prisma.candidate.update({
@@ -589,16 +683,23 @@ export const deleteCandidate = async (
             return;
         }
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(existingCandidate.organizationId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this candidate'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: existingCandidate.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this candidate'
+            });
+            return;
         }
 
         await prisma.candidate.delete({
@@ -641,16 +742,23 @@ export const createExam = async (
         } = req.body;
         const user = req.user as any;
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(orgId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this organization\'s exams'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: orgId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this organization'
+            });
+            return;
         }
 
         const examCode = await generateExamCode();
@@ -695,38 +803,43 @@ export const getExams = async (
         const { showArchived } = req.query;
         const user = req.user as any;
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (orgId !== 'all' && !examinerOrgIds.includes(orgId)) {
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+
+        if (orgId !== 'all') {
+            const organization = await prisma.organization.findFirst({
+                where: {
+                    id: orgId,
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
+
+            if (!organization) {
                 res.status(403).json({
                     status: 'fail',
-                    message: 'You do not have access to this organization\'s exams'
+                    message: 'You do not have access to this organization'
                 });
-                return;
-            }
-
-            // If 'all', filter by all assigned orgs
-            if (orgId === 'all') {
-                const where: any = { organizationId: { in: examinerOrgIds } };
-                if (showArchived !== 'true') {
-                    where.status = { not: 'ARCHIVED' };
-                }
-
-                const exams = await prisma.exam.findMany({
-                    where,
-                    include: {
-                        organization: { select: { name: true } },
-                        _count: { select: { questions: true, assignments: true, attempts: true } }
-                    },
-                    orderBy: { createdAt: 'desc' }
-                });
-                res.status(200).json({ status: 'success', data: exams });
                 return;
             }
         }
 
-        const where: any = orgId === 'all' ? {} : { organizationId: orgId };
+        const where: any = orgId === 'all'
+            ? {
+                organizationId: {
+                    in: await prisma.organization.findMany({
+                        where: {
+                            OR: [
+                                { creatorId: user.id },
+                                { id: { in: assignedOrgIds } }
+                            ]
+                        },
+                        select: { id: true }
+                    }).then(orgs => orgs.map(o => o.id))
+                }
+            }
+            : { organizationId: orgId };
 
         // Filter out archived exams unless requested
         if (showArchived !== 'true') {
@@ -767,24 +880,39 @@ export const getAllExams = async (
         const where: any = {};
         const user = req.user as any;
 
-        // If examiner, restrict to their organizations
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+
+        if (organizationId) {
+            const organization = await prisma.organization.findFirst({
+                where: {
+                    id: String(organizationId),
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
+
+            if (!organization) {
                 res.status(403).json({
                     status: 'fail',
-                    message: 'You do not have access to this organization\'s exams'
+                    message: 'You do not have access to this organization'
                 });
                 return;
             }
-
-            if (organizationId) {
-                where.organizationId = String(organizationId);
-            } else {
-                where.organizationId = { in: examinerOrgIds };
-            }
-        } else if (organizationId) {
             where.organizationId = String(organizationId);
+        } else {
+            const authorizedOrgIds = await prisma.organization.findMany({
+                where: {
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                },
+                select: { id: true }
+            }).then(orgs => orgs.map(o => o.id));
+
+            where.organizationId = { in: authorizedOrgIds };
         }
 
         if (status && status !== 'ALL') {
@@ -875,16 +1003,23 @@ export const getExamById = async (
             throw new NotFoundError('Exam not found');
         }
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(exam.organizationId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this exam'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: exam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam'
+            });
+            return;
         }
 
         res.status(200).json({
@@ -939,16 +1074,23 @@ export const updateExam = async (
             return;
         }
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(existingExam.organizationId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this exam'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: existingExam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam'
+            });
+            return;
         }
 
         const exam = await prisma.exam.update({
@@ -1009,16 +1151,23 @@ export const deleteExam = async (
             return;
         }
 
-        // If examiner, ensure they are assigned to this organization
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (!examinerOrgIds.includes(existingExam.organizationId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this exam'
-                });
-                return;
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: existingExam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
             }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam'
+            });
+            return;
         }
 
         await prisma.exam.delete({
@@ -2105,6 +2254,36 @@ export const getExamResults = async (
         const { examId } = req.params;
         const { page = 1, limit = 10, status } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
+        const user = req.user as any;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id: examId },
+            select: { organizationId: true }
+        });
+
+        if (!exam) {
+            res.status(404).json({ status: 'error', message: 'Exam not found' });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: exam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam results'
+            });
+            return;
+        }
 
         const where: any = { examId };
         if (status) {
@@ -2158,24 +2337,39 @@ export const getGlobalExamResults = async (
 
         const where: any = { status: 'COMPLETED' }; // Default to completed exams usually
 
-        // If examiner, restrict to their organizations
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+
+        if (organizationId) {
+            const organization = await prisma.organization.findFirst({
+                where: {
+                    id: String(organizationId),
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
+
+            if (!organization) {
                 res.status(403).json({
                     status: 'fail',
                     message: 'You do not have access to this organization\'s results'
                 });
                 return;
             }
-
-            if (organizationId) {
-                where.exam = { organizationId: String(organizationId) };
-            } else {
-                where.exam = { organizationId: { in: examinerOrgIds } };
-            }
-        } else if (organizationId) {
             where.exam = { organizationId: String(organizationId) };
+        } else {
+            const authorizedOrgIds = await prisma.organization.findMany({
+                where: {
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                },
+                select: { id: true }
+            }).then(orgs => orgs.map(o => o.id));
+
+            where.exam = { organizationId: { in: authorizedOrgIds } };
         }
 
         if (batch) {
@@ -2301,6 +2495,36 @@ export const getExamAnalytics = async (
 ): Promise<void> => {
     try {
         const { examId } = req.params;
+        const user = req.user as any;
+
+        const exam = await prisma.exam.findUnique({
+            where: { id: examId },
+            select: { organizationId: true }
+        });
+
+        if (!exam) {
+            res.status(404).json({ status: 'error', message: 'Exam not found' });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: exam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam analytics'
+            });
+            return;
+        }
 
         const stats = await calculateExamStatistics(examId);
         const questionStats = await calculateQuestionStatistics(examId);
@@ -2335,22 +2559,40 @@ export const getExamDashboardStats = async (
             };
         }
 
-        let whereOrg: any = organizationId ? { organizationId: String(organizationId) } : {};
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        let whereOrg: any = {};
 
-        // If examiner, restrict to their organizations
-        if (user.role === 'EXAMINER') {
-            const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-            if (organizationId && !examinerOrgIds.includes(String(organizationId))) {
+        if (organizationId) {
+            const organization = await prisma.organization.findFirst({
+                where: {
+                    id: String(organizationId),
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
+
+            if (!organization) {
                 res.status(403).json({
                     status: 'fail',
                     message: 'You do not have access to this organization\'s statistics'
                 });
                 return;
             }
+            whereOrg = { organizationId: String(organizationId) };
+        } else {
+            const authorizedOrgIds = await prisma.organization.findMany({
+                where: {
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                },
+                select: { id: true }
+            }).then(orgs => orgs.map(o => o.id));
 
-            if (!organizationId) {
-                whereOrg = { organizationId: { in: examinerOrgIds } };
-            }
+            whereOrg = { organizationId: { in: authorizedOrgIds } };
         }
         const whereOrgWithDate = { ...whereOrg, ...dateFilter };
 
@@ -2364,10 +2606,19 @@ export const getExamDashboardStats = async (
         // 2. Candidate Counts
         const totalCandidates = await prisma.candidate.count({ where: whereOrgWithDate });
 
-        // 3. Organization Count (Global Only)
+        // 3. Organization Count (Global Only - For authorized ones)
         let totalOrganizations = 0;
         if (!organizationId) {
-            totalOrganizations = await prisma.organization.count({ where: dateFilter });
+            const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            totalOrganizations = await prisma.organization.count({
+                where: {
+                    ...dateFilter,
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
         }
 
         // 4. Question Count (Global or Org)
@@ -2604,6 +2855,7 @@ export const archiveCandidate = async (
 ): Promise<void> => {
     try {
         const { id } = req.params;
+        const user = req.user as any;
 
         const candidate = await prisma.candidate.findUnique({
             where: { id }
@@ -2613,6 +2865,25 @@ export const archiveCandidate = async (
             res.status(404).json({
                 status: 'error',
                 message: 'Candidate not found'
+            });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: candidate.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this candidate'
             });
             return;
         }
@@ -2640,6 +2911,7 @@ export const unarchiveCandidate = async (
 ): Promise<void> => {
     try {
         const { id } = req.params;
+        const user = req.user as any;
 
         const candidate = await prisma.candidate.findUnique({
             where: { id }
@@ -2649,6 +2921,25 @@ export const unarchiveCandidate = async (
             res.status(404).json({
                 status: 'error',
                 message: 'Candidate not found'
+            });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: candidate.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this candidate'
             });
             return;
         }
@@ -2678,6 +2969,7 @@ export const archiveExam = async (
 ): Promise<void> => {
     try {
         const { id } = req.params;
+        const user = req.user as any;
 
         const exam = await prisma.exam.findUnique({
             where: { id }
@@ -2687,6 +2979,25 @@ export const archiveExam = async (
             res.status(404).json({
                 status: 'error',
                 message: 'Exam not found'
+            });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: exam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam'
             });
             return;
         }
@@ -2714,6 +3025,7 @@ export const unarchiveExam = async (
 ): Promise<void> => {
     try {
         const { id } = req.params;
+        const user = req.user as any;
 
         const exam = await prisma.exam.findUnique({
             where: { id }
@@ -2723,6 +3035,25 @@ export const unarchiveExam = async (
             res.status(404).json({
                 status: 'error',
                 message: 'Exam not found'
+            });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: exam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam'
             });
             return;
         }
@@ -2753,28 +3084,51 @@ export const getOpenEndedResponses = async (
     try {
         const { examId } = req.params;
         const { organizationId } = req.query;
-        // @ts-ignore
-        const user = req.user;
+        const user = req.user as any;
         const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 50; // Larger default for "All"
+        const limit = parseInt(req.query.limit as string) || 50;
         const skip = (page - 1) * limit;
 
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
         const whereQuestion: any = {
             type: { in: ['ESSAY', 'SHORT_ANSWER'] }
         };
 
+        if (organizationId) {
+            const organization = await prisma.organization.findFirst({
+                where: {
+                    id: String(organizationId),
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
+
+            if (!organization) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization'
+                });
+                return;
+            }
+            whereQuestion.exam = { organizationId: String(organizationId) };
+        } else {
+            const authorizedOrgIds = await prisma.organization.findMany({
+                where: {
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                },
+                select: { id: true }
+            }).then(orgs => orgs.map(o => o.id));
+
+            whereQuestion.exam = { organizationId: { in: authorizedOrgIds } };
+        }
+
         if (examId && examId !== 'all') {
             whereQuestion.examId = examId;
-        } else if (organizationId) {
-            whereQuestion.exam = { organizationId: String(organizationId) };
-        } else if ((user as any).role === 'EXAMINER') {
-            // Filter by examiner's assigned organizations
-            const examinerOrgs = await prisma.userOrganization.findMany({
-                where: { userId: (user as any).id },
-                select: { organizationId: true }
-            });
-            const orgIds = examinerOrgs.map(o => o.organizationId);
-            whereQuestion.exam = { organizationId: { in: orgIds } };
         }
 
         // Fetch questions first to filter by type
@@ -2859,24 +3213,45 @@ export const markAnswer = async (
     try {
         const { answerId } = req.params;
         const { manualScore, feedback } = req.body;
-        const score = manualScore;
-        // @ts-ignore
-        const userId = req.user.id;
+        const user = req.user as any;
 
         const answer = await prisma.examAnswer.findUnique({
             where: { id: answerId },
-            include: { examQuestion: true }
+            include: {
+                examQuestion: true,
+                examAttempt: {
+                    include: {
+                        exam: { select: { organizationId: true } }
+                    }
+                }
+            }
         });
 
         if (!answer) {
-            res.status(404).json({
-                status: 'error',
-                message: 'Answer not found'
+            res.status(404).json({ status: 'error', message: 'Answer not found' });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: answer.examAttempt.exam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to mark this answer'
             });
             return;
         }
 
-        if (score > answer.examQuestion.points) {
+        if (manualScore > answer.examQuestion.points) {
             res.status(400).json({
                 status: 'error',
                 message: `Score cannot exceed maximum points (${answer.examQuestion.points})`
@@ -2887,13 +3262,11 @@ export const markAnswer = async (
         const updatedAnswer = await prisma.examAnswer.update({
             where: { id: answerId },
             data: {
-                manualScore: score,
+                manualScore,
                 feedback,
-                markedBy: userId,
+                markedBy: user.id,
                 markedAt: new Date(),
-                // Update total points (auto + manual, though usually one or the other)
-                // For open ended, points usually come from manual score
-                points: score
+                points: manualScore
             }
         });
 
@@ -2904,9 +3277,6 @@ export const markAnswer = async (
 
         const totalScore = attemptAnswers.reduce((sum, a) => sum + (a.points || 0), 0);
 
-        // Check if passed
-        // We need the exam passing score, which is on the Exam model
-        // So we need to fetch the attempt with the exam
         const attempt = await prisma.examAttempt.findUnique({
             where: { id: answer.examAttemptId },
             include: {
@@ -2922,8 +3292,6 @@ export const markAnswer = async (
             const questions = attempt.exam.questions;
             const totalPossiblePoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
 
-            // Re-calculate based on ALL answers (some might be auto-graded, some manual)
-            // totalScore is already sum of attemptAnswers points
             const scorePercentage = calculateExamScore(totalPossiblePoints, totalScore);
             const isPassed = scorePercentage >= attempt.exam.passingScore;
 
@@ -2957,6 +3325,7 @@ export const exportDetailedResultsPDF = async (
 ): Promise<void> => {
     try {
         const { examId } = req.params;
+        const user = req.user as any;
 
         const exam = await prisma.exam.findUnique({
             where: { id: examId }
@@ -2966,6 +3335,25 @@ export const exportDetailedResultsPDF = async (
             res.status(404).json({
                 status: 'error',
                 message: 'Exam not found'
+            });
+            return;
+        }
+
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const organization = await prisma.organization.findFirst({
+            where: {
+                id: exam.organizationId,
+                OR: [
+                    { creatorId: user.id },
+                    { id: { in: assignedOrgIds } }
+                ]
+            }
+        });
+
+        if (!organization) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'You do not have access to this exam results'
             });
             return;
         }
@@ -3009,13 +3397,47 @@ export const exportOpenEndedResponsesPDF = async (
 ): Promise<void> => {
     try {
         const { examId } = req.params;
-        // @ts-ignore
-        const user = req.user;
+        const { organizationId } = req.query;
+        const user = req.user as any;
 
+        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
         let examTitle = 'All Exams';
         const whereQuestion: any = {
             type: { in: ['ESSAY', 'SHORT_ANSWER'] }
         };
+
+        if (organizationId) {
+            const organization = await prisma.organization.findFirst({
+                where: {
+                    id: String(organizationId),
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                }
+            });
+
+            if (!organization) {
+                res.status(403).json({
+                    status: 'fail',
+                    message: 'You do not have access to this organization'
+                });
+                return;
+            }
+            whereQuestion.exam = { organizationId: String(organizationId) };
+        } else {
+            const authorizedOrgIds = await prisma.organization.findMany({
+                where: {
+                    OR: [
+                        { creatorId: user.id },
+                        { id: { in: assignedOrgIds } }
+                    ]
+                },
+                select: { id: true }
+            }).then(orgs => orgs.map(o => o.id));
+
+            whereQuestion.exam = { organizationId: { in: authorizedOrgIds } };
+        }
 
         if (examId && examId !== 'all') {
             const exam = await prisma.exam.findUnique({
@@ -3027,13 +3449,6 @@ export const exportOpenEndedResponsesPDF = async (
             }
             examTitle = exam.title;
             whereQuestion.examId = examId;
-        } else if ((user as any).role === 'EXAMINER') {
-            const examinerOrgs = await prisma.userOrganization.findMany({
-                where: { userId: (user as any).id },
-                select: { organizationId: true }
-            });
-            const orgIds = examinerOrgs.map(o => o.organizationId);
-            whereQuestion.exam = { organizationId: { in: orgIds } };
         }
 
         const openEndedQuestions = await prisma.examQuestion.findMany({
