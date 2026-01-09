@@ -102,8 +102,13 @@ export function TestPage() {
 
   /** Navigation */
   const handleNext = () => {
-    if (currentQuestionIndex < questions.length - 1) setCurrentQuestionIndex(prev => prev + 1);
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else if (isOpenEnded) {
+      setShowReview(true);
+    }
   };
+
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) setCurrentQuestionIndex(prev => prev - 1);
   };
@@ -265,25 +270,14 @@ export function TestPage() {
       }
 
       return (
-        <div className="max-w-7xl mx-auto p-4">
-          <div className="mb-6 flex items-center gap-4">
-            <BackButton className="self-start border border-gray-300 rounded-md p-2" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              {test.data.title}
-            </h2>
-          </div>
+        <div className="max-w-7xl mx-auto">
           <OpenEndedTestQuestion
+            testTitle={test.data.title}
             question={currentQuestion}
             totalQuestions={questions.length}
             currentQuestion={currentQuestionIndex + 1}
-            onNext={() => {
-              if (currentQuestionIndex < questions.length - 1) {
-                setCurrentQuestionIndex(prev => prev + 1);
-              } else {
-                // Show review page when reaching the last question
-                setShowReview(true);
-              }
-            }}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
             isLastQuestion={currentQuestionIndex === questions.length - 1}
             timeRemaining={timeLeft}
             onSubmit={() => setShowReview(true)}
@@ -307,28 +301,25 @@ export function TestPage() {
 
     // Use TestQuestion for GENERAL tests
     return (
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="mb-6 flex items-center gap-4">
-          <BackButton className="self-start border border-gray-300 rounded-md p-2" />
-          <h2 className="text-lg font-semibold text-gray-900">
-            {test.data.title}
-          </h2>
-        </div>
+      <div className="max-w-7xl mx-auto">
         <TestQuestion
+          testTitle={test.data.title}
           question={currentQuestion}
           totalQuestions={questions.length}
           currentQuestion={currentQuestionIndex + 1}
           selectedAnswer={answers[currentQuestion.id]}
           onAnswerSelect={(answerId) => handleAnswerSelect(currentQuestion.id, answerId)}
-          onNext={handleNext}
+          handleNext={handleNext}
           onPrevious={handlePrevious}
           isLastQuestion={currentQuestionIndex === questions.length - 1}
           timeRemaining={timeLeft}
-          onSubmit={handleSubmit}
+          handleSubmitTest={handleSubmit}
           testAttemptId={testAttempt?.id}
           onQuestionNavigate={(index) => setCurrentQuestionIndex(index)}
           allAnswers={answers}
           questions={questions}
+          isSubmitting={loading}
+          isSubmittingAnswer={loading}
         />
       </div>
     );

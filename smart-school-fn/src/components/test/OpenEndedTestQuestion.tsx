@@ -15,19 +15,23 @@ interface OpenEndedTestQuestionProps {
     totalQuestions: number;
     currentQuestion: number;
     onNext: () => void;
+    onPrevious: () => void;
     isLastQuestion: boolean;
     timeRemaining: number;
     onSubmit: () => void;
     testAttemptId?: string;
     openEndedResponse: string;
     onOpenEndedChange: (text: string) => void;
+    testTitle?: string;
 }
 
 export function OpenEndedTestQuestion({
+    testTitle,
     question,
     totalQuestions,
     currentQuestion,
     onNext,
+    onPrevious,
     isLastQuestion,
     timeRemaining,
     onSubmit,
@@ -114,29 +118,49 @@ export function OpenEndedTestQuestion({
     };
 
     return (
-        <div className="flex flex-col bg-gray-50">
+        <div className="flex flex-col min-h-screen bg-gray-50">
             {/* Fixed Header */}
-            <div className="border-b border-gray-200 flex-shrink-0">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center justify-center gap-4">
+            <div className="bg-white shadow-sm border-b sticky top-0 z-20">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div>
-                            <p className="text-lg font-semibold text-gray-900">
+                            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                                {testTitle || "Examination Session"}
+                            </h1>
+                            <p className="text-xs sm:text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">
                                 Question {currentQuestion} of {totalQuestions}
                             </p>
                         </div>
 
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center gap-6">
                             {/* Timer */}
-                            {timeRemaining > 0 && (
-                                <div className="flex items-center space-x-2">
-                                    <div className="flex gap-2">
-                                        <div className="text-sm text-gray-600">Time Left :</div>
-                                        <div className="text-sm font-semibold text-gray-900">
-                                            {formatTime(timeRemaining)}
-                                        </div>
+                            <div className="flex items-center space-x-4 bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100">
+                                <div>
+                                    <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-0.5">Time Remaining</div>
+                                    <div className={`text-lg sm:text-xl font-black tabular-nums ${timeRemaining <= 60 ? "text-red-600 animate-pulse" : "text-blue-600"}`}>
+                                        {formatTime(timeRemaining)}
                                     </div>
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full border border-green-100">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Secure Portal</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar Area */}
+                    <div className="mt-6">
+                        <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                            <span>Progress</span>
+                            <span>{currentQuestion} / {totalQuestions}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50">
+                            <div
+                                className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(37,99,235,0.3)]"
+                                style={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
+                            />
                         </div>
                     </div>
                 </div>
@@ -178,8 +202,8 @@ export function OpenEndedTestQuestion({
                             <textarea
                                 value={openEndedResponse}
                                 onChange={(e) => onOpenEndedChange(e.target.value)}
-                                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-                                rows={10}
+                                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-base font-medium text-gray-700 leading-relaxed shadow-sm"
+                                rows={12}
                                 placeholder="Type your detailed response here... (minimum 50 characters)"
                                 maxLength={MAX_CHARS}
                             />
@@ -201,49 +225,63 @@ export function OpenEndedTestQuestion({
             </div>
 
             {/* Fixed Footer Navigation */}
-            <div className="bg-white">
-                <div className="max-w-5xl mx-auto px-4 py-2">
-                    <div className="flex justify-between items-center">
-                        <div className="text-xs text-gray-600">
-                            Question {currentQuestion} of {totalQuestions}
+            <div className="bg-white border-t border-gray-100">
+                <div className="max-w-5xl mx-auto px-4 py-4">
+                    <div className="flex justify-between items-center gap-4">
+                        <div className="flex gap-3">
+                            <button
+                                onClick={onPrevious}
+                                disabled={currentQuestion === 1}
+                                className={`px-6 py-3 text-sm font-black rounded-xl transition-all border-2 active:scale-[0.98] ${currentQuestion === 1
+                                    ? "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed"
+                                    : "bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 shadow-sm"
+                                    }`}
+                            >
+                                PREVIOUS
+                            </button>
+
+                            <button
+                                onClick={isLastQuestion ? handleSubmitTest : handleNext}
+                                disabled={!isValid || isSubmitting}
+                                className={`px-8 py-3 text-sm font-black text-white rounded-xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 ${!isValid || isSubmitting
+                                    ? "bg-blue-200 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700 shadow-blue-100"
+                                    }`}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={18} />
+                                        SAVING...
+                                    </>
+                                ) : isLastQuestion ? (
+                                    <>
+                                        <Send size={18} />
+                                        REVIEW ANSWERS
+                                    </>
+                                ) : (
+                                    <>
+                                        NEXT QUESTION
+                                        <svg
+                                            className="w-5 h-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={3}
+                                                d="M9 5l7 7-7 7"
+                                            />
+                                        </svg>
+                                    </>
+                                )}
+                            </button>
                         </div>
-                        <button
-                            onClick={isLastQuestion ? handleSubmitTest : handleNext}
-                            disabled={!isValid || isSubmitting}
-                            className={`flex items-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg transition-all shadow-md ${!isValid || isSubmitting
-                                ? "bg-gray-300 cursor-not-allowed"
-                                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg"
-                                }`}
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="animate-spin" size={16} />
-                                    Saving...
-                                </>
-                            ) : isLastQuestion ? (
-                                <>
-                                    <Send size={16} />
-                                    Review Answers
-                                </>
-                            ) : (
-                                <>
-                                    Next Question
-                                    <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 5l7 7-7 7"
-                                        />
-                                    </svg>
-                                </>
-                            )}
-                        </button>
+
+                        <div className="hidden sm:block text-[10px] font-black text-gray-400 uppercase tracking-widest italic">
+                            Saved automatically
+                        </div>
                     </div>
                 </div>
             </div>

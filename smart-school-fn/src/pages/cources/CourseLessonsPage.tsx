@@ -185,8 +185,8 @@ const CourseLessonsPage = () => {
         <p className="text-gray-600 mb-4">{course?.description}</p>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6 text-center overflow-x-auto">
-          <nav className="-mb-px flex space-x-8 justify-center">
+        <div className="border-b border-gray-200 mb-6 overflow-x-auto no-scrollbar scroll-smooth">
+          <nav className="-mb-px flex space-x-6 sm:space-x-8 lg:justify-center justify-start px-2">
             {[
               { key: "lessons", label: "Lessons", icon: List },
               { key: "GENERAL", label: "General Exams", icon: FileText },
@@ -200,11 +200,11 @@ const CourseLessonsPage = () => {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as TabType)}
                   className={`${activeTab === tab.key
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                    ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200 hover:bg-gray-50/50"
+                    } whitespace-nowrap py-4 px-4 border-b-2 font-bold text-xs sm:text-sm flex items-center transition-all duration-200 rounded-t-lg`}
                 >
-                  <Icon className="w-4 h-4 mr-2" />
+                  <Icon className={`w-4 h-4 mr-2 ${activeTab === tab.key ? 'text-blue-600' : 'text-gray-400'}`} />
                   {tab.label}
                 </button>
               );
