@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Mail, Phone } from "lucide-react";
-import { AuthHeader } from "../../components/headers/authHeader";
-import { countryCodes } from "../../constants/countryCodes";
+import { useState, useRef } from "react";
+import { Lock, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useDispatch, useSelector } from "react-redux";
-import { requestResetLink } from "../../redux/features/auth";
+import { motion, AnimatePresence } from "framer-motion";
 import { Toast } from "primereact/toast";
-import { useRef } from "react";
+
+import { countryCodes } from "../../constants/countryCodes";
+import { requestResetLink } from "../../redux/features/auth";
 import type { RootState, AppDispatch } from "../../redux/stores";
 
 const emailSchema = yup.object().shape({
@@ -33,10 +34,10 @@ type FormData = {
 export const RequestReset = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [method, setMethod] = useState<"email" | "phone">("email");
+  const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false);
   const toast = useRef<Toast>(null);
-  const { loading} = useSelector(
-    (state: RootState) => state.auth
-  );
+
+  const { loading } = useSelector((state: RootState) => state.auth);
   const schema = (method === "email" ? emailSchema : phoneSchema) as yup.ObjectSchema<FormData>;
 
   const {
@@ -44,6 +45,7 @@ export const RequestReset = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -56,7 +58,6 @@ export const RequestReset = () => {
   const onSubmit = async (data: FormData) => {
     try {
       let identifier: string;
-      
       if (data.email) {
         identifier = data.email;
       } else if (data.countryCode && data.phone) {
@@ -66,132 +67,171 @@ export const RequestReset = () => {
       }
 
       await dispatch(requestResetLink(identifier)).unwrap();
-      if (toast.current) {
-        toast.current.show({
-          severity: "success",
-          summary: "Reset Link Sent",
-          detail: data.email 
-            ? "A reset link has been sent to your email." 
-            : "A reset link has been sent to your phone.",
-          life: 3000,
-        });
-      }
+      toast.current?.show({
+        severity: "success",
+        summary: "Reset Link Sent",
+        detail: data.email
+          ? "A reset link has been sent to your email."
+          : "A reset link has been sent to your phone.",
+        life: 3000,
+      });
     } catch (err) {
-      if (toast.current) {
-        toast.current.show({
-          severity: "error",
-          summary: "Error",
-          detail: "Failed to send reset link. Please try again." + err,
-          life: 3000,
-        });
-      }
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Failed to send reset link. Please try again.",
+        life: 3000,
+      });
     }
     reset();
   };
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
-      <Toast ref={toast} position="top-right"/>
-      <AuthHeader />
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6">
-        <h2 className="text-2xl font-bold text-center mb-2">
-          Reset your password
-        </h2>
-        <p className="text-center text-gray-500 mb-6">
-          Enter your {method === "email" ? "email address" : "phone number"} to
-          receive reset instructions
-        </p>
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-[#6cb9cc] overflow-hidden font-outfit">
+      {/* Background depth effect matching ExamLogin */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#6cb9cc] via-[#7fd1e3] to-[#5da3b5]" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white opacity-10 rounded-full blur-[100px] -mr-48 -mt-48" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white opacity-10 rounded-full blur-[100px] -ml-48 -mb-48" />
 
-        <div className="flex justify-center gap-4 mb-6">
-          <button
-            type="button"
-            onClick={() => setMethod("email")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
-              method === "email"
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            <Mail className="h-4 w-4" />
-            Email
-          </button>
-          <button
-            type="button"
-            onClick={() => setMethod("phone")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
-              method === "phone"
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
-            <Phone className="h-4 w-4" />
-            Phone
-          </button>
-        </div>
+      {/* Back Button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link to="/login" className="flex items-center gap-2 text-white/70 hover:text-white transition-colors font-medium">
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Back to Login</span>
+        </Link>
+      </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {method === "email" ? (
-            <div>
-              <input
-                type="email"
-                {...register("email")}
-                placeholder="Enter your email"
-                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.email.message as string}
-                </p>
-              )}
+      <Toast ref={toast} position="top-right" />
+
+      <div className="relative w-full max-w-[420px] z-10 pt-12">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative"
+        >
+          {/* Overlapping Avatar matching ExamLogin */}
+          <div className="absolute left-1/2 -top-12 -translate-x-1/2 z-20">
+            <div className="w-24 h-24 bg-[#1a7ea5] rounded-full flex items-center justify-center border-4 border-[#6cb9cc] shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
+              <Lock className="w-12 h-12 text-white" />
             </div>
-          ) : (
-            <div className="flex gap-2">
-              <div>
-                <select
-                  {...register("countryCode")}
-                  className="w-28 border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          </div>
+
+          {/* Card matching ExamLogin */}
+          <div className="bg-white pt-14 pb-8 px-10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] relative">
+            <div className="text-center mb-5">
+              <h2 className="text-2xl text-gray-500 font-light tracking-wide italic uppercase">
+                Reset Password
+              </h2>
+              <p className="text-xs text-gray-400 mt-1 italic font-light">Enter details to receive instructions</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Toggle switch */}
+              <div className="flex p-0.5 bg-[#eeeeee] rounded-sm border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setMethod("email")}
+                  className={`flex-1 py-1 rounded-sm text-xs transition-all ${method === "email"
+                    ? "bg-white text-[#1a7ea5] shadow-sm font-bold"
+                    : "text-gray-400"
+                    }`}
                 >
-                  {countryCodes.map((code) => (
-                    <option key={code.code} value={code.code}>
-                      {code.name} ({code.code})
-                    </option>
-                  ))}
-                </select>
-                {errors.countryCode && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.countryCode.message as string}
-                  </p>
-                )}
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMethod("phone")}
+                  className={`flex-1 py-1 rounded-sm text-xs transition-all ${method === "phone"
+                    ? "bg-white text-[#1a7ea5] shadow-sm font-bold"
+                    : "text-gray-400"
+                    }`}
+                >
+                  Phone
+                </button>
               </div>
-              <div className="flex-1">
-                <input
-                  type="tel"
-                  {...register("phone")}
-                  placeholder="Phone number"
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.phone.message as string}
-                  </p>
-                )}
-              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <AnimatePresence mode="wait">
+                  {method === "email" ? (
+                    <motion.div
+                      key="email"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                    >
+                      <input
+                        type="email"
+                        {...register("email")}
+                        placeholder="Email Address"
+                        className="w-full bg-[#eeeeee] border border-gray-200 rounded-sm py-2 px-4 text-left text-gray-700 focus:ring-1 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
+                      />
+                      {errors.email && (
+                        <p className="text-[10px] text-red-500 mt-1 italic">{errors.email.message}</p>
+                      )}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="phone"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex gap-2">
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setShowCountryCodeDropdown(!showCountryCodeDropdown)}
+                            className="h-[38px] px-2 bg-[#eeeeee] border border-gray-200 rounded-sm text-xs text-gray-500 flex items-center gap-1 min-w-[65px] focus:outline-none"
+                          >
+                            {/* Simple display of current code */}
+                            +250
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {showCountryCodeDropdown && (
+                            <div className="absolute z-50 mt-1 w-32 bg-white border border-gray-100 shadow-xl max-h-40 overflow-auto p-1">
+                              {countryCodes.map((country) => (
+                                <div
+                                  key={country.code}
+                                  className="px-3 py-1.5 text-xs text-gray-500 hover:bg-[#eeeeee] hover:text-[#1a7ea5] cursor-pointer"
+                                  onClick={() => {
+                                    setValue("countryCode", country.code);
+                                    setShowCountryCodeDropdown(false);
+                                  }}
+                                >
+                                  {country.code} <span className="text-gray-400 ml-1 font-normal">{country.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="tel"
+                          {...register("phone")}
+                          placeholder="Phone Number"
+                          className="flex-1 bg-[#eeeeee] border border-gray-200 rounded-sm py-2 px-4 text-left text-gray-700 focus:ring-1 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
+                        />
+                      </div>
+                      {errors.phone && (
+                        <p className="text-[10px] text-red-500 mt-1 italic">{errors.phone.message}</p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#1a7ea5] hover:bg-[#156d8f] text-white py-2.5 text-lg font-medium transition-colors shadow-md rounded-[2px]"
+                >
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </button>
+              </form>
             </div>
-          )}
-
-          <button
-            type="submit"
-            className="w-full py-2 rounded-lg text-white font-medium bg-blue-800 cursor-pointer"
-          >
-            {loading ? "Loading..." : "Send Reset Link"}
-          </button>
-        </form>
-
-        <div className="mt-4 text-center text-sm text-gray-500">
-          <a href="/login" className="text-blue-600 hover:underline">
-            Back to login
-          </a>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

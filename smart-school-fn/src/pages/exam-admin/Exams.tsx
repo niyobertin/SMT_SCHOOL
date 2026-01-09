@@ -155,7 +155,11 @@ const Exams = () => {
             status: exam.status || 'DRAFT',
             examCode: exam.examCode || '',
             instructions: Array.isArray(exam.instructions) ? exam.instructions.join('\n') : (exam.instructions || ''),
-            startDate: exam.startDate ? new Date(exam.startDate).toISOString().slice(0, 16) : '',
+            startDate: exam.startDate ? (() => {
+                const d = new Date(exam.startDate);
+                const pad = (n: number) => n.toString().padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            })() : '',
         });
         setSelectedExamId(exam.id);
         setIsEditingExam(true);
