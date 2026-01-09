@@ -163,7 +163,7 @@ export const About = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             {/* Mission */}
             <motion.div
-              className="lg:col-span-7 group bg-white p-12 rounded-[48px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100"
+              className="lg:col-span-7 group bg-white p-12 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100"
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -181,7 +181,7 @@ export const About = () => {
 
             {/* Vision */}
             <motion.div
-              className="lg:col-span-5 group bg-[#1a7ea5] p-12 rounded-[48px] shadow-[0_20px_50px_rgba(26,126,165,0.2)] hover:shadow-[0_40px_80px_rgba(26,126,165,0.3)] transition-all duration-500 text-white"
+              className="lg:col-span-5 group bg-[#1a7ea5] p-12 rounded-3xl shadow-[0_20px_50px_rgba(26,126,165,0.2)] hover:shadow-[0_40px_80px_rgba(26,126,165,0.3)] transition-all duration-500 text-white"
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -219,7 +219,7 @@ export const About = () => {
             {values.map((value, index) => (
               <motion.div
                 key={index}
-                className="p-10 rounded-[40px] bg-slate-50 border border-slate-100 hover:bg-[#1a7ea5] group transition-all duration-500"
+                className="p-10 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-[#1a7ea5] group transition-all duration-500"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -251,7 +251,7 @@ export const About = () => {
             {teamMembers.map((member, index) => (
               <motion.div
                 key={index}
-                className="bg-white rounded-[40px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group transition-all duration-500 text-center"
+                className="bg-white rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group transition-all duration-500 text-center"
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -279,7 +279,7 @@ export const About = () => {
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="bg-[#1a7ea5] rounded-[48px] p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
+            className="bg-[#1a7ea5] rounded-3xl p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"

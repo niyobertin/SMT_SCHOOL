@@ -99,7 +99,7 @@ const LessonContentPage = () => {
                 href={pdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
+                className="text-[#1a7ea5] hover:underline"
               >
                 Open PDF in a new tab
               </a>
@@ -126,7 +126,7 @@ const LessonContentPage = () => {
         onCut={(e) => e.preventDefault()}
         onPaste={(e) => e.preventDefault()}
       >
-        <h1 className="text-2xl text-center font-bold">{currentContent.title}</h1>
+        <h1 className="text-3xl text-center font-bold text-slate-900 tracking-tight mb-6">{currentContent.title}</h1>
         {currentContent.createdAt && (
           <p className="text-sm text-end text-gray-500">
             Created{' '}
@@ -243,7 +243,7 @@ const LessonContentPage = () => {
         <p className="text-red-500 mb-4">{error}</p>
         <button
           onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          className="px-6 py-3 bg-[#1a7ea5] text-white rounded-full font-bold uppercase tracking-widest text-[11px] hover:bg-[#156d8f] transition-all"
         >
           Go Back
         </button>
@@ -262,7 +262,7 @@ const LessonContentPage = () => {
           <div className={isSidebarOpen ? 'flex items-center space-x-4 mb-4' : 'fixed items-center space-x-4 mb-4'}>
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-md"
+              className="flex items-center text-white bg-[#1a7ea5] hover:bg-[#156d8f] px-4 py-2.5 rounded-xl transition-all font-bold text-xs uppercase tracking-wider"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               <span className={isSidebarOpen ? 'block' : 'sr-only'}>Back</span>
@@ -281,9 +281,9 @@ const LessonContentPage = () => {
               <button
                 key={content.id || index}
                 onClick={() => dispatch(setCurrentContent(content))}
-                className={`w-full text-left p-3 rounded-lg mb-2 transition-colors ${currentContent?.id === content.id
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'hover:bg-gray-100'
+                className={`w-full text-left p-3 rounded-xl mb-2 transition-all font-semibold text-xs ${currentContent?.id === content.id
+                  ? 'bg-[#1a7ea5]/10 text-[#1a7ea5]'
+                  : 'hover:bg-slate-50 text-slate-600'
                   }`}
               >
                 <div className="flex items-center">

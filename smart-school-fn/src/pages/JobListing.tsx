@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Calendar, Clock, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { Search, Calendar, Clock, ChevronLeft, ChevronRight, AlertCircle, ArrowRight, Briefcase } from 'lucide-react';
 import api from '../redux/api/api';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from "use-debounce";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const JobListing = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -10,8 +11,8 @@ export const JobListing = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [jobs, setJobs] = useState<any[]>([]);[]
-    const [categories, setCategories] = useState<any[]>([]);[]
+    const [jobs, setJobs] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const navigate = useNavigate();
     const [pagination, setPagination] = useState({
         page: 1,
@@ -21,7 +22,6 @@ export const JobListing = () => {
     });
 
     const jobsPerPage = 5;
-
 
     // Fetch jobs from API
     useEffect(() => {
@@ -82,7 +82,6 @@ export const JobListing = () => {
     };
 
     const handleJobClick = (slug: string) => {
-        console.log(`Navigating to job details for job ID: ${slug}`);
         navigate(`/job-listing/${slug}`);
     };
 
@@ -92,178 +91,214 @@ export const JobListing = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-white">
+            {/* Minimal Hero Header */}
+            <div className="bg-slate-50 py-16 lg:py-24 border-b border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#1a7ea5]/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#6cb9cc]/5 rounded-full -ml-48 -mb-48 blur-3xl" />
 
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Job Opportunities</h1>
-                    <p className="text-gray-600">Discover your next career opportunity</p>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center"
+                    >
+                        <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6 uppercase tracking-tight">
+                            Job Opportunities
+                        </h1>
+                        <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-8 rounded-full" />
+                        <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+                            Discover your next career opportunity and join the workforce of the future.
+                        </p>
+                    </motion.div>
                 </div>
+            </div>
 
-                {/* Search Bar */}
-                <div className="mb-6">
-                    <div className="flex justify-start flex-wrap gap-2 items-center mb-4">
-                        {categories?.map((category) => (
-                            <div key={category.id} className="flex items-center  relative">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20 pb-24">
+                {/* Search & Filters Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white rounded-3xl border border-slate-200 p-6 mb-12"
+                >
+                    <div className="flex flex-col gap-8">
+                        {/* Search Input */}
+                        <div className="relative">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#1a7ea5] w-5 h-5" />
+                            <input
+                                type="text"
+                                placeholder="Search by job title or keyword..."
+                                value={searchTerm}
+                                onChange={handleSearch}
+                                className="w-full pl-16 pr-8 py-5 bg-slate-50 border-none rounded-full focus:ring-2 focus:ring-[#6cb9cc] transition-all text-slate-700 placeholder:text-slate-400 font-medium"
+                            />
+                        </div>
+
+                        {/* Category Tags */}
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => setSearchTerm('')}
+                                className={`px-5 py-2 rounded-full text-[12px] font-bold uppercase tracking-wider transition-all ${!searchTerm
+                                    ? 'bg-[#1a7ea5] text-white'
+                                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                                    }`}
+                            >
+                                All Jobs
+                            </button>
+                            {categories?.map((category) => (
                                 <button
+                                    key={category.id}
                                     onClick={() => handleViewJob(category.name)}
-                                    className="bg-blue-600 text-white px-3 py-1 rounded-full font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                                    className={`px-5 py-2 rounded-full text-[12px] font-bold uppercase tracking-wider transition-all ${searchTerm === category.name
+                                        ? 'bg-[#1a7ea5] text-white'
+                                        : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                                        }`}
                                 >
-                                    {category.name} ({category.jobPosts.length})
+                                    {category.name} <span className="ml-1 opacity-60">({category.jobPosts.length})</span>
                                 </button>
-                            </div>
-                        ))}
-
+                            ))}
+                        </div>
                     </div>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder="Search by job title or company..."
-                            value={searchTerm}
-                            onChange={handleSearch}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                        />
-                    </div>
-                </div>
+                </motion.div>
 
-                {/* Job Listings */}
-                <div className="space-y-4 mb-8">
+                {/* Job Listings Area */}
+                <div className="space-y-6">
                     {isLoading ? (
-                        <div className="flex justify-center items-center py-12">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+                        <div className="flex justify-center items-center py-24">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                className="w-12 h-12 border-4 border-slate-100 border-t-[#1a7ea5] rounded-full"
+                            />
                         </div>
                     ) : error ? (
-                        <div className="text-center py-12">
-                            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                            <p className="text-gray-600">{error}</p>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="bg-red-50 p-12 rounded-3xl text-center border border-red-100"
+                        >
+                            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-6" />
+                            <h3 className="text-xl font-semibold text-red-900 mb-2">Oops! Something went wrong</h3>
+                            <p className="text-red-600 mb-8 max-w-sm mx-auto">{error}</p>
                             <button
                                 onClick={() => setCurrentPage(1)}
-                                className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                className="px-10 py-4 bg-red-600 text-white font-bold uppercase tracking-widest rounded-full hover:bg-red-700 transition-all"
                             >
-                                Retry
+                                Retry Now
                             </button>
-                        </div>
+                        </motion.div>
                     ) : jobs.length === 0 ? (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500 text-lg">No jobs found matching your search criteria.</p>
-                        </div>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="bg-slate-50 p-24 rounded-3xl text-center border border-dashed border-slate-200"
+                        >
+                            <Briefcase className="w-20 h-20 text-slate-200 mx-auto mb-6" />
+                            <h3 className="text-2xl font-semibold text-slate-900 mb-2 uppercase tracking-tight">No Jobs Found</h3>
+                            <p className="text-slate-500 font-medium">Try adjusting your search criteria or explore other categories.</p>
+                        </motion.div>
                     ) : (
-                        jobs.map((job) => (
-                            <div
-                                key={job.id}
-                                onClick={() => handleJobClick(job.slug)}
-                                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer hover:border-green-300"
-                            >
-                                <div className="flex items-start space-x-4">
-                                    {/* Company Logo */}
-                                    <div className="flex-shrink-0">
+                        <AnimatePresence mode="popLayout">
+                            {jobs.map((job, idx) => (
+                                <motion.div
+                                    layout
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ delay: idx * 0.05 }}
+                                    key={job.id}
+                                    onClick={() => handleJobClick(job.slug)}
+                                    className="group bg-white border border-slate-200 p-6 rounded-3xl transition-all duration-500 cursor-pointer flex flex-col md:flex-row gap-6 items-center"
+                                >
+                                    {/* Company Logo - Cleaned up */}
+                                    <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-500 overflow-hidden border border-slate-50">
                                         <img
-                                            src={job.companylogo || 'https://via.placeholder.com/60x60/e5e7eb/9ca3af?text=LOGO'}
-                                            alt={`${job.companyname} logo`}
-                                            className="w-16 h-16 rounded-lg object-cover border"
+                                            src={job.companylogo || 'https://via.placeholder.com/100?text=LOGO'}
+                                            alt={job.companyname}
+                                            className="w-full h-full object-cover"
                                         />
                                     </div>
 
-                                    {/* Job Details */}
-                                    <div className="flex-grow">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-green-600 transition-colors">
-                                            {job.title}
-                                        </h3>
+                                    {/* Job Details Content */}
+                                    <div className="flex-grow text-center md:text-left">
+                                        <div className="flex flex-col md:flex-row md:items-center gap-2 mb-3">
+                                            <h3 className="text-lg font-semibold text-slate-900 group-hover:text-[#1a7ea5] transition-colors tracking-tight">
+                                                {job.title.charAt(0).toUpperCase() + job.title.slice(1).toLowerCase()}
+                                            </h3>
+                                            <span className="inline-block px-3 py-1 bg-[#6cb9cc]/10 text-[#1a7ea5] rounded-full text-[10px] font-bold uppercase tracking-widest w-fit mx-auto md:mx-0">
+                                                Active
+                                            </span>
+                                        </div>
 
-                                        <div className="flex items-center text-sm text-gray-600 mb-3 space-x-4 flex-wrap">
-                                            <span className="font-medium text-green-600">{job.companyname}</span>
-                                            <span className="flex items-center">
-                                                <a
-                                                    href={job.companywebsite}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center text-blue-600 hover:underline"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <MapPin className="w-4 h-4 mr-1" />
-                                                    View on Website
-                                                </a>
+                                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-y-2 gap-x-6 text-[13px] text-slate-500 font-medium">
+                                            <span className="font-semibold text-[#1a7ea5] uppercase tracking-wider">{job.companyname}</span>
+                                            <span className="flex items-center gap-1.5">
+                                                <Calendar className="w-4 h-4 text-slate-400" />
+                                                Posted {new Date(job.createdAt).toLocaleDateString()}
                                             </span>
-                                            <span className="flex items-center">
-                                                <Calendar className="w-4 h-4 mr-1" />
-                                                Posted on : {new Date(job.createdAt).toLocaleDateString()}
-                                            </span>
-                                            <span className="flex items-center font-semibold">
-                                                <Calendar className="w-4 h-4 mr-1" />
+                                            <span className="flex items-center gap-1.5 text-red-500 font-semibold bg-red-50 px-3 py-1 rounded-full uppercase text-[11px] tracking-widest">
+                                                <Clock className="w-4 h-4" />
                                                 Deadline: {new Date(job.dueDate).toLocaleDateString()}
                                             </span>
                                         </div>
+                                    </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <a
-                                                href={job.applicationLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-green-600 hover:underline text-sm flex items-center"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <span className="mr-1">Apply Now</span>
-                                                <Clock className="w-4 h-4" />
-                                            </a>
+                                    {/* Action Area */}
+                                    <div className="flex items-center">
+                                        <div className="p-4 bg-slate-50 text-slate-400 rounded-2xl group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-500">
+                                            <ArrowRight size={24} />
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     )}
                 </div>
 
-                {/* Pagination */}
-                {!isLoading && !error && jobs.length > 0 && (
-                    <div className="flex items-center justify-between bg-white px-6 py-4 rounded-lg border">
-                        <div className="text-sm text-gray-700">
-                            Showing {((pagination.page - 1) * pagination.limit) + 1} to {
-                                Math.min(pagination.page * pagination.limit, pagination.total)
-                            } of {pagination.total} results
-                        </div>
+                {/* Pagination - Cleanized */}
+                {!isLoading && !error && jobs.length > 0 && pagination.totalPages > 1 && (
+                    <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 px-4">
+                        <p className="text-[13px] font-semibold text-slate-400 uppercase tracking-widest">
+                            Showing <span className="text-slate-900">{((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)}</span> of {pagination.total} positions
+                        </p>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setCurrentPage(pagination.page - 1)}
                                 disabled={pagination.page === 1}
-                                className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-12 h-12 flex items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-400 hover:border-[#1a7ea5] hover:text-[#1a7ea5] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
 
-                            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                                // Show first page, last page, and pages around current page
-                                let pageNum;
-                                if (pagination.totalPages <= 5) {
-                                    pageNum = i + 1;
-                                } else if (pagination.page <= 3) {
-                                    pageNum = i + 1;
-                                } else if (pagination.page >= pagination.totalPages - 2) {
-                                    pageNum = pagination.totalPages - 4 + i;
-                                } else {
-                                    pageNum = pagination.page - 2 + i;
-                                }
+                            <div className="flex gap-2">
+                                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (pagination.totalPages <= 5) pageNum = i + 1;
+                                    else if (pagination.page <= 3) pageNum = i + 1;
+                                    else if (pagination.page >= pagination.totalPages - 2) pageNum = pagination.totalPages - 4 + i;
+                                    else pageNum = pagination.page - 2 + i;
 
-                                return (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => setCurrentPage(pageNum)}
-                                        className={`px-3 py-2 rounded-md text-sm font-medium ${pagination.page === pageNum
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                );
-                            })}
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`w-12 h-12 flex items-center justify-center rounded-2xl text-[13px] font-bold transition-all ${pagination.page === pageNum
+                                                ? 'bg-[#1a7ea5] text-white'
+                                                : 'bg-white border border-slate-100 text-slate-400 hover:border-[#1a7ea5] hover:text-[#1a7ea5]'
+                                                }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
 
                             <button
                                 onClick={() => setCurrentPage(pagination.page + 1)}
                                 disabled={pagination.page === pagination.totalPages}
-                                className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-12 h-12 flex items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-400 hover:border-[#1a7ea5] hover:text-[#1a7ea5] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
                                 <ChevronRight className="w-5 h-5" />
                             </button>

@@ -264,7 +264,7 @@ export default function TuitionPage() {
             {plans.map((plan, i) => (
               <motion.div
                 key={plan.id}
-                className={`relative group bg-white p-8 rounded-[40px] border transition-all duration-500 flex flex-col h-full ${plan.popular ? "border-[#1a7ea5] shadow-[0_30px_60px_rgba(26,126,165,0.1)] ring-1 ring-[#1a7ea5]/20" : "border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)]"
+                className={`relative group bg-white p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full ${plan.popular ? "border-[#1a7ea5] shadow-[0_30px_60px_rgba(26,126,165,0.1)] ring-1 ring-[#1a7ea5]/20" : "border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)]"
                   }`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -325,7 +325,7 @@ export default function TuitionPage() {
             {cpaPlans.map((plan, i) => (
               <motion.div
                 key={plan.id}
-                className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col h-full"
+                className="bg-white p-8 rounded-3xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col h-full"
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -365,7 +365,7 @@ export default function TuitionPage() {
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="bg-[#1a7ea5] rounded-[48px] p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
+            className="bg-[#1a7ea5] rounded-3xl p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

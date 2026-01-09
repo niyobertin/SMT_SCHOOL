@@ -160,7 +160,7 @@ export const ContactPage = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <div className="bg-white p-10 rounded-[48px] shadow-[0_30px_80px_rgba(0,0,0,0.06)] border border-slate-100">
+              <div className="bg-white p-10 rounded-3xl shadow-[0_30px_80px_rgba(0,0,0,0.06)] border border-slate-100">
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8 uppercase tracking-tight">Send us a message</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -216,7 +216,7 @@ export const ContactPage = () => {
                       required
                       placeholder="Give us all the details..."
                       rows={5}
-                      className="w-full bg-slate-50 border-none rounded-[32px] px-6 py-5 focus:ring-2 focus:ring-[#6cb9cc] transition-all text-slate-700 placeholder:text-slate-400 font-medium resize-none"
+                      className="w-full bg-slate-50 border-none rounded-2xl px-6 py-5 focus:ring-2 focus:ring-[#6cb9cc] transition-all text-slate-700 placeholder:text-slate-400 font-medium resize-none"
                     />
                   </div>
 
@@ -259,7 +259,7 @@ export const ContactPage = () => {
                     <motion.div
                       key={idx}
                       whileHover={{ x: 10 }}
-                      className="group flex items-center gap-6 p-6 rounded-[32px] bg-slate-50 border border-transparent hover:border-[#6cb9cc]/30 hover:bg-white hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all duration-300"
+                      className="group flex items-center gap-6 p-6 rounded-3xl bg-slate-50 border border-transparent hover:border-[#6cb9cc]/30 hover:bg-white hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all duration-300"
                     >
                       <div className={`w-14 h-14 ${info.bgColor} rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-500`}>
                         <info.icon size={24} className={info.color} />

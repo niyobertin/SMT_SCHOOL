@@ -193,7 +193,7 @@ export const HomePage: React.FC = () => {
               return (
                 <motion.div
                   key={program.id}
-                  className={`group relative bg-white ${colSpan} p-8 md:p-12 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100/50 flex flex-col justify-between`}
+                  className={`group relative bg-white ${colSpan} p-8 md:p-12 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100/50 flex flex-col justify-between`}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -274,9 +274,9 @@ export const HomePage: React.FC = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="inline-block p-1 bg-white/20 rounded-[50px] backdrop-blur-md mb-8"
+            className="inline-block p-1 bg-white/20 rounded-[40px] backdrop-blur-md mb-8"
           >
-            <div className="bg-white/10 px-10 py-16 rounded-[48px] border border-white/30 backdrop-blur-xl">
+            <div className="bg-white/10 px-10 py-16 rounded-[38px] border border-white/30 backdrop-blur-xl">
               <span className="text-7xl md:text-9xl font-black text-white italic block mb-2 leading-none">98%</span>
               <p className="text-white text-lg font-bold uppercase tracking-[0.3em]">Student Success Rate</p>
             </div>
@@ -300,7 +300,7 @@ export const HomePage: React.FC = () => {
       <section className="py-24">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="bg-[#1a7ea5] rounded-[48px] p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
+            className="bg-[#1a7ea5] rounded-3xl p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
             variants={bidirectionalFadeUp}
             initial="hidden"
             whileInView="visible"

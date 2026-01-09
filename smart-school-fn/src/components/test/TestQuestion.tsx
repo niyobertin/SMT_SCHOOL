@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../redux/stores";
 import { Loader2 } from "lucide-react";
 
 interface TestQuestionProps {
