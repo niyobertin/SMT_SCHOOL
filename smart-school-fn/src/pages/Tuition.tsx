@@ -1,21 +1,30 @@
-import { Check, Users, Award, BookOpen, TrendingUp, Loader2 } from "lucide-react"
+import { Check, Users, Award, BookOpen, TrendingUp } from "lucide-react"
 import useLanguage from "../hooks/useLanguage"
 import { useNavigate } from "react-router-dom"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { LoginRequestModal } from "../components/RequestModal"
 import type { AppDispatch, RootState } from "../redux/stores"
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCourses } from "../redux/features/courses/courseSlice"
+import { motion, useScroll, useTransform } from "framer-motion"
+import backgroundImage from "../assets/background.jpg"
 
 export default function TuitionPage() {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const ref = useRef(null);
+
   const {
     items: courses,
-    loading,
-    error,
   } = useSelector((state: RootState) => state.courses);
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
 
   const handleModalOpen = (price: number, period: number, type: string, name?: string) => {
     const localToken = localStorage.getItem('accessToken');
@@ -60,10 +69,9 @@ export default function TuitionPage() {
         "Access to 3 chosen courses",
         "Unlimited support 24/7",
         "Job listings",
-        "Examination preparation via tests",
+        "Exam preparation via tests",
       ],
       icon: BookOpen,
-      color: "from-gray-500 to-gray-600",
     },
     {
       id: "monthly",
@@ -77,10 +85,9 @@ export default function TuitionPage() {
         "Access to 3 chosen courses",
         "Unlimited support 24/7",
         "Job listings",
-        "Examination preparation via tests",
+        "Exam preparation via tests",
       ],
       icon: TrendingUp,
-      color: "from-blue-500 to-purple-600",
     },
     {
       id: "quarterly",
@@ -94,11 +101,10 @@ export default function TuitionPage() {
         "Access to 3 chosen courses",
         "Unlimited support 24/7",
         "Job listings",
-        "Examination preparation via tests",
+        "Exam preparation via tests",
         "1-on-1 Session with mentor",
       ],
       icon: Award,
-      color: "from-purple-500 to-pink-600",
     },
     {
       id: "yearly",
@@ -112,53 +118,28 @@ export default function TuitionPage() {
         "Access to 3 chosen courses",
         "Unlimited support 24/7",
         "Job listings",
-        "Examination preparation via tests",
+        "Exam preparation via tests",
         "1-on-1 Session with mentor",
       ],
       icon: Users,
-      color: "from-green-500 to-teal-600",
     },
   ];
 
   const cpaPlanTemplate = [
     {
-      id: "CAT",
+      id: "Foundation",
       type: "cpa",
       basePrice: 30000,
       period: 90,
       features: [
-        "Study material",
-        "Mock Practices",
-        "Examination Model Answers",
-        "S1.1 Recording Financial Transactions",
-        "S1.2 Principles Of Costing",
-        "S1.3 Effective Working In Accountancy And Finance",
-        "S2.1 Preparation Of Basic Accounts",
-        "S2.2 Managing Costs And Cash Flows",
-        "S2.3 Professional Ethics In Accounting And Finance",
-        "S3.1 Financial Accounting",
-        "S3.2 Management Accounting",
-        "S3.3 Taxation",
-        "S3.4 Audit And Assurance",
-        "S3.5 Credit Management",
-        "S3.6 Public Finance Management",
-      ],
-    },
-    {
-      id: "Advanced",
-      type: "cpa",
-      basePrice: 50000,
-      period: 90,
-      features: [
-        "Study material",
-        "Mock Practices",
-        "Examination Model Answers",
-        "A1.1 STRATEGY & LEADERSHIP",
-        "A1.2 AUDIT PRACTICE & ASSURANCE SERVICES",
-        "A1.3 ADVANCED FINANCIAL REPORTING",
-        "A2.1 STRATEGIC CORPORATE FINANCE",
-        "A2.2 STRATEGIC PERFORMANCE Management",
-        "A2.3 ADVANCED TAXATION",
+        "Business Mathematics & Quantitative Methods",
+        "Introduction to Law",
+        "Financial Accounting",
+        "Business Management, Ethics & Entrepreneurship",
+        "Management Accounting",
+        "Economics and Business Environment",
+        "Information Systems",
+        "Taxation"
       ],
     },
     {
@@ -167,32 +148,40 @@ export default function TuitionPage() {
       basePrice: 40000,
       period: 90,
       features: [
-        "Study material",
-        "Mock Practices",
-        "Examination Model Answers",
-        "I1.1 MANAGERIAL FINANCE",
-        "I1.2 FINANCIAL REPORTING",
-        "I1.3 COMPANY LAW",
-        "I1.4 AUDITING",
+        "Managerial Finance",
+        "Financial Reporting",
+        "Company Law",
+        "Auditing"
       ],
     },
     {
-      id: "Foundation",
+      id: "Advanced",
+      type: "cpa",
+      basePrice: 50000,
+      period: 90,
+      features: [
+        "Strategy & Leadership",
+        "Audit Practice & Assurance Services",
+        "Advanced Financial Reporting",
+        "Strategic Corporate Finance",
+        "Strategic Performance Management",
+        "Advanced Taxation"
+      ],
+    },
+    {
+      id: "CAT",
       type: "cpa",
       basePrice: 30000,
       period: 90,
       features: [
-        "Study material",
-        "Mock Practices",
-        "Examination Model Answers",
-        "✓ F1.1 BUSINESS MATHEMATICS AND Quantitative Methods",
-        "✓ F1.2 INTRODUCTION TO LAW",
-        "✓ F1.3 FINANCIAL ACCOUNTING",
-        "✓ F1.4 BUSINESS MANAGEMENT, ETHICS & Entrepreneurship",
-        "✓ F2.1 MANAGEMENT ACCOUNTING",
-        "✓ F2.2 ECONOMICS AND THE BUSINESS environment",
-        "✓ F2.3 INFORMATION SYSTEMS",
-        "✓ F2.4 TAXATION",
+        "Recording Financial Transactions",
+        "Principles of Costing",
+        "Effective Working In Accountancy",
+        "Preparation of Basic Accounts",
+        "Managing Costs and Cash Flows",
+        "Professional Ethics",
+        "Financial Accounting",
+        "Public Finance Management"
       ],
     },
   ];
@@ -200,7 +189,6 @@ export default function TuitionPage() {
   const cpaPlans = cpaPlanTemplate
     .map((plan, index) => {
       const apiCourse = filterCpaCourses[index];
-
       let price = plan.basePrice;
       if (apiCourse) {
         const title = apiCourse.title.toLowerCase();
@@ -221,156 +209,194 @@ export default function TuitionPage() {
     })
     .sort((a, b) => a.basePrice - b.basePrice);
 
-
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">{t("pricingPlans")}</h1>
+    <div ref={ref} className="bg-white">
+      {/* Hero Section */}
+      <motion.section
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          y,
+        }}
+        className="relative py-24 lg:py-32 h-[60vh] flex items-center justify-center overflow-hidden"
+        initial={{ scale: 1.05 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      >
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="relative max-w-7xl mx-auto px-4 z-10 w-full text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[#6cb9cc] font-black uppercase tracking-[0.3em] text-[12px] mb-4"
+          >
+            Flexible Learning
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-3xl md:text-5xl font-bold text-white mb-6 uppercase tracking-tight"
+          >
+            Pricing & Tuition
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg text-gray-200 max-w-2xl mx-auto font-medium"
+          >
+            Invest in your success with our transparent and flexible investment plans designed for every stage of your career.
+          </motion.p>
         </div>
+      </motion.section>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-          {plans.map((plan) => {
-            return (
-              <div
+      {/* Main Pricing Plans */}
+      <section className="py-24 bg-white relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Main Tuition Plans</h2>
+            <div className="w-16 h-1 bg-[#1a7ea5] mx-auto rounded-full" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {plans.map((plan, i) => (
+              <motion.div
                 key={plan.id}
-                className={`relative group hover:shadow-2xl transition-all duration-300 border rounded-2xl bg-white/80 backdrop-blur-sm p-6 ${plan.popular ? "ring-2 ring-blue-500 scale-105" : ""
+                className={`relative group bg-white p-8 rounded-[40px] border transition-all duration-500 flex flex-col h-full ${plan.popular ? "border-[#1a7ea5] shadow-[0_30px_60px_rgba(26,126,165,0.1)] ring-1 ring-[#1a7ea5]/20" : "border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)]"
                   }`}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -10 }}
               >
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                      {t("mostPopular")}
-                    </span>
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#1a7ea5] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                    Most Popular
                   </div>
                 )}
-
-                <div className="text-center pb-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-                  <p className="text-gray-600 mt-2">{plan.description}</p>
-                </div>
-
-                <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-gray-900 mb-1">{plan.basePrice}Frw</div>
-                  <div className="text-gray-500 text-sm">
-                    {plan.id === "weekly" ? t("perWeek") : plan.id === "monthly" ? t("perMonth") : plan.id === "quarterly" ? "" : plan.id === "yearly" ? t("perYear") : ""}
+                <div className="mb-8">
+                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <plan.icon size={24} className="text-[#1a7ea5]" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">{plan.name}</h3>
+                  <p className="text-slate-500 text-sm font-medium mb-6">{plan.description}</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-[#1a7ea5]">{plan.basePrice}</span>
+                    <span className="text-slate-400 font-bold text-sm uppercase">Frw / {plan.id === "weekly" ? "Week" : plan.id === "monthly" ? "Month" : plan.id === "quarterly" ? "Quarter" : "Year"}</span>
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-8">
-                  {plan.features.map((feature, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600 text-sm">{feature}</span>
+                <div className="space-y-4 mb-10 flex-grow">
+                  {plan.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="mt-1 w-4 h-4 rounded-full bg-[#6cb9cc]/20 flex items-center justify-center flex-shrink-0">
+                        <Check size={10} className="text-[#1a7ea5] font-black" />
+                      </div>
+                      <span className="text-slate-600 text-[13px] font-medium leading-tight">{feature}</span>
                     </div>
                   ))}
                 </div>
 
                 <button
                   onClick={() => handleModalOpen(plan.basePrice, plan.period, plan.id)}
-                  className={`w-full py-3 px-4 rounded-xl font-semibold transition-all bg-blue-800 hover:bg-blue-600 text-white`}
+                  className={`w-full py-4 rounded-full text-[12px] font-black uppercase tracking-widest transition-all ${plan.popular ? "bg-[#1a7ea5] text-white shadow-xl hover:bg-[#156d8f]" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
+                    }`}
                 >
-                  {t("choosePlan")}
+                  Choose {plan.name}
                 </button>
-              </div>
-            )
-          })}
-        </div>
-        <div className="text-center py-8 max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold text-black mb-2">
-            CPA Courses Based Plan
-          </h1>
-
-          <p className="text-black mb-4 font-semibold">
-            A structured learning program tailored for Certified Public Accountant (CPA) exam preparation.
-          </p>
-          <p className="text-black leading-relaxed">
-            This plan provides access to curated study materials, practice tests,
-            and step-by-step lessons for each CPA exam section. It helps learners
-            progress at their own pace while mastering core accounting, auditing,
-            taxation, and financial reporting concepts. Whether you’re just
-            starting your CPA journey or brushing up on key topics, this plan
-            supports your success with a clear and flexible roadmap.
-          </p>
-        </div>
-
-        {loading && (
-          <div className="flex items-center justify-center h-full bg-white p-4 w-fit mx-auto rounded-lg shadow-lg my-4">
-            <Loader2 className="animate-spin" /> Loading...
+              </motion.div>
+            ))}
           </div>
-        )}
-        {error && (
-          <div className="flex items-center justify-center h-full bg-white p-4 w-fit mx-auto rounded-lg shadow-lg my-4">
-            <p className="text-red-500">{error}</p>
-          </div>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+        </div>
+      </section>
 
-          {cpaPlans.map((plan) => {
-            return (
-              <div
+      {/* CPA Section */}
+      <section className="py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto text-center mb-20">
+            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">CPA Specialized Plans</h2>
+            <p className="text-slate-500 font-medium">Professional preparation for Certified Public Accountant success. Comprehensive materials and structured roadmaps for every section.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+            {cpaPlans.map((plan, i) => (
+              <motion.div
                 key={plan.id}
-                className="relative group hover:shadow-2xl transition-all duration-300 border rounded-2xl bg-white/80 backdrop-blur-sm p-6 flex flex-col h-full py-2"
+                className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col h-full"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -8 }}
               >
-                <div className="text-center pb-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
-                </div>
-
-                <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-gray-900 mb-1">{plan.basePrice}Frw</div>
-                  <div className="text-gray-500 text-sm">
-                    {plan.id === "Foundation"
-                      ? ""
-                      : plan.id === "Intermediate"
-                        ? ""
-                        : plan.id === "Advanced"
-                          ? ""
-                          : plan.id === "CAT"
-                            ? ""
-                            : ""}
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-slate-900 mb-4 uppercase tracking-tight h-14 flex items-center">{plan.name}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black text-[#1a7ea5]">{plan.basePrice}</span>
+                    <span className="text-slate-400 font-bold text-[10px] uppercase">Frw / Quarter</span>
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-8 overflow-auto max-h-72 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                  {plan.features.map((feature, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <Check className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600 text-sm">{feature}</span>
+                <div className="space-y-3 mb-8 flex-grow overflow-y-auto max-h-[300px] pr-2 scrollbar-hide">
+                  {plan.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-0.5">
+                      <Check size={14} className="text-[#1a7ea5] mt-1 flex-shrink-0" />
+                      <span className="text-slate-600 text-[12px] font-medium leading-relaxed">{feature}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-auto">
-                  <button
-                    onClick={() => handleModalOpen(plan.basePrice, plan.period, plan.type, plan.name)}
-                    className="w-full py-3 px-4 rounded-xl font-semibold transition-all bg-blue-800 hover:bg-blue-600 text-white"
-                  >
-                    {t("choosePlan")}
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="bg-blue-800 py-16 rounded-2xl">
-          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-4">{t("readyToStart")}</h2>
-            <p className="text-xl text-blue-100 mb-8">{t("joinThousands")}</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button onClick={() => navigate('/login')} className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-xl hover:bg-gray-100">
-                {t("getStarted")}
-              </button>
-              <button onClick={() => navigate('/contact')} className="px-6 py-3 border border-white text-white font-semibold rounded-xl hover:bg-white hover:text-blue-600 bg-transparent">
-                {t("contactUs")}
-              </button>
-            </div>
+                <button
+                  onClick={() => handleModalOpen(plan.basePrice, plan.period, plan.type, plan.name)}
+                  className="w-full py-4 bg-slate-900 text-white rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-[#1a7ea5] transition-all shadow-lg"
+                >
+                  Enroll in {plan.id}
+                </button>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Enhanced CTA Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            className="bg-[#1a7ea5] rounded-[48px] p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a7ea5] via-[#6cb9cc] to-[#1a7ea5] opacity-60" />
+            <div className="relative z-10">
+              <h2 className="text-2xl md:text-4xl font-bold mb-6 uppercase tracking-tight">
+                {t("readyToStart")}
+              </h2>
+              <p className="text-lg text-white/80 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+                {t("joinThousands")}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-5 justify-center">
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-white text-[#1a7ea5] px-12 py-5 rounded-full text-[14px] font-black uppercase tracking-widest shadow-2xl hover:bg-slate-50 transition-all w-full sm:w-auto"
+                >
+                  {t("getStarted")}
+                </button>
+                <button
+                  onClick={() => navigate('/contact')}
+                  className="bg-white/10 backdrop-blur-md border border-white/40 text-white px-12 py-5 rounded-full text-[14px] font-black uppercase tracking-widest hover:bg-white/20 transition-all w-full sm:w-auto"
+                >
+                  {t("contactUs")}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       <LoginRequestModal
         isOpen={isModalOpen}
         onClose={handleClose}
