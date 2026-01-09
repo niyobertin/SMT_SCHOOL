@@ -1602,6 +1602,9 @@ export const candidateLogin = async (
                         logo: true,
                     },
                 },
+                _count: {
+                    select: { questions: true }
+                }
             },
         });
 
@@ -1633,12 +1636,17 @@ export const candidateLogin = async (
 
         // Check exam availability
         const availability = isExamAvailable(exam);
+        let isWaiting = false;
         if (!availability.available) {
-            res.status(403).json({
-                status: 'error',
-                message: availability.reason,
-            });
-            return;
+            if (availability.reason === 'Exam has not started yet') {
+                isWaiting = true;
+            } else {
+                res.status(403).json({
+                    status: 'error',
+                    message: availability.reason,
+                });
+                return;
+            }
         }
 
         // Check remaining attempts
@@ -1682,14 +1690,18 @@ export const candidateLogin = async (
                     title: exam.title,
                     description: exam.description,
                     duration: exam.duration,
+                    passingScore: exam.passingScore,
+                    instructions: exam.instructions,
+                    _count: exam._count,
                     startDate: exam.startDate,
                     endDate: exam.endDate,
                     organization: exam.organization,
                 },
                 attemptsUsed,
                 attemptsRemaining,
+                isWaiting,
             },
-            message: 'Login successful',
+            message: isWaiting ? 'Redirecting to waiting room' : 'Login successful',
         });
     } catch (error) {
         logger.error(error);
