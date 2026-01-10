@@ -18,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const navigate = useNavigate();
+
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
@@ -47,45 +48,49 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900 capitalize">
-          {activeSection.replace("-", " ")}
-        </h1>
+    <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 sticky top-0 z-30">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-1 bg-[#1a7ea5] rounded-full hidden md:block" />
+          <h1 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">
+            System / <span className="text-slate-900">{activeSection.replace("-", " ")}</span>
+          </h1>
+        </div>
 
         <div className="flex items-center gap-4">
           {loadingUser ? (
-            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+            <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (
-            <div className="flex items-center gap-2 relative">
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate("/profile")}
-                className=" bg-blue-500 rounded-lg  flex items-center justify-center gap-2 text-white font-semibold hover:opacity-90 transition p-2 cursor-pointer"
+                className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 flex items-center gap-2 text-slate-700 font-bold hover:bg-slate-100 transition-all cursor-pointer group"
               >
-                {<User size={16} />}<span className="hidden sm:inline font-medium">{user.username}</span>
+                <div className="p-1 bg-[#1a7ea5]/10 rounded-lg group-hover:bg-[#1a7ea5]/20 transition-colors">
+                  <User size={14} className="text-[#1a7ea5]" />
+                </div>
+                <span className="hidden sm:inline text-xs">{user.username}</span>
               </button>
-
-
 
               <button
                 onClick={handleLogout}
-                className="ml-3 p-2 text-gray-900 font-medium hover:text-gray-600 rounded-lg transition flex items-center gap-2 bg-gray-200 p-2 cursor-pointer"
+                className="p-2 text-slate-400 hover:text-red-500 rounded-xl transition-all bg-slate-50 border border-slate-100 hover:bg-red-50 hover:border-red-100 cursor-pointer"
                 title="Logout"
               >
-                <LogOut size={18} /> Logout
+                <LogOut size={18} />
               </button>
             </div>
           ) : (
             <div className="flex gap-2">
               <button
                 onClick={() => navigate("/login")}
-                className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:opacity-90 transition"
+                className="px-4 py-2 bg-[#1a7ea5] text-white text-xs font-bold rounded-xl hover:opacity-90 transition"
               >
                 Login
               </button>
               <button
                 onClick={() => navigate("/register")}
-                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-200 transition"
               >
                 Register
               </button>

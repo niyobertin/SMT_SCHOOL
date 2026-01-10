@@ -421,14 +421,10 @@ export const JobBoard = () => {
     };
 
     const getStatusBadge = (status: string) => {
-        const statusClasses = {
-            'Active': 'bg-green-100 text-green-800',
-            'Draft': 'bg-gray-100 text-gray-800',
-            'Expired': 'bg-red-100 text-red-800'
-        };
 
         return (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClasses[status as keyof typeof statusClasses] || 'bg-gray-100 text-gray-800'}`}>
+            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm flex items-center gap-1.5 ${status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : status === 'Draft' ? 'bg-slate-50 text-slate-500 border-slate-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                <div className={`h-1.5 w-1.5 rounded-full ${status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
                 {status}
             </span>
         );
@@ -442,23 +438,22 @@ export const JobBoard = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-gray-100 mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Job Management</h1>
-                        <p className="text-gray-600">Manage all job postings and applications</p>
+                        <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">Career Board</h1>
+                        <p className="text-slate-500 font-medium mt-3">Manage all job postings and applications</p>
                     </div>
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                        className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
                     >
-                        <Plus className="w-5 h-5 mr-2" />
-                        Add New Job
+                        <Plus size={16} />
+                        New Job
                     </button>
                 </div>
 
                 {/* Search and Filter Section */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-slate-100 p-6 mb-8">
                     <div className="flex justify-start gap-2 items-center mb-4 flex-wrap ">
                         {categories.map((category) => (
                             <div key={category.id} className="flex items-center relative ">
@@ -480,7 +475,7 @@ export const JobBoard = () => {
                                     </button>
 
                                     {openMenuId === category.id && (
-                                        <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] py-2 z-50 border border-slate-100">
                                             <button
                                                 onClick={() => handleEditCategory(category)}
                                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -515,7 +510,7 @@ export const JobBoard = () => {
                                         setSearchTerm(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                                    className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all outline-none text-sm font-bold text-slate-700 shadow-sm"
                                 />
                             </div>
                         </div>
@@ -523,11 +518,11 @@ export const JobBoard = () => {
                 </div>
 
                 {/* Job Listings */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div className="p-6">
                         {isLoading ? (
-                            <div className="flex justify-center items-center py-12">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                            <div className="flex justify-center items-center py-20">
+                                <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#1a7ea5]/20 border-t-[#1a7ea5]"></div>
                             </div>
                         ) : error ? (
                             <div className="text-center py-12">
@@ -541,15 +536,15 @@ export const JobBoard = () => {
                                 </button>
                             </div>
                         ) : jobs.length === 0 ? (
-                            <div className="text-center py-12">
-                                <p className="text-gray-500 text-lg">No jobs found.</p>
+                            <div className="text-center py-24 bg-slate-50/30 rounded-2xl m-6 border border-dashed border-slate-200">
+                                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No active vacancies found.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {jobs.map((job: any) => (
                                     <div
                                         key={job.id}
-                                        className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200"
+                                        className="border border-slate-100 bg-white rounded-2xl p-5 hover:border-[#1a7ea5]/20 hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)] transition-all group"
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-start space-x-4 flex-1">
@@ -558,33 +553,31 @@ export const JobBoard = () => {
                                                     <img
                                                         src={job.companylogo || 'https://via.placeholder.com/60x60/e5e7eb/9ca3af?text=LOGO'}
                                                         alt={`${job.companyname} logo`}
-                                                        className="w-16 h-16 rounded-lg object-cover border"
+                                                        className="w-16 h-16 rounded-xl object-cover border border-slate-100 shadow-sm"
                                                     />
                                                 </div>
 
                                                 {/* Job Details */}
                                                 <div className="flex-grow min-w-0">
                                                     <div className="flex items-start justify-between mb-2">
-                                                        <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2">
+                                                        <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors line-clamp-2">
                                                             {job.title}
                                                         </h3>
                                                         {getStatusBadge(job.isActive ? 'Active' : 'Inactive')}
                                                     </div>
 
-                                                    <div className="flex items-center text-sm text-gray-600 mb-3 space-x-4 flex-wrap">
-                                                        <span className="font-medium text-blue-600">{job.companyname}</span>
+                                                    <div className="flex items-center text-[11px] text-slate-500 mb-3 space-x-5 flex-wrap font-bold uppercase tracking-widest">
+                                                        <span className="text-[#1a7ea5] bg-[#1a7ea5]/5 px-2.5 py-1 rounded-lg">{job.companyname}</span>
                                                         {job.companywebsite && (
-                                                            <span className="flex items-center">
-                                                                <a
-                                                                    href={job.companywebsite}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="flex items-center text-blue-600 hover:underline"
-                                                                >
-                                                                    <Globe className="w-4 h-4 mr-1" />
-                                                                    Website
-                                                                </a>
-                                                            </span>
+                                                            <a
+                                                                href={job.companywebsite}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center hover:underline"
+                                                            >
+                                                                <Globe className="w-3.5 h-3.5 mr-1.5" />
+                                                                Portal
+                                                            </a>
                                                         )}
 
                                                         <span className="flex items-center">
@@ -618,13 +611,13 @@ export const JobBoard = () => {
                                             <div className="relative">
                                                 <button
                                                     onClick={() => setShowActionMenu(showActionMenu === job.id ? null : job.id)}
-                                                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                    className="p-2.5 text-slate-400 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm"
                                                 >
                                                     <MoreVertical className="w-5 h-5" />
                                                 </button>
 
                                                 {showActionMenu === job.id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                                    <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-10 overflow-hidden">
                                                         <div className="py-1">
                                                             <button
                                                                 onClick={() => handleViewJob(job.slug)}
@@ -720,15 +713,15 @@ export const JobBoard = () => {
                 {/* Create/Edit Job Modal */}
                 {showCreateModal && (
                     <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                             {/* Modal Header */}
-                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                                <h2 className="text-2xl font-bold text-gray-900">
-                                    {isEditing ? 'Edit Job Post' : 'Create New Job Post'}
+                            <div className="flex items-center justify-between p-6 border-b border-slate-50">
+                                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                                    {isEditing ? 'Edit Vacancy' : 'New Vacancy'}
                                 </h2>
                                 <button
                                     onClick={handleCloseModal}
-                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
                                 >
                                     <X className="w-6 h-6" />
                                 </button>
@@ -738,17 +731,17 @@ export const JobBoard = () => {
                             <div className="p-6">
                                 <div className="space-y-8">
                                     {/* Job Details Section */}
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                            <FileText className="w-5 h-5 mr-2" />
-                                            Job Details
+                                    <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100 mb-6">
+                                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center">
+                                            <FileText className="w-4 h-4 mr-2" />
+                                            Position Detail
                                         </h3>
 
                                         <div className="space-y-4">
                                             {/* Job Title */}
                                             <div>
-                                                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Job Title *
+                                                <label htmlFor="title" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                                                    Vacancy Title *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -756,8 +749,8 @@ export const JobBoard = () => {
                                                     name="title"
                                                     value={formData.title}
                                                     onChange={handleInputChange}
-                                                    placeholder="e.g., TENDER NOTICE FOR CONSTRUCTION WORKS..."
-                                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
+                                                    placeholder="e.g., Senior Software Architect"
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
                                                 />
                                             </div>
 
@@ -775,7 +768,7 @@ export const JobBoard = () => {
                                                         name="jobCategoryId"
                                                         value={formData.jobCategoryId}
                                                         onChange={handleInputChange}
-                                                        className="w-1/2 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300"
+                                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
                                                     >
                                                         <option value="">Select a category</option>
                                                         {categories?.map((category: any) => (
@@ -788,9 +781,9 @@ export const JobBoard = () => {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleOpenCategoryModal()}
-                                                        className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 bg-blue-500 rounded-lg hover:bg-gray-50 mt-2"
+                                                        className="px-5 py-2.5 bg-[#1a7ea5]/10 text-[#1a7ea5] rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#1a7ea5] hover:text-white transition-all whitespace-nowrap"
                                                     >
-                                                        Add Category
+                                                        + Category
                                                     </button>
                                                 </div>
                                             </div>
@@ -828,7 +821,7 @@ export const JobBoard = () => {
                                                         name="dueDate"
                                                         value={formData.dueDate}
                                                         onChange={handleInputChange}
-                                                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
+                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 outline-none transition-all text-sm font-bold text-slate-700"
                                                     />
                                                 </div>
                                             </div>
@@ -855,7 +848,7 @@ export const JobBoard = () => {
                                                     value={formData.companyname}
                                                     onChange={handleInputChange}
                                                     placeholder="e.g., Kilimo Trust"
-                                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
                                                 />
                                             </div>
 
@@ -873,7 +866,7 @@ export const JobBoard = () => {
                                                         value={formData.companywebsite}
                                                         onChange={handleInputChange}
                                                         placeholder="https://www.company.com"
-                                                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
+                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 outline-none transition-all text-sm font-bold text-slate-700"
                                                     />
                                                 </div>
                                             </div>
@@ -886,7 +879,7 @@ export const JobBoard = () => {
                                             </label>
 
                                             {!logoPreview ? (
-                                                <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                                                <div className="relative border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-[#1a7ea5]/20 transition-all">
                                                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                                                     <div className="space-y-1">
                                                         <p className="text-gray-600 text-sm">Click to upload or drag and drop</p>
@@ -933,7 +926,7 @@ export const JobBoard = () => {
                                                     value={formData.applicationLink}
                                                     onChange={handleInputChange}
                                                     placeholder="https://www.company.com/apply"
-                                                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 outline-none transition-all text-sm font-bold text-slate-700"
                                                 />
                                             </div>
                                         </div>
@@ -949,7 +942,7 @@ export const JobBoard = () => {
                                                     id="attachments"
                                                     name="attachments"
                                                     onChange={handleFileChange}
-                                                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors border-gray-300`}
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 outline-none transition-all text-sm font-bold text-slate-700"
                                                 />
                                             </div>
                                         </div>

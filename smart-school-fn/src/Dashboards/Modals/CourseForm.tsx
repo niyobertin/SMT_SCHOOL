@@ -1,544 +1,405 @@
-import React, { useState, useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Toast } from 'primereact/toast';
 import { motion, AnimatePresence } from "framer-motion";
-import * as yup from "yup";
 import { createCourse, updateCourse } from "../../redux/features/courses/courseSlice";
 import { fetchCategories, createCategory } from "../../redux/features/courses/category";
-import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../redux/stores";
-import { courseSchema } from "../../schema/courseScema";
-import { Toast } from "primereact/toast";
 
 interface CourseFormProps {
-  open: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
   course?: any;
+  onClose: () => void;
+  onSuccess?: () => void;
+  open?: boolean;
 }
 
-export const CourseForm = ({ open, onClose, onSuccess, course }: CourseFormProps) => {
-  const toast = useRef<Toast>(null);
-  const dispatch = useDispatch<AppDispatch>();
-  const { items: categories, loading: categoriesLoading } = useSelector(
-    (state: RootState) => state.categories
-  );
-
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
+export const CourseForm = ({ course, onClose, onSuccess }: CourseFormProps) => {
   const [courseData, setCourseData] = useState({
-    title: "",
-    description: "",
-    shortDescription: "",
+    title: course?.title || '',
+    shortDescription: course?.shortDescription || '',
+    description: course?.description || '',
+    language: course?.language || 'English',
+    level: course?.level || 'BEGINNER',
+    status: course?.status || 'DRAFT',
+    type: course?.type || 'Free',
+    categoryId: course?.categoryId || '',
+    isPublished: course?.isPublished || false,
+    isFeatured: course?.isFeatured || false,
     thumbnail: null as File | null,
-    language: "English",
-    level: "BEGINNER",
-    status: "DRAFT",
-    isPublished: false,
-    isFeatured: false,
-    type: "free",
-    tags: [] as string[],
-    requirements: [] as string[],
-    objectives: [] as string[],
-    categoryId: "",
   });
 
-  // Initialize form with course data when in edit mode
-  useEffect(() => {
-    if (course) {
-      setCourseData({
-        title: course.title || "",
-        description: course.description || "",
-        shortDescription: course.shortDescription || "",
-        thumbnail: course.thumbnail || null,
-        language: course.language || "English",
-        level: course.level || "BEGINNER",
-        status: course.status || "DRAFT",
-        isPublished: course.isPublished || false,
-        isFeatured: course.isFeatured || false,
-        type: course.type || "free",
-        tags: course.tags || [],
-        requirements: course.requirements || [],
-        objectives: course.objectives || [],
-        categoryId: course.categoryId || "",
-      });
-    } else {
-      // Reset form when creating a new course
-      setCourseData({
-        title: "",
-        description: "",
-        shortDescription: "",
-        thumbnail: null,
-        language: "English",
-        level: "BEGINNER",
-        status: "DRAFT",
-        isPublished: false,
-        isFeatured: false,
-        type: "free",
-        tags: [],
-        requirements: [],
-        objectives: [],
-        categoryId: "",
-      });
-    }
-  }, [course, open]);
-
+  const [errors, setErrors] = useState<any>({});
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
     isActive: true,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [courseLoading, setCourseLoading] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const toast = useRef<Toast>(null);
+
+  const { items: categories, loading: categoriesLoading } = useSelector(
+    (state: RootState) => state.categories
+  );
+  const { loading: courseLoading } = useSelector((state: RootState) => state.courses);
 
   useEffect(() => {
-    if (open) {
-      dispatch(fetchCategories({ page: 1, limit: 1000, search: "" }));
-    }
-  }, [open, dispatch]);
+    dispatch(fetchCategories({ page: 1, limit: 1000, search: "" }));
+  }, [dispatch]);
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [open]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setCourseData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
 
-  const validateField = async (field: string, value: any) => {
-    try {
-      await courseSchema.validateAt(field, { [field]: value });
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    } catch (error) {
-      if (error instanceof yup.ValidationError) {
-        setErrors((prev) => ({ ...prev, [field]: error.message }));
-      }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setCourseData((prev) => ({
+        ...prev,
+        thumbnail: e.target.files![0],
+      }));
     }
   };
 
-  const handleChange = async (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const target = e.target as HTMLInputElement;
-    const { name, value, type } = target;
-    const checked = "checked" in target ? target.checked : false;
-
-    setCourseData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-
-    await validateField(name, type === "checkbox" ? checked : value);
+  const validate = () => {
+    const newErrors: any = {};
+    if (!courseData.title) newErrors.title = 'Title is required';
+    if (!courseData.shortDescription) newErrors.shortDescription = 'Short description is required';
+    if (!courseData.description) newErrors.description = 'Description is required';
+    if (!courseData.categoryId) newErrors.categoryId = 'Category is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCourseLoading(true);
+    if (!validate()) return;
+
+    const formData = new FormData();
+    Object.keys(courseData).forEach((key) => {
+      if (key === 'thumbnail' && courseData.thumbnail) {
+        formData.append('thumbnail', courseData.thumbnail);
+      } else if (key !== 'thumbnail') {
+        formData.append(key, (courseData as any)[key]);
+      }
+    });
 
     try {
-      // Validate form data
-      await courseSchema.validate(courseData, { abortEarly: false });
-
-      const formData = new FormData();
-
-      // Append all fields to formData
-      Object.entries(courseData).forEach(([key, value]) => {
-        if (key === "thumbnail") {
-          if (value instanceof File) {
-            formData.append("thumbnail", value);
-          }
-        } else if (Array.isArray(value)) {
-          value.forEach((item, index) => {
-            formData.append(`${key}[${index}]`, item);
-          });
-        } else if (value !== null && value !== undefined) {
-          formData.append(key, value as string | Blob);
-        }
-      });
-
       if (course) {
-        // Update existing course
-        await dispatch(updateCourse({
-          courseId: course.id, courseData: formData,
-        })).unwrap();
+        await dispatch(updateCourse({ courseId: course.id, courseData: formData })).unwrap();
         toast.current?.show({
           severity: 'success',
           summary: 'Success',
           detail: 'Course updated successfully',
-          life: 3000
         });
       } else {
-        // Create new course
         await dispatch(createCourse(formData)).unwrap();
         toast.current?.show({
           severity: 'success',
           summary: 'Success',
           detail: 'Course created successfully',
-          life: 3000
         });
       }
-
-      onSuccess();
+      if (onSuccess) onSuccess();
       onClose();
-    } catch (error: any) {
-      if (error.inner) {
-        // Yup validation errors
-        const validationErrors: Record<string, string> = {};
-        error.inner.forEach((err: any) => {
-          validationErrors[err.path] = err.message;
-        });
-        setErrors(validationErrors);
-      } else {
-        // API errors
-        toast.current?.show({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.message || 'An error occurred',
-          life: 3000
-        });
-      }
-    } finally {
-      setCourseLoading(false);
+    } catch (err: any) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Error',
+        detail: err.message || 'Something went wrong',
+      });
     }
   };
 
   const handleAddCategory = async () => {
+    if (!newCategory.name) return;
     try {
-      await dispatch(createCategory({
-        name: newCategory.name,
-        description: newCategory.description,
-        isActive: newCategory.isActive
-      })).unwrap();
-
-      setNewCategory({ name: "", description: "", isActive: true });
+      await dispatch(createCategory(newCategory)).unwrap();
       toast.current?.show({
-        severity: "success",
-        summary: "Category Created",
-        detail: "Category created successfully!",
-        life: 3000,
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Category added successfully',
       });
       setShowCategoryModal(false);
-    } catch (error: any) {
-      console.error('Failed to create category:', error);
+      setNewCategory({ name: '', description: '', isActive: true });
+      dispatch(fetchCategories({ page: 1, limit: 1000, search: "" }));
+    } catch (err: any) {
       toast.current?.show({
-        severity: "error",
-        summary: "Category Failed",
-        detail: "Category failed to create!",
-        life: 3000,
+        severity: 'error',
+        summary: 'Error',
+        detail: err.message || 'Failed to add category',
       });
     }
   };
 
   return (
     <AnimatePresence>
-      {open && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
+        }}
+      >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              onClose();
-            }
-          }}
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -50, opacity: 0 }}
+          className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
         >
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -50, opacity: 0 }}
-            className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-          >
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold">
-                  {course ? 'Edit Course' : 'Create New Course'}
-                </h2>
-                <button
-                  onClick={onClose}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={24} />
-                </button>
+          <div className="p-5">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                {course ? 'Edit Course' : 'Create New Course'}
+              </h2>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="lg:flex gap-4">
+                <div className="flex-1">
+                  <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Title</label>
+                  <input
+                    type="text"
+                    name="title"
+                    placeholder="Course Title"
+                    value={courseData.title}
+                    onChange={handleChange}
+                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all ${errors.title ? 'ring-2 ring-red-500' : ''}`}
+                  />
+                  {errors.title && <p className="text-red-500 text-[10px] mt-1 ml-1">{errors.title}</p>}
+                </div>
+
+                <div className="flex-1">
+                  <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Short Description</label>
+                  <input
+                    type="text"
+                    name="shortDescription"
+                    placeholder="Short Description"
+                    value={courseData.shortDescription}
+                    onChange={handleChange}
+                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all ${errors.shortDescription ? 'ring-2 ring-red-500' : ''}`}
+                  />
+                  {errors.shortDescription && <p className="text-red-500 text-[10px] mt-1 ml-1">{errors.shortDescription}</p>}
+                </div>
               </div>
 
-              <form onSubmit={handleSubmit}>
-                <div className="lg:flex gap-4">
-                  {/* Title */}
-                  <div className="flex-1">
-                    <label htmlFor="title" className="block mb-1 font-medium">Title</label>
-                    <input
-                      type="text"
-                      name="title"
-                      placeholder="Course Title"
-                      value={courseData.title}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 mb-2 ${errors.title ? 'border-red-500' : ''}`}
-                      required
-                    />
-                    {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-                  </div>
+              <div>
+                <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Description</label>
+                <textarea
+                  name="description"
+                  placeholder="Full Description"
+                  value={courseData.description}
+                  onChange={handleChange}
+                  className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all ${errors.description ? 'ring-2 ring-red-500' : ''}`}
+                  rows={4}
+                />
+                {errors.description && <p className="text-red-500 text-[10px] mt-1 ml-1">{errors.description}</p>}
+              </div>
 
-                  {/* Short Description */}
-                  <div className="flex-1">
-                    <label htmlFor="shortDescription" className="block mb-1 font-medium">Short Description</label>
-                    <input
-                      type="text"
-                      name="shortDescription"
-                      placeholder="Short Description"
-                      value={courseData.shortDescription}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 mb-2 ${errors.shortDescription ? 'border-red-500' : ''}`}
-                      required
-                    />
-                    {errors.shortDescription && <p className="text-red-500 text-sm mt-1">{errors.shortDescription}</p>}
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label htmlFor="description" className="block mb-1 font-medium">Description</label>
-                  <textarea
-                    name="description"
-                    placeholder="Full Description"
-                    value={courseData.description}
+              <div className="lg:flex gap-4">
+                <div className="flex-1">
+                  <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Language</label>
+                  <select
+                    name="language"
+                    value={courseData.language}
                     onChange={handleChange}
-                    className={`w-full border rounded-lg p-2 mb-2 ${errors.description ? 'border-red-500' : ''}`}
-                    rows={4}
-                    required
-                  />
-                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                </div>
-                <div className="lg:flex gap-4">
-                  {/* <div className="flex-1">
-                  <label htmlFor="thumbnail" className="block mb-1 font-medium">Cover Image</label>
-                  <input
-                    type="file"
-                    name="thumbnail"
-                    placeholder=""
-                    onChange={handleFileChange}
-                    className={`w-full border rounded-lg p-2 mb-2 ${errors.thumbnail ? 'border-red-500' : ''}`}
-                  />
-                  {errors.thumbnail && <p className="text-red-500 text-sm mt-1">{errors.thumbnail}</p>}
-                  </div> */}
-
-                  {/* Language */}
-                  <div className="flex-1">
-                    <label htmlFor="language" className="block mb-1 font-medium">Language</label>
-                    <select
-                      name="language"
-                      value={courseData.language}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 mb-2 ${errors.language ? 'border-red-500' : ''}`}
-                    >
-                      <option>English</option>
-                      <option>French</option>
-                      <option>Kinyarwanda</option>
-                    </select>
-                    {errors.language && <p className="text-red-500 text-sm mt-1">{errors.language}</p>}
-                  </div>
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
+                  >
+                    <option>English</option>
+                    <option>French</option>
+                    <option>Kinyarwanda</option>
+                  </select>
                 </div>
 
-                <div className="lg:flex gap-4">
-                  {/* Level */}
-                  <div className="flex-1">
-                    <label htmlFor="level" className="block mb-1 font-medium">Level</label>
-                    <select
-                      name="level"
-                      value={courseData.level}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 mb-2 ${errors.level ? 'border-red-500' : ''}`}
-                    >
-                      <option>BEGINNER</option>
-                      <option>INTERMEDIATE</option>
-                      <option>ADVANCED</option>
-                      <option>EXPERT</option>
-                    </select>
-                    {errors.level && <p className="text-red-500 text-sm mt-1">{errors.level}</p>}
-                  </div>
-
-                  {/* Status */}
-                  <div className="flex-1">
-                    <label htmlFor="status" className="block mb-1 font-medium">Status</label>
-                    <select
-                      name="status"
-                      value={courseData.status}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 mb-2 ${errors.status ? 'border-red-500' : ''}`}
-                    >
-                      <option>DRAFT</option>
-                      <option>PUBLISHED</option>
-                      <option>ARCHIVED</option>
-                    </select>
-                    {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
-                  </div>
-                  {/* Type */}
-                  <div className="flex-1">
-                    <label htmlFor="type" className="block mb-1 font-medium">Type</label>
-                    <select
-                      name="type"
-                      value={courseData.type}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 mb-2 ${errors.type ? 'border-red-500' : ''}`}
-                    >
-                      <option>Free</option>
-                      <option>Paid</option>
-                    </select>
-                    {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
-                  </div>
-                </div>
-                {/* Category Selector */}
-                <div>
-                  <label htmlFor="categoryId" className="block mb-1 font-medium">Category</label>
-                  <div className="flex gap-2">
-                    {categoriesLoading ? (
-                      <div className="flex-1 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
-                    ) : (
-                      <>
-                        <select
-                          name="categoryId"
-                          value={courseData.categoryId}
-                          onChange={handleChange}
-                          className={`flex-1 border rounded-lg p-2 mb-2 ${errors.categoryId ? 'border-red-500' : ''}`}
-                          required
-                          disabled={categoriesLoading}
-                        >
-                          <option value="">Select a category</option>
-                          {categories
-                            .filter((cat) => cat.isActive)
-                            .map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </option>
-                            ))}
-
-                        </select>
-                        {errors.categoryId && <p className="text-red-500 text-sm mt-1">{errors.categoryId}</p>}
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setShowCategoryModal(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
-                      disabled={categoriesLoading}
-                    >
-                      + Add
-                    </button>
-                  </div>
-                </div>
-
-                {/* Booleans */}
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="isPublished"
-                    checked={courseData.isPublished}
+                <div className="flex-1">
+                  <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Level</label>
+                  <select
+                    name="level"
+                    value={courseData.level}
                     onChange={handleChange}
-                  />
-                  Published
-                </label>
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
+                  >
+                    <option>BEGINNER</option>
+                    <option>INTERMEDIATE</option>
+                    <option>ADVANCED</option>
+                    <option>EXPERT</option>
+                  </select>
+                </div>
+              </div>
 
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="isFeatured"
-                    checked={courseData.isFeatured}
+              <div className="lg:flex gap-4">
+                <div className="flex-1">
+                  <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Status</label>
+                  <select
+                    name="status"
+                    value={courseData.status}
                     onChange={handleChange}
-                  />
-                  Featured
-                </label>
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
+                  >
+                    <option>DRAFT</option>
+                    <option>PUBLISHED</option>
+                    <option>ARCHIVED</option>
+                  </select>
+                </div>
 
-                <div className="mt-6 flex justify-end space-x-3">
+                <div className="flex-1">
+                  <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Type</label>
+                  <select
+                    name="type"
+                    value={courseData.type}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
+                  >
+                    <option>Free</option>
+                    <option>Paid</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                <div className="flex gap-2">
+                  <select
+                    name="categoryId"
+                    value={courseData.categoryId}
+                    onChange={handleChange}
+                    className={`flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all ${errors.categoryId ? 'ring-2 ring-red-500' : ''}`}
+                  >
+                    <option value="">Select a category</option>
+                    {categories
+                      .filter((cat) => cat.isActive)
+                      .map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                  </select>
                   <button
                     type="button"
-                    onClick={onClose}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                    disabled={courseLoading}
+                    onClick={() => setShowCategoryModal(true)}
+                    className="px-5 py-2.5 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                    disabled={courseLoading}
-                  >
-                    {courseLoading ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        {course ? 'Updating...' : 'Creating...'}
-                      </span>
-                    ) : course ? (
-                      'Update Course'
-                    ) : (
-                      'Create Course'
-                    )}
+                    New
                   </button>
                 </div>
-              </form>
+                {errors.categoryId && <p className="text-red-500 text-[10px] mt-1 ml-1">{errors.categoryId}</p>}
+              </div>
 
-              {/* Category Modal */}
-              {showCategoryModal && (
-                <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50">
-                  <div className="bg-white p-6 rounded-xl w-full max-w-md relative">
+              <div>
+                <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Cover Thumbnail</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
+                />
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-6 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all font-bold"
+                  disabled={courseLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-10 py-3.5 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20 disabled:opacity-50"
+                  disabled={courseLoading}
+                >
+                  {courseLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 size={16} className="animate-spin" />
+                      Processing...
+                    </span>
+                  ) : course ? (
+                    'Update Course'
+                  ) : (
+                    'Create Course'
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {showCategoryModal && (
+              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+                <div className="bg-white p-6 rounded-2xl w-full max-w-md relative shadow-2xl border border-slate-200">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">Add New Category</h3>
                     <button
                       onClick={() => setShowCategoryModal(false)}
-                      className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
                       disabled={categoriesLoading}
                     >
-                      <X size={20} />
+                      <X size={24} />
                     </button>
-                    <h3 className="text-xl font-bold mb-4">Add New Category</h3>
-                    <div className="space-y-3">
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Name</label>
                       <input
                         type="text"
-                        placeholder="Category Name"
+                        placeholder="e.g., Mathematics"
                         value={newCategory.name}
                         onChange={(e) =>
                           setNewCategory((prev) => ({ ...prev, name: e.target.value }))
                         }
-                        className="w-full border rounded-lg p-2"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
                         disabled={categoriesLoading}
                       />
+                    </div>
+                    <div>
+                      <label className="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Description</label>
                       <textarea
-                        placeholder="Description"
+                        placeholder="Category purpose..."
                         value={newCategory.description}
                         onChange={(e) =>
                           setNewCategory((prev) => ({ ...prev, description: e.target.value }))
                         }
-                        className="w-full border rounded-lg p-2"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
+                        rows={3}
                         disabled={categoriesLoading}
                       />
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={newCategory.isActive}
-                          onChange={(e) =>
-                            setNewCategory((prev) => ({ ...prev, isActive: e.target.checked }))
-                          }
-                          disabled={categoriesLoading}
-                        />
-                        Active
-                      </label>
-                      <button
-                        onClick={handleAddCategory}
-                        className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                        disabled={!newCategory.name || categoriesLoading}
-                      >
-                        {categoriesLoading ? 'Saving...' : 'Save Category'}
-                      </button>
                     </div>
+                    <button
+                      onClick={handleAddCategory}
+                      className="w-full py-3.5 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all disabled:opacity-50 mt-4 font-bold"
+                      disabled={!newCategory.name || categoriesLoading}
+                    >
+                      {categoriesLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 size={16} className="animate-spin" />
+                          Saving...
+                        </span>
+                      ) : (
+                        'Save Category'
+                      )}
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
-          </motion.div>
+              </div>
+            )}
+          </div>
         </motion.div>
-      )}
+      </motion.div>
       <Toast ref={toast} position="top-right" />
     </AnimatePresence>
   );

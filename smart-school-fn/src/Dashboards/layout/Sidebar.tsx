@@ -33,82 +33,89 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div
-      className={`${isCollapsed ? "w-20" : "w-64"
-        } bg-white border-r border-gray-200 transition-all duration-300`}
+      className={`${isCollapsed ? "w-20" : "w-72"
+        } bg-white border-r border-slate-100 transition-all duration-500 ease-in-out z-40 relative`}
     >
       <div className="flex flex-col h-full">
-        {/* Logo */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        {/* Logo Section */}
+        <div className="flex items-center justify-between p-6 mb-4">
           {!isCollapsed && (
-            <div className="flex items-center">
-              <img
-                src="/nbglogo.png"
-                alt="Logo"
-                className="h-8 w-auto"
-              />
-              <span className="ml-2 text-xl font-semibold">Admin Panel</span>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-[#1a7ea5] rounded-xl flex items-center justify-center shadow-lg shadow-[#1a7ea5]/20">
+                <img
+                  src="/nbglogo.png"
+                  alt="Logo"
+                  className="h-6 w-auto brightness-200"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-black text-slate-900 uppercase tracking-tighter leading-none">Smart School</span>
+                <span className="text-[10px] font-bold text-[#6cb9cc] uppercase tracking-widest mt-1">Admin</span>
+              </div>
             </div>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded-full hover:bg-gray-100"
+            className={`p-2 rounded-xl transition-all duration-300 ${isCollapsed ? "mx-auto bg-[#1a7ea5]/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
           >
-            {isCollapsed ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-500"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-500"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
+            <div className="flex flex-col gap-1 w-4">
+              <div className={`h-0.5 bg-slate-400 rounded-full transition-all duration-300 ${!isCollapsed ? 'w-full' : 'w-4'}`} />
+              <div className={`h-0.5 bg-slate-400 rounded-full transition-all duration-300 ${!isCollapsed ? 'w-2/3' : 'w-2'}`} />
+              <div className={`h-0.5 bg-slate-400 rounded-full transition-all duration-300 ${!isCollapsed ? 'w-full' : 'w-4'}`} />
+            </div>
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-5">
+        <nav className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
+          <ul className="space-y-2">
             {sidebarItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.path);
+              const isActive = item.path === "/"
+                ? location.pathname === "/"
+                : item.path === "/dashboard"
+                  ? location.pathname === "/dashboard"
+                  : location.pathname.startsWith(item.path);
               return (
                 <li key={item.id}>
                   <Link
                     to={item.path}
-                    className={`flex items-center px-4 py-3 text-sm font-medium ${isActive
-                      ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600"
-                      : "text-gray-600 hover:bg-gray-50"
+                    className={`flex items-center px-4 py-3.5 rounded-2xl transition-all duration-300 group ${isActive
+                      ? "bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/25"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-[#1a7ea5]"
                       }`}
                   >
-                    <item.icon
-                      className={`h-5 w-5 ${isActive ? "text-blue-600" : "text-gray-400"
-                        }`}
-                    />
-                    {!isCollapsed && <span className="ml-3">{item.label}</span>}
+                    <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#1a7ea5]"}`}>
+                      <item.icon size={20} strokeWidth={2.5} />
+                    </div>
+                    {!isCollapsed && (
+                      <span className="ml-3 text-xs font-black uppercase tracking-widest truncate">
+                        {item.label}
+                      </span>
+                    )}
+                    {isActive && !isCollapsed && (
+                      <div className="ml-auto w-1.5 h-1.5 bg-white/40 rounded-full ring-4 ring-white/10" />
+                    )}
                   </Link>
                 </li>
               );
             })}
           </ul>
         </nav>
+
+        {/* Bottom Section */}
+        {!isCollapsed && (
+          <div className="p-6">
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Platform Status</p>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-xs font-bold text-slate-700">Healthy</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
