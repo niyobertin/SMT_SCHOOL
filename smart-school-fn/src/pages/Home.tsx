@@ -119,7 +119,7 @@ export const HomePage: React.FC = () => {
 
             <motion.p
               variants={itemVariants}
-              className="text-lg text-gray-100 mb-10 leading-relaxed font-medium max-w-3xl mx-auto"
+              className="hidden md:block text-lg text-gray-100 mb-10 leading-relaxed font-medium max-w-3xl mx-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.6 }}

@@ -41,7 +41,7 @@ export const About = () => {
     },
     {
       name: "Bertin Niyonkuru",
-      position: "Software engineer/CTO",
+      position: "Software engineer",
       image: cto,
       bio: "+250783021801",
     }
@@ -132,7 +132,7 @@ export const About = () => {
             </motion.h1>
             <motion.p
               variants={fadeInUp}
-              className="text-lg text-gray-100 mb-10 leading-relaxed font-medium max-w-2xl mx-auto"
+              className="hidden md:block text-lg text-gray-100 mb-10 leading-relaxed font-medium max-w-2xl mx-auto"
             >
               The future of learning where education goes beyond classroom walls and adapts to the demands of today’s fast-changing world.
             </motion.p>

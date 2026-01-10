@@ -68,15 +68,15 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin size={14} className="mt-1 text-[#6cb9cc]" />
-                <span className="text-[13px]">Kigali, Rwanda</span>
+                <span className="text-[13px]">JQX4+W7R Nyanza, Rwanda</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail size={14} text-teal-400 className="text-[#6cb9cc]" />
-                <span className="text-[13px]">support@smartschool.rw</span>
+                <Mail size={14} className="text-[#6cb9cc]" />
+                <span className="text-[13px]">smartschoolrwanda@gmail.com</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={14} className="text-[#6cb9cc]" />
-                <span className="text-[13px]">+250 788 000 000</span>
+                <span className="text-[13px]">+250 781 212 252</span>
               </li>
             </ul>
           </div>

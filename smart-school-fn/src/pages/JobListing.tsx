@@ -107,7 +107,7 @@ export const JobListing = () => {
                             Job Opportunities
                         </h1>
                         <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-8 rounded-full" />
-                        <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+                        <p className="hidden md:block text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
                             Discover your next career opportunity and join the workforce of the future.
                         </p>
                     </motion.div>

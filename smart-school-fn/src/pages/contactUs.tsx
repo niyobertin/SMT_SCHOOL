@@ -142,7 +142,7 @@ export const ContactPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg text-gray-200 max-w-2xl mx-auto font-medium"
+            className="hidden md:block text-lg text-gray-200 max-w-2xl mx-auto font-medium"
           >
             Have questions or need assistance? Our dedicated team is here to support your learning journey every step of the way.
           </motion.p>

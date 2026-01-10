@@ -245,7 +245,7 @@ export default function TuitionPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg text-gray-200 max-w-2xl mx-auto font-medium"
+            className="hidden md:block text-lg text-gray-200 max-w-2xl mx-auto font-medium"
           >
             Invest in your success with our transparent and flexible investment plans designed for every stage of your career.
           </motion.p>

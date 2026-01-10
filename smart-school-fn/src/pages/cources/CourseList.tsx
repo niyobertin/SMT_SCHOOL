@@ -135,7 +135,7 @@ export const CourseList = () => {
               Educational Programs
             </h1>
             <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-8 rounded-full" />
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="hidden md:block text-lg text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
               Explore our comprehensive curriculum designed to empower your professional development and academic success.
             </p>
           </motion.div>
