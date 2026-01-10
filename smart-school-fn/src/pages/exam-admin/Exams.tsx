@@ -95,6 +95,14 @@ const Exams = () => {
         dispatch(fetchOrganizations());
     }, [dispatch]);
 
+    // Auto-select organization for examiners
+    useEffect(() => {
+        if (user?.role === 'EXAMINER' && organizations.length > 0 && !filters.organizationId) {
+            const org = organizations[0]; // For examiners, we typically expect one or a clear default
+            handleOrgFilterChange(org.id);
+        }
+    }, [user, organizations, filters.organizationId]);
+
     // Fetch Exams on Filter Change
     useEffect(() => {
         const fetchParams: any = {
@@ -436,8 +444,8 @@ const Exams = () => {
                     />
                 </div>
 
-                {/* Organization Filter */}
-                {user?.role !== 'EXAMINER' && (
+                {/* Organization Filter - Only show for non-examiners or if multiple orgs are available and user is not an examiner */}
+                {(user?.role !== 'EXAMINER') && (
                     <div className="col-span-1 md:col-span-1">
                         <div className="relative">
                             <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />

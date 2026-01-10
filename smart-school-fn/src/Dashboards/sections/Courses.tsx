@@ -1,20 +1,18 @@
-import { Plus, ChevronLeft, ChevronRight, Edit, Trash2, Eye, Calendar, X } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Edit, Trash2, Eye, X, BookOpen, Layers, Tag } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { deleteCourse, fetchCourses, setPage } from "../../redux/features/courses/courseSlice";
 import { CourseForm } from "../Modals/CourseForm";
 import { CourseCardSkeleton } from "../../components/Skeletons/CourseCardSkeleton";
 import type { AppDispatch, RootState } from "../../redux/stores";
 import { Toast } from 'primereact/toast';
 import { Dialog } from 'primereact/dialog';
-import { Button } from 'primereact/button';
 import { fetchCategories, createCategory } from "../../redux/features/courses/category";
 import api from "../../redux/api/api";
 
-interface CoursesSectionProps { }
-
-export const CoursesSection = ({ }: CoursesSectionProps) => {
+export const CoursesSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -31,7 +29,6 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
   const {
     items: courses,
     loading,
-    error,
     page,
     totalPages,
   } = useSelector((state: RootState) => state.courses);
@@ -65,6 +62,9 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
     }));
   }, [dispatch, page]);
 
+  useEffect(() => {
+    dispatch(fetchCategories({ page: 1, limit: 1000, search: "" }));
+  }, [dispatch]);
 
   const handleViewCourse = (courseId: string) => {
     navigate(`/dashboard/courses/${courseId}`);
@@ -88,7 +88,6 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
 
     try {
       await dispatch(deleteCourse(courseToDelete)).unwrap();
-
       toast.current?.show({
         severity: 'success',
         summary: 'Success',
@@ -115,7 +114,6 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
   const handleFormSuccess = () => {
     setIsModalOpen(false);
     setEditingCourse(null);
-    // Refresh courses
     dispatch(fetchCourses({
       page,
       limit: itemsPerPage
@@ -127,7 +125,6 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
     description: "",
     isActive: true,
   });
-
 
   const openModal = (category?: any) => {
     if (category) {
@@ -144,10 +141,6 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
     setShowCategoryModal(true);
   };
 
-  useEffect(() => {
-    dispatch(fetchCategories({ page: 1, limit: 1000, search: "" }));
-  }, [dispatch]);
-
   const handleAddCategory = async () => {
     if (editingCategory) {
       try {
@@ -161,7 +154,6 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
         });
         setShowCategoryModal(false);
       } catch (error: any) {
-        console.error('Failed to update category:', error);
         toast.current?.show({
           severity: "error",
           summary: "Category Failed",
@@ -185,8 +177,8 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
           life: 3000,
         });
         setShowCategoryModal(false);
+        dispatch(fetchCategories({ page: 1, limit: 1000, search: "" }));
       } catch (error: any) {
-        console.error('Failed to create category:', error);
         toast.current?.show({
           severity: "error",
           summary: "Category Failed",
@@ -197,460 +189,460 @@ export const CoursesSection = ({ }: CoursesSectionProps) => {
     }
   };
 
-
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   const handleCategoryDeleteClick = (categoryId: string) => {
     setCategoryToDelete(categoryId);
     setShowDeleteDialog(true);
   };
-  const confirmDeleteCategory = () => {
-    api.delete(`/categories/${categoryToDelete}`);
-    dispatch(fetchCategories({ page, limit: itemsPerPage }));
-    setShowDeleteDialog(false);
-    setCategoryToDelete(null);
-    toast.current?.show({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Category deleted successfully',
-      life: 3000
-    });
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    try {
+      await api.delete(`/categories/${categoryToDelete}`);
+      dispatch(fetchCategories({ page: 1, limit: 1000, search: "" }));
+      setShowDeleteDialog(false);
+      setCategoryToDelete(null);
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Category deleted successfully',
+        life: 3000
+      });
+    } catch {
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete category' });
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   const truncateDescription = (description: string, maxLength = 80) => {
     return description.length > maxLength
       ? description.substring(0, maxLength) + '...'
       : description;
   };
-  if (loading) {
+
+  if (loading && courses.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-        {[...Array(9)].map((_, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-0">
+        {[...Array(6)].map((_, index) => (
           <CourseCardSkeleton key={index} />
         ))}
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-6 text-red-500">
-        Error loading courses: {error}
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8 p-0"
+    >
       <Toast ref={toast} />
-      <div className="flex gap-4 mb-6">
+
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-gray-100">
+        <div>
+          <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">Curriculum</h1>
+          <p className="text-slate-500 font-medium mt-3">Design and organize your educational programs and tracks.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setEditingCourse(null);
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+          >
+            <Plus size={16} />
+            New Course
+          </button>
+        </div>
+      </div>
+
+      {/* Modern Tabs */}
+      <div className="flex gap-2 p-1.5 bg-slate-100/50 rounded-xl w-fit border border-slate-100">
         <button
-          className={`px-4 py-2 rounded-lg ${activeTab === "courses" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "courses" ? "bg-white text-[#1a7ea5] shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
           onClick={() => setActiveTab("courses")}
         >
+          <BookOpen size={14} />
           Courses
         </button>
         <button
-          className={`px-4 py-2 rounded-lg ${activeTab === "categories" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === "categories" ? "bg-white text-[#1a7ea5] shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
           onClick={() => setActiveTab("categories")}
         >
+          <Layers size={14} />
           Categories
         </button>
       </div>
-      {activeTab === "courses" ? (
-        <>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">Courses</h2>
-            <button
-              onClick={() => {
-                setEditingCourse(null);
-                setIsModalOpen(true);
-              }}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus size={16} className="mr-2" />
-              Add New Course
-            </button>
-          </div>
 
-          <Dialog
-            visible={showDeleteDialog}
-            onHide={() => setShowDeleteDialog(false)}
-            header="Confirm Delete"
-            modal
-            footer={
-              <div>
-                <Button
-                  label="No"
-                  icon="pi pi-times"
-                  onClick={() => setShowDeleteDialog(false)}
-                  className="p-button-text"
-                />
-                <Button
-                  label="Yes"
-                  icon="pi pi-check"
-                  onClick={confirmDelete}
-                  autoFocus
-                  className="p-button-danger"
-                />
-              </div>
-            }
+      <AnimatePresence mode="wait">
+        {activeTab === "courses" ? (
+          <motion.div
+            key="courses-tab"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            className="space-y-8"
           >
-            <p>Are you sure you want to delete this course? This action cannot be undone.</p>
-          </Dialog>
-
-          {isModalOpen && (
-            <CourseForm
-              open={isModalOpen}
-              onClose={() => {
-                setIsModalOpen(false);
-                setEditingCourse(null);
-              }}
-              onSuccess={handleFormSuccess}
-              course={editingCourse}
-            />
-          )}
-
-          {courses.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">No courses found</p>
-              <button
-                onClick={() => {
-                  setEditingCourse(null);
-                  setIsModalOpen(true);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Create your first course
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.isArray(courses) && courses.map((course: any, index: number) => (
-                  <div
-                    key={index}
-                    className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <CourseCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : courses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
+                <div className="p-4 bg-slate-50 rounded-xl mb-6">
+                  <BookOpen size={48} className="text-slate-300" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">No courses yet</h3>
+                <p className="text-slate-500 font-medium mt-2 max-w-xs text-center">Start building your curriculum by creating your first course.</p>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="mt-8 px-6 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+                >
+                  Create Course
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {courses.map((course: any, idx: number) => (
+                  <motion.div
+                    key={course.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="group bg-white rounded-2xl p-2 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 overflow-hidden"
                   >
-                    {/* <div className="h-48 bg-gray-200 relative">
-                  {course?.thumbnail && (
-                    <img
-                      src={course.thumbnail}
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                </div> */}
-                    <div className="p-4">
-                      <div className="flex justify-between">
-                        <h3 className="text-sm font-semibold text-gray-700">{course?.status}</h3>
-                        <h3 className="text-sm font-semibold text-gray-700">{course?.type}</h3>
+                    <div className="relative h-44 bg-slate-100 rounded-xl overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#1a7ea5]/20 to-transparent" />
+                      <div className="absolute top-4 left-4 flex gap-2">
+                        <span className="px-3 py-1.5 bg-white/80 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-900 shadow-sm">
+                          {course?.status}
+                        </span>
+                        <span className="px-3 py-1.5 bg-[#1a7ea5] rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-sm">
+                          {course?.type}
+                        </span>
                       </div>
-                      <div className="flex justify-between items-start mb-3">
+                      {/* If thumbnail exists, use it here */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <BookOpen size={40} className="text-[#1a7ea5]/20" />
+                      </div>
+                    </div>
 
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {course?.title}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {course?.description || 'No description available.'}
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors">{course?.title}</h3>
+                      <p className="text-sm text-slate-500 font-medium mt-3 line-clamp-2 leading-relaxed">
+                        {course?.description || 'No detailed description provided for this track.'}
                       </p>
-                      <div className="flex justify-between items-center text-sm text-gray-500 ">
+
+                      <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
                         <button
                           onClick={() => handleViewCourse(course.id)}
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 cursor-pointer bg-green-500 text-white p-2 rounded"
+                          className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all"
                         >
-                          <Eye size={16} />
+                          <Eye size={14} />
                           {course?.lessons?.length || 0} Lessons
                         </button>
-                        <div className="flex gap-3">
+
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditCourse(course.id);
-                            }}
-                            className="flex items-center gap-1 hover:text-yellow-800 cursor-pointer bg-indigo-500 text-white p-2 rounded"
-                            title="Edit course"
+                            onClick={() => handleEditCourse(course.id)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl transition-all"
+                            title="Edit"
                           >
-                            <Edit size={16} /> Edit
+                            <Edit size={16} />
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(course.id);
-                            }}
-                            className="flex items-center gap-1 text-red-600 hover:text-red-800 cursor-pointer bg-red-500 text-white p-2 rounded"
-                            title="Delete course"
+                            onClick={() => handleDeleteClick(course.id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 rounded-xl transition-all"
+                            title="Delete"
                           >
-                            <Trash2 size={16} /> Delete
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
+            )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center mt-8 space-x-2">
+            {/* Premium Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page Results</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={e => handleItemsPerPageChange(Number(e.target.value))}
+                    className="bg-slate-50 border-none rounded-xl px-3 py-1.5 text-xs font-bold text-slate-600 outline-none cursor-pointer"
+                  >
+                    {[9, 18, 27, 45, 90].map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => handlePageChange(page - 1)}
                     disabled={page === 1}
-                    className="px-3 py-1 border rounded-md disabled:opacity-50 cursor-pointer"
+                    className="p-2.5 bg-slate-50 text-slate-400 rounded-xl disabled:opacity-30 hover:text-[#1a7ea5] transition-all"
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    <ChevronLeft size={20} />
                   </button>
-
-                  <div className="text-sm text-black flex items-center justify-between gap-2">
-                    Page <span className="font-semibold">{page} </span> of <span className="font-semibold"> {totalPages}</span>
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handlePageChange(i + 1)}
+                        className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${page === i + 1 ? 'bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    {totalPages > 5 && <span className="text-slate-300 px-1 font-black">...</span>}
                   </div>
                   <button
                     onClick={() => handlePageChange(page + 1)}
                     disabled={page === totalPages}
-                    className="px-3 py-1 border rounded-md disabled:opacity-50 cursor-pointer"
+                    className="p-2.5 bg-slate-50 text-slate-400 rounded-xl disabled:opacity-30 hover:text-[#1a7ea5] transition-all"
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight size={20} />
                   </button>
-                  <select
-                    value={itemsPerPage}
-                    onChange={e => handleItemsPerPageChange(Number(e.target.value))}
-                    className="px-3 py-1 border rounded-md"
-                  >
-                    <option value="9">9 per page</option>
-                    <option value="18">18 per page</option>
-                    <option value="27">27 per page</option>
-                    <option value="36">36 per page</option>
-                    <option value="45">45 per page</option>
-                    <option value="54">54 per page</option>
-                    <option value="63">63 per page</option>
-                    <option value="72">72 per page</option>
-                    <option value="81">81 per page</option>
-                    <option value="90">90 per page</option>
-                  </select>
                 </div>
-              )}
-            </>
-          )}
-        </>
-      ) :
-        (
-          <div className="bg-gray-50 min-h-screen">
-            <div className="flex justify-between items-center">
-              <div className="px-6 py-4">
-                <h2 className="text-2xl font-bold text-black flex items-center gap-2">
-                  Categories Management
-                </h2>
-                <p className="text-gray-700 mt-1">Manage your course categories and track course counts</p>
               </div>
-              <div className="px-6 py-4">
-                <button
-                  onClick={() => setShowCategoryModal(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Create Category
-                </button>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="categories-tab"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="space-y-6"
+          >
+            <div className="flex justify-between items-center mb-2">
+              <div>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">Categories</h2>
+                <p className="text-xs font-medium text-slate-400 mt-1">Classification and taxonomies</p>
               </div>
+              <button
+                onClick={() => openModal()}
+                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-2xl font-bold text-xs text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+              >
+                <Tag size={14} className="text-[#1a7ea5]" />
+                Create Category
+              </button>
             </div>
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+
+            <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-100 border-b border-gray-200">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/50">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Courses
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Category</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Description</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Courses</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Status</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {categories.map((category, index) => (
-                      <tr
+                  <tbody className="divide-y divide-slate-50">
+                    {categories.map((category, idx) => (
+                      <motion.tr
                         key={category.id}
-                        className={`hover:bg-gray-50 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
-                          }`}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className="hover:bg-slate-50/30 transition-colors group"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-8 py-5">
                           <div className="flex flex-col">
-                            <div className="text-sm font-medium text-gray-900">
-                              {category.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {category.slug}
-                            </div>
+                            <span className="text-sm font-bold text-slate-900 leading-none">{category.name}</span>
+                            <span className="text-[10px] font-medium text-slate-400 mt-1.5 uppercase tracking-tighter">/{category.slug}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 max-w-xs">
+                        <td className="px-6 py-5">
+                          <p className="text-xs text-slate-500 font-medium max-w-xs leading-relaxed">
                             {truncateDescription(category.description)}
-                          </div>
+                          </p>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <span className="text-sm text-gray-900">
-                              {category.courses?.length || 0} course{category.courses?.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${category.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                            }`}>
-                            {category.isActive ? 'Active' : 'Inactive'}
+                        <td className="px-6 py-5 text-center">
+                          <span className="inline-flex items-center px-3 py-1 bg-slate-100 rounded-lg text-xs font-black text-[#1a7ea5]">
+                            {category.courses?.length || 0}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {formatDate(category.createdAt)}
-                          </div>
+                        <td className="px-6 py-5 text-sm">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${category.isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                            {category.isActive ? 'Active' : 'Offline'}
+                          </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
+                        <td className="px-8 py-5">
+                          <div className="flex items-center justify-end gap-2 transition-all">
                             <button
                               onClick={() => openModal(category)}
-                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
-                              title="Update Category"
+                              className="p-2 text-slate-400 hover:text-[#1a7ea5] hover:bg-blue-50 bg-white border border-slate-100 rounded-xl transition-all shadow-sm"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit size={14} />
                             </button>
                             <button
                               onClick={() => handleCategoryDeleteClick(category.id)}
-                              className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
-                              title="Delete Category"
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 bg-white border border-slate-100 rounded-xl transition-all shadow-sm"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              {/* Category Modal */}
-              {showCategoryModal && (
-                <div className="fixed inset-0 bg-gray-700/70 backdrop-blur-sm flex items-center justify-center z-50">
-                  <div className="bg-white p-6 rounded-xl w-full max-w-md relative">
-                    <button
-                      onClick={() => setShowCategoryModal(false)}
-                      className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                      disabled={categoriesLoading}
-                    >
-                      <X size={20} />
-                    </button>
-                    <h3 className="text-xl font-bold mb-4">Add New Category</h3>
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        placeholder="Category Name"
-                        value={newCategory.name}
-                        onChange={(e) =>
-                          setNewCategory((prev) => ({ ...prev, name: e.target.value }))
-                        }
-                        className="w-full border rounded-lg p-2"
-                        disabled={categoriesLoading}
-                      />
-                      <textarea
-                        placeholder="Description"
-                        value={newCategory.description}
-                        onChange={(e) =>
-                          setNewCategory((prev) => ({ ...prev, description: e.target.value }))
-                        }
-                        className="w-full border rounded-lg p-2"
-                        disabled={categoriesLoading}
-                      />
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={newCategory.isActive}
-                          onChange={(e) =>
-                            setNewCategory((prev) => ({ ...prev, isActive: e.target.checked }))
-                          }
-                          disabled={categoriesLoading}
-                        />
-                        Active
-                      </label>
-                      <button
-                        onClick={handleAddCategory}
-                        className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                        disabled={!newCategory.name || categoriesLoading}
-                      >
-                        {categoriesLoading ? 'Saving...' : editingCategory ? 'Update Category' : 'Save Category'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <Dialog
-                visible={showDeleteDialog}
-                onHide={() => setShowDeleteDialog(false)}
-                header="Confirm Delete"
-                modal
-                footer={
-                  <div>
-                    <Button
-                      label="No"
-                      icon="pi pi-times"
-                      onClick={() => setShowDeleteDialog(false)}
-                      className="p-button-text"
-                    />
-                    <Button
-                      label="Yes"
-                      icon="pi pi-check"
-                      onClick={confirmDeleteCategory}
-                      autoFocus
-                      className="p-button-danger"
-                    />
-                  </div>
-                }
-              >
-                <p>Are you sure you want to delete this category? This action cannot be undone.</p>
-              </Dialog>
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <div className="px-8 py-6 bg-slate-50/30 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                    Showing <span className="font-medium">1</span> to <span className="font-medium">{categories.length}</span> of{' '}
-                    <span className="font-medium">{categories.length}</span> categories
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Total courses: <span className="font-medium">
-                      {categories.reduce((total, category) => total + (category.courses?.length || 0), 0)}
-                    </span>
-                  </div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Total curriculum spread: <span className="text-slate-900">{categories.length} segments</span>
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
-    </div>
+      </AnimatePresence>
+
+      {/* Modals & Dialogs */}
+      <ConfirmDeleteDialog
+        visible={showDeleteDialog && !!courseToDelete}
+        onHide={() => setShowDeleteDialog(false)}
+        onConfirm={confirmDelete}
+        message="Are you sure you want to delete this course track? This will remove all associated curriculum data."
+      />
+
+      <ConfirmDeleteDialog
+        visible={showDeleteDialog && !!categoryToDelete}
+        onHide={() => setShowDeleteDialog(false)}
+        onConfirm={confirmDeleteCategory}
+        message="Deleting this category will affect course classification. Continue?"
+      />
+
+      {isModalOpen && (
+        <CourseForm
+          open={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingCourse(null);
+          }}
+          onSuccess={handleFormSuccess}
+          course={editingCourse}
+        />
+      )}
+
+      {/* Category Modal - Modernized */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white p-6 rounded-2xl w-full max-w-lg shadow-2xl relative"
+          >
+            <button
+              onClick={() => setShowCategoryModal(false)}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-all"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-4 mb-8">
+              <div className="p-4 bg-[#1a7ea5]/10 rounded-3xl text-[#1a7ea5]">
+                <Layers size={24} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">Manage Category</h3>
+                <p className="text-sm font-medium text-slate-400">Classify your curriculum effectively.</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[#1a7ea5] ml-4">Segment Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Computer Science, Business"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[#1a7ea5] ml-4">Strategic Purpose</label>
+                <textarea
+                  placeholder="Describe what this category encompasses..."
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory((prev) => ({ ...prev, description: e.target.value }))}
+                  className="w-full bg-slate-50 border-none rounded-3xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all h-32 resize-none"
+                />
+              </div>
+
+              <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all">
+                <div className={`w-10 h-6 rounded-full relative transition-all ${newCategory.isActive ? 'bg-[#1a7ea5]' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${newCategory.isActive ? 'translate-x-4' : ''}`} />
+                </div>
+                <input
+                  type="checkbox"
+                  checked={newCategory.isActive}
+                  onChange={(e) => setNewCategory((prev) => ({ ...prev, isActive: e.target.checked }))}
+                  className="hidden"
+                />
+                <span className="text-xs font-black uppercase tracking-widest text-slate-600">Active Pipeline</span>
+              </label>
+
+              <button
+                onClick={handleAddCategory}
+                className="w-full py-5 bg-[#1a7ea5] text-white rounded-3xl font-black text-xs uppercase tracking-widest hover:opacity-95 transition-all shadow-xl shadow-[#1a7ea5]/20 disabled:opacity-40"
+                disabled={!newCategory.name || categoriesLoading}
+              >
+                {categoriesLoading ? 'Processing...' : editingCategory ? 'Sync Changes' : 'Publish Segment'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
   );
 };
+
+const ConfirmDeleteDialog = ({ visible, onHide, onConfirm, message }: any) => (
+  <Dialog
+    visible={visible}
+    onHide={onHide}
+    header="Danger Zone"
+    modal
+    className="rounded-[32px] overflow-hidden"
+    footer={
+      <div className="flex gap-3 justify-end p-4 bg-slate-50/50">
+        <button
+          onClick={onHide}
+          className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all"
+        >
+          Retreat
+        </button>
+        <button
+          onClick={onConfirm}
+          className="px-5 py-2.5 bg-rose-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20"
+        >
+          Confirm Strike
+        </button>
+      </div>
+    }
+  >
+    <div className="p-2">
+      <p className="text-sm font-medium text-slate-500 leading-relaxed">{message}</p>
+    </div>
+  </Dialog>
+);
 
 export default CoursesSection;

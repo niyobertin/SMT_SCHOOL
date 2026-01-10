@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Trash2, Shield } from "lucide-react";
+import { Search, Trash2, Shield, UserPlus, Filter, MoreVertical, CheckCircle2, XCircle } from "lucide-react";
 import { Toast } from "primereact/toast";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../../redux/api/api";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { ExaminerAssignmentModal } from "../Modals/ExaminerAssignmentModal";
+import Skeleton from "react-loading-skeleton";
 
 interface User {
   id: string;
@@ -106,9 +108,7 @@ export const UsersSection = () => {
 
   const confirmExaminerAssignment = async (orgIds: string[]) => {
     if (!selectedUserForRole) return;
-
-    setUpdatingRoleId(selectedUserForRole.id); // Show loading on the row/modal?
-    // Since modal is open, we can pass loading prop to modal instead
+    setUpdatingRoleId(selectedUserForRole.id);
 
     try {
       await api.post(`/users/${selectedUserForRole.id}/assign-examiner-role`, {
@@ -140,19 +140,6 @@ export const UsersSection = () => {
     }
   };
 
-  const handleVerifyChange = async (id: string, verified: boolean) => {
-    try {
-      await api.patch(`/users/${id}`, { isVerified: verified });
-      toast.current?.show({
-        severity: "success",
-        summary: "Success",
-        detail: `User ${verified ? "verified" : "unverified"} successfully`,
-      });
-      fetchUsers();
-    } catch {
-      toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to update verification" });
-    }
-  };
 
   const handleManageOrganizations = (user: User) => {
     setSelectedUserForRole(user);
@@ -160,147 +147,188 @@ export const UsersSection = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-      </div>
-      <div>
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full md:full lg:w-1/2 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8 p-0"
+    >
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-gray-100">
+        <div>
+          <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">Users</h1>
+          <p className="text-slate-500 font-medium mt-3">Manage your platform's community and access levels.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20">
+            <UserPlus size={16} />
+            Add User
+          </button>
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* Filters Area */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 relative group">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-[#1a7ea5] transition-colors" size={18} />
+          <input
+            type="text"
+            placeholder="Search by name, username or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium text-slate-700 shadow-sm"
+          />
+        </div>
+        <button className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
+          <Filter size={18} />
+          Filters
+        </button>
+      </div>
+
+      {/* Users Table Card */}
+      <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Verified</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            <thead>
+              <tr className="bg-slate-50/50">
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">User Identity</th>
+                <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Account Role</th>
+                <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Status</th>
+                <th className="px-5 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Verified</th>
+                <th className="px-6 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-50">
               {loading ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-6">Loading users...</td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-6">No users found</td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-6 py-4 whitespace-nowrap flex items-center">
-                      <div className="h-10 w-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
-                        {user.firstName[0]}
-                      </div>
-                      <div className="ml-4 text-sm font-medium text-gray-900">
-                        {user.firstName} {user.lastName}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{user.username}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={user.role}
-                          onChange={(e) => handleRoleChange(user, e.target.value)}
-                          disabled={updatingRoleId === user.id}
-                          className={`border border-gray-300 rounded-lg px-2 py-1 text-sm ${user.role === 'EXAMINER' ? 'bg-purple-50 border-purple-200' : ''}`}
-                        >
-                          <option value="STUDENT">Student</option>
-                          <option value="ADMIN">Admin</option>
-                          <option value="INSTRUCTOR">Instructor</option>
-                          <option value="EXAMINER">Examiner</option>
-                        </select>
-                        {user.role === 'EXAMINER' && (
-                          <button
-                            onClick={() => handleManageOrganizations(user)}
-                            className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50"
-                            title="Manage Organizations"
-                          >
-                            <Shield size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    {/* Status toggle */}
-                    <td className="px-6 py-4">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={user.isActive}
-                          onChange={(e) => handleStatusChange(user.id, e.target.checked)}
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                        />
-                        <span className="text-sm">{user.isActive ? "Active" : "Inactive"}</span>
-                      </label>
-                    </td>
-                    {/* Verified toggle */}
-                    <td className="px-6 py-4">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={user.isVerified}
-                          onChange={(e) => handleVerifyChange(user.id, e.target.checked)}
-                          className="h-4 w-4 text-green-600 border-gray-300 rounded"
-                        />
-                        <span className="text-sm">{user.isVerified ? "Yes" : "No"}</span>
-                      </label>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium">
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                        disabled={isDeleteModalOpen}
-                      >
-                        {isDeleteModalOpen ? "Deleting..." : <><Trash2 size={16} /> Delete</>}
-                      </button>
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <tr key={idx}>
+                    <td colSpan={5} className="px-8 py-4">
+                      <Skeleton height={40} borderRadius={12} />
                     </td>
                   </tr>
                 ))
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-8 py-12 text-center text-slate-400 font-medium">No system users found.</td>
+                </tr>
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {users.map((user, idx) => (
+                    <motion.tr
+                      key={user.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="hover:bg-slate-50/50 transition-colors group"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-xl bg-[#1a7ea5]/10 flex items-center justify-center text-[#1a7ea5] font-bold text-sm border border-[#1a7ea5]/5 shadow-inner">
+                            {user.firstName[0]}{user.lastName[0]}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors">{user.firstName} {user.lastName}</span>
+                            <span className="text-[11px] text-slate-400 font-medium">{user.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user, e.target.value)}
+                            disabled={updatingRoleId === user.id}
+                            className={`appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/30 outline-none transition-all cursor-pointer ${user.role === 'EXAMINER' ? 'bg-purple-100/50 text-purple-700 border-purple-200' : ''}`}
+                          >
+                            <option value="STUDENT">Student</option>
+                            <option value="ADMIN">Admin</option>
+                            <option value="INSTRUCTOR">Instructor</option>
+                            <option value="EXAMINER">Examiner</option>
+                          </select>
+                          {user.role === 'EXAMINER' && (
+                            <button
+                              onClick={() => handleManageOrganizations(user)}
+                              className="p-2 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl transition-all"
+                              title="Manage Organizations"
+                            >
+                              <Shield size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <button
+                          onClick={() => handleStatusChange(user.id, !user.isActive)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${user.isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}
+                        >
+                          <div className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                          {user.isActive ? "Active" : "Inactive"}
+                        </button>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          {user.isVerified ? (
+                            <CheckCircle2 size={18} className="text-emerald-500" />
+                          ) : (
+                            <XCircle size={18} className="text-slate-300" />
+                          )}
+                          <span className="text-xs font-bold text-slate-500">{user.isVerified ? "Verified" : "Pending"}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-3 transition-opacity">
+                          <button
+                            onClick={() => handleDelete(user.id)}
+                            className="p-2.5 text-slate-400 hover:text-red-500 bg-white hover:bg-red-50 border border-slate-100 hover:border-red-100 rounded-xl transition-all shadow-sm"
+                            disabled={isDeleteModalOpen}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button className="p-2.5 text-slate-400 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm">
+                            <MoreVertical size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex justify-between items-center p-4 border-t border-gray-100">
-          <button
-            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-            disabled={page === 1}
-            className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span>Page {pagination.page} of {pagination.totalPages}</span>
-          <button
-            onClick={() => setPage((prev) => Math.min(prev + 1, pagination.totalPages))}
-            disabled={page === pagination.totalPages}
-            className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
-          >
-            Next
-          </button>
+        {/* Premium Pagination */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-8 py-6 bg-slate-50/30 border-t border-slate-100">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            Showing <span className="text-slate-900">{users.length}</span> results per page
+          </p>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-600 disabled:opacity-40 disabled:bg-slate-50 hover:border-[#1a7ea5]/30 hover:text-[#1a7ea5] transition-all shadow-sm"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: pagination.totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPage(i + 1)}
+                  className={`w-8 h-8 rounded-xl text-[10px] font-black transition-all ${page === i + 1 ? 'bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/20' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setPage((prev) => Math.min(prev + 1, pagination.totalPages))}
+              disabled={page === pagination.totalPages}
+              className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-600 disabled:opacity-40 disabled:bg-slate-50 hover:border-[#1a7ea5]/30 hover:text-[#1a7ea5] transition-all shadow-sm"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -308,8 +336,8 @@ export const UsersSection = () => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
-        title="Delete User"
-        message="Are you sure you want to delete this user? This action cannot be undone."
+        title="Remove User"
+        message="This will permanently revoke all access for this user. Are you absolutely sure?"
       />
 
       {selectedUserForRole && (
@@ -326,6 +354,7 @@ export const UsersSection = () => {
       )}
 
       <Toast ref={toast} position="top-right" />
-    </div>
+    </motion.div>
   );
 };
+
