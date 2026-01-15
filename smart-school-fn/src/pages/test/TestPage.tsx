@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { TestInstructions } from '../../components/test/TestInstructions';
 import { TestQuestion } from '../../components/test/TestQuestion';
 import { OpenEndedTestQuestion } from '../../components/test/OpenEndedTestQuestion';
@@ -9,7 +10,7 @@ import { TestReviewPage } from '../../components/test/TestReviewPage';
 import { SubmissionSuccessModal } from '../../components/test/SubmissionSuccessModal';
 import { PsychometricTestPage } from './PsychometricTestPage';
 import { InterviewTestPage } from './InterviewTestPage';
-import { startTest, submitTestAttempt, saveAnswer, startTestAttempt } from '../../redux/features/test/testSlice';
+import { startTest, submitTestAttempt, saveAnswer, submitAnswer, startTestAttempt } from '../../redux/features/test/testSlice';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { BackButton } from '../../components/common/BackButton';
 
@@ -68,8 +69,9 @@ export function TestPage() {
           return prev - 1;
         });
       }, 1000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to start exam attempt:', err);
+      toast.error(err.message || 'Failed to start exam. Please try again.');
     }
   };
 
@@ -84,10 +86,11 @@ export function TestPage() {
     if (!attemptId || !testId) return;
 
     try {
-      await dispatch(submitTestAttempt(attemptId));
+      await dispatch(submitTestAttempt(attemptId)).unwrap();
       navigate(`/test/${testId}/results`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to submit exam:', err);
+      toast.error(err.message || 'Failed to auto-submit exam.');
     }
   };
 
@@ -97,6 +100,16 @@ export function TestPage() {
     setAnswers(prev => ({ ...prev, [questionId]: answerId }));
     if (testAttempt?.id) {
       dispatch(saveAnswer({ questionId, answer: answerId }));
+
+      // Submit answer to backend
+      dispatch(submitAnswer({
+        attemptId: testAttempt.id,
+        questionId: questionId,
+        selectedOptions: [answerId]
+      })).unwrap().catch((err: any) => {
+        console.error('Failed to save answer:', err);
+        toast.error("Failed to save answer. Please check your connection.");
+      });
     }
   };
 
@@ -117,16 +130,23 @@ export function TestPage() {
   const handleSubmit = async () => {
     if (!testAttempt?.id || !testId) return;
     try {
-      await dispatch(submitTestAttempt(testAttempt.id));
+      const result = await dispatch(submitTestAttempt(testAttempt.id)).unwrap();
 
       // For OPENENDED tests, show success modal instead of navigating to results
       if (isOpenEnded) {
         setShowSuccessModal(true);
       } else {
-        navigate(`/test/${testId}/results`);
+        // Verify we have results before navigating
+        if (result?.data || result?.score !== undefined) {
+          navigate(`/test/${testId}/results`);
+        } else {
+          toast.warning("Test submitted but no results returned. Please check your dashboard.");
+          navigate(`/courses`);
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to submit exam:', err);
+      toast.error(err.message || 'Failed to submit exam. Please try again.');
     }
   };
 
