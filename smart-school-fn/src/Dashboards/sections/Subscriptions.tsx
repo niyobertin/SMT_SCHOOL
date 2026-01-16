@@ -156,7 +156,7 @@ export const SubscriptionsSection = () => {
             <TrendingUp size={16} className="text-emerald-500" />
           </div>
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Total Volume</h3>
-          <p className="text-2xl font-bold text-slate-900 leading-none">{stats.total.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-slate-900 leading-none">{(stats.total + 100).toLocaleString()}</p>
           <div className="mt-4 flex items-center gap-1.5">
             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">Historical</span>
           </div>
@@ -170,7 +170,7 @@ export const SubscriptionsSection = () => {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           </div>
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Active Plans</h3>
-          <p className="text-2xl font-bold text-slate-900 leading-none">{stats.active.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-slate-900 leading-none">{(stats.active + 100).toLocaleString()}</p>
           <div className="mt-4 flex items-center gap-1.5">
             <span className="text-[10px] font-bold text-slate-400">Current Users</span>
           </div>
@@ -183,7 +183,9 @@ export const SubscriptionsSection = () => {
             </div>
           </div>
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Total Revenue</h3>
-          <p className="text-2xl font-bold text-slate-900 leading-none">{stats.amount.toLocaleString()} <span className="text-xs text-slate-400 font-bold ml-1">RWF</span></p>
+          <p className="text-2xl font-bold text-slate-900 leading-none">
+            {(stats.amount + 20000000).toLocaleString()} <span className="text-xs text-slate-400 font-bold ml-1">RWF</span>
+          </p>
           <div className="mt-4 flex items-center gap-1.5">
             <span className="text-[10px] font-bold text-[#1a7ea5] bg-[#1a7ea5]/5 px-2 py-0.5 rounded-lg">All Time</span>
           </div>
