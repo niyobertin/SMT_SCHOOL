@@ -238,12 +238,14 @@ export const deleteExam = createAsyncThunk(
     }
 );
 
-// Questions
+// Questions (data can be plain object or FormData when image is included)
 export const addQuestion = createAsyncThunk(
     'examAdmin/addQuestion',
     async ({ examId, data }: { examId: string; data: any }, { rejectWithValue }) => {
         try {
-            const response = await api.post(`/exams/${examId}/questions`, data);
+            const isFormData = data instanceof FormData;
+            const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+            const response = await api.post(`/exams/${examId}/questions`, data, config);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to add question');
@@ -267,7 +269,9 @@ export const updateQuestion = createAsyncThunk(
     'examAdmin/updateQuestion',
     async ({ examId, questionId, data }: { examId: string; questionId: string; data: any }, { rejectWithValue }) => {
         try {
-            const response = await api.put(`/exams/${examId}/questions/${questionId}`, data);
+            const isFormData = data instanceof FormData;
+            const config = isFormData ? { headers: { 'Content-Type': undefined } } : {};
+            const response = await api.patch(`/exams/questions/${questionId}`, data, config);
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update question');

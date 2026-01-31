@@ -72,7 +72,7 @@ export const LoginPage = () => {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
-    if (role === "ADMIN" || role === "INSTRUCTOR") {
+    if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "INSTRUCTOR") {
       navigate("/dashboard");
     } else if (role) {
       navigate("/courses");

@@ -56,7 +56,7 @@ function App() {
           <Route
             path="/dashboard/*"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR"]}>
+              <ProtectedRoute allowedRoles={["SUPER_ADMIN", "ADMIN", "INSTRUCTOR"]}>
                 <DashboardRoutes />
               </ProtectedRoute>
             }
@@ -72,7 +72,7 @@ function App() {
           <Route
             path="/exam-admin/*"
             element={
-              <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "EXAMINER"]}>
+              <ProtectedRoute allowedRoles={["SUPER_ADMIN", "ADMIN", "INSTRUCTOR", "EXAMINER"]}>
                 <ExamAdminLayout />
               </ProtectedRoute>
             }
@@ -106,7 +106,7 @@ function App() {
             <Route
               path="/profile"
               element={
-                <ProtectedRoute allowedRoles={["ADMIN", "INSTRUCTOR", "STUDENT", "USER"]}>
+                <ProtectedRoute allowedRoles={["SUPER_ADMIN", "ADMIN", "INSTRUCTOR", "STUDENT", "USER"]}>
                   <UserProfilePage />
                 </ProtectedRoute>
               }

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Trash2, Shield, UserPlus, Filter, MoreVertical, CheckCircle2, XCircle } from "lucide-react";
+import { Search, Trash2, Shield, UserPlus, Filter, MoreVertical, CheckCircle2, XCircle, Building2, Crown } from "lucide-react";
 import { Toast } from "primereact/toast";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../redux/api/api";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { ExaminerAssignmentModal } from "../Modals/ExaminerAssignmentModal";
+import { AssignUserToOrgModal } from "../Modals/AssignUserToOrgModal";
 import Skeleton from "react-loading-skeleton";
 
 interface User {
@@ -38,6 +39,9 @@ export const UsersSection = () => {
 
   const [isExaminerModalOpen, setIsExaminerModalOpen] = useState(false);
   const [selectedUserForRole, setSelectedUserForRole] = useState<User | null>(null);
+
+  const [isAssignOrgModalOpen, setIsAssignOrgModalOpen] = useState(false);
+  const [selectedUserForOrg, setSelectedUserForOrg] = useState<User | null>(null);
 
   const toast = useRef<Toast>(null);
 
@@ -146,6 +150,16 @@ export const UsersSection = () => {
     setIsExaminerModalOpen(true);
   };
 
+  const handleAssignToOrg = (user: User) => {
+    setSelectedUserForOrg(user);
+    setIsAssignOrgModalOpen(true);
+  };
+
+  const handleAssignToOrgSuccess = () => {
+    toast.current?.show({ severity: "success", summary: "Success", detail: "User assigned to organization successfully" });
+    fetchUsers();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -223,11 +237,19 @@ export const UsersSection = () => {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-[#1a7ea5]/10 flex items-center justify-center text-[#1a7ea5] font-bold text-sm border border-[#1a7ea5]/5 shadow-inner">
+                          <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-sm border shadow-inner ${user.role === 'SUPER_ADMIN'
+                              ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white border-amber-300'
+                              : 'bg-[#1a7ea5]/10 text-[#1a7ea5] border-[#1a7ea5]/5'
+                            }`}>
                             {user.firstName[0]}{user.lastName[0]}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors">{user.firstName} {user.lastName}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors">{user.firstName} {user.lastName}</span>
+                              {user.role === 'SUPER_ADMIN' && (
+                                <Crown size={12} className="text-amber-600 fill-amber-600" />
+                              )}
+                            </div>
                             <span className="text-[11px] text-slate-400 font-medium">{user.email}</span>
                           </div>
                         </div>
@@ -238,13 +260,21 @@ export const UsersSection = () => {
                             value={user.role}
                             onChange={(e) => handleRoleChange(user, e.target.value)}
                             disabled={updatingRoleId === user.id}
-                            className={`appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/30 outline-none transition-all cursor-pointer ${user.role === 'EXAMINER' ? 'bg-purple-100/50 text-purple-700 border-purple-200' : ''}`}
+                            className={`appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/30 outline-none transition-all cursor-pointer ${user.role === 'SUPER_ADMIN' ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 border-amber-300' :
+                                user.role === 'EXAMINER' ? 'bg-purple-100/50 text-purple-700 border-purple-200' : ''
+                              }`}
                           >
                             <option value="STUDENT">Student</option>
                             <option value="ADMIN">Admin</option>
                             <option value="INSTRUCTOR">Instructor</option>
                             <option value="EXAMINER">Examiner</option>
+                            <option value="SUPER_ADMIN">Super Admin</option>
                           </select>
+                          {user.role === 'SUPER_ADMIN' && (
+                            <div className="p-2 text-amber-600 bg-amber-50 rounded-xl" title="System Owner">
+                              <Crown size={14} className="fill-amber-600" />
+                            </div>
+                          )}
                           {user.role === 'EXAMINER' && (
                             <button
                               onClick={() => handleManageOrganizations(user)}
@@ -277,6 +307,13 @@ export const UsersSection = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3 transition-opacity">
+                          <button
+                            onClick={() => handleAssignToOrg(user)}
+                            className="p-2.5 text-slate-400 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm"
+                            title="Assign to organization"
+                          >
+                            <Building2 size={16} />
+                          </button>
                           <button
                             onClick={() => handleDelete(user.id)}
                             className="p-2.5 text-slate-400 hover:text-red-500 bg-white hover:bg-red-50 border border-slate-100 hover:border-red-100 rounded-xl transition-all shadow-sm"
@@ -350,6 +387,20 @@ export const UsersSection = () => {
           onConfirm={confirmExaminerAssignment}
           userId={selectedUserForRole.id}
           loading={!!updatingRoleId}
+        />
+      )}
+
+      {selectedUserForOrg && (
+        <AssignUserToOrgModal
+          isOpen={isAssignOrgModalOpen}
+          onClose={() => {
+            setIsAssignOrgModalOpen(false);
+            setSelectedUserForOrg(null);
+          }}
+          onSuccess={handleAssignToOrgSuccess}
+          onError={(message) => toast.current?.show({ severity: "error", summary: "Error", detail: message })}
+          userId={selectedUserForOrg.id}
+          userName={`${selectedUserForOrg.firstName} ${selectedUserForOrg.lastName}`}
         />
       )}
 

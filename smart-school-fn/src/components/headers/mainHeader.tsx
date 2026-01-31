@@ -103,12 +103,12 @@ export function Header() {
                     <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-[#6cb9cc]/10 hover:text-[#1a7ea5] transition-colors">
                       <User size={14} /> {t("profile")}
                     </Link>
-                    {user.role !== "EXAMINER" && (user.role === "ADMIN" || user.role === "INSTRUCTOR") && (
+                    {user.role !== "EXAMINER" && (user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "INSTRUCTOR") && (
                       <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-[#6cb9cc]/10 hover:text-[#1a7ea5] transition-colors">
                         <LayoutDashboard size={14} /> {t("dashboard")}
                       </Link>
                     )}
-                    {(user.role === "ADMIN" || user.role === "INSTRUCTOR" || user.role === "EXAMINER") && (
+                    {(user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "INSTRUCTOR" || user.role === "EXAMINER") && (
                       <Link to="/exam-admin/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-[#6cb9cc]/10 hover:text-[#1a7ea5] transition-colors">
                         <Shield size={14} /> {t("examinationPortal")}
                       </Link>

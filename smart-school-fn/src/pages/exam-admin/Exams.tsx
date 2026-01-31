@@ -143,6 +143,9 @@ const Exams = () => {
         explanation: '',
         options: [{ option: '', isCorrect: false }, { option: '', isCorrect: false }],
     });
+    const [questionImageFile, setQuestionImageFile] = useState<File | null>(null);
+    const [questionImagePreviewUrl, setQuestionImagePreviewUrl] = useState<string | null>(null);
+    const [questionImageClear, setQuestionImageClear] = useState(false);
 
     const handleCreateExamClick = () => {
         if (!selectedOrg && !filters.organizationId) {
@@ -206,12 +209,18 @@ const Exams = () => {
             return;
         }
 
+        // Send startDate (and endDate if present) as ISO UTC so server stores correctly; avoids +2h display bug when client TZ differs from server
+        const payloadStartDate = examForm.startDate ? new Date(examForm.startDate).toISOString() : '';
+        const payloadEndDate = (examForm as any).endDate ? new Date((examForm as any).endDate).toISOString() : '';
+
         try {
             if (isEditingExam && selectedExamId) {
                 await dispatch(updateExam({
                     examId: selectedExamId,
                     data: {
                         ...examForm,
+                        startDate: payloadStartDate,
+                        ...(payloadEndDate && { endDate: payloadEndDate }),
                         instructions: examForm.instructions.split('\n').filter(line => line.trim() !== '')
                     }
                 })).unwrap();
@@ -221,6 +230,8 @@ const Exams = () => {
                     orgId: orgId!,
                     data: {
                         ...examForm,
+                        startDate: payloadStartDate,
+                        ...(payloadEndDate && { endDate: payloadEndDate }),
                         instructions: examForm.instructions.split('\n').filter(line => line.trim() !== ''),
                         randomizeQuestions: true,
                         showResults: true,
@@ -266,15 +277,29 @@ const Exams = () => {
     const handleQuestionSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const hasImage = questionImageFile || (isEditingQuestion && questionImageClear);
+            let data: any = questionForm;
+            if (hasImage) {
+                const formData = new FormData();
+                formData.append('question', questionForm.question);
+                formData.append('type', questionForm.type);
+                formData.append('points', String(questionForm.points));
+                formData.append('explanation', questionForm.explanation);
+                formData.append('options', JSON.stringify(questionForm.options));
+                if (questionImageFile) formData.append('fileImage', questionImageFile);
+                if (isEditingQuestion && questionImageClear) formData.append('clearImage', 'true');
+                data = formData;
+            }
             if (isEditingQuestion && questionIdToEdit) {
-                await dispatch(updateQuestion({ examId: selectedExamId, questionId: questionIdToEdit, data: questionForm })).unwrap();
+                await dispatch(updateQuestion({ examId: selectedExamId!, questionId: questionIdToEdit, data })).unwrap();
                 toast.success('Updated question');
             } else {
-                await dispatch(addQuestion({ examId: selectedExamId, data: questionForm })).unwrap();
+                await dispatch(addQuestion({ examId: selectedExamId!, data })).unwrap();
                 toast.success('Added question');
             }
             setQuestionViewMode('LIST');
             resetQuestionForm();
+            await dispatch(fetchExamDetails(selectedExamId!));
         } catch (error: any) {
             toast.error(error);
         }
@@ -285,6 +310,9 @@ const Exams = () => {
             question: '', type: 'MULTIPLE_CHOICE', points: 1, explanation: '',
             options: [{ option: '', isCorrect: false }, { option: '', isCorrect: false }]
         });
+        setQuestionImageFile(null);
+        setQuestionImagePreviewUrl(null);
+        setQuestionImageClear(false);
         setIsEditingQuestion(false);
         setQuestionIdToEdit(null);
     };
@@ -848,6 +876,11 @@ const Exams = () => {
                                                             </div>
                                                         </div>
                                                         <p className="text-gray-900 font-medium mb-3">{q.question}</p>
+                                                        {q.image && (
+                                                            <div className="mb-3">
+                                                                <img src={q.image} alt="Question" className="max-w-full h-auto max-h-48 rounded-lg border border-gray-200 object-contain" />
+                                                            </div>
+                                                        )}
                                                         {q.options && q.options.length > 0 && (
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                                 {q.options.map((opt: any, oIdx: number) => (
@@ -881,6 +914,16 @@ const Exams = () => {
                                 ) : (
                                     <form onSubmit={handleQuestionSubmit} className="space-y-4">
                                         <div><label className="block text-sm font-medium">Question Text</label><textarea className="w-full border rounded p-2" value={questionForm.question} onChange={e => setQuestionForm({ ...questionForm, question: e.target.value })} required /></div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Question Image (optional)</label>
+                                            <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="w-full border rounded p-2 text-sm" onChange={e => { const f = e.target.files?.[0]; setQuestionImageFile(f || null); setQuestionImagePreviewUrl(f ? URL.createObjectURL(f) : null); setQuestionImageClear(false); }} />
+                                            {(questionImagePreviewUrl || questionImageFile) && (
+                                                <div className="mt-2 flex items-center gap-2">
+                                                    {questionImagePreviewUrl && <img src={questionImagePreviewUrl} alt="Preview" className="max-h-24 rounded border" />}
+                                                    <button type="button" onClick={() => { setQuestionImageFile(null); setQuestionImagePreviewUrl(null); if (isEditingQuestion) setQuestionImageClear(true); }} className="text-sm text-red-600">Remove image</button>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="flex gap-4">
                                             <div className="flex-1"><label className="block text-sm font-medium">Points</label><input type="number" className="w-full border rounded p-2" value={questionForm.points} onChange={e => setQuestionForm({ ...questionForm, points: Number(e.target.value) })} /></div>
                                             <div className="flex-1"><label className="block text-sm font-medium">Type</label><select className="w-full border rounded p-2" value={questionForm.type} onChange={e => setQuestionForm({ ...questionForm, type: e.target.value })}><option value="MULTIPLE_CHOICE">Multiple Choice</option><option value="TRUE_FALSE">True/False</option><option value="SHORT_ANSWER">Short Answer</option><option value="ESSAY">Essay</option></select></div>

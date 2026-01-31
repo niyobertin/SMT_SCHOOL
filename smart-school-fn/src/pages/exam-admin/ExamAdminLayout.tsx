@@ -21,7 +21,7 @@ const ExamAdminLayout = () => {
     useEffect(() => {
         if (!isAuthenticated) {
             navigate('/exam-admin/login');
-        } else if (user?.role !== 'ADMIN' && user?.role !== 'INSTRUCTOR' && user?.role !== 'EXAMINER') {
+        } else if (user?.role !== 'SUPER_ADMIN' && user?.role !== 'ADMIN' && user?.role !== 'INSTRUCTOR' && user?.role !== 'EXAMINER') {
             navigate('/exam-admin/login');
         }
     }, [isAuthenticated, user, navigate]);
