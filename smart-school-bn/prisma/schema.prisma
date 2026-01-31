@@ -28,23 +28,23 @@ model User {
   lastLogin            DateTime?
 
   // Relations
-  courses              Course[]
-  enrollments          Enrollment[]
-  payments             Payment[]
-  testAttempts         TestAttempt[]
-  userProgress         UserProgress[]
-  userCourseProgress   UserCourseProgress[]
-  notifications        Notification[]
-  ActivityLog          ActivityLog[]
-  userOrganizations    UserOrganization[] // For EXAMINER role organization assignments
-  markedAnswers        ExamAnswer[]         @relation("MarkedBy") // Answers marked by this user
-  examAnswers          ExamAnswer[]
-  createdOrganizations Organization[]       @relation("CreatedBy")
+  courses            Course[]
+  enrollments        Enrollment[]
+  payments           Payment[]
+  testAttempts       TestAttempt[]
+  userProgress       UserProgress[]
+  userCourseProgress UserCourseProgress[]
+  notifications      Notification[]
+  ActivityLog        ActivityLog[]
+  userOrganizations  UserOrganization[] // For EXAMINER role organization assignments
+  markedAnswers      ExamAnswer[]         @relation("MarkedBy") // Answers marked by this user
+  examAnswers        ExamAnswer[]
 
   @@map("users")
 }
 
 enum UserRole {
+  SUPER_ADMIN
   ADMIN
   INSTRUCTOR
   STUDENT
@@ -493,8 +493,6 @@ model Organization {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  creatorId    String?
-  creator      User?    @relation("CreatedBy", fields: [creatorId], references: [id])
 
   // Relations
   exams             Exam[]

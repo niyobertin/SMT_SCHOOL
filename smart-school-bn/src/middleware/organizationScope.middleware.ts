@@ -18,8 +18,8 @@ export const requireOrganizationAccess = (orgIdParam: string = 'orgId') => {
             });
         }
 
-        // Admin users have access to all organizations
-        if (user.role === 'ADMIN') {
+        // Super Admin and Admin users have access to all organizations
+        if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
             return next();
         }
 
@@ -57,8 +57,8 @@ export const getUserOrganizationIds = (req: Request): string[] | null => {
         return null;
     }
 
-    // Admin users have access to all organizations (return null to indicate "all")
-    if (user.role === 'ADMIN') {
+    // Super Admin and Admin users have access to all organizations (return null to indicate "all")
+    if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
         return null;
     }
 

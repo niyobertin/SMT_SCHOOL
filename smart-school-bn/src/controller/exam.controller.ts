@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { ExamQuestionType, Prisma, PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
@@ -14,8 +14,25 @@ import {
     calculateExamStatistics,
     calculateQuestionStatistics,
 } from '../services/exam.service';
+import { uploadBufferToCloudinary } from '../config/cloudinary';
 
 const prisma = new PrismaClient();
+
+/**
+ * Returns organization filter for list/find queries.
+ * ADMIN (Super Admin / exam portal owner) sees all orgs; EXAMINER/INSTRUCTOR restricted to assigned organizations only.
+ */
+function getOrgFilter(user: any): { id: { in: string[] } } | null {
+    if (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') return null;
+    const assignedOrgIds = user?.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+    return { id: { in: assignedOrgIds } };
+}
+
+/** Builds where clause for a single org by id with optional scope filter (so id is not overwritten by getOrgFilter). */
+function buildOrgWhere(orgId: string, user: any): { id: string } | { AND: Array<{ id: string } | { id: { in: string[] } }> } {
+    const orgFilter = getOrgFilter(user);
+    return orgFilter ? { AND: [{ id: orgId }, orgFilter] } : { id: orgId };
+}
 
 // ============================================
 // ORGANIZATION MANAGEMENT
@@ -37,7 +54,6 @@ export const createOrganization = async (
                 logo,
                 contactEmail,
                 contactPhone,
-                creatorId: (req.user as any)?.id,
             },
         });
 
@@ -62,18 +78,8 @@ export const getOrganizations = async (
         const skip = (Number(page) - 1) * Number(limit);
 
         const user = req.user as any;
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-
-        const where: any = {
-            AND: [
-                {
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
-            ]
-        };
+        const orgFilter = getOrgFilter(user);
+        const where: any = { AND: orgFilter ? [orgFilter] : [] };
 
         if (search) {
             where.AND.push({
@@ -127,16 +133,11 @@ export const getOrganizationById = async (
         const { id } = req.params;
 
         const user = req.user as any;
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(id, user);
 
         const organization = await prisma.organization.findFirst({
-            where: {
-                id,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            },
+            where: orgWhere,
             include: {
                 _count: {
                     select: {
@@ -170,17 +171,12 @@ export const updateOrganization = async (
         const { name, description, logo, contactEmail, contactPhone, isActive } = req.body;
 
         const user = req.user as any;
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(id, user);
 
         // verify access
         const existingOrg = await prisma.organization.findFirst({
-            where: {
-                id,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!existingOrg) {
@@ -220,17 +216,12 @@ export const deleteOrganization = async (
         const { id } = req.params;
 
         const user = req.user as any;
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(id, user);
 
         // verify access
         const existingOrg = await prisma.organization.findFirst({
-            where: {
-                id,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!existingOrg) {
@@ -280,15 +271,10 @@ export const createCandidate = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(orgId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: orgId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -344,15 +330,10 @@ export const createCandidatesBulk = async (
         const { candidates } = req.body; // Array of { firstName, lastName, email, phoneNumber }
         const user = req.user as any;
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(orgId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: orgId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -416,19 +397,13 @@ export const getAllCandidates = async (
         const { organizationId, search, page = 1, limit = 50, showArchived } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
         const user = req.user as any;
-
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
         const where: any = {};
 
         if (organizationId) {
+            const orgWhere = buildOrgWhere(String(organizationId), user);
             const organization = await prisma.organization.findFirst({
-                where: {
-                    id: String(organizationId),
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgWhere
             });
 
             if (!organization) {
@@ -441,12 +416,7 @@ export const getAllCandidates = async (
             where.organizationId = String(organizationId);
         } else {
             const authorizedOrgIds = await prisma.organization.findMany({
-                where: {
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                },
+                where: orgFilter ? { ...orgFilter } : {},
                 select: { id: true }
             }).then(orgs => orgs.map(o => o.id));
 
@@ -511,16 +481,10 @@ export const getCandidates = async (
     try {
         const { orgId } = req.params;
         const user = req.user as any;
-
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(orgId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: orgId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -620,15 +584,10 @@ export const updateCandidate = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(existingCandidate.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: existingCandidate.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -683,15 +642,10 @@ export const deleteCandidate = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(existingCandidate.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: existingCandidate.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -741,16 +695,10 @@ export const createExam = async (
             allowReview,
         } = req.body;
         const user = req.user as any;
-
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(orgId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: orgId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -802,18 +750,12 @@ export const getExams = async (
         const { orgId } = req.params;
         const { showArchived } = req.query;
         const user = req.user as any;
-
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
 
         if (orgId !== 'all') {
+            const orgWhere = buildOrgWhere(orgId, user);
             const organization = await prisma.organization.findFirst({
-                where: {
-                    id: orgId,
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgWhere
             });
 
             if (!organization) {
@@ -829,12 +771,7 @@ export const getExams = async (
             ? {
                 organizationId: {
                     in: await prisma.organization.findMany({
-                        where: {
-                            OR: [
-                                { creatorId: user.id },
-                                { id: { in: assignedOrgIds } }
-                            ]
-                        },
+                        where: orgFilter ? { ...orgFilter } : {},
                         select: { id: true }
                     }).then(orgs => orgs.map(o => o.id))
                 }
@@ -879,18 +816,12 @@ export const getAllExams = async (
 
         const where: any = {};
         const user = req.user as any;
-
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
 
         if (organizationId) {
+            const orgWhere = buildOrgWhere(String(organizationId), user);
             const organization = await prisma.organization.findFirst({
-                where: {
-                    id: String(organizationId),
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgWhere
             });
 
             if (!organization) {
@@ -903,12 +834,7 @@ export const getAllExams = async (
             where.organizationId = String(organizationId);
         } else {
             const authorizedOrgIds = await prisma.organization.findMany({
-                where: {
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                },
+                where: orgFilter ? { ...orgFilter } : {},
                 select: { id: true }
             }).then(orgs => orgs.map(o => o.id));
 
@@ -1003,15 +929,10 @@ export const getExamById = async (
             throw new NotFoundError('Exam not found');
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(exam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: exam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -1074,15 +995,10 @@ export const updateExam = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(existingExam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: existingExam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -1151,15 +1067,10 @@ export const deleteExam = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(existingExam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: existingExam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -1195,8 +1106,24 @@ export const addQuestionToExam = async (
 ): Promise<void> => {
     try {
         const { examId } = req.params;
-        const { question, type, points, explanation, options } = req.body;
+        let { question, type, points, explanation, options } = req.body;
         const user = req.user as any;
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+        const imageFile = files?.fileImage?.[0];
+        if (typeof options === 'string') {
+            try { options = JSON.parse(options); } catch { options = []; }
+        }
+
+        // Optional: upload image for question (validate image type)
+        let imageUrl: string | null = null;
+        if (imageFile) {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(imageFile.mimetype)) {
+                res.status(400).json({ status: 'error', message: 'Invalid image type. Allowed: JPEG, PNG, GIF, WebP' });
+                return;
+            }
+            imageUrl = await uploadBufferToCloudinary(imageFile.buffer, imageFile.mimetype, imageFile.originalname);
+        }
 
         // Check if exam exists and get its organization
         const exam = await prisma.exam.findUnique({
@@ -1247,6 +1174,7 @@ export const addQuestionToExam = async (
                     explanation: explanation || null,
                     order: newOrder,
                     examId,
+                    image: imageUrl,
                 },
             });
 
@@ -1369,17 +1297,37 @@ export const updateExamQuestion = async (
 ): Promise<void> => {
     try {
         const { questionId } = req.params;
-        const { question, type, points, explanation, options } = req.body;
+        let { question, type, points, explanation, options, clearImage } = req.body;
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+        const imageFile = files?.fileImage?.[0];
+        if (typeof options === 'string') {
+            try { options = JSON.parse(options); } catch { options = undefined; }
+        }
+
+        let imageUrl: string | null | undefined = undefined;
+        if (clearImage === 'true' || clearImage === true) {
+            imageUrl = null;
+        } else if (imageFile) {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(imageFile.mimetype)) {
+                res.status(400).json({ status: 'error', message: 'Invalid image type. Allowed: JPEG, PNG, GIF, WebP' });
+                return;
+            }
+            imageUrl = await uploadBufferToCloudinary(imageFile.buffer, imageFile.mimetype, imageFile.originalname);
+        }
 
         const result = await prisma.$transaction(async (tx) => {
+            const updateData: Prisma.ExamQuestionUpdateInput = {
+                question,
+                type: type as ExamQuestionType,
+                points: points ? Number(points) : undefined,
+                explanation,
+            };
+            if (imageUrl !== undefined) updateData.image = imageUrl;
+
             const updatedQuestion = await tx.examQuestion.update({
                 where: { id: questionId },
-                data: {
-                    question,
-                    type,
-                    points: points ? Number(points) : undefined,
-                    explanation,
-                },
+                data: updateData,
             });
 
             // Update options if provided
@@ -2266,15 +2214,10 @@ export const getExamResults = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(exam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: exam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -2336,18 +2279,12 @@ export const getGlobalExamResults = async (
         const user = req.user as any;
 
         const where: any = { status: 'COMPLETED' }; // Default to completed exams usually
-
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
 
         if (organizationId) {
+            const orgWhere = buildOrgWhere(String(organizationId), user);
             const organization = await prisma.organization.findFirst({
-                where: {
-                    id: String(organizationId),
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgWhere
             });
 
             if (!organization) {
@@ -2360,12 +2297,7 @@ export const getGlobalExamResults = async (
             where.exam = { organizationId: String(organizationId) };
         } else {
             const authorizedOrgIds = await prisma.organization.findMany({
-                where: {
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                },
+                where: orgFilter ? { ...orgFilter } : {},
                 select: { id: true }
             }).then(orgs => orgs.map(o => o.id));
 
@@ -2507,15 +2439,10 @@ export const getExamAnalytics = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(exam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: exam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -2559,18 +2486,13 @@ export const getExamDashboardStats = async (
             };
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
         let whereOrg: any = {};
 
         if (organizationId) {
+            const orgWhere = buildOrgWhere(String(organizationId), user);
             const organization = await prisma.organization.findFirst({
-                where: {
-                    id: String(organizationId),
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgWhere
             });
 
             if (!organization) {
@@ -2583,12 +2505,7 @@ export const getExamDashboardStats = async (
             whereOrg = { organizationId: String(organizationId) };
         } else {
             const authorizedOrgIds = await prisma.organization.findMany({
-                where: {
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                },
+                where: orgFilter ? { ...orgFilter } : {},
                 select: { id: true }
             }).then(orgs => orgs.map(o => o.id));
 
@@ -2609,15 +2526,9 @@ export const getExamDashboardStats = async (
         // 3. Organization Count (Global Only - For authorized ones)
         let totalOrganizations = 0;
         if (!organizationId) {
-            const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+            const orgFilterStats = getOrgFilter(user);
             totalOrganizations = await prisma.organization.count({
-                where: {
-                    ...dateFilter,
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgFilterStats ? { ...dateFilter, ...orgFilterStats } : dateFilter
             });
         }
 
@@ -2869,15 +2780,10 @@ export const archiveCandidate = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(candidate.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: candidate.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -2925,15 +2831,10 @@ export const unarchiveCandidate = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(candidate.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: candidate.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -2983,15 +2884,10 @@ export const archiveExam = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(exam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: exam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -3039,15 +2935,10 @@ export const unarchiveExam = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(exam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: exam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -3089,20 +2980,15 @@ export const getOpenEndedResponses = async (
         const limit = parseInt(req.query.limit as string) || 50;
         const skip = (page - 1) * limit;
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
         const whereQuestion: any = {
             type: { in: ['ESSAY', 'SHORT_ANSWER'] }
         };
 
         if (organizationId) {
+            const orgWhere = buildOrgWhere(String(organizationId), user);
             const organization = await prisma.organization.findFirst({
-                where: {
-                    id: String(organizationId),
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgWhere
             });
 
             if (!organization) {
@@ -3115,12 +3001,7 @@ export const getOpenEndedResponses = async (
             whereQuestion.exam = { organizationId: String(organizationId) };
         } else {
             const authorizedOrgIds = await prisma.organization.findMany({
-                where: {
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                },
+                where: orgFilter ? { ...orgFilter } : {},
                 select: { id: true }
             }).then(orgs => orgs.map(o => o.id));
 
@@ -3232,15 +3113,10 @@ export const markAnswer = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(answer.examAttempt.exam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: answer.examAttempt.exam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -3339,15 +3215,10 @@ export const exportDetailedResultsPDF = async (
             return;
         }
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
+        const orgWhere = buildOrgWhere(exam.organizationId, user);
         const organization = await prisma.organization.findFirst({
-            where: {
-                id: exam.organizationId,
-                OR: [
-                    { creatorId: user.id },
-                    { id: { in: assignedOrgIds } }
-                ]
-            }
+            where: orgWhere
         });
 
         if (!organization) {
@@ -3400,21 +3271,16 @@ export const exportOpenEndedResponsesPDF = async (
         const { organizationId } = req.query;
         const user = req.user as any;
 
-        const assignedOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
+        const orgFilter = getOrgFilter(user);
         let examTitle = 'All Exams';
         const whereQuestion: any = {
             type: { in: ['ESSAY', 'SHORT_ANSWER'] }
         };
 
         if (organizationId) {
+            const orgWhere = buildOrgWhere(String(organizationId), user);
             const organization = await prisma.organization.findFirst({
-                where: {
-                    id: String(organizationId),
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                }
+                where: orgWhere
             });
 
             if (!organization) {
@@ -3427,12 +3293,7 @@ export const exportOpenEndedResponsesPDF = async (
             whereQuestion.exam = { organizationId: String(organizationId) };
         } else {
             const authorizedOrgIds = await prisma.organization.findMany({
-                where: {
-                    OR: [
-                        { creatorId: user.id },
-                        { id: { in: assignedOrgIds } }
-                    ]
-                },
+                where: orgFilter ? { ...orgFilter } : {},
                 select: { id: true }
             }).then(orgs => orgs.map(o => o.id));
 

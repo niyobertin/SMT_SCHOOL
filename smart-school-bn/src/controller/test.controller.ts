@@ -632,7 +632,7 @@ export const submitTest = async (
       },
     });
 
-    // 4. Update user progress and record achievement if passed
+    // 4. Update user progress (achievements = completed tests; recorded in UserCourseProgress.completedTests)
     if (isPassed) {
       await updateUserProgress(
         userId,
@@ -865,6 +865,10 @@ export const updateTestById = async (
       passingScore,
       randomizeQuestions,
       showResults,
+      duration,
+      type,
+      maxAttempts,
+      instructions,
     } = req.body;
     const existingTest = await prisma.test.findUnique({
       where: { id: testId },
@@ -874,15 +878,22 @@ export const updateTestById = async (
       throw new NotFoundError("Test not found");
     }
 
+    // Build update data: include all fields the frontend may send (duration, type, maxAttempts, instructions)
+    const updateData: Record<string, unknown> = {
+      title,
+      description,
+      passingScore,
+      randomizeQuestions: randomizeQuestions !== false,
+      showResults: showResults !== false,
+    };
+    if (duration !== undefined) updateData.duration = duration === null ? null : Number(duration);
+    if (type !== undefined) updateData.type = type;
+    if (maxAttempts !== undefined) updateData.maxAttempts = maxAttempts === null ? null : Number(maxAttempts);
+    if (instructions !== undefined) updateData.instructions = Array.isArray(instructions) ? instructions : instructions;
+
     const test = await prisma.test.update({
       where: { id: testId },
-      data: {
-        title,
-        description,
-        passingScore,
-        randomizeQuestions: randomizeQuestions !== false,
-        showResults: showResults !== false,
-      },
+      data: updateData as any,
     });
 
     res.status(200).json({
