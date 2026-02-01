@@ -267,7 +267,7 @@ export const bulkAddQuestions = createAsyncThunk(
 
 export const updateQuestion = createAsyncThunk(
     'examAdmin/updateQuestion',
-    async ({ examId, questionId, data }: { examId: string; questionId: string; data: any }, { rejectWithValue }) => {
+    async ({ examId: _examId, questionId, data }: { examId: string; questionId: string; data: any }, { rejectWithValue }) => {
         try {
             const isFormData = data instanceof FormData;
             const config = isFormData ? { headers: { 'Content-Type': undefined } } : {};
