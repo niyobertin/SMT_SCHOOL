@@ -238,8 +238,8 @@ export const UsersSection = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
                           <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold text-sm border shadow-inner ${user.role === 'SUPER_ADMIN'
-                              ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white border-amber-300'
-                              : 'bg-[#1a7ea5]/10 text-[#1a7ea5] border-[#1a7ea5]/5'
+                            ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-white border-amber-300'
+                            : 'bg-[#1a7ea5]/10 text-[#1a7ea5] border-[#1a7ea5]/5'
                             }`}>
                             {user.firstName[0]}{user.lastName[0]}
                           </div>
@@ -261,7 +261,7 @@ export const UsersSection = () => {
                             onChange={(e) => handleRoleChange(user, e.target.value)}
                             disabled={updatingRoleId === user.id}
                             className={`appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/30 outline-none transition-all cursor-pointer ${user.role === 'SUPER_ADMIN' ? 'bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 border-amber-300' :
-                                user.role === 'EXAMINER' ? 'bg-purple-100/50 text-purple-700 border-purple-200' : ''
+                              user.role === 'EXAMINER' ? 'bg-purple-100/50 text-purple-700 border-purple-200' : ''
                               }`}
                           >
                             <option value="STUDENT">Student</option>
