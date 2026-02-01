@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Trash2, Shield, UserPlus, Filter, MoreVertical, CheckCircle2, XCircle, Building2, Crown } from "lucide-react";
+import { Search, Trash2, Shield, UserPlus, Filter, CheckCircle2, XCircle, Building2, Crown } from "lucide-react";
 import { Toast } from "primereact/toast";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../redux/api/api";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { ExaminerAssignmentModal } from "../Modals/ExaminerAssignmentModal";
 import { AssignUserToOrgModal } from "../Modals/AssignUserToOrgModal";
+import { CreateUserModal } from "../Modals/CreateUserModal";
 import Skeleton from "react-loading-skeleton";
 
 interface User {
@@ -42,6 +43,9 @@ export const UsersSection = () => {
 
   const [isAssignOrgModalOpen, setIsAssignOrgModalOpen] = useState(false);
   const [selectedUserForOrg, setSelectedUserForOrg] = useState<User | null>(null);
+
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const currentUserRole = localStorage.getItem("userRole") || "";
 
   const toast = useRef<Toast>(null);
 
@@ -173,7 +177,10 @@ export const UsersSection = () => {
           <p className="text-slate-500 font-medium mt-3">Manage your platform's community and access levels.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20">
+          <button
+            onClick={() => setIsCreateUserModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+          >
             <UserPlus size={16} />
             Add User
           </button>
@@ -321,9 +328,6 @@ export const UsersSection = () => {
                           >
                             <Trash2 size={16} />
                           </button>
-                          <button className="p-2.5 text-slate-400 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm">
-                            <MoreVertical size={16} />
-                          </button>
                         </div>
                       </td>
                     </motion.tr>
@@ -403,6 +407,16 @@ export const UsersSection = () => {
           userName={`${selectedUserForOrg.firstName} ${selectedUserForOrg.lastName}`}
         />
       )}
+
+      <CreateUserModal
+        isOpen={isCreateUserModalOpen}
+        onClose={() => setIsCreateUserModalOpen(false)}
+        onSuccess={() => {
+          fetchUsers();
+          setIsCreateUserModalOpen(false);
+        }}
+        currentUserRole={currentUserRole}
+      />
 
       <Toast ref={toast} position="top-right" />
     </motion.div>

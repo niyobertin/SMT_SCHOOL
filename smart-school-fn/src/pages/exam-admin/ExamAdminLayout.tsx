@@ -11,6 +11,7 @@ import {
     Shield,
     ClipboardList,
     PenTool,
+    Home,
 } from 'lucide-react';
 
 const ExamAdminLayout = () => {
@@ -32,6 +33,7 @@ const ExamAdminLayout = () => {
     };
 
     const navItems = [
+        { path: '/dashboard', icon: Home, label: 'Home' },
         { path: '/exam-admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         ...(user?.role !== 'EXAMINER' ? [{ path: '/exam-admin/organizations', icon: Building2, label: 'Organizations' }] : []),
         { path: '/exam-admin/exams', icon: FileText, label: 'Exams' },

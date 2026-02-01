@@ -164,6 +164,11 @@ export const createUser = async (
 ): Promise<void> => {
   try {
     const userData = req.body;
+
+    // Check if this is an admin creating a user (authenticated request)
+    // @ts-ignore
+    const isAdminCreation = !!req.user;
+
     if (userData.email) {
       const existingEmail = await prisma.user.findUnique({
         where: { email: userData.email },
@@ -206,39 +211,73 @@ export const createUser = async (
     const hashedPassword = await hashPassword(userData.password);
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-    if (userData.email) {
+    // Send appropriate email based on creation type
+    if (isAdminCreation && userData.email) {
+      // Send welcome email with credentials for admin-created users
       await sendEmail({
         to: userData.email,
-        subject: "Verification Code",
-        text: `Here is your verification code: ${verificationCode}`,
-        html: `<p>Hello ${userData.username}, Thank you for signing up to Smart School</p>
-               <p>You can verify your account with this code:</p>
-               <h2>${verificationCode}</h2>
-               <p>Best regards, </p>
-               <p>Smart School Team</p>`,
+        subject: "Welcome to Smart School - Your Account is Ready",
+        text: `Welcome to Smart School! Your account has been created and is ready to use.`,
+        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                 <h2 style="color: #1a7ea5;">Welcome to Smart School!</h2>
+                 <p>Hello ${userData.firstName} ${userData.lastName},</p>
+                 <p>Your account has been created by an administrator and is ready to use.</p>
+                 
+                 <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                   <h3 style="margin-top: 0; color: #333;">Your Login Credentials:</h3>
+                   <p><strong>Username:</strong> ${userData.username}</p>
+                   <p><strong>Email:</strong> ${userData.email}</p>
+                   <p><strong>Password:</strong> ${userData.password}</p>
+                 </div>
+                 
+                 <p style="color: #d9534f;"><strong>Important:</strong> Please change your password after your first login for security purposes.</p>
+                 
+                 <p>You can login at: <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="color: #1a7ea5;">Smart School Login</a></p>
+                 
+                 <p>Best regards,<br/>Smart School Team</p>
+               </div>`,
       });
-    } else if (userData.phoneNumber) {
-      await sendSmsTo(
-        userData.phoneNumber,
-        `Your verification code is ${verificationCode}. Thank you for signing up to Smart School`
-      );
+    } else if (!isAdminCreation) {
+      // Send verification code for self-registration
+      if (userData.email) {
+        await sendEmail({
+          to: userData.email,
+          subject: "Verification Code",
+          text: `Here is your verification code: ${verificationCode}`,
+          html: `<p>Hello ${userData.username}, Thank you for signing up to Smart School</p>
+                 <p>You can verify your account with this code:</p>
+                 <h2>${verificationCode}</h2>
+                 <p>Best regards, </p>
+                 <p>Smart School Team</p>`,
+        });
+      } else if (userData.phoneNumber) {
+        await sendSmsTo(
+          userData.phoneNumber,
+          `Your verification code is ${verificationCode}. Thank you for signing up to Smart School`
+        );
+      }
     }
+
     const newUser: User = await prisma.user.create({
       data: {
         id: uuidv4(),
         ...userData,
         password: hashedPassword,
-        verificationCode
+        verificationCode: isAdminCreation ? null : verificationCode,
+        isVerified: isAdminCreation ? true : false, // Auto-verify admin-created users
       },
     });
 
-    logActivity(newUser.id, "CREATE_USER", "New user registerd", req.ip || "");
+    // @ts-ignore
+    logActivity(isAdminCreation ? req.user.id : newUser.id, "CREATE_USER", isAdminCreation ? `Admin created user ${newUser.username}` : "New user registered", req.ip || "");
 
     const { password, ...userWithoutPassword } = newUser;
 
     res.status(201).json({
       status: "success",
-      message: "User created successfully. Please verify your account.",
+      message: isAdminCreation
+        ? "User created successfully. Welcome email sent with login credentials."
+        : "User created successfully. Please verify your account.",
       data: userWithoutPassword,
     });
   } catch (error) {

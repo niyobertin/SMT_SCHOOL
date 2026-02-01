@@ -778,10 +778,11 @@ export const getExams = async (
             }
             : { organizationId: orgId };
 
-        // Filter out archived exams unless requested
-        if (showArchived !== 'true') {
+        // Include archived exams by default, only exclude if explicitly requested
+        if (showArchived === 'false') {
             where.status = { not: 'ARCHIVED' };
         }
+        // Otherwise, show all exams including archived ones with their status
 
         const exams = await prisma.exam.findMany({
             where,
@@ -863,10 +864,11 @@ export const getAllExams = async (
             };
         }
 
-        // Archive status
-        if (showArchived !== 'true' && !status && status !== 'ARCHIVED') {
+        // Include archived exams by default, only exclude if explicitly requested
+        if (showArchived === 'false' && !status) {
             where.status = { not: 'ARCHIVED' };
         }
+        // Otherwise, show all exams including archived ones with their status
 
         const exams = await prisma.exam.findMany({
             where,

@@ -1,6 +1,7 @@
 import Router from "express";
 import {
     callbackUrlHandler,
+    createUser,
     deleteUser,
     getProfile,
     getUserById,
@@ -90,8 +91,60 @@ const userRouter = Router();
  */
 userRouter.get("/",
     authenticate,
-    authorize("ADMIN"),
+    authorize("SUPER_ADMIN", "ADMIN"),
     getUsers
+);
+
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: Create a new user (Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - firstName
+ *               - lastName
+ *               - password
+ *               - role
+ *             properties:
+ *               email:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [STUDENT, INSTRUCTOR, ADMIN, EXAMINER, SUPER_ADMIN]
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *       409:
+ *         description: User already exists
+ *       401:
+ *         description: Unauthorized
+ */
+userRouter.post("/",
+    authenticate,
+    authorize("SUPER_ADMIN", "ADMIN"),
+    createUser
 );
 /**
  * @swagger
