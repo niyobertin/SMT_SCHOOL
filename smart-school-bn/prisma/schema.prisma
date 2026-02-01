@@ -490,6 +490,7 @@ model Organization {
   logo         String?
   contactEmail String?
   contactPhone String?
+  creatorId    String? // ID of user who created this organization
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
