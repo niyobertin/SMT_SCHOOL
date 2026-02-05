@@ -20,7 +20,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
         const userRole = decoded.role;
 
         // 2️⃣ If route requires specific roles, check them
-        if (allowedRoles && !allowedRoles.includes(userRole)) {
+        if (userRole !== "SUPER_ADMIN" && allowedRoles && !allowedRoles.includes(userRole)) {
             // If user is logged in but not authorized
             if (userRole === "STUDENT" || userRole === "USER") {
                 return <Navigate to="/courses" replace />;

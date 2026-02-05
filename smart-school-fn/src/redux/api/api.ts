@@ -28,7 +28,8 @@ api.interceptors.response.use(
       if (
         role !== "ADMIN" &&
         role !== "INSTRUCTOR" &&
-        window.location.pathname === "/dashboard"
+        role !== "SUPER_ADMIN" &&
+        window.location.pathname.startsWith("/dashboard")
       ) {
         window.location.href = "/courses";
       }

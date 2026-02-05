@@ -97,7 +97,7 @@ export const optionalAuthenticate = async (req: Request, res: Response, next: Ne
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // @ts-ignore
-    if (!roles.includes(req.user.role)) {
+    if (req.user.role !== 'SUPER_ADMIN' && !roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. You do not have permissions to perform this action.'
