@@ -1576,7 +1576,7 @@ export const bulkAssignExamToCandidates = async (
 
                 // Send Email
                 if (assignment.candidate.email && notify !== 'false') {
-                    const examLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/exam-portal/login`;
+                    const examLink = `${process.env.CLIENT_URL || 'https://smartschool.rw'}/exam-portal/login`;
                     const startDate = assignment.exam.startDate
                         ? new Date(assignment.exam.startDate).toLocaleString()
                         : 'Flexible';
