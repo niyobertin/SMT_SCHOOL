@@ -357,21 +357,40 @@ export const createCandidatesBulk = async (
 
         for (const cand of candidates) {
             try {
-                const candidateIdGenerated = await generateCandidateId(orgId);
+                // Use provided candidateId or generate one
+                let finalCandidateId = cand.candidateId || cand.customCandidateId;
+
+                if (!finalCandidateId) {
+                    finalCandidateId = await generateCandidateId(orgId);
+                } else {
+                    // Check if provided candidateId already exists
+                    const existing = await prisma.candidate.findUnique({
+                        where: { candidateId: String(finalCandidateId) }
+                    });
+                    if (existing) {
+                        errors.push({ candidate: cand, error: `Candidate ID ${finalCandidateId} already exists` });
+                        continue;
+                    }
+                }
+
                 const newCandidate = await prisma.candidate.create({
                     data: {
                         id: uuidv4(),
-                        candidateId: candidateIdGenerated,
+                        candidateId: String(finalCandidateId),
+                        customCandidateId: cand.customCandidateId ? String(cand.customCandidateId) : null,
                         firstName: cand.firstName,
                         lastName: cand.lastName,
                         email: cand.email,
-                        phoneNumber: cand.phoneNumber,
+                        phoneNumber: cand.phoneNumber ? String(cand.phoneNumber) : null,
                         organizationId: orgId,
+                        batch: cand.batch || null,
+                        grade: cand.grade !== undefined ? String(cand.grade) : null,
+                        department: cand.department || null,
                     },
                 });
                 createdCandidates.push(newCandidate);
             } catch (err) {
-                logger.error(`Failed to create candidate ${cand.email}`, err);
+                logger.error(`Failed to create candidate ${cand.email || cand.firstName}`, err);
                 errors.push({ candidate: cand, error: 'Failed to create' });
             }
         }

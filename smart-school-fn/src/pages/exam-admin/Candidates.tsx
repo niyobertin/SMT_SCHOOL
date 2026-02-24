@@ -252,10 +252,11 @@ const Candidates = () => {
                     firstName: row.FirstName || row.firstName || '',
                     lastName: row.LastName || row.lastName || '',
                     email: row.Email || row.email || '',
-                    phoneNumber: row.PhoneNumber || row.phoneNumber || '',
+                    phoneNumber: row.PhoneNumber !== undefined ? String(row.PhoneNumber) : '',
+                    candidateId: row.CustomID || row.customCandidateId || '',
                     customCandidateId: row.CustomID || row.customCandidateId || '',
                     batch: row.Batch || row.batch || '',
-                    grade: row.Grade || row.grade || (row.Grade !== undefined ? String(row.Grade) : ''),
+                    grade: row.Grade !== undefined ? String(row.Grade) : '',
                     department: row.Department || row.department || '',
                 })).filter(c => c.firstName && c.lastName);
 
