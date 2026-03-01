@@ -1,4 +1,4 @@
-type UserRole = "SUPER_ADMIN" | "ADMIN" | "INSTRUCTOR" | "STUDENT" | "EXAMINER";
+type UserRole = "SUPER_ADMIN" | "ADMIN" | "INSTRUCTOR" | "STUDENT" | "SELF_STUDENT" | "EXAMINER" | "USER";
 
 export interface User {
   id: string;

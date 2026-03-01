@@ -166,7 +166,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                         >
-                            <div className="sticky top-0 bg-white border-b border-slate-100 px-8 py-6 flex items-center justify-between z-10">
+                            <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-900">Create New User</h2>
                                     <p className="text-sm text-slate-500 mt-1">Add a new user to the platform</p>
@@ -179,8 +179,8 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
+                            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     {/* Email */}
                                     <div className="col-span-2 md:col-span-1">
                                         <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
@@ -190,7 +190,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                                             type="email"
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className={`w-full px-4 py-3 bg-slate-50 border ${errors.email ? "border-red-300" : "border-slate-200"
+                                            className={`w-full px-3 py-2 bg-slate-50 border ${errors.email ? "border-red-300" : "border-slate-200"
                                                 } rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium`}
                                             placeholder="user@example.com"
                                         />
@@ -206,7 +206,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                                             type="tel"
                                             value={formData.phoneNumber}
                                             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium"
                                             placeholder="+250 XXX XXX XXX"
                                         />
                                     </div>
@@ -269,7 +269,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                                                 type={showPassword ? "text" : "password"}
                                                 value={formData.password}
                                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                className={`w-full px-4 py-3 pr-12 bg-slate-50 border ${errors.password ? "border-red-300" : "border-slate-200"
+                                                className={`w-full px-3 py-2 pr-12 bg-slate-50 border ${errors.password ? "border-red-300" : "border-slate-200"
                                                     } rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium`}
                                                 placeholder="••••••••"
                                             />
@@ -305,7 +305,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                                         <select
                                             value={formData.role}
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium"
                                         >
                                             <option value="STUDENT">Student</option>
                                             <option value="INSTRUCTOR">Instructor</option>
@@ -320,7 +320,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                                         <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                                             Account Status
                                         </label>
-                                        <label className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                                        <label className="flex items-center gap-3 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
                                             <input
                                                 type="checkbox"
                                                 checked={formData.isActive}
@@ -333,18 +333,18 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess, currentUserRole }:
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+                                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                                     <button
                                         type="button"
                                         onClick={handleClose}
-                                        className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors"
+                                        className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="px-6 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        className="px-4 py-2 bg-[#1a7ea5] text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         {loading && <Loader2 size={16} className="animate-spin" />}
                                         {loading ? "Creating..." : "Create User"}

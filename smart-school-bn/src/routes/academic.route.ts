@@ -15,7 +15,9 @@ import {
     getTeacherAssignments,
     removeTeacherAssignment,
     createTerm,
-    getTerms
+    getTerms,
+    createStudent,
+    getStudentsByOrg
 } from '../controller/academic.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import { tenantContext, requireTenant } from '../middleware/tenant.middleware';
@@ -55,5 +57,9 @@ router.delete('/teacher-assignments/:id', authorize('ADMIN', 'SUPER_ADMIN'), rem
 
 // Assignments
 router.post('/bulk-assign', authorize('ADMIN', 'SUPER_ADMIN'), bulkAssignToClass);
+
+// Student Management (School Based)
+router.post('/students', authorize('ADMIN', 'SUPER_ADMIN', 'INSTRUCTOR'), createStudent);
+router.get('/students', getStudentsByOrg);
 
 export default router;

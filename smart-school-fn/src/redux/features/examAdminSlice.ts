@@ -43,6 +43,7 @@ interface ExamAdminState {
     classRooms: any[];
     subjects: any[];
     academicRecords: any[];
+    students: any[];
 }
 
 const initialState: ExamAdminState = {
@@ -65,6 +66,7 @@ const initialState: ExamAdminState = {
     classRooms: [],
     subjects: [],
     academicRecords: [],
+    students: [],
 };
 
 // Async Thunks
@@ -760,6 +762,35 @@ export const bulkAssignToClass = createAsyncThunk(
     }
 );
 
+// Student Management (School Based)
+export const fetchStudentsByOrg = createAsyncThunk(
+    'examAdmin/fetchStudentsByOrg',
+    async (organizationId: string | undefined, { rejectWithValue }) => {
+        try {
+            const headers: any = {};
+            if (organizationId) {
+                headers['x-organization-id'] = organizationId;
+            }
+            const response = await api.get('/academic/students', { headers });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch students');
+        }
+    }
+);
+
+export const createStudent = createAsyncThunk(
+    'examAdmin/createStudent',
+    async (data: any, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/academic/students', data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to create student');
+        }
+    }
+);
+
 // Result Approvals
 
 export const submitExamForApproval = createAsyncThunk(
@@ -1141,6 +1172,29 @@ const examAdminSlice = createSlice({
             })
             .addCase(deleteSubject.fulfilled, (state, action) => {
                 state.subjects = state.subjects.filter(s => s.id !== action.payload);
+            })
+            // Student Management
+            .addCase(fetchStudentsByOrg.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(fetchStudentsByOrg.fulfilled, (state, action) => {
+                state.loading = false;
+                state.students = action.payload.data;
+            })
+            .addCase(fetchStudentsByOrg.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            .addCase(createStudent.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(createStudent.fulfilled, (state, action) => {
+                state.loading = false;
+                state.students.push(action.payload.data);
+            })
+            .addCase(createStudent.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
             })
             // Approvals
             .addCase(submitExamForApproval.fulfilled, (state, action) => {

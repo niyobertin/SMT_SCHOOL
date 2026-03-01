@@ -331,6 +331,9 @@ export const getCandidates = async (
                 take: Number(limit) === -1 ? undefined : Number(limit),
                 orderBy: { createdAt: 'desc' },
                 include: {
+                    organization: {
+                        select: { name: true }
+                    },
                     _count: {
                         select: {
                             examAssignments: true,
@@ -1924,7 +1927,9 @@ export const getGlobalExamResults = async (
             where.exam = { organizationId: String(organizationId) };
         } else {
             const tenantFilter = getTenantFilter(req);
-            where.exam = { organizationId: tenantFilter.organizationId || { not: undefined } };
+            if (tenantFilter.organizationId) {
+                where.exam = { organizationId: tenantFilter.organizationId };
+            }
         }
 
         if (batch) {

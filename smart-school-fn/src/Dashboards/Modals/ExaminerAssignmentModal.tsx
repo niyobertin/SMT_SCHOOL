@@ -77,13 +77,13 @@ export const ExaminerAssignmentModal: React.FC<ExaminerAssignmentModalProps> = (
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-700/70 backdrop-blur-sm z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] flex flex-col">
-                <h2 className="text-lg font-bold mb-2">Assign Organizations</h2>
-                <p className="text-sm text-gray-600 mb-4">
+            <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-md max-h-[80vh] flex flex-col">
+                <h2 className="text-lg font-bold mb-0.5">Assign Organizations</h2>
+                <p className="text-sm text-gray-600 mb-2">
                     Select the organizations this examiner will manage.
                 </p>
 
-                <div className="flex-1 overflow-y-auto border border-gray-200 rounded p-2 mb-4">
+                <div className="flex-1 overflow-y-auto border border-gray-200 rounded p-1 mb-2">
                     {fetchLoading ? (
                         <div className="text-center py-4">Loading organizations...</div>
                     ) : organizations.length === 0 ? (
@@ -91,7 +91,7 @@ export const ExaminerAssignmentModal: React.FC<ExaminerAssignmentModalProps> = (
                     ) : (
                         <div className="space-y-2">
                             {organizations.map((org) => (
-                                <label key={org.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                <label key={org.id} className="flex items-center space-x-3 p-1.5 hover:bg-gray-50 rounded cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={selectedOrgs.includes(org.id)}
@@ -108,14 +108,14 @@ export const ExaminerAssignmentModal: React.FC<ExaminerAssignmentModalProps> = (
                 <div className="flex justify-end gap-3 flex-shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100"
+                        className="px-3 py-1.5 border rounded-lg text-gray-700 hover:bg-gray-100"
                         disabled={loading}
                     >
                         Cancel
                     </button>
                     <button
                         onClick={() => onConfirm(selectedOrgs)}
-                        className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         disabled={loading}
                     >
                         {loading ? 'Saving...' : 'Confirm Assignment'}

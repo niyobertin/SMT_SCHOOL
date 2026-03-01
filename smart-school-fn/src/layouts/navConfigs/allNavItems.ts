@@ -4,7 +4,6 @@ import {
     Building2,
     GraduationCap,
     BookOpen,
-    Layers,
     UserPlus,
     FileText,
     PenTool,
@@ -27,7 +26,7 @@ export const allNavItems: NavItem[] = [
     {
         path: '/dashboard/organizations',
         icon: Building2,
-        label: 'Organizations',
+        label: 'Organizations/Schools',
         roles: ['SUPER_ADMIN', 'ADMIN']
     },
     {

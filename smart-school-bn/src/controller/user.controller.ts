@@ -35,6 +35,20 @@ export const getUsers = async (
         ],
       },
       include: {
+        academicRecords: {
+          include: {
+            class: {
+              include: {
+                grade: true
+              }
+            }
+          }
+        },
+        userOrganizations: {
+          include: {
+            organization: true
+          }
+        },
         enrollments: true,
         testAttempts: true
       },
@@ -261,6 +275,7 @@ export const createUser = async (
       data: {
         id: uuidv4(),
         ...userData,
+        role: isAdminCreation ? (userData.role || "STUDENT") : "SELF_STUDENT",
         password: hashedPassword,
         verificationCode: isAdminCreation ? null : verificationCode,
         isVerified: isAdminCreation ? true : false, // Auto-verify admin-created users

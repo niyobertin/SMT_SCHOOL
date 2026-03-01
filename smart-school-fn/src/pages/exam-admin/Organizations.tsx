@@ -20,7 +20,8 @@ import {
     Upload,
     Image as ImageIcon,
     MapPin,
-    Hash
+    Hash,
+    Loader2
 } from 'lucide-react';
 
 const Organizations = () => {
@@ -33,7 +34,6 @@ const Organizations = () => {
         description: '',
         contactEmail: '',
         contactPhone: '',
-        logo: '',
         schoolCode: '',
         location: '',
     });
@@ -64,7 +64,6 @@ const Organizations = () => {
             description: org.description || '',
             contactEmail: org.contactEmail,
             contactPhone: org.contactPhone || '',
-            logo: org.logo || '',
             schoolCode: org.schoolCode || '',
             location: org.location || '',
         });
@@ -158,7 +157,6 @@ const Organizations = () => {
             description: '',
             contactEmail: '',
             contactPhone: '',
-            logo: '',
             schoolCode: '',
             location: '',
         });
@@ -294,9 +292,9 @@ const Organizations = () => {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto"
+                            className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-4 max-h-[90vh] overflow-y-auto"
                         >
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-2xl font-bold text-gray-900">
                                     {isEditing ? 'Edit Organization' : 'Create Organization'}
                                 </h3>
@@ -308,11 +306,11 @@ const Organizations = () => {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-2">
                                 {/* Logo Upload Section */}
-                                <div className="flex justify-center mb-6">
+                                <div className="flex justify-center mb-3">
                                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                        <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-indigo-500 transition-colors">
+                                        <div className="w-28 h-24 rounded-md bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-indigo-500 transition-colors">
                                             {logoPreview ? (
                                                 <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
                                             ) : (
@@ -334,7 +332,7 @@ const Organizations = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
                                         Organization Name *
                                     </label>
                                     <input
@@ -342,108 +340,90 @@ const Organizations = () => {
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         required
-                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        className="w-full px-3 py-1.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                         placeholder="e.g., Tech University"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
                                         Description
                                     </label>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                         rows={3}
-                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        className="w-full px-3 py-1.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                         placeholder="Brief description of the organization"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Contact Email *
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={formData.contactEmail}
-                                            onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                                            required
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            placeholder="admin@organization.com"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Contact Phone
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            value={formData.contactPhone}
-                                            onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            placeholder="+250 788 000 000"
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                        Contact Email *
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={formData.contactEmail}
+                                        onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                                        required
+                                        className="w-full px-3 py-1.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        placeholder="admin@organization.com"
+                                    />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Logo URL (Manual Entry - Optional)
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                        Contact Phone
                                     </label>
                                     <input
-                                        type="url"
-                                        value={formData.logo}
-                                        onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        placeholder="https://example.com/logo.png"
+                                        type="tel"
+                                        value={formData.contactPhone}
+                                        onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                                        className="w-full px-3 py-1.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        placeholder="+250 788 000 000"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Faster to upload above, but you can also paste a URL here.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                        School Code
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.schoolCode}
+                                        onChange={(e) => setFormData({ ...formData, schoolCode: e.target.value })}
+                                        className="w-full px-3 py-1.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        placeholder="e.g., SMS001"
+                                    />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            School Code
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.schoolCode}
-                                            onChange={(e) => setFormData({ ...formData, schoolCode: e.target.value })}
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            placeholder="e.g., SMS001"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Location
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.location}
-                                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            placeholder="e.g., Kigali, Rwanda"
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                        Location
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.location}
+                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                        className="w-full px-3 py-1.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        placeholder="e.g., Kigali, Rwanda"
+                                    />
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
+                                <div className="flex gap-2 pt-2">
                                     <button
                                         type="button"
                                         onClick={() => setShowCreateModal(false)}
-                                        className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                                        className="flex-1 px-3 py-1.5 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                                        className="flex-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
+                                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                                         {loading ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Organization' : 'Create Organization')}
                                     </button>
                                 </div>
@@ -462,27 +442,29 @@ const Organizations = () => {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center"
+                            className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-4 text-center"
                         >
                             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trash2 className="w-8 h-8 text-red-600" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Organization?</h3>
-                            <p className="text-gray-600 mb-6">
+                            <p className="text-gray-600 mb-4 px-2">
                                 Are you sure you want to delete this organization? This action cannot be undone and will delete all associated candidates and exams.
                             </p>
-                            <div className="flex gap-3">
+                            <div className="flex gap-2">
                                 <button
                                     onClick={() => setShowDeleteModal(false)}
-                                    className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl hover:bg-gray-50 font-medium"
+                                    className="flex-1 px-3 py-1.5 border-2 border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleConfirmDelete}
-                                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium"
+                                    disabled={loading}
+                                    className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    Delete
+                                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {loading ? 'Deleting...' : 'Delete'}
                                 </button>
                             </div>
                         </motion.div>

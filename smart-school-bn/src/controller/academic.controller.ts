@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getTenantFilter } from '../middleware/tenant.middleware';
 import prisma from '../services/prisma.singleton';
+import { hashPassword } from '../utils/hashPassword';
+import { logActivity } from '../helper/activitylogs';
 
 // ============================================
 // ACADEMIC YEAR MANAGEMENT
@@ -102,34 +104,49 @@ export const createClassRoom = async (req: Request, res: Response, next: NextFun
 
 export const bulkAssignToClass = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { classId, yearId, studentAssignments } = req.body; // Array of { studentId, studentCode }
+        const { gradeId, classId, yearId, studentAssignments, studentIds } = req.body;
         const organizationId = req.organizationId!;
 
+        if (!gradeId || !yearId) {
+            res.status(400).json({ success: false, message: 'Grade and Year are required' });
+            return;
+        }
+
+        // Handle case where studentAssignments is not provided but studentIds is
+        const finalAssignments = studentAssignments || (studentIds || []).map((id: string) => ({ studentId: id, studentCode: id }));
+
+        if (!finalAssignments || finalAssignments.length === 0) {
+            res.status(400).json({ success: false, message: 'No students provided for assignment' });
+            return;
+        }
+
         const records = await prisma.$transaction(
-            studentAssignments.map((assign: any) =>
+            finalAssignments.map((assign: any) =>
                 prisma.academicRecord.upsert({
                     where: {
-                        studentId_classId_yearId: {
+                        studentId_gradeId_yearId: {
                             studentId: assign.studentId,
-                            classId,
+                            gradeId,
                             yearId
                         }
                     },
                     update: {
-                        studentCode: assign.studentCode
+                        studentCode: assign.studentCode,
+                        classId: classId || null
                     },
                     create: {
                         id: uuidv4(),
                         studentId: assign.studentId,
                         studentCode: assign.studentCode,
-                        classId,
+                        gradeId,
+                        classId: classId || null,
                         yearId
                     }
                 })
             )
         );
 
-        res.status(200).json({ success: true, data: records, message: 'Students assigned to class successfully' });
+        res.status(200).json({ success: true, data: records, message: 'Students assigned successfully' });
     } catch (error) {
         next(error);
     }
@@ -292,6 +309,115 @@ export const getTerms = async (req: Request, res: Response, next: NextFunction) 
             where: { yearId }
         });
         res.status(200).json({ success: true, data: terms });
+    } catch (error) {
+        next(error);
+    }
+};
+// ============================================
+// STUDENT MANAGEMENT
+// ============================================
+
+export const createStudent = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { username, password, firstName, lastName, email, phoneNumber, classId, yearId, studentCode } = req.body;
+        const organizationId = req.organizationId!;
+        const creatorId = (req as any).user.id;
+
+        // Coerce empty strings to null so the unique constraint allows multiple students without an email
+        const emailValue = email && email.trim() ? email.trim() : null;
+        const phoneValue = phoneNumber && phoneNumber.trim() ? phoneNumber.trim() : null;
+
+        const hashedPassword = await hashPassword(password);
+
+        const student = await prisma.$transaction(async (tx) => {
+            // 1. Create User
+            const user = await tx.user.create({
+                data: {
+                    id: uuidv4(),
+                    username,
+                    password: hashedPassword,
+                    firstName,
+                    lastName,
+                    email: emailValue,
+                    phoneNumber: phoneValue,
+                    role: 'STUDENT',
+                    isVerified: true
+                }
+            });
+
+            // 2. Link to Organization
+            await tx.userOrganization.create({
+                data: {
+                    id: uuidv4(),
+                    userId: user.id,
+                    organizationId
+                }
+            });
+
+            // 3. Optional Academic placement
+            if (classId && yearId) {
+                await tx.academicRecord.create({
+                    data: {
+                        id: uuidv4(),
+                        studentId: user.id,
+                        classId,
+                        yearId,
+                        studentCode: studentCode || username
+                    }
+                });
+            }
+
+            return user;
+        });
+
+        logActivity(creatorId, "CREATE_STUDENT", `Created student ${student.username} for organization ${organizationId}`, req.ip || "");
+
+        const { password: _, ...studentWithoutPassword } = student;
+        res.status(201).json({ success: true, data: studentWithoutPassword });
+    } catch (error: any) {
+        // Provide a clear message for unique-constraint violations (Prisma P2002)
+        if (error?.code === 'P2002') {
+            const field = error?.meta?.target?.[0] || 'field';
+            const messages: Record<string, string> = {
+                username: 'Username is already taken. Please choose a different one.',
+                email: 'Email address is already registered.',
+                phoneNumber: 'Phone number is already registered.',
+            };
+            res.status(409).json({
+                success: false,
+                message: messages[field] ?? `${field} is already in use.`
+            });
+            return;
+        }
+        next(error);
+    }
+};
+
+export const getStudentsByOrg = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const organizationId = req.organizationId!;
+        const students = await prisma.user.findMany({
+            where: {
+                role: 'STUDENT',
+                userOrganizations: {
+                    some: { organizationId }
+                }
+            },
+            include: {
+                academicRecords: {
+                    include: {
+                        class: {
+                            include: { grade: true }
+                        },
+                        year: true
+                    }
+                },
+                userOrganizations: {
+                    include: { organization: true }
+                }
+            }
+        });
+        res.status(200).json({ success: true, data: students });
     } catch (error) {
         next(error);
     }

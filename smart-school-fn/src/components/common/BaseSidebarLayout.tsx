@@ -34,17 +34,14 @@ export const BaseSidebarLayout = ({
     const logout = useLogout();
     const dispatch = useAppDispatch();
     const { user, selectedOrganizationId } = useAppSelector((state) => state.auth);
-    const { organizations, selectedOrg } = useAppSelector((state) => state.examAdmin);
+    const { organizations, selectedOrg, loading } = useAppSelector((state) => state.examAdmin);
 
-    // Fetch organizations if not already loaded
     useEffect(() => {
         const managementRoles = ['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'];
-        if (user && managementRoles.includes(user.role) && (!organizations || organizations.length === 0)) {
+        if (user && managementRoles.includes(user.role) && organizations.length === 0 && !loading) {
             dispatch(fetchOrganizations());
         }
-    }, [user, organizations, dispatch]);
-
-    // Sync selectedOrganizationId from auth with selectedOrg in examAdmin
+    }, [user, dispatch]);
     useEffect(() => {
         if (organizations && organizations.length > 0) {
             if (selectedOrganizationId) {

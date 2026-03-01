@@ -1,6 +1,6 @@
 import { ExamAttempt } from '@prisma/client';
 
-type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'INSTRUCTOR' | 'STUDENT' | 'EXAMINER' | 'USER';
+type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'INSTRUCTOR' | 'STUDENT' | 'SELF_STUDENT' | 'EXAMINER' | 'USER';
 
 interface UnifiedUser {
     id: string;

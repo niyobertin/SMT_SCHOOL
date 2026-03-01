@@ -35,6 +35,7 @@ export const UserRole = {
     ADMIN: 'ADMIN',
     INSTRUCTOR: 'INSTRUCTOR',
     STUDENT: 'STUDENT',
+    SELF_STUDENT: 'SELF_STUDENT',
     EXAMINER: 'EXAMINER',
     USER: 'USER',
 } as const;

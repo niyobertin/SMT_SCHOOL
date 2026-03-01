@@ -12,7 +12,7 @@ import {
     createClassRoom,
     updateClassRoom,
     deleteClassRoom,
-    fetchCandidates,
+    fetchStudentsByOrg,
     bulkAssignToClass,
 } from '../../redux/features/examAdminSlice';
 import { toast } from 'react-toastify';
@@ -32,19 +32,20 @@ import {
     ArrowRight
 } from 'lucide-react';
 import SubjectTab from './components/SubjectTab';
+import StudentsTab from './components/StudentsTab';
 
 const Academic = () => {
     const dispatch = useAppDispatch();
     const {
         academicYears,
         grades,
-        candidates,
+        students,
         loading,
         selectedOrg
     } = useAppSelector((state) => state.examAdmin);
     const { user } = useAppSelector((state) => state.auth);
 
-    const [activeTab, setActiveTab] = useState<'years' | 'grades' | 'classrooms' | 'subjects' | 'placement'>('years');
+    const [activeTab, setActiveTab] = useState<'years' | 'grades' | 'classrooms' | 'subjects' | 'students' | 'placement'>('years');
     const [showYearModal, setShowYearModal] = useState(false);
     const [showGradeModal, setShowGradeModal] = useState(false);
     const [showClassModal, setShowClassModal] = useState(false);
@@ -73,8 +74,8 @@ const Academic = () => {
     });
 
     const [placementData, setPlacementData] = useState({
-        academicYearId: '',
-        classRoomId: '',
+        yearId: '', // Changed from academicYearId to yearId for consistency with backend
+        classId: '', // Changed from classRoomId to classId for consistency with backend
         studentIds: [] as string[],
         organizationId: '',
     });
@@ -84,7 +85,7 @@ const Academic = () => {
             const orgId = selectedOrg?.id || '';
             dispatch(fetchAcademicYears(orgId));
             dispatch(fetchGrades(orgId));
-            dispatch(fetchCandidates(orgId));
+            dispatch(fetchStudentsByOrg(orgId));
 
             if (selectedOrg?.id) {
                 setYearFormData(prev => ({ ...prev, organizationId: selectedOrg.id }));
@@ -188,7 +189,7 @@ const Academic = () => {
             await dispatch(bulkAssignToClass(placementData)).unwrap();
             toast.success('Students assigned successfully');
             setShowPlacementModal(false);
-            setPlacementData({ ...placementData, studentIds: [], classRoomId: '' });
+            setPlacementData({ ...placementData, studentIds: [], classId: '' });
         } catch (error: any) {
             toast.error(error || 'Failed to assign students');
         }
@@ -263,13 +264,13 @@ const Academic = () => {
             </div>
 
             <div className="flex gap-1.5 bg-slate-100 p-1.5 rounded-xl mb-6 w-fit overflow-x-auto border border-slate-200 shadow-sm">
-                {(['years', 'grades', 'classrooms', 'subjects', 'placement'] as const).map((tab) => (
+                {(['years', 'grades', 'classrooms', 'subjects', 'students', 'placement'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap capitalize ${activeTab === tab ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-800'}`}
                     >
-                        {tab === 'years' ? 'Academic Years' : tab === 'grades' ? 'Grades & Levels' : tab === 'classrooms' ? 'ClassRooms' : tab === 'subjects' ? 'Subjects' : 'Student Placement'}
+                        {tab === 'years' ? 'Academic Years' : tab === 'grades' ? 'Grades & Levels' : tab === 'classrooms' ? 'ClassRooms' : tab === 'subjects' ? 'Subjects' : tab === 'students' ? 'Students' : 'Student Placement'}
                     </button>
                 ))}
             </div>
@@ -478,6 +479,8 @@ const Academic = () => {
 
                 {activeTab === 'subjects' && <SubjectTab />}
 
+                {activeTab === 'students' && <StudentsTab />}
+
                 {activeTab === 'placement' && (
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -497,7 +500,7 @@ const Academic = () => {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                            {candidates.map((student) => {
+                            {(students || []).map((student) => {
                                 const isSelected = placementData.studentIds.includes(student.id);
                                 return (
                                     <div
@@ -512,11 +515,14 @@ const Academic = () => {
                                     >
                                         <div className="flex items-center gap-2">
                                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${isSelected ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-                                                {student.firstName[0]}{student.lastName[0]}
+                                                {student.firstName?.[0]}{student.lastName?.[0]}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="font-bold text-slate-900 text-xs truncate">{student.firstName}</p>
                                                 <p className="text-[10px] text-slate-500 truncate">{student.lastName}</p>
+                                                {student.academicRecords?.[0]?.class && (
+                                                    <p className="text-[8px] font-bold text-indigo-500 truncate">{student.academicRecords[0].class.name}</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -700,8 +706,8 @@ const Academic = () => {
                                     <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 ml-1">Academic Year</label>
                                     <select
                                         required
-                                        value={placementData.academicYearId}
-                                        onChange={(e) => setPlacementData({ ...placementData, academicYearId: e.target.value })}
+                                        value={placementData.yearId}
+                                        onChange={(e) => setPlacementData({ ...placementData, yearId: e.target.value })}
                                         className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-bold"
                                     >
                                         <option value="">Choose Year...</option>
@@ -714,14 +720,14 @@ const Academic = () => {
                                     <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 ml-1">Classroom</label>
                                     <select
                                         required
-                                        value={placementData.classRoomId}
-                                        onChange={(e) => setPlacementData({ ...placementData, classRoomId: e.target.value })}
+                                        value={placementData.classId}
+                                        onChange={(e) => setPlacementData({ ...placementData, classId: e.target.value })}
                                         className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-bold"
                                     >
                                         <option value="">Choose Class...</option>
-                                        {grades.flatMap(g => g.classRooms || []).map(cls => (
+                                        {grades.flatMap(g => (g.classRooms || []).map((cls: any) => ({ ...cls, gradeName: g.name }))).map(cls => (
                                             <option key={cls.id} value={cls.id}>
-                                                {cls.name} ({grades.find(g => g.id === cls.gradeId)?.name})
+                                                {cls.name} ({cls.gradeName})
                                             </option>
                                         ))}
                                     </select>

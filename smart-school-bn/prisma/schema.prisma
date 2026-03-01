@@ -55,7 +55,8 @@ enum UserRole {
   SUPER_ADMIN
   ADMIN
   INSTRUCTOR
-  STUDENT
+  STUDENT // This will be used for school-managed students
+  SELF_STUDENT // This will be used for self-registered students
   EXAMINER
 }
 
