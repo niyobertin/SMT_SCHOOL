@@ -8,8 +8,7 @@ import { sendEmail } from "../utils/sendEmail";
 import { generateToken, refreshToken } from "../utils/tokens";
 import jwt from "jsonwebtoken";
 import { logActivity } from "../helper/activitylogs";
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 export const getUsers = async (
   req: Request,

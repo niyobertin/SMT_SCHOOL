@@ -7,6 +7,7 @@ interface AuthState {
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  selectedOrganizationId: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -16,6 +17,7 @@ const initialState: AuthState = {
   token: localStorage.getItem('accessToken'),
   refreshToken: localStorage.getItem('refreshToken'),
   isAuthenticated: !!localStorage.getItem('accessToken'),
+  selectedOrganizationId: localStorage.getItem('selectedOrganizationId'),
   loading: false,
   error: null,
 };
@@ -122,12 +124,22 @@ const authSlice = createSlice({
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       localStorage.removeItem('userRole');
+      localStorage.removeItem('selectedOrganizationId');
       state.user = null;
       state.token = null;
       state.refreshToken = null;
+      state.selectedOrganizationId = null;
       state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
+    },
+    setSelectedOrganization: (state, action: PayloadAction<string>) => {
+      state.selectedOrganizationId = action.payload || null;
+      if (action.payload) {
+        localStorage.setItem('selectedOrganizationId', action.payload);
+      } else {
+        localStorage.removeItem('selectedOrganizationId');
+      }
     },
     clearError: (state) => {
       state.error = null;
@@ -145,6 +157,15 @@ const authSlice = createSlice({
         state.user = action.payload.data.user;
         state.token = action.payload.data.accessToken;
         state.refreshToken = action.payload.data.refreshToken;
+
+        // Auto-select first organization if available
+        const organizations = action.payload.data.user.userOrganizations;
+        if (organizations && organizations.length > 0) {
+          const firstOrgId = organizations[0].organizationId;
+          state.selectedOrganizationId = firstOrgId;
+          localStorage.setItem('selectedOrganizationId', firstOrgId);
+        }
+
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -216,5 +237,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, setSelectedOrganization } = authSlice.actions;
 export default authSlice.reducer;

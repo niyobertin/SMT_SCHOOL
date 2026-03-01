@@ -1,20 +1,23 @@
 import { Request, Response, NextFunction } from "express";
-import { logger } from "../utils/logger";
-import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
+import { getTenantFilter } from "../middleware/tenant.middleware";
+import prisma from "../services/prisma.singleton";
+import { logger } from "../utils/logger";
 
-const prisma = new PrismaClient();
 export const createLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const courseId = req.params.courseId;
         const { title, description, order } = req.body;
-        const course = await prisma.course.findUnique({
-            where: { id: courseId },
+        const organizationId = req.organizationId!;
+
+        const course = await prisma.course.findFirst({
+            where: { id: courseId, organizationId },
         });
+
         if (!course) {
             res.status(404).json({
-                status: "error",
-                message: "Course not found",
+                success: false,
+                error: { message: "Course not found or access denied" }
             });
             return;
         }
@@ -34,8 +37,7 @@ export const createLesson = async (req: Request, res: Response, next: NextFuncti
         });
         logger.info("Lesson created successfully", { lessonId: lesson.id });
         res.status(201).json({
-            status: "success",
-            message: "Lesson created successfully",
+            success: true,
             data: lesson,
         });
     } catch (error) {
@@ -45,16 +47,18 @@ export const createLesson = async (req: Request, res: Response, next: NextFuncti
 export const getLessons = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const courseId = req.params.courseId;
+        const organizationId = req.organizationId!;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const skip = (page - 1) * limit;
-        const course = await prisma.course.findUnique({
-            where: { id: courseId },
+
+        const course = await prisma.course.findFirst({
+            where: { id: courseId, organizationId },
         });
         if (!course) {
             res.status(404).json({
-                status: "error",
-                message: "Course not found",
+                success: false,
+                error: { message: "Course not found or access denied" }
             });
             return;
         }
@@ -75,8 +79,7 @@ export const getLessons = async (req: Request, res: Response, next: NextFunction
         const totalPages = Math.ceil(total / limit);
         logger.info("Lessons retrieved successfully", { courseId });
         res.status(200).json({
-            status: "success",
-            message: "Lessons retrieved successfully",
+            success: true,
             data: {
                 lessons,
                 pagination: {
@@ -106,15 +109,14 @@ export const getSingleLesson = async (req: Request, res: Response, next: NextFun
         });
         if (!lesson) {
             res.status(404).json({
-                status: "error",
-                message: "Lesson not found",
+                success: false,
+                error: { message: "Lesson not found or access denied" }
             });
             return;
         }
         logger.info("Lesson retrieved successfully", { lessonId });
         res.status(200).json({
-            status: "success",
-            message: "Lesson retrieved successfully",
+            success: true,
             data: lesson,
         });
     } catch (error) {
@@ -126,13 +128,18 @@ export const updateLesson = async (req: Request, res: Response, next: NextFuncti
     try {
         const lessonId = req.params.lessonId;
         const lessonData = req.body;
-        const lesson = await prisma.lesson.findUnique({
-            where: { id: lessonId },
+        const organizationId = req.organizationId!;
+
+        const lesson = await prisma.lesson.findFirst({
+            where: {
+                id: lessonId,
+                course: { organizationId }
+            },
         });
         if (!lesson) {
             res.status(404).json({
-                status: "error",
-                message: "Lesson not found",
+                success: false,
+                error: { message: "Lesson not found or access denied" }
             });
             return;
         }
@@ -142,8 +149,7 @@ export const updateLesson = async (req: Request, res: Response, next: NextFuncti
         });
         logger.info("Lesson updated successfully", { lessonId });
         res.status(200).json({
-            status: "success",
-            message: "Lesson updated successfully",
+            success: true,
             data: updatedLesson,
         });
     } catch (error) {
@@ -154,13 +160,18 @@ export const updateLesson = async (req: Request, res: Response, next: NextFuncti
 export const deleteLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const lessonId = req.params.lessonId;
-        const lesson = await prisma.lesson.findUnique({
-            where: { id: lessonId },
+        const organizationId = req.organizationId!;
+
+        const lesson = await prisma.lesson.findFirst({
+            where: {
+                id: lessonId,
+                course: { organizationId }
+            },
         });
         if (!lesson) {
             res.status(404).json({
-                status: "error",
-                message: "Lesson not found",
+                success: false,
+                error: { message: "Lesson not found or access denied" }
             });
             return;
         }
@@ -169,8 +180,7 @@ export const deleteLesson = async (req: Request, res: Response, next: NextFuncti
         });
         logger.info("Lesson deleted successfully", { lessonId });
         res.status(200).json({
-            status: "success",
-            message: "Lesson deleted successfully",
+            success: true,
             data: deletedLesson,
         });
     } catch (error) {

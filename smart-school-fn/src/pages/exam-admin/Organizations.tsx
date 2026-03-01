@@ -18,7 +18,9 @@ import {
     Phone,
     X,
     Upload,
-    Image as ImageIcon
+    Image as ImageIcon,
+    MapPin,
+    Hash
 } from 'lucide-react';
 
 const Organizations = () => {
@@ -32,6 +34,8 @@ const Organizations = () => {
         contactEmail: '',
         contactPhone: '',
         logo: '',
+        schoolCode: '',
+        location: '',
     });
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -61,6 +65,8 @@ const Organizations = () => {
             contactEmail: org.contactEmail,
             contactPhone: org.contactPhone || '',
             logo: org.logo || '',
+            schoolCode: org.schoolCode || '',
+            location: org.location || '',
         });
         setLogoPreview(org.logo || null);
         setLogoFile(null);
@@ -153,6 +159,8 @@ const Organizations = () => {
             contactEmail: '',
             contactPhone: '',
             logo: '',
+            schoolCode: '',
+            location: '',
         });
         setLogoFile(null);
         setLogoPreview(null);
@@ -257,6 +265,21 @@ const Organizations = () => {
                             <div className="mt-4 pt-4 border-t border-gray-200 flex gap-4 text-sm text-gray-500">
                                 <span>📝 Exams: {org._count?.exams || 0}</span>
                                 <span>👥 Candidates: {org._count?.candidates || 0}</span>
+                            </div>
+
+                            <div className="mt-2 space-y-1 text-xs text-gray-400">
+                                {org.schoolCode && (
+                                    <div className="flex items-center gap-1">
+                                        <Hash className="w-3 h-3" />
+                                        <span>Code: {org.schoolCode}</span>
+                                    </div>
+                                )}
+                                {org.location && (
+                                    <div className="flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        <span>{org.location}</span>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     ))}
@@ -378,6 +401,34 @@ const Organizations = () => {
                                         placeholder="https://example.com/logo.png"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Faster to upload above, but you can also paste a URL here.</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            School Code
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.schoolCode}
+                                            onChange={(e) => setFormData({ ...formData, schoolCode: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            placeholder="e.g., SMS001"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Location
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.location}
+                                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                            placeholder="e.g., Kigali, Rwanda"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3 pt-4">

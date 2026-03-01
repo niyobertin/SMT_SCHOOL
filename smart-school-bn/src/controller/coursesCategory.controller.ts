@@ -1,10 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { logger } from "../utils/logger";
-import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
-
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 export const createCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -46,7 +42,7 @@ export const getCategories = async (req: Request, res: Response, next: NextFunct
         const query = req.query.q as string || "";
         const categories = await prisma.category.findMany({
             orderBy: { createdAt: "desc" },
-            include:{courses:true},
+            include: { courses: true },
             take: limit,
             skip: startIndex,
             where: {

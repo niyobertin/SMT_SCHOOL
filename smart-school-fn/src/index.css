@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+@theme {
+  --color-indigo-50: #f0f9fb;
+  --color-indigo-100: #e0f3f8;
+  --color-indigo-200: #c1e6f1;
+  --color-indigo-300: #93d2e5;
+  --color-indigo-400: #6cb9cc;
+  --color-indigo-500: #3b9bc2;
+  --color-indigo-600: #1a7ea5;
+  --color-indigo-700: #156d8f;
+  --color-indigo-800: #165773;
+  --color-indigo-900: #164961;
+  --color-indigo-950: #0e3042;
+
+  --color-blue-50: #f0f9fb;
+  --color-blue-100: #e0f3f8;
+  --color-blue-200: #c1e6f1;
+  --color-blue-300: #93d2e5;
+  --color-blue-400: #6cb9cc;
+  --color-blue-500: #3b9bc2;
+  --color-blue-600: #1a7ea5;
+  --color-blue-700: #156d8f;
+  --color-blue-800: #165773;
+  --color-blue-900: #164961;
+  --color-blue-950: #0e3042;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -283,4 +309,13 @@
 .public-DraftEditorPlaceholder-root {
   color: #94a3b8 !important;
   padding: 16px !important;
+}
+
+@layer base {
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="hidden"]),
+  select,
+  textarea {
+    @apply border border-slate-300 rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all bg-white text-slate-900;
+  }
 }

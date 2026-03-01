@@ -72,7 +72,9 @@ export const LoginPage = () => {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
-    if (role === "SUPER_ADMIN" || role === "ADMIN" || role === "INSTRUCTOR") {
+    const managementRoles = ["SUPER_ADMIN", "ADMIN", "INSTRUCTOR", "EXAMINER"];
+
+    if (role && managementRoles.includes(role)) {
       navigate("/dashboard");
     } else if (role) {
       navigate("/courses");

@@ -1,43 +1,8 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAppDispatch } from '../../redux/hooks';
-import { loginUser } from '../../redux/features/auth';
-import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Mail, Lock, LogIn, Building2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Shield, LogIn, Building2, ArrowLeft } from 'lucide-react';
 
 const ExamAdminLogin = () => {
-    const [credentials, setCredentials] = useState({
-        identifier: '',
-        password: '',
-    });
-    const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const result = await dispatch(loginUser(credentials)).unwrap();
-
-            // Check if user has admin or instructor role
-            const userRole = result.data.user.role;
-            if (userRole === 'SUPER_ADMIN' || userRole === 'ADMIN' || userRole === 'INSTRUCTOR' || userRole === 'EXAMINER') {
-                toast.success('Welcome to Exam Administration Portal!');
-                navigate('/exam-admin/dashboard');
-            } else {
-                toast.error('Access denied. Super Admin, Admin, Instructor, or Examiner role required.');
-                setLoading(false);
-            }
-        } catch (error: any) {
-            toast.error(error || 'Login failed');
-            setLoading(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Background elements */}
@@ -78,85 +43,28 @@ const ExamAdminLogin = () => {
                         </div>
                     </motion.div>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Examiner Portal</h1>
-                    <p className="text-gray-500 font-medium">Secure administrative access for instructors</p>
+                    <p className="text-gray-500 font-medium">This login page is being deprecated</p>
                 </div>
 
-                {/* Login Card */}
-                <div className="bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100/50 p-10 backdrop-blur-sm">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">
-                                Administrator Credentials
-                            </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-gray-300 group-focus-within:text-indigo-500 transition-colors" />
-                                </div>
-                                <input
-                                    type="text"
-                                    value={credentials.identifier}
-                                    onChange={(e) =>
-                                        setCredentials({ ...credentials, identifier: e.target.value })
-                                    }
-                                    required
-                                    className="w-full pl-14 pr-5 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/30 transition-all duration-300 text-gray-900 font-bold placeholder:text-gray-300 outline-none"
-                                    placeholder="Email or Username"
-                                />
-                            </div>
+                {/* Deprecation Card */}
+                <div className="bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100/50 p-10 backdrop-blur-sm text-center">
+                    <div className="mb-8">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-50 rounded-full mb-4">
+                            <Building2 className="w-8 h-8 text-amber-500" />
                         </div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Notice: Unified Login</h2>
+                        <p className="text-gray-500 text-sm leading-relaxed">
+                            We've unified our login systems. Please use the primary login page for all administrative, instructor, and examiner access.
+                        </p>
+                    </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">
-                                Secret Access Key
-                            </label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-300 group-focus-within:text-indigo-500 transition-colors" />
-                                </div>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={credentials.password}
-                                    onChange={(e) =>
-                                        setCredentials({ ...credentials, password: e.target.value })
-                                    }
-                                    required
-                                    className="w-full pl-14 pr-12 py-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/30 transition-all duration-300 text-gray-900 font-bold placeholder:text-gray-300 outline-none"
-                                    placeholder="••••••••"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-indigo-500 transition-colors"
-                                >
-                                    {showPassword ? (
-                                        <EyeOff className="h-5 w-5" />
-                                    ) : (
-                                        <Eye className="h-5 w-5" />
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        <motion.button
-                            whileHover={{ scale: 1.01, y: -2 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-gray-900 hover:bg-black text-white font-bold py-5 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-gray-200 flex items-center justify-center gap-3 mt-10"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Authenticating...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span>Access Management</span>
-                                    <LogIn className="w-5 h-5" />
-                                </>
-                            )}
-                        </motion.button>
-                    </form>
+                    <Link
+                        to="/login"
+                        className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-5 rounded-2xl transition-all duration-300 shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"
+                    >
+                        <span>Go to Primary Login</span>
+                        <LogIn className="w-5 h-5" />
+                    </Link>
                 </div>
 
                 {/* Footer Info */}
@@ -166,11 +74,6 @@ const ExamAdminLogin = () => {
                     transition={{ delay: 0.4 }}
                     className="mt-10 flex flex-col items-center gap-6"
                 >
-                    <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50/50 rounded-full border border-indigo-100/50">
-                        <Building2 className="w-4 h-4 text-indigo-600" />
-                        <span className="text-[10px] font-black text-indigo-800 uppercase tracking-widest">Administrative Restricted Zone</span>
-                    </div>
-
                     <p className="text-gray-400 text-sm font-medium">
                         Looking for the candidate portal?{' '}
                         <Link

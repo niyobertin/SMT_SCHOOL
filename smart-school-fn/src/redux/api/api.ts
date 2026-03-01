@@ -14,6 +14,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const selectedOrgId = localStorage.getItem("selectedOrganizationId");
+    if (selectedOrgId) {
+      config.headers["x-organization-id"] = selectedOrgId;
+    }
     return config;
   },
   (error) => Promise.reject(error)

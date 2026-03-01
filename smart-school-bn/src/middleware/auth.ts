@@ -1,8 +1,6 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
-
-const prisma = new PrismaClient();
+import prisma from '../services/prisma.singleton';
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -10,12 +8,16 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
     if (!token) {
       return res.status(401).json({
-        success: false,
-        message: 'Access denied. please provide a valid token or login.'
+        status: 'error',
+        message: 'Access denied. Please provide a valid token or login.',
+        code: 'TOKEN_MISSING',
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & {
+      userId: string;
+    };
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -30,43 +32,44 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         userOrganizations: {
           select: {
             organizationId: true,
-            organization: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
-          }
-        }
-      }
+            organization: { select: { id: true, name: true } },
+          },
+        },
+      },
     });
 
     if (!user || !user.isActive) {
       return res.status(401).json({
-        success: false,
-        message: 'Invalid token or user not active'
+        status: 'error',
+        message: 'Invalid token or user not active',
+        code: 'TOKEN_INVALID',
       });
     }
-    //@ts-ignore
+
     req.user = user;
     next();
   } catch (error: any) {
     res.status(401).json({
-      success: false,
-      message: error.message || 'Invalid token'
+      status: 'error',
+      message: error.message || 'Invalid token',
+      code: 'TOKEN_INVALID',
     });
   }
 };
 
-export const optionalAuthenticate = async (req: Request, res: Response, next: NextFunction) => {
+export const optionalAuthenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      // no token, guest user
-      return next();
-    }
+    if (!token) return next();
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & {
+      userId: string;
+    };
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -77,30 +80,40 @@ export const optionalAuthenticate = async (req: Request, res: Response, next: Ne
         firstName: true,
         lastName: true,
         role: true,
-        isActive: true
-      }
+        isActive: true,
+        userOrganizations: {
+          select: {
+            organizationId: true,
+            organization: { select: { id: true, name: true } },
+          },
+        },
+      },
     });
 
-    if (!user || !user.isActive) {
-      // invalid token, treat as guest
-      return next();
+    if (user?.isActive) {
+      req.user = user;
     }
-
-    //@ts-ignore
-    req.user = user;
     next();
-  } catch (err) {
-    // token invalid, just treat as guest
+  } catch {
+    // Invalid token — treat as guest
     next();
   }
 };
+
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    // @ts-ignore
-    if (req.user.role !== 'SUPER_ADMIN' && !roles.includes(req.user.role)) {
+    if (!req.user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required',
+        code: 'UNAUTHENTICATED',
+      });
+    }
+    if ((req.user as any).role !== 'SUPER_ADMIN' && !roles.includes((req.user as any).role)) {
       return res.status(403).json({
-        success: false,
-        message: 'Access denied. You do not have permissions to perform this action.'
+        status: 'error',
+        message: 'Access denied. You do not have permission to perform this action.',
+        code: 'FORBIDDEN',
       });
     }
     next();

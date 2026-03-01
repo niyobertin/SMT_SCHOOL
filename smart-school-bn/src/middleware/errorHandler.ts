@@ -15,8 +15,7 @@ export const errorHandler = (
   next: NextFunction
 ): void => {
   const statusCode = err.statusCode || 500;
-  const status = err.status || 'error';
-  
+
   logger.error('Error occurred:', {
     error: err.message,
     stack: err.stack,
@@ -32,9 +31,12 @@ export const errorHandler = (
     : err.message;
 
   res.status(statusCode).json({
-    status,
-    message,
-    timestamp: new Date().toISOString(),
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    success: false,
+    error: {
+      message,
+      code: err.status || 'INTERNAL_ERROR',
+      timestamp: new Date().toISOString(),
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    }
   });
 };

@@ -2,9 +2,7 @@ import fs from "fs";
 import { google } from "googleapis";
 // import open from "open";
 import logger from "../utils/logger";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 interface UploadOptions {
   title: string;

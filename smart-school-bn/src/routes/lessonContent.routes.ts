@@ -1,7 +1,8 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { createLessonContent, deleteLessonContent, getLessonContent, getLessonContentById, updateLessonContent } from "../controller/lessonContent.controller";
 import { uploadFile } from "../middleware/uploadFile";
 import { authenticate, authorize } from "../middleware/auth";
+import { tenantContext, requireTenant } from "../middleware/tenant.middleware";
 
 
 const lessonContentRouter = Router();
@@ -433,10 +434,12 @@ const lessonContentRouter = Router();
  *                 message:
  *                   type: string
  */
-lessonContentRouter.post("/:lessonId",authenticate, authorize("ADMIN","INSTRUCTOR"), uploadFile, createLessonContent);
+lessonContentRouter.use(authenticate, tenantContext, requireTenant);
+
+lessonContentRouter.post("/:lessonId", authorize("ADMIN", "INSTRUCTOR", "SUPER_ADMIN"), uploadFile, createLessonContent);
 lessonContentRouter.get("/:lessonId", getLessonContent);
 lessonContentRouter.get("/get-lesson-content-by-id/:lessonContentId", getLessonContentById);
-lessonContentRouter.patch ("/:lessonContentId",authenticate, authorize("ADMIN","INSTRUCTOR"), uploadFile, updateLessonContent);
-lessonContentRouter.delete("/:lessonContentId",authenticate, authorize("ADMIN","INSTRUCTOR"), deleteLessonContent);
+lessonContentRouter.patch("/:lessonContentId", authorize("ADMIN", "INSTRUCTOR", "SUPER_ADMIN"), uploadFile, updateLessonContent);
+lessonContentRouter.delete("/:lessonContentId", authorize("ADMIN", "INSTRUCTOR", "SUPER_ADMIN"), deleteLessonContent);
 
 export default lessonContentRouter;

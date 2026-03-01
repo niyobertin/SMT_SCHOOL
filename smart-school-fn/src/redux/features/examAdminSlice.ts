@@ -38,6 +38,11 @@ interface ExamAdminState {
     loading: boolean;
     error: string | null;
     openEndedResponses: any[];
+    academicYears: any[];
+    grades: any[];
+    classRooms: any[];
+    subjects: any[];
+    academicRecords: any[];
 }
 
 const initialState: ExamAdminState = {
@@ -55,6 +60,11 @@ const initialState: ExamAdminState = {
     loading: false,
     error: null,
     openEndedResponses: [],
+    academicYears: [],
+    grades: [],
+    classRooms: [],
+    subjects: [],
+    academicRecords: [],
 };
 
 // Async Thunks
@@ -294,10 +304,11 @@ export const deleteQuestion = createAsyncThunk(
 // Candidates
 export const fetchCandidates = createAsyncThunk(
     'examAdmin/fetchCandidates',
-    async (orgId: string, { rejectWithValue }) => {
+    async (orgId: string | undefined, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/exams/organizations/${orgId}/candidates`);
-            return response.data;
+            const url = orgId ? `/exams/organizations/${orgId}/candidates` : '/exams/candidates/all?limit=1000';
+            const response = await api.get(url);
+            return orgId ? response.data : response.data.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch candidates');
         }
@@ -539,6 +550,238 @@ export const authorizeRetake = createAsyncThunk(
             return response.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || 'Failed to authorize retake');
+        }
+    }
+);
+
+// Academic Hierarchy Thunks
+
+export const fetchAcademicYears = createAsyncThunk(
+    'examAdmin/fetchAcademicYears',
+    async (organizationId: string | undefined, { rejectWithValue }) => {
+        try {
+            const headers: any = {};
+            if (organizationId) {
+                headers['x-organization-id'] = organizationId;
+            }
+            const response = await api.get('/academic/years', { headers });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch academic years');
+        }
+    }
+);
+
+export const createAcademicYear = createAsyncThunk(
+    'examAdmin/createAcademicYear',
+    async (data: any, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/academic/years', data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to create academic year');
+        }
+    }
+);
+
+export const updateAcademicYear = createAsyncThunk(
+    'examAdmin/updateAcademicYear',
+    async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/academic/years/${id}`, data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update academic year');
+        }
+    }
+);
+
+export const deleteAcademicYear = createAsyncThunk(
+    'examAdmin/deleteAcademicYear',
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await api.delete(`/academic/years/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to delete academic year');
+        }
+    }
+);
+
+export const fetchGrades = createAsyncThunk(
+    'examAdmin/fetchGrades',
+    async (organizationId: string | undefined, { rejectWithValue }) => {
+        try {
+            const headers: any = {};
+            if (organizationId) {
+                headers['x-organization-id'] = organizationId;
+            }
+            const response = await api.get('/academic/grades', { headers });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch grades');
+        }
+    }
+);
+
+export const createGrade = createAsyncThunk(
+    'examAdmin/createGrade',
+    async (data: any, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/academic/grades', data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to create grade');
+        }
+    }
+);
+
+export const updateGrade = createAsyncThunk(
+    'examAdmin/updateGrade',
+    async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/academic/grades/${id}`, data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update grade');
+        }
+    }
+);
+
+export const deleteGrade = createAsyncThunk(
+    'examAdmin/deleteGrade',
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await api.delete(`/academic/grades/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to delete grade');
+        }
+    }
+);
+
+export const createClassRoom = createAsyncThunk(
+    'examAdmin/createClassRoom',
+    async (data: any, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/academic/classrooms', data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to create classroom');
+        }
+    }
+);
+
+export const updateClassRoom = createAsyncThunk(
+    'examAdmin/updateClassRoom',
+    async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/academic/classrooms/${id}`, data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update classroom');
+        }
+    }
+);
+
+export const deleteClassRoom = createAsyncThunk(
+    'examAdmin/deleteClassRoom',
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await api.delete(`/academic/classrooms/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to delete classroom');
+        }
+    }
+);
+
+export const fetchSubjects = createAsyncThunk(
+    'examAdmin/fetchSubjects',
+    async (organizationId: string | undefined, { rejectWithValue }) => {
+        try {
+            const headers: any = {};
+            if (organizationId) {
+                headers['x-organization-id'] = organizationId;
+            }
+            const response = await api.get('/academic/subjects', { headers });
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch subjects');
+        }
+    }
+);
+
+export const createSubject = createAsyncThunk(
+    'examAdmin/createSubject',
+    async (data: any, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/academic/subjects', data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to create subject');
+        }
+    }
+);
+
+export const updateSubject = createAsyncThunk(
+    'examAdmin/updateSubject',
+    async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/academic/subjects/${id}`, data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update subject');
+        }
+    }
+);
+
+export const deleteSubject = createAsyncThunk(
+    'examAdmin/deleteSubject',
+    async (id: string, { rejectWithValue }) => {
+        try {
+            await api.delete(`/academic/subjects/${id}`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to delete subject');
+        }
+    }
+);
+
+export const bulkAssignToClass = createAsyncThunk(
+    'examAdmin/bulkAssignToClass',
+    async (data: any, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/academic/bulk-assign', data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to assign students');
+        }
+    }
+);
+
+// Result Approvals
+
+export const submitExamForApproval = createAsyncThunk(
+    'examAdmin/submitExamForApproval',
+    async (attemptId: string, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/exams/attempts/${attemptId}/submit-for-approval`);
+            return { attemptId, data: response.data };
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to submit exam for approval');
+        }
+    }
+);
+
+export const approveExamResult = createAsyncThunk(
+    'examAdmin/approveExamResult',
+    async (attemptId: string, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/exams/attempts/${attemptId}/approve`);
+            return { attemptId, data: response.data };
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to approve exam result');
         }
     }
 );
@@ -827,6 +1070,92 @@ const examAdminSlice = createSlice({
                     const index = state.openEndedResponses.findIndex((a: any) => a.id === updatedAnswer.id);
                     if (index !== -1) {
                         state.openEndedResponses[index] = updatedAnswer;
+                    }
+                }
+            })
+            // Academic Hierarchy
+            .addCase(fetchAcademicYears.fulfilled, (state, action) => {
+                state.academicYears = action.payload.data;
+            })
+            .addCase(createAcademicYear.fulfilled, (state, action) => {
+                state.academicYears.push(action.payload.data);
+            })
+            .addCase(updateAcademicYear.fulfilled, (state, action) => {
+                const index = state.academicYears.findIndex(y => y.id === action.payload.data.id);
+                if (index !== -1) {
+                    state.academicYears[index] = action.payload.data;
+                }
+            })
+            .addCase(deleteAcademicYear.fulfilled, (state, action) => {
+                state.academicYears = state.academicYears.filter(y => y.id !== action.payload);
+            })
+            .addCase(fetchGrades.fulfilled, (state, action) => {
+                state.grades = action.payload.data;
+            })
+            .addCase(createGrade.fulfilled, (state, action) => {
+                state.grades.push(action.payload.data);
+            })
+            .addCase(updateGrade.fulfilled, (state, action) => {
+                const index = state.grades.findIndex(g => g.id === action.payload.data.id);
+                if (index !== -1) {
+                    state.grades[index] = action.payload.data;
+                }
+            })
+            .addCase(deleteGrade.fulfilled, (state, action) => {
+                state.grades = state.grades.filter(g => g.id !== action.payload);
+            })
+            .addCase(createClassRoom.fulfilled, (state, action) => {
+                // Find grade and push classroom
+                const grade = state.grades.find(g => g.id === action.payload.data.gradeId);
+                if (grade) {
+                    if (!grade.classRooms) grade.classRooms = [];
+                    grade.classRooms.push(action.payload.data);
+                }
+            })
+            .addCase(updateClassRoom.fulfilled, (state, action) => {
+                state.grades.forEach(grade => {
+                    const index = grade.classRooms?.findIndex((c: any) => c.id === action.payload.data.id);
+                    if (index !== undefined && index !== -1) {
+                        grade.classRooms[index] = action.payload.data;
+                    }
+                });
+            })
+            .addCase(deleteClassRoom.fulfilled, (state, action) => {
+                state.grades.forEach(grade => {
+                    if (grade.classRooms) {
+                        grade.classRooms = grade.classRooms.filter((c: any) => c.id !== action.payload);
+                    }
+                });
+            })
+            .addCase(fetchSubjects.fulfilled, (state, action) => {
+                state.subjects = action.payload.data;
+            })
+            .addCase(createSubject.fulfilled, (state, action) => {
+                state.subjects.push(action.payload.data);
+            })
+            .addCase(updateSubject.fulfilled, (state, action) => {
+                const index = state.subjects.findIndex(s => s.id === action.payload.data.id);
+                if (index !== -1) {
+                    state.subjects[index] = action.payload.data;
+                }
+            })
+            .addCase(deleteSubject.fulfilled, (state, action) => {
+                state.subjects = state.subjects.filter(s => s.id !== action.payload);
+            })
+            // Approvals
+            .addCase(submitExamForApproval.fulfilled, (state, action) => {
+                if (state.globalResults?.data) {
+                    const index = state.globalResults.data.findIndex(a => a.id === action.payload.attemptId);
+                    if (index !== -1) {
+                        state.globalResults.data[index].approvalStatus = 'PENDING';
+                    }
+                }
+            })
+            .addCase(approveExamResult.fulfilled, (state, action) => {
+                if (state.globalResults?.data) {
+                    const index = state.globalResults.data.findIndex(a => a.id === action.payload.attemptId);
+                    if (index !== -1) {
+                        state.globalResults.data[index].approvalStatus = 'APPROVED';
                     }
                 }
             })

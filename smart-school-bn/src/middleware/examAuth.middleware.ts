@@ -1,13 +1,12 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { Request, Response, NextFunction } from 'express';
+import prisma from '../services/prisma.singleton';
 import { hasRemainingAttempts } from '../services/exam.service';
 
-const prisma = new PrismaClient();
-
 /**
- * Authenticate candidate using JWT token
- * Token contains candidateId and examId
+ * Authenticate candidate using JWT token.
+ * Token contains candidateId and examId.
+ * Sets req.candidate (typed via express.d.ts — no @ts-ignore needed).
  */
 export const authenticateCandidate = async (
     req: Request,
@@ -19,8 +18,9 @@ export const authenticateCandidate = async (
 
         if (!token) {
             return res.status(401).json({
-                success: false,
+                status: 'error',
                 message: 'Access denied. Please provide a valid token.',
+                code: 'TOKEN_MISSING',
             });
         }
 
@@ -29,7 +29,6 @@ export const authenticateCandidate = async (
             examId: string;
         };
 
-        // Validate candidate exists and is active
         const candidate = await prisma.candidate.findUnique({
             where: { id: decoded.candidateId },
             select: {
@@ -45,27 +44,26 @@ export const authenticateCandidate = async (
 
         if (!candidate || !candidate.isActive) {
             return res.status(401).json({
-                success: false,
+                status: 'error',
                 message: 'Invalid token or candidate not active',
+                code: 'TOKEN_INVALID',
             });
         }
 
-        // Attach candidate and examId to request
-        // @ts-ignore
         req.candidate = candidate;
-        // @ts-ignore
         req.examId = decoded.examId;
         next();
-    } catch (error) {
+    } catch {
         res.status(401).json({
-            success: false,
+            status: 'error',
             message: 'Invalid or expired token',
+            code: 'TOKEN_EXPIRED',
         });
     }
 };
 
 /**
- * Validate that candidate has access to the exam
+ * Validate that candidate has access to the exam.
  */
 export const validateExamAccess = async (
     req: Request,
@@ -73,45 +71,41 @@ export const validateExamAccess = async (
     next: NextFunction
 ) => {
     try {
-        // @ts-ignore
         const candidateId = req.candidate?.id;
         const { examId } = req.params;
 
         if (!candidateId) {
             return res.status(401).json({
-                success: false,
+                status: 'error',
                 message: 'Candidate not authenticated',
+                code: 'UNAUTHENTICATED',
             });
         }
 
-        // Check if exam is assigned to candidate
         const assignment = await prisma.examAssignment.findUnique({
-            where: {
-                candidateId_examId: {
-                    candidateId,
-                    examId,
-                },
-            },
+            where: { candidateId_examId: { candidateId, examId } },
         });
 
         if (!assignment || !assignment.isActive) {
             return res.status(403).json({
-                success: false,
+                status: 'error',
                 message: 'You are not assigned to this exam',
+                code: 'EXAM_ACCESS_DENIED',
             });
         }
 
         next();
     } catch (error) {
         res.status(500).json({
-            success: false,
+            status: 'error',
             message: 'Error validating exam access',
+            code: 'INTERNAL_ERROR',
         });
     }
 };
 
 /**
- * Check if exam is available for taking
+ * Check if exam is available (active, published, within date range, has remaining attempts).
  */
 export const checkExamAvailability = async (
     req: Request,
@@ -121,65 +115,58 @@ export const checkExamAvailability = async (
     try {
         const { examId } = req.params;
 
-        const exam = await prisma.exam.findUnique({
-            where: { id: examId },
-        });
+        const exam = await prisma.exam.findUnique({ where: { id: examId } });
 
         if (!exam) {
             return res.status(404).json({
-                success: false,
+                status: 'error',
                 message: 'Exam not found',
+                code: 'NOT_FOUND',
             });
         }
 
-        // Check if exam is active
         if (!exam.isActive) {
             return res.status(403).json({
-                success: false,
+                status: 'error',
                 message: 'This exam is not currently active',
+                code: 'EXAM_INACTIVE',
             });
         }
 
-        // Check if exam is published
         if (exam.status !== 'PUBLISHED') {
             return res.status(403).json({
-                success: false,
+                status: 'error',
                 message: 'This exam is not yet available',
+                code: 'EXAM_NOT_PUBLISHED',
             });
         }
 
-        // Check start date
         if (exam.startDate && new Date(exam.startDate) > new Date()) {
             return res.status(403).json({
-                success: false,
+                status: 'error',
                 message: 'This exam has not started yet',
+                code: 'EXAM_NOT_STARTED',
                 startDate: exam.startDate,
             });
         }
 
-        // Check end date
         if (exam.endDate && new Date(exam.endDate) < new Date()) {
             return res.status(403).json({
-                success: false,
+                status: 'error',
                 message: 'This exam has ended',
+                code: 'EXAM_ENDED',
                 endDate: exam.endDate,
             });
         }
 
-        // Check remaining attempts
-        // @ts-ignore
         const candidateId = req.candidate?.id;
         if (candidateId) {
-            const attemptInfo = await hasRemainingAttempts(
-                candidateId,
-                examId,
-                exam.maxAttempts
-            );
-
+            const attemptInfo = await hasRemainingAttempts(candidateId, examId, exam.maxAttempts);
             if (!attemptInfo.hasAttempts) {
                 return res.status(403).json({
-                    success: false,
+                    status: 'error',
                     message: `You have reached the maximum number of attempts (${exam.maxAttempts})`,
+                    code: 'MAX_ATTEMPTS_REACHED',
                     attemptsUsed: attemptInfo.attemptsUsed,
                     maxAttempts: exam.maxAttempts,
                 });
@@ -187,16 +174,17 @@ export const checkExamAvailability = async (
         }
 
         next();
-    } catch (error) {
+    } catch {
         res.status(500).json({
-            success: false,
+            status: 'error',
             message: 'Error checking exam availability',
+            code: 'INTERNAL_ERROR',
         });
     }
 };
 
 /**
- * Validate exam attempt ownership
+ * Validate exam attempt ownership.
  */
 export const validateAttemptOwnership = async (
     req: Request,
@@ -204,38 +192,36 @@ export const validateAttemptOwnership = async (
     next: NextFunction
 ) => {
     try {
-        // @ts-ignore
         const candidateId = req.candidate?.id;
         const { attemptId } = req.params;
 
         if (!candidateId) {
             return res.status(401).json({
-                success: false,
+                status: 'error',
                 message: 'Candidate not authenticated',
+                code: 'UNAUTHENTICATED',
             });
         }
 
         const attempt = await prisma.examAttempt.findFirst({
-            where: {
-                id: attemptId,
-                candidateId,
-            },
+            where: { id: attemptId, candidateId },
         });
 
         if (!attempt) {
             return res.status(404).json({
-                success: false,
+                status: 'error',
                 message: 'Exam attempt not found or you do not have access',
+                code: 'NOT_FOUND',
             });
         }
 
-        // @ts-ignore
         req.examAttempt = attempt;
         next();
-    } catch (error) {
+    } catch {
         res.status(500).json({
-            success: false,
+            status: 'error',
             message: 'Error validating attempt ownership',
+            code: 'INTERNAL_ERROR',
         });
     }
 };

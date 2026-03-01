@@ -6,8 +6,9 @@ import * as XLSX from "xlsx";
 import { NotFoundError } from "../utils/errors";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
 import { sendTestResponseEmail } from "../services/testResponseEmail.service";
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
+import { QuestionService } from "../services/question.service";
+import { AttemptService } from "../services/attempt.service";
 
 export const getTestByCourseId = async (
   req: Request,
@@ -28,7 +29,7 @@ export const getTestByCourseId = async (
     }
 
     res.status(200).json({
-      status: "success",
+      success: true,
       data: test,
     });
   } catch (error) {
@@ -56,8 +57,7 @@ export const createTest = async (
     const { courseId } = req.params;
 
     // Verify user owns the course
-    // @ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
     const course = await prisma.course.findUnique({
       where: { id: courseId, instructorId: userId },
     });
@@ -90,7 +90,7 @@ export const createTest = async (
     });
 
     res.status(201).json({
-      status: "success",
+      success: true,
       data: test,
       message: "Test created successfully",
     });
@@ -111,21 +111,21 @@ export const addQuestionToTest = async (
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     // Verify test exists
-    const test = await prisma.test.findFirst({
-      where: {
-        id: testId,
-      },
+    const test = await prisma.test.findUnique({
+      where: { id: testId },
     });
 
     if (!test) {
       res.status(404).json({
-        status: "error",
-        message: "Test not found",
+        success: false,
+        error: {
+          message: "Test not found",
+          code: "TEST_NOT_FOUND"
+        }
       });
       return;
     }
 
-    // Get current max order to set for the new question
     const lastQuestion = await prisma.question.findFirst({
       where: { testId },
       orderBy: { order: "desc" },
@@ -140,59 +140,23 @@ export const addQuestionToTest = async (
         imageFile.mimetype
       );
     }
-    // Create question with transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx) => {
-      const newQuestion = await tx.question.create({
-        data: {
-          id: uuidv4(),
-          question,
-          image: imageUrl,
-          type,
-          points: Number(points || 1),
-          explanation: explanation || null,
-          order: newOrder,
-          test: {
-            connect: { id: testId },
-          },
-        },
-      });
 
-      // Add options if it's a multiple choice question
-
-      if (
-        options &&
-        options.length > 0 &&
-        (type === "MULTIPLE_CHOICE" || type === "TRUE_FALSE")
-      ) {
-        await Promise.all(
-          options.map(
-            (opt: { option: string; isCorrect: any }, index: number) =>
-              tx.questionOption.create({
-                data: {
-                  id: uuidv4(),
-                  option: opt.option,
-                  isCorrect: opt.isCorrect === true || opt.isCorrect === "true",
-                  order: index,
-                  question: {
-                    connect: { id: newQuestion.id },
-                  },
-                },
-              })
-          )
-        );
-      }
-
-      return newQuestion;
-    });
-
-    // Get the full question with options
-    const createdQuestion = await prisma.question.findUnique({
-      where: { id: result.id },
-      include: { options: true },
-    });
+    const createdQuestion = await QuestionService.createQuestion(testId, {
+      question,
+      type,
+      points: Number(points || 1),
+      explanation: explanation || null,
+      order: newOrder,
+      image: imageUrl,
+      options: options ? options.map((opt: any, index: number) => ({
+        option: opt.option,
+        isCorrect: opt.isCorrect === true || opt.isCorrect === "true",
+        order: index
+      })) : undefined
+    }, 'test');
 
     res.status(201).json({
-      status: "success",
+      success: true,
       data: createdQuestion,
       message: "Question added successfully",
     });
@@ -240,7 +204,7 @@ export const getTestById = async (
     }
 
     res.status(200).json({
-      status: "success",
+      success: true,
       data: test,
     });
   } catch (error) {
@@ -289,7 +253,7 @@ export const getTestQuestions = async (
     });
 
     res.status(200).json({
-      status: "success",
+      success: true,
       data: questions,
     });
   } catch (error) {
@@ -305,98 +269,64 @@ export const startTestAttempt = async (
 ): Promise<void> => {
   try {
     const { testId } = req.params;
-    // @ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
-    // Check if user is enrolled in the course
+    // Check if user is enrolled (Specific to LMS)
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
         course: {
           include: {
             enrollments: {
-              where: {
-                userId,
-                status: "ACTIVE",
-              },
+              where: { userId, status: "ACTIVE" },
             },
           },
         },
       },
     });
-    // Get questions
+
+    if (!test || test.course.enrollments.length === 0) {
+      res.status(403).json({ status: "error", message: "Not enrolled in this course" });
+      return;
+    }
+
+    const testAttempt = await AttemptService.startAttempt(testId, userId, 'test');
+
+    // Get questions for the response
     const questions = await prisma.question.findMany({
       where: { testId, isActive: true },
       include: {
         options: {
           orderBy: { order: "asc" },
-          select: {
-            id: true,
-            option: true,
-            order: true,
-          },
+          select: { id: true, option: true, order: true },
         },
       },
-      orderBy: test?.randomizeQuestions ? { id: "asc" } : { order: "asc" },
+      orderBy: test.randomizeQuestions ? { id: "asc" } : { order: "asc" },
     });
 
-    if (questions.length === 0) {
-      res.status(400).json({
-        status: "error",
-        message: "No questions available for this test",
-      });
-      return;
-    }
-
-    // Randomize questions if needed
-    const randomizedQuestions = test?.randomizeQuestions
+    const randomizedQuestions = test.randomizeQuestions
       ? questions.sort(() => Math.random() - 0.5)
       : questions;
 
-    // Create test attempt
-    const testAttempt = await prisma.testAttempt.create({
-      data: {
-        id: uuidv4(),
-        totalQuestions: questions.length,
-        test: {
-          connect: { id: testId },
-        },
-        user: {
-          connect: { id: userId },
-        },
-      },
-    });
-
-    // Calculate end time if duration is set
-    const endTime = test?.duration
-      ? new Date(Date.now() + test.duration * 60 * 1000)
-      : null;
-
     res.status(200).json({
-      status: "success",
+      success: true,
       data: {
         attemptId: testAttempt.id,
         test: {
-          id: test?.id,
-          title: test?.title,
-          description: test?.description,
-          instructions: test?.instructions,
-          duration: test?.duration,
-          passingScore: test?.passingScore,
-          showResults: test?.showResults,
+          id: test.id,
+          title: test.title,
+          duration: test.duration,
+          passingScore: test.passingScore,
+          showResults: test.showResults,
         },
         questions: randomizedQuestions.map((q) => ({
           id: q.id,
           question: q.question,
-          image: q.image,
           type: q.type,
-          points: q.points,
           options: q.options,
-          order: q.order,
         })),
         startTime: testAttempt.startTime,
-        endTime,
-        timeRemaining: test?.duration ? test.duration * 60 : null, // in seconds
+        timeRemaining: test.duration ? test.duration * 60 : null,
       },
     });
   } catch (error) {
@@ -413,138 +343,40 @@ export const submitAnswer = async (
   try {
     const { attemptId } = req.params;
     const { questionId, answerText, selectedOptions } = req.body;
-    // @ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
 
-    // Validate test attempt
-    const testAttempt = await prisma.testAttempt.findFirst({
-      where: {
-        id: attemptId,
-        userId,
-      },
-      include: {
-        test: {
-          include: {
-            questions: {
-              where: { id: questionId },
-              include: {
-                options: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!testAttempt) {
-      res.status(404).json({
-        status: "error",
-        message: "Test attempt not found ",
-      });
-      return;
-    } else if (testAttempt.status === "COMPLETED") {
-      res.status(400).json({
-        status: "error",
-        message: "Test attempt already completed",
-      });
-      return;
-    }
-
-    const question = testAttempt.test.questions[0];
-    if (!question) {
-      res.status(404).json({
-        status: "error",
-        message: "Question not found in this test",
-      });
-      return;
-    }
-
-    // Get the selected option texts
-    const selectedOptionTexts = question.options
-      .filter((opt) => selectedOptions?.includes(opt.id))
-      .map((opt) => opt.option);
-
-    // Check if answer already exists
-    const existingAnswer = await prisma.answer.findFirst({
-      where: {
-        testAttemptId: attemptId,
-        questionId,
-      },
-    });
-
-    let isCorrect = false;
-    let points = 0;
-
-    // Auto-grade if possible
-    if (question.type === "MULTIPLE_CHOICE" || question.type === "TRUE_FALSE") {
-      const correctOptions = question.options
-        .filter((opt) => opt.isCorrect)
-        .map((opt) => opt.id);
-
-      const selected = Array.isArray(selectedOptions) ? selectedOptions : [];
-
-      // Check if all correct options are selected and no incorrect ones
-      isCorrect =
-        correctOptions.length === selected.length &&
-        correctOptions.every((optId) => selected.includes(optId));
-
-      points = isCorrect ? question.points : 0;
-    }
-    // For other question types, manual grading is required
-
-    // Create or update answer
-    const answer = await prisma.answer.upsert({
-      where: {
-        id: existingAnswer?.id || uuidv4(),
-      },
-      create: {
-        id: uuidv4(),
-        answerText: answerText || null,
-        selectedOptions: selectedOptions || [],
-        userAnswer: selectedOptionTexts || [],
-        isCorrect,
-        points,
-        testAttempt: {
-          connect: { id: attemptId },
-        },
-        question: {
-          connect: { id: questionId },
-        },
-      },
-      update: {
-        answerText: answerText || null,
-        selectedOptions: selectedOptions || [],
-        userAnswer: selectedOptionTexts || [],
-        isCorrect,
-        points,
-      },
-    });
-
-    // Update test attempt stats
-    const answers = await prisma.answer.findMany({
-      where: { testAttemptId: attemptId },
-    });
-
-    const correctAnswers = answers.filter((a) => a.isCorrect).length;
-    const totalPoints = answers.reduce((sum, a) => sum + (a.points || 0), 0);
-
-    await prisma.testAttempt.update({
+    // Validate test attempt belongs to user
+    const testAttempt = await prisma.testAttempt.findUnique({
       where: { id: attemptId },
-      data: {
-        correctAnswers,
-        score: (totalPoints / testAttempt.totalQuestions) * 100,
-      },
+    });
+
+    if (!testAttempt || testAttempt.userId !== userId) {
+      res.status(404).json({ status: "error", message: "Test attempt not found" });
+      return;
+    }
+
+    if (testAttempt.status === "COMPLETED") {
+      res.status(400).json({ status: "error", message: "Test attempt already completed" });
+      return;
+    }
+
+    const { isCorrect, points } = await AttemptService.submitAnswer(attemptId, {
+      questionId,
+      answerText,
+      selectedOptions
+    }, 'test');
+
+    const stats = await prisma.testAttempt.findUnique({
+      where: { id: attemptId },
     });
 
     res.status(200).json({
-      status: "success",
+      success: true,
       data: {
-        answer,
         isCorrect,
         points,
-        correctAnswers,
-        totalAnswered: answers.length,
-        totalQuestions: testAttempt.totalQuestions,
+        correctAnswers: stats?.correctAnswers,
+        totalQuestions: stats?.totalQuestions,
       },
     });
   } catch (error) {
@@ -560,129 +392,52 @@ export const submitTest = async (
 ): Promise<void> => {
   try {
     const { attemptId } = req.params;
-    // @ts-ignore
-    const userId = req.user?.id;
-    // 1. Validate test attempt
-    const testAttempt = await prisma.testAttempt.findFirst({
-      where: {
-        id: attemptId,
-        userId,
-      },
-      include: {
-        test: {
-          include: {
-            course: {
-              include: {
-                instructor: true,
-              },
-            },
-            questions: {
-              include: {
-                options: true,
-              },
-            },
-          },
-        },
-        user: true,
-        answers: {
-          include: {
-            question: true,
-          },
-        },
-      },
-    });
+    const userId = (req.user as any)?.id;
 
-    if (!testAttempt) {
-      throw new NotFoundError("Test attempt not found ");
-    }
-
-    // 2. Calculate final score
-    const questions = await prisma.question.findMany({
-      where: { testId: testAttempt.testId },
-    });
-
-    const totalScoreForQuestions = questions.reduce(
-      (sum, q) => sum + (q.points || 0),
-      0
-    );
-    const totalQuestions = questions.length;
-    const answeredQuestions = testAttempt.answers.length;
-    const correctAnswers = testAttempt.answers.filter(
-      (a) => a.isCorrect
-    ).length;
-    const totalPoints = testAttempt.answers.reduce(
-      (sum, a) => sum + (a.points || 0),
-      0
-    );
-    const score = (totalPoints / totalScoreForQuestions) * 100;
-    const isPassed = score >= testAttempt.test.passingScore;
-
-    // 3. Update test attempt
-    const now = new Date();
-    await prisma.testAttempt.update({
+    const testAttempt = await prisma.testAttempt.findUnique({
       where: { id: attemptId },
-      data: {
-        endTime: now,
-        score,
-        isPassed,
-        status: "COMPLETED",
-        timeSpent: Math.floor(
-          (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
-        ), // in minutes
-      },
+      include: {
+        test: { include: { course: true } },
+        user: true,
+      }
     });
 
-    // 4. Update user progress (achievements = completed tests; recorded in UserCourseProgress.completedTests)
-    if (isPassed) {
-      await updateUserProgress(
-        userId,
-        testAttempt.test.courseId,
-        testAttempt.testId
-      );
+    if (!testAttempt || testAttempt.userId !== userId) {
+      throw new NotFoundError("Test attempt not found");
     }
 
-    // 5. Send email notification for INTERVIEW and OPENENDED tests
+    const updatedAttempt = await AttemptService.finalizeAttempt(attemptId, 'test');
+
+    // Update user progress
+    if (updatedAttempt.isPassed) {
+      await updateUserProgress(userId, testAttempt.test.courseId, testAttempt.testId);
+    }
+
+    // Email notification for subjective tests
     if (testAttempt.test.type === "INTERVIEW" || testAttempt.test.type === "OPENENDED") {
-      await sendTestResponseEmailNotification(
-        testAttempt,
-        userId
-      );
+      await sendTestResponseEmailNotification(testAttempt, userId);
     }
 
-    // 6. Generate results
     const response: any = {
-      status: "success",
+      success: true,
       data: {
-        attemptId: testAttempt.id,
-        score,
-        isPassed,
+        attemptId: updatedAttempt.id,
+        score: updatedAttempt.score,
+        isPassed: updatedAttempt.isPassed,
         passingScore: testAttempt.test.passingScore,
-        totalQuestions,
-        answeredQuestions,
-        correctAnswers,
-        pointsEarned: totalPoints,
-        totalPoints: totalScoreForQuestions,
-        timeSpent: Math.floor(
-          (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
-        ),
-        submittedAt: now.toISOString(),
+        totalQuestions: updatedAttempt.totalQuestions,
+        correctAnswers: updatedAttempt.correctAnswers,
+        timeSpent: updatedAttempt.timeSpent,
+        submittedAt: updatedAttempt.endTime?.toISOString(),
       },
       message: "Test submitted successfully",
     };
 
-    // 7. Include detailed results if showResults is enabled
     if (testAttempt.test.showResults) {
       const detailedAnswers = await prisma.answer.findMany({
         where: { testAttemptId: attemptId },
         include: {
-          question: {
-            include: {
-              options: {
-                where: { isCorrect: true },
-                select: { id: true, option: true },
-              },
-            },
-          },
+          question: { include: { options: { where: { isCorrect: true } } } },
         },
       });
 
@@ -700,13 +455,7 @@ export const submitTest = async (
       }));
     }
 
-    // 8. Send notifications
-    await sendTestCompletionNotification(
-      userId,
-      testAttempt.test,
-      isPassed,
-      score
-    );
+    await sendTestCompletionNotification(userId, testAttempt.test, updatedAttempt.isPassed, updatedAttempt.score || 0);
 
     res.status(200).json(response);
   } catch (error) {
@@ -897,7 +646,7 @@ export const updateTestById = async (
     });
 
     res.status(200).json({
-      status: "success",
+      success: true,
       data: test,
       message: "Test updated successfully",
     });
@@ -924,7 +673,7 @@ export const deleteTestById = async (
     await prisma.test.delete({ where: { id: testId } });
 
     res.status(200).json({
-      status: "success",
+      success: true,
       message: "Test deleted successfully",
     });
   } catch (error) {
@@ -984,7 +733,7 @@ export const updateTestQuestion = async (
     });
 
     res.status(200).json({
-      status: "success",
+      success: true,
       data: updatedQuestion,
       message: "Question updated successfully",
     });
@@ -1011,7 +760,7 @@ export const deleteTestQuestion = async (
     await prisma.question.delete({ where: { id: questionId } });
 
     res.status(200).json({
-      status: "success",
+      success: true,
       message: "Question deleted successfully",
     });
   } catch (error) {
@@ -1104,7 +853,7 @@ export const uploadQuestionsExcel = async (
     });
 
     res.status(201).json({
-      status: "success",
+      success: true,
       message: `${created.length} questions uploaded successfully`,
       data: created,
     });

@@ -1,7 +1,5 @@
 import { logger } from "../utils/logger";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 export const logActivity = async (userId: string, action: string, details: string, ip: string) => {
     try {

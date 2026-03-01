@@ -11,6 +11,13 @@ import paymentRouter from "./payment.route";
 import jobPostRoutes from "./jobPost.routes";
 import jobCategoriesRouter from "./jobCategories";
 import examRoutes from "./exam.routes";
+import academicRoutes from "./academic.route";
+import gradingRoutes from "./grading.route";
+import resultRoutes from "./result.route";
+import assignmentRoutes from "./assignment.routes";
+import submissionRoutes from "./submission.routes";
+import organizationRoutes from "./organization.routes";
+import statsRoutes from "./stats.route";
 const router = Router();
 
 /**
@@ -58,6 +65,18 @@ router.use("/payments", paymentRouter);
 router.use("/job-posts", jobPostRoutes);
 router.use("/job-categories", jobCategoriesRouter);
 router.use("/exams", examRoutes);
+router.use("/academic", academicRoutes);
+router.use("/grading", gradingRoutes);
+router.use("/results", resultRoutes);
+router.use("/assignments", assignmentRoutes);
+router.use("/submissions", submissionRoutes);
+// Phase 1: Organization management now lives at /organizations
+// NOTE: /exams/organizations remains active in exam.routes.ts as a backward-compat alias (Phase 1 only).
+// It will be removed in Phase 3 once all frontend calls are migrated to /organizations.
+router.use("/organizations", organizationRoutes);
+// Phase 2: Unified dashboard stats
+router.use("/stats", statsRoutes);
+
 
 // API info endpoint
 /**

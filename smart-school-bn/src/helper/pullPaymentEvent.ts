@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { getTransactionEvents } from "../utils/getPaymentEvent";
 import logger from "../utils/logger";
 import { stopPendingPaymentsJob } from "../utils/jobs";
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 export const pollPendingPayments = async () => {
     const { getIO } = await import("../utils/socketServer");

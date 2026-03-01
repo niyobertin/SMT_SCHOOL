@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Users, BookOpen, DollarSign, Activity, TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import Skeleton from "react-loading-skeleton";
@@ -16,8 +16,9 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import api from '../redux/api/api';
-import { StatsCard } from './StatsCard';
+import { StatsCard } from '../components/ui/StatsCard';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { fetchLmsDashboardStats } from '../redux/features/dashboardSlice';
 
 
 // Register ChartJS components
@@ -32,59 +33,14 @@ ChartJS.register(
   Filler
 );
 
-interface DashboardStats {
-  users: number;
-  courses: number;
-  lessons: number;
-  enrollments: number;
-  payments: number;
-  tests: number;
-  questions: number;
-  testAttempts: number;
-  logs: Array<{
-    id: string;
-    userId: string;
-    action: string;
-    user: {
-      username: string;
-      role: string;
-    };
-    details: string;
-    ip: string;
-    createdAt: string;
-  }>;
-  revenueTrend: Array<{
-    id: string;
-    amount: number;
-    status: string;
-    createdAt: string;
-  }>;
-}
-
 export const DashboardHome = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { stats, loading, error } = useAppSelector((state) => state.dashboard);
 
   useEffect(() => {
-    const fetchDashboardStats = async () => {
-      try {
-        const response = await api.get('/users/dashboard/stats');
-        if (response.data.status === 'success') {
-          setStats(response.data.data);
-        } else {
-          throw new Error('Failed to fetch dashboard stats');
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
+    dispatch(fetchLmsDashboardStats());
+  }, [dispatch]);
 
-    fetchDashboardStats();
-  }, []);
 
   if (loading) {
     return (

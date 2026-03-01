@@ -1,11 +1,8 @@
-// config/passport.ts
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as FacebookStrategy } from "passport-facebook";
-import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../utils/hashPassword";
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 /**
  * Reusable helper for creating/finding users from OAuth providers

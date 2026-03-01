@@ -1,9 +1,9 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 import CronJob from "node-cron";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 // ================== CRUD CONTROLLERS ==================
 

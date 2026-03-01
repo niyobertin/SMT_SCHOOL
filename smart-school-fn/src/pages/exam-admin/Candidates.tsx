@@ -422,11 +422,11 @@ const Candidates = () => {
             </div>
 
             {/* Candidates Table */}
-            <div className="bg-white rounded-xl shadow-md border-2 border-gray-200 overflow-visible">
-                <table className="w-full">
-                    <thead className="bg-gray-50 border-b-2 border-gray-200">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-slate-50 text-slate-500 font-bold text-xs border-b border-slate-200">
                         <tr>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 rounded-tl-xl">
+                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500">
                                 Candidate ID
                             </th>
                             <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
@@ -452,7 +452,7 @@ const Candidates = () => {
                     <tbody className="divide-y divide-gray-200">
                         {loading ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
                                     <div className="flex flex-col items-center justify-center">
                                         <Loader2 className="w-8 h-8 animate-spin mb-2 text-indigo-600" />
                                         <span>Loading candidates...</span>
@@ -470,8 +470,8 @@ const Candidates = () => {
 
                             filteredCandidates.map((candidate) => {
                                 return (
-                                    <tr key={candidate.id} className={`hover:bg-gray-50 transition-colors ${candidate.isArchived ? 'opacity-75 bg-gray-50' : ''}`}>
-                                        <td className="px-6 py-4">
+                                    <tr key={candidate.id} className={`hover:bg-slate-50/50 transition-colors group ${candidate.isArchived ? 'opacity-75 bg-slate-50' : ''}`}>
+                                        <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-2">
                                                     <code className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded font-mono">

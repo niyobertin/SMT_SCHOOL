@@ -1,72 +1,70 @@
 import { sendEmail } from "../utils/sendEmail";
-import { PrismaClient } from "@prisma/client";
 import { logger } from "../utils/logger";
-
-const prisma = new PrismaClient();
+import prisma from "./prisma.singleton";
 
 interface TestResponseEmailData {
-    instructorEmail: string;
-    studentName: string;
-    studentEmail: string;
-    testTitle: string;
-    testType: string;
-    submissionTime: string;
-    questions: Array<{
-        question: string;
-        image?: string;
-        studentAnswer: string;
-        solution?: string;
-        explanation?: string;
-    }>;
+  instructorEmail: string;
+  studentName: string;
+  studentEmail: string;
+  testTitle: string;
+  testType: string;
+  submissionTime: string;
+  questions: Array<{
+    question: string;
+    image?: string;
+    studentAnswer: string;
+    solution?: string;
+    explanation?: string;
+  }>;
 }
 
 export const sendTestResponseEmail = async (
-    data: TestResponseEmailData
+  data: TestResponseEmailData
 ): Promise<void> => {
-    try {
-        const {
-            instructorEmail,
-            studentName,
-            studentEmail,
-            testTitle,
-            testType,
-            submissionTime,
-            questions,
-        } = data;
+  try {
+    const {
+      instructorEmail,
+      studentName,
+      studentEmail,
+      testTitle,
+      testType,
+      submissionTime,
+      questions,
+    } = data;
 
-        // Generate HTML email content
-        const htmlContent = generateTestResponseHTML(data);
+    // Generate HTML email content
+    const htmlContent = generateTestResponseHTML(data);
 
-        // Send email
-        await sendEmail({
-            to: instructorEmail,
-            subject: `New ${testType} Test Submission - ${testTitle} - ${studentName}`,
-            html: htmlContent,
-            text: `${studentName} has submitted a ${testType} test: ${testTitle}. Please check your email for details.`,
-        });
+    // Send email
+    await sendEmail({
+      to: instructorEmail,
+      subject: `New ${testType} Test Submission - ${testTitle} - ${studentName}`,
+      html: htmlContent,
+      text: `${studentName} has submitted a ${testType} test: ${testTitle}. Please check your email for details.`,
+    });
 
-        logger.info(
-            `Test response email sent to ${instructorEmail} for test ${testTitle}`
-        );
-    } catch (error) {
-        logger.error("Error sending test response email:", error);
-        // Don't throw error - email failure shouldn't block test submission
-    }
+    logger.info(
+      `Test response email sent to ${instructorEmail} for test ${testTitle}`
+    );
+  } catch (error) {
+    logger.error("Error sending test response email:", error);
+    // Don't throw error - email failure shouldn't block test submission
+  }
 };
 
 const generateTestResponseHTML = (
-    data: TestResponseEmailData
+  data: TestResponseEmailData
 ): string => {
-    const {
-        studentName,
-        studentEmail,
-        testTitle,
-        testType,
-        submissionTime,
-        questions,
-    } = data;
+  const {
+    studentName,
+    studentEmail,
+    testTitle,
+    testType,
+    submissionTime,
+    questions,
+  } = data;
 
-    return `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -256,8 +254,8 @@ const generateTestResponseHTML = (
     </div>
 
     ${questions
-            .map(
-                (q, index) => `
+      .map(
+        (q, index) => `
     <div class="question-container">
       <div class="question-header">
         Question ${index + 1}
@@ -266,9 +264,9 @@ const generateTestResponseHTML = (
         ${q.question}
       </div>
       ${q.image
-                        ? `<img src="${q.image}" alt="Question Image" class="question-image" />`
-                        : ""
-                    }
+            ? `<img src="${q.image}" alt="Question Image" class="question-image" />`
+            : ""
+          }
       
       <div class="response-section">
         <div class="response-label">Student Response</div>
@@ -276,28 +274,28 @@ const generateTestResponseHTML = (
       </div>
 
       ${q.solution
-                        ? `
+            ? `
       <div class="solution-section">
         <div class="solution-label">Expected Answer / Solution</div>
         <div class="solution-text">${q.solution}</div>
       </div>
       `
-                        : ""
-                    }
+            : ""
+          }
 
       ${q.explanation
-                        ? `
+            ? `
       <div class="solution-section">
         <div class="solution-label">Explanation</div>
         <div class="solution-text">${q.explanation}</div>
       </div>
       `
-                        : ""
-                    }
+            : ""
+          }
     </div>
     `
-            )
-            .join("")}
+      )
+      .join("")}
 
     <div class="footer">
       <p>This is an automated email from Smart School.</p>

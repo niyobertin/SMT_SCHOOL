@@ -8,12 +8,6 @@ import {
 } from '../middleware/examAuth.middleware';
 import { catchAsync } from '../utils/errors';
 import {
-    // Organization Management
-    createOrganization,
-    getOrganizations,
-    getOrganizationById,
-    updateOrganization,
-    deleteOrganization,
     // Candidate Management
     createCandidate,
     createCandidatesBulk,
@@ -50,8 +44,6 @@ import {
     getAllExams,
     getAllCandidates,
     authorizeRetake,
-    // New Feature Imports
-    uploadOrganizationLogo,
     archiveCandidate,
     unarchiveCandidate,
     archiveExam,
@@ -59,10 +51,12 @@ import {
     getOpenEndedResponses,
     markAnswer,
     exportOpenEndedResponsesPDF,
-    exportDetailedResultsPDF
+    exportDetailedResultsPDF,
+    submitExamForApproval,
+    approveExamResult
 } from '../controller/exam.controller';
-import { upload, uploadFile } from '../middleware/uploadFile';
-
+import { uploadFile } from '../middleware/uploadFile';
+import organizationRoutes from './organization.routes';
 const router = express.Router();
 
 /**
@@ -83,74 +77,9 @@ const router = express.Router();
  */
 
 // ============================================
-// ORGANIZATION MANAGEMENT ROUTES (Admin only)
+// BACKWARD COMPATIBILITY ROUTES (Phase 1)
 // ============================================
-
-/**
- * @swagger
- * /api/exams/organizations:
- *   post:
- *     summary: Create a new organization
- *     tags: [Exam Organizations]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *               logo:
- *                 type: string
- *               contactEmail:
- *                 type: string
- *               contactPhone:
- *                 type: string
- *     responses:
- *       201:
- *         description: Organization created successfully
- */
-router.post(
-    '/organizations',
-    authenticate,
-    authorize('SUPER_ADMIN', 'ADMIN'),
-    catchAsync(createOrganization)
-);
-
-router.get(
-    '/organizations',
-    authenticate,
-    authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
-    catchAsync(getOrganizations)
-);
-
-router.get(
-    '/organizations/:id',
-    authenticate,
-    authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
-    catchAsync(getOrganizationById)
-);
-
-router.patch(
-    '/organizations/:id',
-    authenticate,
-    authorize('SUPER_ADMIN', 'ADMIN'),
-    catchAsync(updateOrganization)
-);
-
-router.delete(
-    '/organizations/:id',
-    authenticate,
-    authorize('SUPER_ADMIN', 'ADMIN'),
-    catchAsync(deleteOrganization)
-);
+router.use('/organizations', organizationRoutes);
 
 // ============================================
 // CANDIDATE MANAGEMENT ROUTES
@@ -215,7 +144,12 @@ router.get(
     authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(getExams)
 );
-
+router.get(
+    '/',
+    authenticate,
+    authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(getAllExams)
+);
 router.get(
     '/all',
     authenticate,
@@ -383,13 +317,6 @@ router.get(
 // ============================================
 
 router.get(
-    '/stats/dashboard',
-    authenticate,
-    authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
-    getExamDashboardStats
-);
-
-router.get(
     '/results/all',
     authenticate,
     authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
@@ -420,14 +347,6 @@ router.get(
 // ============================================
 // NEW FEATURE ROUTES
 // ============================================
-
-router.post(
-    '/organizations/:id/logo',
-    authenticate,
-    authorize('SUPER_ADMIN', 'ADMIN'),
-    upload.single('logo'),
-    catchAsync(uploadOrganizationLogo)
-);
 
 router.get(
     '/all/open-ended-responses/export',
@@ -491,6 +410,21 @@ router.post(
     authenticate,
     authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
     catchAsync(markAnswer)
+);
+
+// Results Approval
+router.post(
+    '/attempts/:attemptId/submit-for-approval',
+    authenticate,
+    authorize('SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EXAMINER'),
+    catchAsync(submitExamForApproval)
+);
+
+router.post(
+    '/attempts/:attemptId/approve',
+    authenticate,
+    authorize('SUPER_ADMIN', 'ADMIN'),
+    catchAsync(approveExamResult)
 );
 
 export default router;

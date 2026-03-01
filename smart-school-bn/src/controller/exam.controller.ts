@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ExamQuestionType, Prisma, PrismaClient } from '@prisma/client';
+import { ExamQuestionType, Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
@@ -15,233 +15,13 @@ import {
     calculateQuestionStatistics,
 } from '../services/exam.service';
 import { uploadBufferToCloudinary } from '../config/cloudinary';
+import { AssessmentService } from '../services/assessment.service';
+import { QuestionService } from '../services/question.service';
+import { AttemptService } from '../services/attempt.service';
+import { getTenantFilter } from '../middleware/tenant.middleware';
+import prisma from '../services/prisma.singleton';
 
-const prisma = new PrismaClient();
-
-/**
- * Returns organization filter for list/find queries.
- * ADMIN (Super Admin / exam portal owner) sees all orgs; EXAMINER/INSTRUCTOR restricted to assigned organizations only.
- */
-function getOrgFilter(user: any): { id: { in: string[] } } | null {
-    if (user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') return null;
-    const assignedOrgIds = user?.userOrganizations?.map((uo: any) => uo.organizationId) || [];
-    return { id: { in: assignedOrgIds } };
-}
-
-/** Builds where clause for a single org by id with optional scope filter (so id is not overwritten by getOrgFilter). */
-function buildOrgWhere(orgId: string, user: any): { id: string } | { AND: Array<{ id: string } | { id: { in: string[] } }> } {
-    const orgFilter = getOrgFilter(user);
-    return orgFilter ? { AND: [{ id: orgId }, orgFilter] } : { id: orgId };
-}
-
-// ============================================
-// ORGANIZATION MANAGEMENT
-// ============================================
-
-export const createOrganization = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        const { name, description, logo, contactEmail, contactPhone } = req.body;
-
-        const organization = await prisma.organization.create({
-            data: {
-                id: uuidv4(),
-                name,
-                description,
-                logo,
-                contactEmail,
-                contactPhone,
-            },
-        });
-
-        res.status(201).json({
-            status: 'success',
-            data: organization,
-            message: 'Organization created successfully',
-        });
-    } catch (error) {
-        logger.error(error);
-        next(error);
-    }
-};
-
-export const getOrganizations = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        const { page = 1, limit = 10, search } = req.query;
-        const skip = (Number(page) - 1) * Number(limit);
-
-        const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-        const where: any = { AND: orgFilter ? [orgFilter] : [] };
-
-        if (search) {
-            where.AND.push({
-                OR: [
-                    { name: { contains: search as string, mode: 'insensitive' as const } },
-                    { description: { contains: search as string, mode: 'insensitive' as const } },
-                ]
-            });
-        }
-
-        const [organizations, total] = await Promise.all([
-            prisma.organization.findMany({
-                where,
-                skip,
-                take: Number(limit),
-                orderBy: { createdAt: 'desc' },
-                include: {
-                    _count: {
-                        select: {
-                            exams: true,
-                            candidates: true,
-                        },
-                    },
-                },
-            }),
-            prisma.organization.count({ where }),
-        ]);
-
-        res.status(200).json({
-            status: 'success',
-            data: organizations,
-            pagination: {
-                page: Number(page),
-                limit: Number(limit),
-                total,
-                pages: Math.ceil(total / Number(limit)),
-            },
-        });
-    } catch (error) {
-        logger.error(error);
-        next(error);
-    }
-};
-
-export const getOrganizationById = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        const { id } = req.params;
-
-        const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(id, user);
-
-        const organization = await prisma.organization.findFirst({
-            where: orgWhere,
-            include: {
-                _count: {
-                    select: {
-                        exams: true,
-                        candidates: true,
-                    },
-                },
-            },
-        });
-
-        if (!organization) {
-            throw new NotFoundError('Organization not found');
-        }
-
-        res.status(200).json({
-            status: 'success',
-            data: organization,
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const updateOrganization = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        const { id } = req.params;
-        const { name, description, logo, contactEmail, contactPhone, isActive } = req.body;
-
-        const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(id, user);
-
-        // verify access
-        const existingOrg = await prisma.organization.findFirst({
-            where: orgWhere
-        });
-
-        if (!existingOrg) {
-            res.status(403).json({ status: 'error', message: 'You do not have access to this organization' });
-            return;
-        }
-
-        const organization = await prisma.organization.update({
-            where: { id },
-            data: {
-                name,
-                description,
-                logo,
-                contactEmail,
-                contactPhone,
-                isActive,
-            },
-        });
-
-        res.status(200).json({
-            status: 'success',
-            data: organization,
-            message: 'Organization updated successfully',
-        });
-    } catch (error) {
-        logger.error(error);
-        next(error);
-    }
-};
-
-export const deleteOrganization = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        const { id } = req.params;
-
-        const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(id, user);
-
-        // verify access
-        const existingOrg = await prisma.organization.findFirst({
-            where: orgWhere
-        });
-
-        if (!existingOrg) {
-            res.status(403).json({ status: 'error', message: 'You do not have access to this organization' });
-            return;
-        }
-
-        await prisma.organization.delete({
-            where: { id },
-        });
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Organization deleted successfully',
-        });
-    } catch (error) {
-        logger.error(error);
-        next(error);
-    }
-};
+// Local organization filter functions removed (Unified filter used instead)
 
 // ============================================
 // CANDIDATE MANAGEMENT
@@ -271,17 +51,20 @@ export const createCandidate = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(orgId, user);
+        const orgWhere = getTenantFilter(req, { id: orgId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
 
         if (!organization) {
             res.status(403).json({
-                status: 'fail',
-                message: 'You do not have access to this organization'
+                success: false,
+                error: {
+                    message: 'You do not have access to this organization',
+                    code: 'ORG_ACCESS_DENIED'
+                }
             });
+            return;
             return;
         }
 
@@ -310,7 +93,7 @@ export const createCandidate = async (
         });
 
         res.status(201).json({
-            status: 'success',
+            success: true,
             data: candidate,
             message: 'Candidate created successfully',
         });
@@ -330,17 +113,20 @@ export const createCandidatesBulk = async (
         const { candidates } = req.body; // Array of { firstName, lastName, email, phoneNumber }
         const user = req.user as any;
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(orgId, user);
+        const orgWhere = getTenantFilter(req, { id: orgId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
 
         if (!organization) {
             res.status(403).json({
-                status: 'fail',
-                message: 'You do not have access to this organization'
+                success: false,
+                error: {
+                    message: 'You do not have access to this organization',
+                    code: 'ORG_ACCESS_DENIED'
+                }
             });
+            return;
             return;
         }
 
@@ -396,7 +182,7 @@ export const createCandidatesBulk = async (
         }
 
         res.status(201).json({
-            status: 'success',
+            success: true,
             data: createdCandidates,
             message: `Successfully created ${createdCandidates.length} candidates`,
             errors: errors.length > 0 ? errors : undefined,
@@ -416,11 +202,10 @@ export const getAllCandidates = async (
         const { organizationId, search, page = 1, limit = 50, showArchived } = req.query;
         const skip = (Number(page) - 1) * Number(limit);
         const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-        const where: any = {};
+        let where: any = {};
 
         if (organizationId) {
-            const orgWhere = buildOrgWhere(String(organizationId), user);
+            const orgWhere = getTenantFilter(req, { id: String(organizationId) });
             const organization = await prisma.organization.findFirst({
                 where: orgWhere
             });
@@ -434,12 +219,8 @@ export const getAllCandidates = async (
             }
             where.organizationId = String(organizationId);
         } else {
-            const authorizedOrgIds = await prisma.organization.findMany({
-                where: orgFilter ? { ...orgFilter } : {},
-                select: { id: true }
-            }).then(orgs => orgs.map(o => o.id));
-
-            where.organizationId = { in: authorizedOrgIds };
+            const tenantFilter = getTenantFilter(req);
+            where.organizationId = tenantFilter.organizationId || { in: [] };
         }
 
         if (search) {
@@ -477,7 +258,7 @@ export const getAllCandidates = async (
         ]);
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: candidates,
             pagination: {
                 page: Number(page),
@@ -500,17 +281,20 @@ export const getCandidates = async (
     try {
         const { orgId } = req.params;
         const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(orgId, user);
+        const orgWhere = getTenantFilter(req, { id: orgId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
 
         if (!organization) {
             res.status(403).json({
-                status: 'fail',
-                message: 'You do not have access to this organization'
+                success: false,
+                error: {
+                    message: 'You do not have access to this organization',
+                    code: 'ORG_ACCESS_DENIED'
+                }
             });
+            return;
             return;
         }
 
@@ -559,7 +343,7 @@ export const getCandidates = async (
         ]);
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: candidates,
             pagination: {
                 page: Number(page),
@@ -603,8 +387,7 @@ export const updateCandidate = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(existingCandidate.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: existingCandidate.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -632,7 +415,7 @@ export const updateCandidate = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: candidate,
             message: 'Candidate updated successfully',
         });
@@ -661,8 +444,7 @@ export const deleteCandidate = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(existingCandidate.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: existingCandidate.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -680,7 +462,7 @@ export const deleteCandidate = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Candidate deleted successfully',
         });
     } catch (error) {
@@ -714,17 +496,20 @@ export const createExam = async (
             allowReview,
         } = req.body;
         const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(orgId, user);
+        const orgWhere = getTenantFilter(req, { id: orgId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
 
         if (!organization) {
             res.status(403).json({
-                status: 'fail',
-                message: 'You do not have access to this organization'
+                success: false,
+                error: {
+                    message: 'You do not have access to this organization',
+                    code: 'ORG_ACCESS_DENIED'
+                }
             });
+            return;
             return;
         }
 
@@ -750,7 +535,7 @@ export const createExam = async (
         });
 
         res.status(201).json({
-            status: 'success',
+            success: true,
             data: exam,
             message: 'Exam created successfully',
         });
@@ -769,31 +554,28 @@ export const getExams = async (
         const { orgId } = req.params;
         const { showArchived } = req.query;
         const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-
         if (orgId !== 'all') {
-            const orgWhere = buildOrgWhere(orgId, user);
+            const orgWhere = getTenantFilter(req, { id: orgId });
             const organization = await prisma.organization.findFirst({
                 where: orgWhere
             });
 
             if (!organization) {
                 res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this organization'
+                    success: false,
+                    error: {
+                        message: 'You do not have access to this organization',
+                        code: 'ORG_ACCESS_DENIED'
+                    }
                 });
                 return;
             }
         }
 
+        const tenantFilter = getTenantFilter(req);
         const where: any = orgId === 'all'
             ? {
-                organizationId: {
-                    in: await prisma.organization.findMany({
-                        where: orgFilter ? { ...orgFilter } : {},
-                        select: { id: true }
-                    }).then(orgs => orgs.map(o => o.id))
-                }
+                organizationId: tenantFilter.organizationId || { not: undefined },
             }
             : { organizationId: orgId };
 
@@ -817,7 +599,7 @@ export const getExams = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: exams,
         });
     } catch (error) {
@@ -836,10 +618,8 @@ export const getAllExams = async (
 
         const where: any = {};
         const user = req.user as any;
-        const orgFilter = getOrgFilter(user);
-
         if (organizationId) {
-            const orgWhere = buildOrgWhere(String(organizationId), user);
+            const orgWhere = getTenantFilter(req, { id: String(organizationId) });
             const organization = await prisma.organization.findFirst({
                 where: orgWhere
             });
@@ -853,12 +633,10 @@ export const getAllExams = async (
             }
             where.organizationId = String(organizationId);
         } else {
-            const authorizedOrgIds = await prisma.organization.findMany({
-                where: orgFilter ? { ...orgFilter } : {},
-                select: { id: true }
-            }).then(orgs => orgs.map(o => o.id));
-
-            where.organizationId = { in: authorizedOrgIds };
+            const tenantFilter = getTenantFilter(req);
+            if (tenantFilter.organizationId) {
+                where.organizationId = tenantFilter.organizationId;
+            }
         }
 
         if (status && status !== 'ALL') {
@@ -903,7 +681,7 @@ export const getAllExams = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: exams,
         });
     } catch (error) {
@@ -950,8 +728,7 @@ export const getExamById = async (
             throw new NotFoundError('Exam not found');
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(exam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: exam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -965,7 +742,7 @@ export const getExamById = async (
         }
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: exam,
         });
     } catch (error) {
@@ -1016,8 +793,7 @@ export const updateExam = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(existingExam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: existingExam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -1050,7 +826,7 @@ export const updateExam = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: exam,
             message: 'Exam updated successfully',
         });
@@ -1088,8 +864,7 @@ export const deleteExam = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(existingExam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: existingExam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -1107,7 +882,7 @@ export const deleteExam = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Exam deleted successfully',
         });
     } catch (error) {
@@ -1135,102 +910,55 @@ export const addQuestionToExam = async (
             try { options = JSON.parse(options); } catch { options = []; }
         }
 
-        // Optional: upload image for question (validate image type)
         let imageUrl: string | null = null;
         if (imageFile) {
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (!allowedTypes.includes(imageFile.mimetype)) {
-                res.status(400).json({ status: 'error', message: 'Invalid image type. Allowed: JPEG, PNG, GIF, WebP' });
-                return;
-            }
             imageUrl = await uploadBufferToCloudinary(imageFile.buffer, imageFile.mimetype, imageFile.originalname);
         }
 
-        // Check if exam exists and get its organization
-        const exam = await prisma.exam.findUnique({
-            where: { id: examId }
-        });
-
+        const exam = await prisma.exam.findUnique({ where: { id: examId } });
         if (!exam) {
             res.status(404).json({ status: 'error', message: 'Exam not found' });
             return;
         }
 
-        // Check archive status
         if (exam.status === 'ARCHIVED') {
-            res.status(403).json({
-                status: 'fail',
-                message: 'This exam is archived and cannot be modified'
-            });
+            res.status(403).json({ status: 'fail', message: 'Exam is archived' });
             return;
         }
 
-        // If examiner, ensure they are assigned to this organization
         if (user.role === 'EXAMINER') {
             const examinerOrgIds = user.userOrganizations?.map((uo: any) => uo.organizationId) || [];
             if (!examinerOrgIds.includes(exam.organizationId)) {
-                res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this exam'
-                });
+                res.status(403).json({ status: 'fail', message: 'No access to this exam' });
                 return;
             }
         }
 
-        // Get current max order
         const lastQuestion = await prisma.examQuestion.findFirst({
             where: { examId },
             orderBy: { order: 'desc' },
         });
 
-        const newOrder = lastQuestion ? lastQuestion.order + 1 : 0;
-
-        const result = await prisma.$transaction(async (tx) => {
-            const newQuestion = await tx.examQuestion.create({
-                data: {
-                    id: uuidv4(),
-                    question,
-                    type,
-                    points: Number(points || 1),
-                    explanation: explanation || null,
-                    order: newOrder,
-                    examId,
-                    image: imageUrl,
-                },
-            });
-
-            // Add options for MCQ/True-False
-            if (options && options.length > 0 && (type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE')) {
-                await Promise.all(
-                    options.map((opt: { option: string; isCorrect: any }, index: number) =>
-                        tx.examQuestionOption.create({
-                            data: {
-                                id: uuidv4(),
-                                option: opt.option,
-                                isCorrect: opt.isCorrect === true || opt.isCorrect === 'true',
-                                order: index,
-                                examQuestionId: newQuestion.id,
-                            },
-                        })
-                    )
-                );
-            }
-
-            return newQuestion;
-        });
-
-        const createdQuestion = await prisma.examQuestion.findUnique({
-            where: { id: result.id },
-            include: { options: true },
-        });
+        const createdQuestion = await QuestionService.createQuestion(examId, {
+            question,
+            type,
+            points: Number(points || 1),
+            explanation,
+            order: lastQuestion ? lastQuestion.order + 1 : 0,
+            image: imageUrl,
+            options: options ? options.map((opt: any, index: number) => ({
+                option: opt.option,
+                isCorrect: opt.isCorrect === true || opt.isCorrect === 'true',
+                order: index
+            })) : undefined
+        }, 'exam');
 
         res.status(201).json({
-            status: 'success',
+            success: true,
             data: createdQuestion,
-            message: 'Question added successfully',
+            message: 'Question added successfully'
         });
     } catch (error) {
-        logger.error(error);
         next(error);
     }
 };
@@ -1301,7 +1029,7 @@ export const addQuestionsBulk = async (
         });
 
         res.status(201).json({
-            status: 'success',
+            success: true,
             data: results,
             message: `Successfully added ${results.length} questions`,
         });
@@ -1383,7 +1111,7 @@ export const updateExamQuestion = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: updatedQuestionData,
             message: 'Question updated successfully',
         });
@@ -1400,17 +1128,9 @@ export const deleteExamQuestion = async (
 ): Promise<void> => {
     try {
         const { questionId } = req.params;
-
-        await prisma.examQuestion.delete({
-            where: { id: questionId },
-        });
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Question deleted successfully',
-        });
+        await QuestionService.deleteQuestion(questionId, 'exam');
+        res.status(200).json({ success: true, message: 'Question deleted successfully' });
     } catch (error) {
-        logger.error(error);
         next(error);
     }
 };
@@ -1437,7 +1157,7 @@ export const getExamAssignedCandidates = async (
         const assignedCandidateIds = assignments.map(a => a.candidateId);
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: assignedCandidateIds,
         });
     } catch (error) {
@@ -1530,7 +1250,7 @@ export const assignExamToCandidate = async (
         }
 
         res.status(201).json({
-            status: 'success',
+            success: true,
             data: assignment,
             message: notify !== 'false'
                 ? 'Exam assigned to candidate successfully and email sent'
@@ -1636,7 +1356,7 @@ export const bulkAssignExamToCandidates = async (
         }
 
         res.status(201).json({
-            status: 'success',
+            success: true,
             data: results,
             message: `Successfully assigned ${results.length} candidates`,
             errors: errors.length > 0 ? errors : undefined
@@ -1666,7 +1386,7 @@ export const unassignExamFromCandidate = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Exam unassigned from candidate successfully',
         });
     } catch (error) {
@@ -1794,7 +1514,7 @@ export const candidateLogin = async (
         );
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: {
                 token,
                 candidate: {
@@ -1901,7 +1621,7 @@ export const startExamAttempt = async (
             : null;
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: {
                 attemptId: examAttempt.id,
                 exam: {
@@ -1943,111 +1663,39 @@ export const submitExamAnswer = async (
         // @ts-ignore
         const candidateId = req.candidate?.id;
 
-        const examAttempt = await prisma.examAttempt.findFirst({
-            where: {
-                id: attemptId,
-                candidateId,
-            },
-            include: {
-                exam: {
-                    include: {
-                        questions: {
-                            where: { id: questionId },
-                            include: {
-                                options: true,
-                            },
-                        },
-                    },
-                },
-            },
+        const examAttempt = await prisma.examAttempt.findUnique({
+            where: { id: attemptId }
         });
 
-        if (!examAttempt) {
-            res.status(404).json({
-                status: 'error',
-                message: 'Exam attempt not found',
-            });
+        if (!examAttempt || examAttempt.candidateId !== candidateId) {
+            res.status(404).json({ status: 'error', message: 'Exam attempt not found' });
             return;
         }
 
         if (examAttempt.status === 'COMPLETED') {
-            res.status(400).json({
-                status: 'error',
-                message: 'Exam attempt already completed',
-            });
+            res.status(400).json({ status: 'error', message: 'Exam attempt already completed' });
             return;
         }
 
-        const question = examAttempt.exam.questions[0];
-        if (!question) {
-            res.status(404).json({
-                status: 'error',
-                message: 'Question not found in this exam',
-            });
-            return;
-        }
+        const { isCorrect, points } = await AttemptService.submitAnswer(attemptId, {
+            questionId,
+            answerText,
+            selectedOptions,
+            timeSpent
+        }, 'exam');
 
-        // Get selected option texts
-        const selectedOptionTexts = question.options
-            .filter((opt) => selectedOptions?.includes(opt.id))
-            .map((opt) => opt.option);
-
-        // Auto-grade
-        const { isCorrect, points } = autoGradeAnswer(question, selectedOptions);
-
-        // Check if answer exists
-        const existingAnswer = await prisma.examAnswer.findFirst({
-            where: {
-                examAttemptId: attemptId,
-                examQuestionId: questionId,
-            },
-        });
-
-        // Create or update answer
-        const answer = await prisma.examAnswer.upsert({
-            where: {
-                id: existingAnswer?.id || uuidv4(),
-            },
-            create: {
-                id: uuidv4(),
-                answerText: answerText || null,
-                selectedOptions: selectedOptions || [],
-                userAnswer: selectedOptionTexts || [],
-                isCorrect,
-                points,
-                timeSpent: timeSpent || null,
-                examAttemptId: attemptId,
-                examQuestionId: questionId,
-            },
-            update: {
-                answerText: answerText || null,
-                selectedOptions: selectedOptions || [],
-                userAnswer: selectedOptionTexts || [],
-                isCorrect,
-                points,
-                timeSpent: timeSpent || null,
-            },
-        });
-
-        // Update attempt stats
-        const answers = await prisma.examAnswer.findMany({
-            where: { examAttemptId: attemptId },
-        });
-
-        const correctAnswers = answers.filter((a) => a.isCorrect).length;
-        const totalPoints = answers.reduce((sum, a) => sum + (a.points || 0), 0);
+        const stats = await prisma.examAttempt.findUnique({ where: { id: attemptId } });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: {
-                answer,
-                correctAnswers,
-                totalAnswered: answers.length,
-                totalQuestions: examAttempt.totalQuestions,
+                isCorrect,
+                points,
+                correctAnswers: stats?.correctAnswers,
+                totalQuestions: stats?.totalQuestions,
             },
         });
     } catch (error) {
-        logger.error(error);
         next(error);
     }
 };
@@ -2062,76 +1710,33 @@ export const submitExam = async (
         // @ts-ignore
         const candidateId = req.candidate?.id;
 
-        const examAttempt = await prisma.examAttempt.findFirst({
-            where: {
-                id: attemptId,
-                candidateId,
-            },
-            include: {
-                exam: {
-                    include: {
-                        questions: true,
-                    },
-                },
-                candidate: true,
-                answers: {
-                    include: {
-                        examQuestion: true,
-                    },
-                },
-            },
+        const examAttempt = await prisma.examAttempt.findUnique({
+            where: { id: attemptId },
+            include: { exam: true }
         });
 
-        if (!examAttempt) {
+        if (!examAttempt || examAttempt.candidateId !== candidateId) {
             throw new NotFoundError('Exam attempt not found');
         }
 
-        // Calculate final score
-        const questions = examAttempt.exam.questions;
-        const totalPossiblePoints = questions.reduce((sum, q) => sum + (q.points || 0), 0);
-        const earnedPoints = examAttempt.answers.reduce((sum, a) => sum + (a.points || 0), 0);
-        const score = calculateExamScore(totalPossiblePoints, earnedPoints);
-        const correctAnswers = examAttempt.answers.filter((a) => a.isCorrect).length;
-        const isPassed = score >= examAttempt.exam.passingScore;
-
-        // Calculate time spent
-        const now = new Date();
-        const timeSpentSeconds = Math.floor(
-            (now.getTime() - examAttempt.startTime.getTime()) / 1000
-        );
-
-        // Update attempt
-        await prisma.examAttempt.update({
-            where: { id: attemptId },
-            data: {
-                endTime: now,
-                score,
-                correctAnswers,
-                isPassed,
-                status: 'COMPLETED',
-                timeSpent: timeSpentSeconds,
-            },
-        });
+        const updatedAttempt = await AttemptService.finalizeAttempt(attemptId, 'exam');
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: {
-                attemptId: examAttempt.id,
-                score,
-                isPassed,
+                attemptId: updatedAttempt.id,
+                score: updatedAttempt.score,
+                isPassed: updatedAttempt.isPassed,
                 passingScore: examAttempt.exam.passingScore,
-                totalQuestions: examAttempt.totalQuestions,
-                answeredQuestions: examAttempt.answers.length,
-                correctAnswers,
-                pointsEarned: earnedPoints,
-                totalPoints: totalPossiblePoints,
-                timeSpent: timeSpentSeconds,
-                submittedAt: now.toISOString(),
+                totalQuestions: updatedAttempt.totalQuestions,
+                answeredQuestions: updatedAttempt.totalQuestions,
+                correctAnswers: updatedAttempt.correctAnswers,
+                timeSpent: updatedAttempt.timeSpent,
+                submittedAt: updatedAttempt.endTime?.toISOString(),
             },
             message: 'Exam submitted successfully',
         });
     } catch (error) {
-        logger.error(error);
         next(error);
     }
 };
@@ -2173,7 +1778,7 @@ export const getExamResult = async (
         }
 
         const response: any = {
-            status: 'success',
+            success: true,
             data: {
                 attemptId: examAttempt.id,
                 examTitle: examAttempt.exam.title,
@@ -2235,8 +1840,7 @@ export const getExamResults = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(exam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: exam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -2275,7 +1879,7 @@ export const getExamResults = async (
         ]);
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: attempts,
             pagination: {
                 page: Number(page),
@@ -2300,29 +1904,27 @@ export const getGlobalExamResults = async (
         const user = req.user as any;
 
         const where: any = { status: 'COMPLETED' }; // Default to completed exams usually
-        const orgFilter = getOrgFilter(user);
 
         if (organizationId) {
-            const orgWhere = buildOrgWhere(String(organizationId), user);
+            const orgWhere = getTenantFilter(req, { id: String(organizationId) });
             const organization = await prisma.organization.findFirst({
                 where: orgWhere
             });
 
             if (!organization) {
                 res.status(403).json({
-                    status: 'fail',
-                    message: 'You do not have access to this organization\'s results'
+                    success: false,
+                    error: {
+                        message: 'You do not have access to this organization\'s results',
+                        code: 'ORG_ACCESS_DENIED'
+                    }
                 });
                 return;
             }
             where.exam = { organizationId: String(organizationId) };
         } else {
-            const authorizedOrgIds = await prisma.organization.findMany({
-                where: orgFilter ? { ...orgFilter } : {},
-                select: { id: true }
-            }).then(orgs => orgs.map(o => o.id));
-
-            where.exam = { organizationId: { in: authorizedOrgIds } };
+            const tenantFilter = getTenantFilter(req);
+            where.exam = { organizationId: tenantFilter.organizationId || { not: undefined } };
         }
 
         if (batch) {
@@ -2422,7 +2024,7 @@ export const getGlobalExamResults = async (
         const averageScore = totalScore._avg.score || 0;
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: attemptsWithAssignments,
             meta: {
                 total,
@@ -2460,8 +2062,7 @@ export const getExamAnalytics = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(exam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: exam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -2478,7 +2079,7 @@ export const getExamAnalytics = async (
         const questionStats = await calculateQuestionStatistics(examId);
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: {
                 examStatistics: stats,
                 questionStatistics: questionStats,
@@ -2507,11 +2108,9 @@ export const getExamDashboardStats = async (
             };
         }
 
-        const orgFilter = getOrgFilter(user);
         let whereOrg: any = {};
-
         if (organizationId) {
-            const orgWhere = buildOrgWhere(String(organizationId), user);
+            const orgWhere = getTenantFilter(req, { id: String(organizationId) });
             const organization = await prisma.organization.findFirst({
                 where: orgWhere
             });
@@ -2525,12 +2124,10 @@ export const getExamDashboardStats = async (
             }
             whereOrg = { organizationId: String(organizationId) };
         } else {
-            const authorizedOrgIds = await prisma.organization.findMany({
-                where: orgFilter ? { ...orgFilter } : {},
-                select: { id: true }
-            }).then(orgs => orgs.map(o => o.id));
-
-            whereOrg = { organizationId: { in: authorizedOrgIds } };
+            const tenantFilter = getTenantFilter(req);
+            if (tenantFilter.organizationId) {
+                whereOrg = { organizationId: tenantFilter.organizationId };
+            }
         }
         const whereOrgWithDate = { ...whereOrg, ...dateFilter };
 
@@ -2547,9 +2144,9 @@ export const getExamDashboardStats = async (
         // 3. Organization Count (Global Only - For authorized ones)
         let totalOrganizations = 0;
         if (!organizationId) {
-            const orgFilterStats = getOrgFilter(user);
+            const tenantFilter = getTenantFilter(req, dateFilter);
             totalOrganizations = await prisma.organization.count({
-                where: orgFilterStats ? { ...dateFilter, ...orgFilterStats } : dateFilter
+                where: tenantFilter
             });
         }
 
@@ -2579,9 +2176,9 @@ export const getExamDashboardStats = async (
             };
         }
 
-        if (organizationId) {
+        if (whereOrg.organizationId) {
             attemptWhere.exam = {
-                organizationId: String(organizationId)
+                organizationId: whereOrg.organizationId
             };
         }
 
@@ -2652,7 +2249,7 @@ export const getExamDashboardStats = async (
         })).sort((a, b) => b.avgTimeMinutes - a.avgTimeMinutes).slice(0, 10); // Top 10 longest interactions
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: {
                 organizations: {
                     total: totalOrganizations
@@ -2710,7 +2307,7 @@ export const authorizeRetake = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             data: assignment,
             message: `Retake ${assignment.allowRetake ? 'authorized' : 'deauthorized'} for ${assignment.candidate.firstName}`,
         });
@@ -2768,7 +2365,7 @@ export const uploadOrganizationLogo = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Organization logo uploaded successfully',
             data: updatedOrg
         });
@@ -2801,8 +2398,7 @@ export const archiveCandidate = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(candidate.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: candidate.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -2821,7 +2417,7 @@ export const archiveCandidate = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Candidate archived successfully',
             data: updatedCandidate
         });
@@ -2852,8 +2448,7 @@ export const unarchiveCandidate = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(candidate.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: candidate.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -2872,7 +2467,7 @@ export const unarchiveCandidate = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Candidate unarchived successfully',
             data: updatedCandidate
         });
@@ -2905,16 +2500,18 @@ export const archiveExam = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(exam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: exam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
 
         if (!organization) {
             res.status(403).json({
-                status: 'fail',
-                message: 'You do not have access to this exam'
+                success: false,
+                error: {
+                    message: 'You do not have access to this exam',
+                    code: 'ORG_ACCESS_DENIED'
+                }
             });
             return;
         }
@@ -2925,7 +2522,7 @@ export const archiveExam = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Exam archived successfully',
             data: updatedExam
         });
@@ -2956,16 +2553,18 @@ export const unarchiveExam = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(exam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: exam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
 
         if (!organization) {
             res.status(403).json({
-                status: 'fail',
-                message: 'You do not have access to this exam'
+                success: false,
+                error: {
+                    message: 'You do not have access to this exam',
+                    code: 'ORG_ACCESS_DENIED'
+                }
             });
             return;
         }
@@ -2976,7 +2575,7 @@ export const unarchiveExam = async (
         });
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Exam unarchived successfully',
             data: updatedExam
         });
@@ -3001,13 +2600,12 @@ export const getOpenEndedResponses = async (
         const limit = parseInt(req.query.limit as string) || 50;
         const skip = (page - 1) * limit;
 
-        const orgFilter = getOrgFilter(user);
         const whereQuestion: any = {
             type: { in: ['ESSAY', 'SHORT_ANSWER'] }
         };
 
         if (organizationId) {
-            const orgWhere = buildOrgWhere(String(organizationId), user);
+            const orgWhere = getTenantFilter(req, { id: String(organizationId) });
             const organization = await prisma.organization.findFirst({
                 where: orgWhere
             });
@@ -3021,12 +2619,10 @@ export const getOpenEndedResponses = async (
             }
             whereQuestion.exam = { organizationId: String(organizationId) };
         } else {
-            const authorizedOrgIds = await prisma.organization.findMany({
-                where: orgFilter ? { ...orgFilter } : {},
-                select: { id: true }
-            }).then(orgs => orgs.map(o => o.id));
-
-            whereQuestion.exam = { organizationId: { in: authorizedOrgIds } };
+            const tenantFilter = getTenantFilter(req);
+            if (tenantFilter.organizationId) {
+                whereQuestion.exam = { organizationId: tenantFilter.organizationId };
+            }
         }
 
         if (examId && examId !== 'all') {
@@ -3043,7 +2639,7 @@ export const getOpenEndedResponses = async (
 
         if (questionIds.length === 0) {
             res.status(200).json({
-                status: 'success',
+                success: true,
                 data: {
                     responses: [],
                     pagination: {
@@ -3089,7 +2685,7 @@ export const getOpenEndedResponses = async (
         ]);
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Open-ended responses retrieved successfully',
             data: {
                 responses,
@@ -3130,12 +2726,25 @@ export const markAnswer = async (
         });
 
         if (!answer) {
+            throw new NotFoundError('Answer not found');
+        }
+
+        // Check if the attempt is still mutable
+        const isMutable = await AssessmentService.isMutable(answer.examAttemptId, 'EXAM');
+        if (!isMutable) {
+            res.status(403).json({
+                status: 'fail',
+                message: 'This exam result has already been approved and cannot be modified.',
+            });
+            return;
+        }
+
+        if (!answer) {
             res.status(404).json({ status: 'error', message: 'Answer not found' });
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(answer.examAttempt.exam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: answer.examAttempt.exam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -3202,7 +2811,7 @@ export const markAnswer = async (
         }
 
         res.status(200).json({
-            status: 'success',
+            success: true,
             message: 'Answer marked successfully',
             data: updatedAnswer
         });
@@ -3236,8 +2845,7 @@ export const exportDetailedResultsPDF = async (
             return;
         }
 
-        const orgFilter = getOrgFilter(user);
-        const orgWhere = buildOrgWhere(exam.organizationId, user);
+        const orgWhere = getTenantFilter(req, { id: exam.organizationId });
         const organization = await prisma.organization.findFirst({
             where: orgWhere
         });
@@ -3292,14 +2900,13 @@ export const exportOpenEndedResponsesPDF = async (
         const { organizationId } = req.query;
         const user = req.user as any;
 
-        const orgFilter = getOrgFilter(user);
         let examTitle = 'All Exams';
         const whereQuestion: any = {
             type: { in: ['ESSAY', 'SHORT_ANSWER'] }
         };
 
         if (organizationId) {
-            const orgWhere = buildOrgWhere(String(organizationId), user);
+            const orgWhere = getTenantFilter(req, { id: String(organizationId) });
             const organization = await prisma.organization.findFirst({
                 where: orgWhere
             });
@@ -3313,12 +2920,10 @@ export const exportOpenEndedResponsesPDF = async (
             }
             whereQuestion.exam = { organizationId: String(organizationId) };
         } else {
-            const authorizedOrgIds = await prisma.organization.findMany({
-                where: orgFilter ? { ...orgFilter } : {},
-                select: { id: true }
-            }).then(orgs => orgs.map(o => o.id));
-
-            whereQuestion.exam = { organizationId: { in: authorizedOrgIds } };
+            const tenantFilter = getTenantFilter(req);
+            if (tenantFilter.organizationId) {
+                whereQuestion.exam = { organizationId: tenantFilter.organizationId };
+            }
         }
 
         if (examId && examId !== 'all') {
@@ -3375,6 +2980,48 @@ export const exportOpenEndedResponsesPDF = async (
 
         generateOpenEndedPDF(flatResponses as any, examTitle, res);
 
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const submitExamForApproval = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { attemptId } = req.params;
+        const user = (req as any).user;
+
+        await AssessmentService.submitForApproval(attemptId, 'EXAM', user.id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Exam result submitted for approval successfully',
+        });
+    } catch (error) {
+        logger.error(error);
+        next(error);
+    }
+};
+
+export const approveExamResult = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { attemptId } = req.params;
+        const user = (req as any).user;
+
+        await AssessmentService.approveResult(attemptId, 'EXAM', user.id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Exam result approved successfully. It is now immutable.',
+        });
     } catch (error) {
         logger.error(error);
         next(error);

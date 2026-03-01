@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 export const getDashboardStats = async (req: Request, res: Response, next: NextFunction) => {
     try {

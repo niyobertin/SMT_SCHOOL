@@ -1,13 +1,12 @@
-import { Request, Response, NextFunction } from "express";
-import { logger } from "../utils/logger";
-import { PrismaClient } from "@prisma/client";
-import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import path from "path";
+import { Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import fs from 'fs';
+import { getTenantFilter } from "../middleware/tenant.middleware";
+import prisma from "../services/prisma.singleton";
 import YouTubeUploader from "../helper/youtubeUploader";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
-
-const prisma = new PrismaClient();
+import { logger } from "../utils/logger";
 
 // Ensure tmp directory exists
 const tmpDir = path.join(process.cwd(), "tmp");
@@ -49,11 +48,20 @@ export const createLessonContent = async (
   try {
     const { lessonId } = req.params;
     const { title, textBody, order, fileName } = req.body;
+    const organizationId = req.organizationId!;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+    const lesson = await prisma.lesson.findFirst({
+      where: {
+        id: lessonId,
+        course: { organizationId }
+      }
+    });
     if (!lesson) {
-      return res.status(404).json({ status: "error", message: "Lesson not found" });
+      return res.status(404).json({
+        success: false,
+        error: { message: "Lesson not found or access denied" }
+      });
     }
 
     const uploader = new YouTubeUploader();
@@ -104,7 +112,7 @@ export const createLessonContent = async (
       },
     });
 
-    res.status(201).json(lessonContent);
+    res.status(201).json({ success: true, data: lessonContent });
   } catch (error) {
     logger.error("Error creating lesson content:", error);
     next(error);
@@ -114,29 +122,30 @@ export const createLessonContent = async (
 export const getLessonContent = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { lessonId } = req.params;
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+    const organizationId = req.organizationId!;
+    const lesson = await prisma.lesson.findFirst({
+      where: {
+        id: lessonId,
+        course: { organizationId }
+      }
+    });
     if (!lesson) {
-      return res.status(404).json({ status: "error", message: "Lesson not found" });
+      return res.status(404).json({
+        success: false,
+        error: { message: "Lesson not found or access denied" }
+      });
     }
 
     // Check enrollment validity
-    // @ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
     if (userId) {
-      // Allow admins or instructors to bypass? Maybe. 
-      // For now, assume student access flow.
-      // Actually, we should check role. But let's strictly enforce enrollment for content access if likely student.
       const isValid = await checkEnrollmentValidity(userId, lessonId);
-
-      // Note: If user is admin/instructor they might not have enrollment. 
-      // We should check if they are the instructor of the course or ADMIN role.
-      // Fetch user role for robustness.
       const user = await prisma.user.findUnique({ where: { id: userId } });
 
       if (user?.role === 'STUDENT' && !isValid) {
         return res.status(403).json({
-          status: "error",
-          message: "Access denied. Active enrollment required."
+          success: false,
+          error: { message: "Access denied. Active enrollment required." }
         });
       }
     } else {
@@ -166,17 +175,12 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
       orderBy: { createdAt: "asc" }
     });
     const total = await prisma.lessonContent.count({ where: { lesson: { id: lessonId }, title: { contains: query, mode: "insensitive" } } });
-    // const totalPages = Math.ceil(total / limit);
     res.status(200).json({
-      status: "success",
-      message: "Lesson content retrieved successfully",
+      success: true,
       data: {
         lessonContent,
         pagination: {
-          // page,
-          // limit,
           total,
-          // totalPages,
         },
       },
     });
@@ -194,9 +198,12 @@ export const getLessonContentById = async (req: Request, res: Response, next: Ne
       orderBy: { createdAt: "asc" }
     });
     if (!lessonContent) {
-      return res.status(404).json({ status: "error", message: "Lesson content not found" });
+      return res.status(404).json({
+        success: false,
+        error: { message: "Lesson content not found" }
+      });
     }
-    res.status(200).json(lessonContent);
+    res.status(200).json({ success: true, data: lessonContent });
   } catch (error) {
     logger.error("Error getting lesson content by id:", error);
     next(error);
@@ -207,12 +214,19 @@ export const updateLessonContent = async (req: Request, res: Response, next: Nex
   try {
     const { lessonContentId } = req.params;
     const { title, textBody, order, fileName } = req.body;
+    const organizationId = req.organizationId!;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    const existingContent = await prisma.lessonContent.findUnique({
-      where: { id: lessonContentId }
+    const existingContent = await prisma.lessonContent.findFirst({
+      where: {
+        id: lessonContentId,
+        lesson: { course: { organizationId } }
+      }
     });
     if (!existingContent) {
-      return res.status(404).json({ status: "error", message: "Lesson content not found" });
+      return res.status(404).json({
+        success: false,
+        error: { message: "Lesson content not found or access denied" }
+      });
     }
     let updateData: any = { title, textBody, order: order ? Number(order) : 0, fileName };
     const uploader = new YouTubeUploader();
@@ -245,8 +259,7 @@ export const updateLessonContent = async (req: Request, res: Response, next: Nex
     });
 
     res.status(200).json({
-      status: "success",
-      message: "Lesson content updated successfully",
+      success: true,
       data: updatedLessonContent
     });
   } catch (error) {
@@ -258,14 +271,22 @@ export const updateLessonContent = async (req: Request, res: Response, next: Nex
 export const deleteLessonContent = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { lessonContentId } = req.params;
-    const lessonContent = await prisma.lessonContent.findUnique({ where: { id: lessonContentId } });
+    const organizationId = req.organizationId!;
+    const lessonContent = await prisma.lessonContent.findFirst({
+      where: {
+        id: lessonContentId,
+        lesson: { course: { organizationId } }
+      }
+    });
     if (!lessonContent) {
-      return res.status(404).json({ status: "error", message: "Lesson content not found" });
+      return res.status(404).json({
+        success: false,
+        error: { message: "Lesson content not found or access denied" }
+      });
     }
     const deletedLessonContent = await prisma.lessonContent.delete({ where: { id: lessonContentId } });
     res.status(200).json({
-      status: "success",
-      message: "Lesson content deleted successfully",
+      success: true,
       data: deletedLessonContent
     });
   } catch (error) {

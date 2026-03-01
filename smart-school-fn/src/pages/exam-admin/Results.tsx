@@ -7,6 +7,8 @@ import {
     fetchExams,
     setSelectedOrg,
     authorizeRetake,
+    submitExamForApproval,
+    approveExamResult,
 } from '../../redux/features/examAdminSlice';
 import { toast } from 'react-toastify';
 import { jsPDF } from 'jspdf';
@@ -24,7 +26,9 @@ import {
     ChevronRight,
     Loader2,
     RotateCcw,
-    AlertTriangle
+    AlertTriangle,
+    Lock,
+    Send
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -374,8 +378,8 @@ const Results = () => {
                 {/* Results Table */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative min-h-[400px]">
                     {loading && (!globalResults?.data || globalResults.data.length === 0) ? (
-                        <div className="p-12 flex flex-col justify-center items-center text-gray-500 min-h-[400px]">
-                            <Loader2 className="w-12 h-12 animate-spin mb-4 text-indigo-500" />
+                        <div className="p-12 flex flex-col justify-center items-center text-slate-500 min-h-[400px]">
+                            <Loader2 className="w-8 h-8 animate-spin mb-2 text-indigo-600" />
                             <p className="font-medium">Fetching examination results...</p>
                         </div>
                     ) : globalResults?.data && globalResults.data.length > 0 ? (
@@ -389,52 +393,52 @@ const Results = () => {
                                 </div>
                             )}
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm text-gray-600">
-                                    <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
+                                <table className="w-full text-left text-sm text-slate-600">
+                                    <thead className="bg-slate-50 text-slate-500 font-bold text-xs border-b border-slate-200 uppercase tracking-wider">
                                         <tr>
-                                            <th className="px-6 py-4">Pos</th>
-                                            <th className="px-6 py-4">ID</th>
-                                            <th className="px-6 py-4">Candidate Name</th>
-                                            <th className="px-6 py-4">Exam Info</th>
-                                            <th className="px-6 py-4">Score (%)</th>
-                                            <th className="px-6 py-4">Status</th>
-                                            <th className="px-6 py-4">Date</th>
-                                            <th className="px-6 py-4">Actions</th>
+                                            <th className="px-4 py-3">Pos</th>
+                                            <th className="px-4 py-3">ID</th>
+                                            <th className="px-4 py-3">Candidate Name</th>
+                                            <th className="px-4 py-3">Exam Info</th>
+                                            <th className="px-4 py-3">Score (%)</th>
+                                            <th className="px-4 py-3">Status</th>
+                                            <th className="px-4 py-3">Date</th>
+                                            <th className="px-4 py-3">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-slate-100">
                                         {globalResults.data.map((attempt: any, index: number) => (
-                                            <tr key={attempt.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 font-medium text-gray-900">
+                                            <tr key={attempt.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="px-4 py-3 font-medium text-slate-900">
                                                     {(page - 1) * limit + index + 1}
                                                 </td>
-                                                <td className="px-6 py-4 font-mono text-xs text-indigo-600 bg-indigo-50/50">
+                                                <td className="px-4 py-3 font-mono text-xs text-indigo-600 bg-indigo-50/50">
                                                     {attempt.candidate.candidateId}
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
                                                             {attempt.candidate.firstName[0]}{attempt.candidate.lastName[0]}
                                                         </div>
                                                         <div>
-                                                            <p className="font-semibold text-gray-900">{attempt.candidate.firstName} {attempt.candidate.lastName}</p>
-                                                            <p className="text-xs text-gray-400">{attempt.candidate.email || attempt.candidate.phoneNumber || '-'}</p>
+                                                            <p className="font-semibold text-slate-900">{attempt.candidate.firstName} {attempt.candidate.lastName}</p>
+                                                            <p className="text-xs text-slate-400">{attempt.candidate.email || attempt.candidate.phoneNumber || '-'}</p>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-4 py-3">
                                                     <div className="flex items-center gap-2">
-                                                        <FileText className="w-4 h-4 text-gray-400" />
-                                                        <span className="text-gray-700 font-medium">{attempt.exam.title}</span>
+                                                        <FileText className="w-4 h-4 text-slate-400" />
+                                                        <span className="text-slate-700 font-medium">{attempt.exam.title}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-4 py-3">
                                                     <div className="flex flex-col">
-                                                        <span className="text-lg font-bold text-gray-900">{attempt.score?.toFixed(2)}%</span>
-                                                        <span className="text-[10px] text-gray-400">Pass: {attempt.exam.passingScore}%</span>
+                                                        <span className="text-lg font-bold text-slate-900">{attempt.score?.toFixed(2)}%</span>
+                                                        <span className="text-[10px] text-slate-400">Pass: {attempt.exam.passingScore}%</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-4 py-3">
                                                     <div className="flex flex-col gap-1.5 items-start">
                                                         {attempt.isMarkingPending ? (
                                                             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
@@ -454,34 +458,76 @@ const Results = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-gray-500">
+                                                <td className="px-4 py-3 text-slate-500">
                                                     {new Date(attempt.startTime).toLocaleDateString()}
-                                                    <div className="text-xs text-gray-400">
+                                                    <div className="text-xs text-slate-400">
                                                         {new Date(attempt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    {attempt.assignment && (
-                                                        <button
-                                                            onClick={() => {
-                                                                setConfirmModal({
-                                                                    show: true,
-                                                                    assignmentId: attempt.assignment.id,
-                                                                    candidateName: attempt.candidate.firstName,
-                                                                    allowRetake: !attempt.assignment.allowRetake
-                                                                });
-                                                            }}
-                                                            disabled={loading}
-                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${attempt.assignment.allowRetake
-                                                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
-                                                                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200'
-                                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                            title={attempt.assignment.allowRetake ? 'Unauthorized Retake' : 'Authorize Retake'}
-                                                        >
-                                                            <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                                                            {attempt.assignment.allowRetake ? 'Authorized' : 'Authorize Retake'}
-                                                        </button>
-                                                    )}
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col gap-2">
+                                                        {attempt.assignment && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setConfirmModal({
+                                                                        show: true,
+                                                                        assignmentId: attempt.assignment.id,
+                                                                        candidateName: attempt.candidate.firstName,
+                                                                        allowRetake: !attempt.assignment.allowRetake
+                                                                    });
+                                                                }}
+                                                                disabled={loading}
+                                                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${attempt.assignment.allowRetake
+                                                                    ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200'
+                                                                    : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200'
+                                                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                                title={attempt.assignment.allowRetake ? 'Unauthorized Retake' : 'Authorize Retake'}
+                                                            >
+                                                                <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                                                                {attempt.assignment.allowRetake ? 'Authorized' : 'Authorize Retake'}
+                                                            </button>
+                                                        )}
+
+                                                        {/* Approval Actions */}
+                                                        {attempt.approvalStatus === 'PENDING' && (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Are you sure you want to approve this result? This will make it immutable.')) {
+                                                                        dispatch(approveExamResult(attempt.id)).then((res: any) => {
+                                                                            if (approveExamResult.fulfilled.match(res)) toast.success('Result approved successfully');
+                                                                        });
+                                                                    }
+                                                                }}
+                                                                disabled={loading}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 text-white hover:bg-green-700 shadow-sm"
+                                                            >
+                                                                <Lock className="w-3.5 h-3.5" />
+                                                                Approve
+                                                            </button>
+                                                        )}
+
+                                                        {(attempt.approvalStatus === null || attempt.approvalStatus === 'PENDING') && (user?.role === 'INSTRUCTOR' || user?.role === 'EXAMINER') && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    dispatch(submitExamForApproval(attempt.id)).then((res: any) => {
+                                                                        if (submitExamForApproval.fulfilled.match(res)) toast.success('Submitted for approval');
+                                                                    });
+                                                                }}
+                                                                disabled={loading || attempt.approvalStatus === 'PENDING'}
+                                                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${attempt.approvalStatus === 'PENDING' ? 'bg-gray-100 text-gray-500' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'}`}
+                                                            >
+                                                                <Send className="w-3.5 h-3.5" />
+                                                                {attempt.approvalStatus === 'PENDING' ? 'Awaiting Approval' : 'Submit Approval'}
+                                                            </button>
+                                                        )}
+
+                                                        {attempt.approvalStatus === 'APPROVED' && (
+                                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 text-gray-500 border border-gray-200">
+                                                                <Lock className="w-3.5 h-3.5 text-gray-400" />
+                                                                Finalized
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

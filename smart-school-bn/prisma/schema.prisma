@@ -40,6 +40,14 @@ model User {
   markedAnswers      ExamAnswer[]         @relation("MarkedBy") // Answers marked by this user
   examAnswers        ExamAnswer[]
 
+  // Approval Relations (Bidirectional)
+  approvedExamAttempts ExamAttempt[]          @relation("ExamAttemptApprovedBy")
+  approvedTestAttempts TestAttempt[]          @relation("TestAttemptApprovedBy")
+  academicRecords      AcademicRecord[]       @relation("StudentAcademicRecord")
+  teacherAssignments   TeacherAssignment[]
+  submissions          AssignmentSubmission[] @relation("StudentSubmission")
+  gradedSubmissions    AssignmentSubmission[] @relation("GradedBy")
+
   @@map("users")
 }
 
@@ -101,6 +109,9 @@ model Course {
   Payment            Payment[]
   PaymentCourse      PaymentCourse[]
 
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
   @@map("courses")
 }
 
@@ -132,6 +143,7 @@ model Lesson {
 
   content      LessonContent[]
   userProgress UserProgress[]
+  assignments  Assignment[]
 
   @@map("lessons")
 }
@@ -318,7 +330,19 @@ model TestAttempt {
   answers       Answer[]
   notifications Notification[]
 
+  // Approval status
+  approvalStatus ApprovalStatus @default(PENDING)
+  approvedById   String?
+  approvedBy     User?          @relation("TestAttemptApprovedBy", fields: [approvedById], references: [id])
+  approvedAt     DateTime?
+
   @@map("test_attempts")
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum TestAttemptStatus {
@@ -490,15 +514,25 @@ model Organization {
   logo         String?
   contactEmail String?
   contactPhone String?
+  location     String? // New field from notes
+  schoolCode   String?  @unique // New field from notes
   creatorId    String? // ID of user who created this organization
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relations
-  exams             Exam[]
-  candidates        Candidate[]
-  userOrganizations UserOrganization[] // Users assigned to this organization
+  exams              Exam[]
+  courses            Course[]
+  candidates         Candidate[]
+  userOrganizations  UserOrganization[] // Users assigned to this organization
+  classRooms         ClassRoom[]
+  grades             Grade[]
+  academicYears      AcademicYear[]
+  subjects           Subject[]
+  teacherAssignments TeacherAssignment[]
+  gradingPolicies    GradingPolicy[]
+  assignments        Assignment[]
 
   @@map("organizations")
 }
@@ -669,6 +703,12 @@ model ExamAttempt {
   // Relations
   answers ExamAnswer[]
 
+  // Approval status
+  approvalStatus ApprovalStatus @default(PENDING)
+  approvedById   String?
+  approvedBy     User?          @relation("ExamAttemptApprovedBy", fields: [approvedById], references: [id])
+  approvedAt     DateTime?
+
   @@index([candidateId])
   @@index([examId])
   @@map("exam_attempts")
@@ -711,4 +751,254 @@ model ExamAnswer {
   @@index([examAttemptId])
   @@index([examQuestionId])
   @@map("exam_answers")
+}
+
+// ============================================
+// ACADEMIC HIERARCHY MODELS
+// ============================================
+
+model AcademicYear {
+  id        String   @id @default(cuid())
+  name      String // e.g., "2025-2026"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  academicRecords    AcademicRecord[]
+  teacherAssignments TeacherAssignment[]
+  terms              Term[]
+
+  @@unique([name, organizationId])
+  @@map("academic_years")
+}
+
+model Term {
+  id        String   @id @default(cuid())
+  name      String // e.g., "Term 1", "Semester 1"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  yearId String
+  year   AcademicYear @relation(fields: [yearId], references: [id], onDelete: Cascade)
+
+  results AssessmentResult[]
+
+  @@unique([name, yearId])
+  @@map("terms")
+}
+
+model Grade {
+  id          String   @id @default(cuid())
+  name        String // e.g., "Grade 10", "Level 1"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  classRooms ClassRoom[]
+  subjects   Subject[]
+
+  @@unique([name, organizationId])
+  @@map("grades")
+}
+
+model ClassRoom {
+  id        String   @id @default(cuid())
+  name      String // e.g., "Section A"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  gradeId String
+  grade   Grade  @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  academicRecords    AcademicRecord[]
+  teacherAssignments TeacherAssignment[]
+
+  @@unique([name, gradeId, organizationId])
+  @@map("class_rooms")
+}
+
+model AcademicRecord {
+  id          String   @id @default(cuid())
+  studentId   String // The system-generated student ID (User model)
+  studentCode String? // Optional "produced by school" code
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student User @relation("StudentAcademicRecord", fields: [studentId], references: [id], onDelete: Cascade)
+
+  classId String
+  class   ClassRoom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  yearId      String
+  year        AcademicYear       @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  attendances Attendance[]
+  results     AssessmentResult[]
+
+  @@unique([studentId, classId, yearId])
+  @@map("academic_records")
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  name        String
+  code        String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  gradeId String
+  grade   Grade  @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+
+  teacherAssignments TeacherAssignment[]
+  assessmentResults  AssessmentResult[]
+
+  @@unique([name, gradeId, organizationId])
+  @@unique([code, organizationId])
+  @@map("subjects")
+}
+
+model TeacherAssignment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacherId String
+  teacher   User   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  classId String
+  class   ClassRoom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  yearId       String
+  academicYear AcademicYear @relation(fields: [yearId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, classId, subjectId, yearId])
+  @@map("teacher_assignments")
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  date      DateTime
+  status    AttendanceStatus @default(PRESENT)
+  remarks   String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  academicRecordId String
+  academicRecord   AcademicRecord @relation(fields: [academicRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([academicRecordId, date])
+  @@map("attendances")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+model GradingPolicy {
+  id          String   @id @default(cuid())
+  name        String // e.g., "Standard Primary Scale"
+  description String?
+  pointsJson  Json // Stores the actual scale, e.g., [{"grade": "A", "min": 90, "max": 100}, ...]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([name, organizationId])
+  @@map("grading_policies")
+}
+
+model AssessmentResult {
+  id        String   @id @default(cuid())
+  marks     Float
+  maxMarks  Float    @default(100)
+  grade     String? // e.g., "A" (calculated based on GradingPolicy)
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academicRecordId String
+  academicRecord   AcademicRecord @relation(fields: [academicRecordId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  termId String
+  term   Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  teacherId String? // Who recorded the marks
+
+  @@unique([academicRecordId, subjectId, termId])
+  @@map("assessment_results")
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  maxPoints   Float     @default(100)
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  submissions AssignmentSubmission[]
+
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id          String    @id @default(cuid())
+  content     String?
+  fileUrl     String?
+  submittedAt DateTime  @default(now())
+  points      Float?
+  feedback    String?
+  gradedAt    DateTime?
+
+  studentId String
+  student   User   @relation("StudentSubmission", fields: [studentId], references: [id], onDelete: Cascade)
+
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  gradedById String?
+  gradedBy   User?   @relation("GradedBy", fields: [gradedById], references: [id])
+
+  @@unique([studentId, assignmentId])
+  @@map("assignment_submissions")
 }

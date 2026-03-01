@@ -4,6 +4,7 @@ import { createLesson, deleteLesson, getLessons, getSingleLesson, updateLesson }
 import { updateLessonValidation } from "../schema/lessonSchema";
 import { validateRequest } from "../middleware/validation";
 import { authenticate, authorize } from "../middleware/auth";
+import { tenantContext, requireTenant } from "../middleware/tenant.middleware";
 
 const lessonRouter = Router();
 /**
@@ -554,11 +555,13 @@ const lessonRouter = Router();
 */
 
 
-// Lesson Routes
-lessonRouter.post("/:courseId", authenticate, authorize("ADMIN", "INSTRUCTOR"), lessonValidation, validateRequest, createLesson);
+// Lesson Routes mounting with tenant context
+lessonRouter.use(authenticate, tenantContext, requireTenant);
+
+lessonRouter.post("/:courseId", authorize("ADMIN", "INSTRUCTOR", "SUPER_ADMIN"), lessonValidation, validateRequest, createLesson);
 lessonRouter.get("/:courseId", getLessons);
 lessonRouter.get("/get-lesson-by-id/:id", getSingleLesson);
-lessonRouter.patch("/:lessonId", authenticate, authorize("ADMIN", "INSTRUCTOR"), updateLessonValidation, validateRequest, updateLesson);
-lessonRouter.delete("/:lessonId", authenticate, authorize("ADMIN", "INSTRUCTOR"), deleteLesson);
+lessonRouter.patch("/:lessonId", authorize("ADMIN", "INSTRUCTOR", "SUPER_ADMIN"), updateLessonValidation, validateRequest, updateLesson);
+lessonRouter.delete("/:lessonId", authorize("ADMIN", "INSTRUCTOR", "SUPER_ADMIN"), deleteLesson);
 
 export default lessonRouter;

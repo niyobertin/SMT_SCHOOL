@@ -9,7 +9,7 @@ import { logActivity } from "../helper/activitylogs";
 import { getIO } from '../utils/socketServer';
 import { PaymentStatus } from '@prisma/client';
 import crypto from 'crypto';
-const prisma = new PrismaClient();
+import prisma from "../services/prisma.singleton";
 
 interface PaypackWebhookPayload {
     event_id: string;
@@ -223,7 +223,7 @@ export const handlePaypackWebhook = async (req: Request, res: Response) => {
 };
 export const cashin = async (req: Request, res: Response, next: NextFunction) => {
     // @ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
     const { amount, phoneNumber, channel, subscribedCourseIds, subscriptionPeriod, isActive } = req.body;
     try {
         // 1. Create the payment
