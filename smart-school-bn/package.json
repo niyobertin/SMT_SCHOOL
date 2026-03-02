@@ -99,5 +99,9 @@
     "monitoring"
   ],
   "author": "Niyonkuru Bertin",
-  "license": "MIT"
+  "license": "MIT",
+  "resolutions": {
+    "@types/express": "^4.17.21",
+    "@types/express-serve-static-core": "^4.17.41"
+  }
 }

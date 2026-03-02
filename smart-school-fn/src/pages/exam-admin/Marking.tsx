@@ -106,10 +106,10 @@ const Marking = () => {
             const token = localStorage.getItem('accessToken');
 
             const endpoint = selectedExamId
-                ? `/api/exams/${selectedExamId}/open-ended-responses/export`
-                : `/api/exams/all/open-ended-responses/export`;
+                ? `/exams/${selectedExamId}/open-ended-responses/export`
+                : `/exams/all/open-ended-responses/export`;
 
-            const response = await fetch(`${baseUrl}${endpoint}`, {
+            const response = await fetch(`${baseUrl}/api${endpoint}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
