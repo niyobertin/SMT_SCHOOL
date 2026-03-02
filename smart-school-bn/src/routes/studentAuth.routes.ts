@@ -15,6 +15,12 @@ router.get(
   studentAuthController.getProfile
 );
 
+router.get(
+  "/courses",
+  authenticateStudent,
+  studentAuthController.getAssignedCourses
+);
+
 router.post(
   "/refresh",
   authenticateStudent,

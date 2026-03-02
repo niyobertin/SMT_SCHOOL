@@ -63,6 +63,28 @@ export const studentAuthController = {
     }
   },
 
+  async getAssignedCourses(req: Request, res: Response, next: NextFunction) {
+    try {
+      const studentId = (req as any).studentId;
+      const profile = await studentAuthService.getStudentProfile(studentId);
+
+      if (!profile) {
+        return res.status(404).json({
+          status: "error",
+          message: "Student not found",
+        });
+      }
+
+      return res.status(200).json({
+        status: "success",
+        data: profile.assignedCourses,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
       const student = (req as any).student;

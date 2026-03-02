@@ -9,6 +9,7 @@ import manageTestReducer from "../features/test/manageTestslice";
 import examPortalReducer from "../features/examPortalSlice";
 import examAdminReducer from "../features/examAdminSlice";
 import studentAuthReducer from "../features/studentAuth";
+import academicReducer from "../features/academic/academicSlice";
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     examPortal: examPortalReducer,
     examAdmin: examAdminReducer,
     studentAuth: studentAuthReducer,
+    academic: academicReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

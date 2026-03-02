@@ -1,26 +1,22 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Clock, CheckCircle, Search } from "lucide-react";
+import { BookOpen, Search, User } from "lucide-react";
 import { motion } from "framer-motion";
 
-interface CourseEnrollment {
+interface Course {
     id: string;
-    courseId: string;
-    course: {
-        id: string;
-        title: string;
-        description?: string;
-        thumbnail?: string;
-        progress?: number;
-    };
-    enrollmentDate: string;
-    isCompleted: boolean;
+    title: string;
+    description?: string;
+    thumbnail?: string;
+    progress?: number;
+    category?: { name: string };
+    instructor?: { firstName: string, lastName: string };
 }
 
 export const StudentCourses = () => {
     const navigate = useNavigate();
-    const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
+    const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -37,7 +33,7 @@ export const StudentCourses = () => {
             }
 
             const { data } = await axios.get(
-                `${import.meta.env.VITE_API_URL}/api/student-auth/me`,
+                `${import.meta.env.VITE_API_URL}/api/student-auth/courses`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -45,7 +41,7 @@ export const StudentCourses = () => {
                 }
             );
 
-            setEnrollments(data.data.enrollments || []);
+            setCourses(data.data || []);
         } catch (err: any) {
             console.error("Failed to load courses", err);
         } finally {
@@ -53,8 +49,8 @@ export const StudentCourses = () => {
         }
     };
 
-    const filteredCourses = enrollments.filter(enrollment =>
-        enrollment.course.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredCourses = courses.filter(course =>
+        course.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (loading) {
@@ -99,57 +95,59 @@ export const StudentCourses = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCourses.map((enrollment, index) => (
+                    {filteredCourses.map((course, index) => (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            key={enrollment.id}
-                            className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all group cursor-pointer"
-                            onClick={() => navigate(`/courses/${enrollment.courseId}/lessons`)}
+                            key={course.id}
+                            className="group bg-white rounded-2xl p-2 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 overflow-hidden cursor-pointer"
+                            onClick={() => navigate(`/courses/${course.id}/lessons`)}
                         >
-                            <div className="relative h-40 overflow-hidden">
-                                {enrollment.course.thumbnail ? (
+                            <div className="relative h-44 bg-slate-100 rounded-xl overflow-hidden">
+                                {course.thumbnail ? (
                                     <img
-                                        src={enrollment.course.thumbnail}
-                                        alt={enrollment.course.title}
+                                        src={course.thumbnail}
+                                        alt={course.title}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center capitalize">
-                                        <BookOpen className="w-10 h-10 text-gray-400" />
+                                    <div className="w-full h-full bg-gradient-to-br from-[#1a7ea5]/10 to-transparent flex items-center justify-center">
+                                        <BookOpen className="w-10 h-10 text-[#1a7ea5]/20" />
                                     </div>
                                 )}
-                                <div className="absolute top-3 right-3">
-                                    {enrollment.isCompleted ? (
-                                        <div className="bg-green-500 text-white p-1.5 rounded-full shadow-lg">
-                                            <CheckCircle className="w-4 h-4" />
-                                        </div>
-                                    ) : (
-                                        <div className="bg-[#1a7ea5]/90 text-white p-1.5 rounded-full shadow-lg backdrop-blur-sm">
-                                            <Clock className="w-4 h-4" />
-                                        </div>
-                                    )}
+                                <div className="absolute top-4 left-4 flex gap-2">
+                                    <span className="px-3 py-1.5 bg-white/80 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-900 shadow-sm">
+                                        Assigned
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="p-5">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${enrollment.isCompleted ? "bg-green-50 text-green-600" : "bg-[#1a7ea5]/5 text-[#1a7ea5]"
-                                        }`}>
-                                        {enrollment.isCompleted ? "Completed" : "In Progress"}
+                            <div className="p-6">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-[#1a7ea5]/5 text-[#1a7ea5] rounded-xl">
+                                        {course.category?.name || "Curriculum"}
                                     </span>
                                 </div>
-                                <h3 className="font-bold text-gray-800 line-clamp-2 mb-2 group-hover:text-[#1a7ea5] transition-colors">
-                                    {enrollment.course.title}
+                                <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors line-clamp-2">
+                                    {course.title}
                                 </h3>
 
-                                <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                                    <span className="text-xs text-gray-400">
-                                        Enrolled {new Date(enrollment.enrollmentDate).toLocaleDateString()}
-                                    </span>
-                                    <div className="flex items-center gap-1 text-[#1a7ea5] font-semibold text-xs">
-                                        Continue <ChevronRight className="w-3 h-3" />
+                                <p className="text-sm text-slate-500 font-medium mt-3 line-clamp-2 leading-relaxed">
+                                    {course.description || "Start your learning journey with this course."}
+                                </p>
+
+                                <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center">
+                                            <User className="w-3 h-3 text-slate-400" />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                            {course.instructor ? `${course.instructor.firstName} ${course.instructor.lastName}` : "Instructor"}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[#1a7ea5] font-black text-[10px] uppercase tracking-widest">
+                                        Proceed <ChevronRight className="w-3 h-3" />
                                     </div>
                                 </div>
                             </div>

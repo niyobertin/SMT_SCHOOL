@@ -66,19 +66,19 @@ export const StudentLayout = () => {
                 {/* Logo Section */}
                 <div className="h-16 flex items-center px-6 border-b border-gray-100">
                     <Link to="/" className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 bg-[#1a7ea5] rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-6 h-6 bg-[#1a7ea5] rounded-md flex items-center justify-center flex-shrink-0">
                             <Shield className="text-white w-5 h-5" />
                         </div>
                         {isSidebarOpen && (
-                            <span className="font-bold text-lg text-gray-800 whitespace-nowrap">
-                                SMT School
+                            <span className="font-semibold text-xl text-gray-800 whitespace-nowrap capitalize">
+                                smt school
                             </span>
                         )}
                     </Link>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 py-6 px-3 space-y-1">
+                <nav className="flex-1 py-3 px-2 space-y-0.5">
                     {menuItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         const Icon = item.icon;
@@ -87,7 +87,7 @@ export const StudentLayout = () => {
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${isActive
+                                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all group ${isActive
                                     ? "bg-[#1a7ea5] text-white shadow-md shadow-[#1a7ea5]/20"
                                     : "text-gray-500 hover:bg-gray-100 hover:text-[#1a7ea5]"
                                     }`}
@@ -97,7 +97,7 @@ export const StudentLayout = () => {
                                         }`}
                                 />
                                 {isSidebarOpen && (
-                                    <span className="font-medium text-sm">{item.label}</span>
+                                    <span className="font-medium text-[15px] capitalize">{item.label}</span>
                                 )}
                                 {isSidebarOpen && isActive && (
                                     <ChevronRight className="ml-auto w-4 h-4 opacity-50" />
@@ -110,9 +110,9 @@ export const StudentLayout = () => {
                 {/* User Profile Summary & Logout */}
                 <div className="p-4 border-t border-gray-100">
                     {isSidebarOpen && profile && (
-                        <div className="mb-4 px-2 py-3 bg-gray-50 rounded-xl">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-tight mb-1">
-                                Student
+                        <div className="mb-2 px-1.5 py-2 bg-gray-50 rounded-lg">
+                            <p className="text-[11px] font-semibold text-gray-400 capitalize tracking-tight mb-1">
+                                student
                             </p>
                             <p className="text-sm font-semibold text-gray-800 truncate">
                                 {profile.firstName} {profile.lastName}
@@ -122,11 +122,11 @@ export const StudentLayout = () => {
                     )}
                     <button
                         onClick={handleLogout}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-all ${!isSidebarOpen && "justify-center"
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-all ${!isSidebarOpen && "justify-center"
                             }`}
                     >
                         <LogOut className="w-5 h-5" />
-                        {isSidebarOpen && <span className="font-medium text-sm">Logout</span>}
+                        {isSidebarOpen && <span className="font-medium text-[15px] capitalize">logout</span>}
                     </button>
                 </div>
 
@@ -145,7 +145,7 @@ export const StudentLayout = () => {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Header */}
-                <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-20">
+                <header className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-20">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
@@ -176,8 +176,8 @@ export const StudentLayout = () => {
                                 <p className="text-sm font-semibold text-gray-800">
                                     {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : "Student"}
                                 </p>
-                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">
-                                    Level 1 Student
+                                <p className="text-[11px] text-gray-500 capitalize font-medium tracking-widest">
+                                    level 1 student
                                 </p>
                             </div>
                             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1a7ea5] to-[#6cb9cc] flex items-center justify-center text-white font-bold text-lg shadow-sm">
@@ -188,7 +188,7 @@ export const StudentLayout = () => {
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto p-6 md:p-8">
+                <main className="flex-1 overflow-y-auto p-3 md:p-4">
                     <Outlet />
                 </main>
             </div>
@@ -216,8 +216,8 @@ export const StudentLayout = () => {
                                     <div className="w-8 h-8 bg-[#1a7ea5] rounded-lg flex items-center justify-center">
                                         <Shield className="text-white w-5 h-5" />
                                     </div>
-                                    <span className="font-bold text-lg text-gray-800">
-                                        SMT School
+                                    <span className="font-bold text-lg text-gray-800 capitalize">
+                                        smt school
                                     </span>
                                 </div>
                                 <button
@@ -238,13 +238,13 @@ export const StudentLayout = () => {
                                             key={item.path}
                                             to={item.path}
                                             onClick={() => setIsMobileMenuOpen(false)}
-                                            className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${isActive
+                                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all ${isActive
                                                 ? "bg-[#1a7ea5] text-white"
                                                 : "text-gray-500 hover:bg-gray-50"
                                                 }`}
                                         >
                                             <Icon className="w-5 h-5" />
-                                            <span className="font-semibold">{item.label}</span>
+                                            <span className="font-semibold capitalize">{item.label}</span>
                                         </Link>
                                     );
                                 })}
@@ -253,10 +253,10 @@ export const StudentLayout = () => {
                             <div className="p-6 border-t border-gray-100">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-semibold"
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold"
                                 >
                                     <LogOut className="w-5 h-5" />
-                                    Logout
+                                    <span className="capitalize">logout</span>
                                 </button>
                             </div>
                         </motion.aside>

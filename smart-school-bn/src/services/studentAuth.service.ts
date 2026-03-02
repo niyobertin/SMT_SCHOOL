@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { logger } from "../utils/logger";
 import { studentService } from "./student.service";
 import { schoolService } from "./school.service";
+import { courseAssignmentService } from "./courseAssignment.service";
 
 const prisma = new PrismaClient();
 
@@ -110,6 +111,11 @@ export const studentAuthService = {
 
     const enrollments = await studentService.getStudentEnrollments(studentId);
     const progress = await studentService.getStudentProgress(studentId);
+    const assignedCourses = await courseAssignmentService.getStudentAssignedCourses(
+      studentId,
+      student.schoolId,
+      student.classId || undefined
+    );
 
     return {
       id: student.id,
@@ -127,6 +133,7 @@ export const studentAuthService = {
       class: student.class,
       academicYear: student.academicYear,
       enrollments,
+      assignedCourses,
       progressCount: progress.length,
       createdAt: student.createdAt,
     };

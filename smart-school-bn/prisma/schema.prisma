@@ -89,11 +89,14 @@ model School {
   updatedAt    DateTime   @updatedAt
 
   // Relations
-  students      Student[]
-  staff         SchoolStaff[]
-  courses       Course[]
-  classes       SchoolClass[]
-  academicYears AcademicYear[]
+  students           Student[]
+  staff              SchoolStaff[]
+  courses            Course[]
+  classes            SchoolClass[]
+  academicYears      AcademicYear[]
+  subjects           Subject[]
+  teacherAssignments TeacherSubjectAssignment[]
+  courseAssignments  CourseAssignment[]
 
   @@map("schools")
 }
@@ -119,9 +122,11 @@ model Student {
   updatedAt      DateTime      @updatedAt
 
   // Relations
-  enrollments  StudentEnrollment[]
-  testAttempts StudentTestAttempt[]
-  progress     StudentProgress[]
+  enrollments       StudentEnrollment[]
+  testAttempts      StudentTestAttempt[]
+  progress          StudentProgress[]
+  classEnrollments  StudentClassEnrollment[]
+  courseAssignments CourseAssignment[]
 
   @@unique([schoolId, studentId])
   @@index([schoolId])
@@ -140,6 +145,8 @@ model SchoolStaff {
   assignedAt   DateTime       @default(now())
   assignedBy   String?
 
+  subjectAssignments TeacherSubjectAssignment[]
+
   @@unique([schoolId, userId])
   @@index([schoolId])
   @@index([userId])
@@ -151,13 +158,18 @@ model SchoolClass {
   schoolId       String
   school         School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   name           String // e.g., "Form 4A", "Grade 10B"
+  level          String? // e.g., "Grade 10", "Level 4"
+  stream         String? // e.g., "Science", "Arts"
   academicYearId String?
   academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
   // Relations
-  students Student[]
+  students           Student[]
+  teacherAssignments TeacherSubjectAssignment[]
+  classEnrollments   StudentClassEnrollment[]
+  courseAssignments  CourseAssignment[]
 
   @@unique([schoolId, name])
   @@index([schoolId])
@@ -165,18 +177,19 @@ model SchoolClass {
 }
 
 model AcademicYear {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   schoolId  String
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   year      String // e.g., "2024-2025"
-  startDate DateTime
-  endDate   DateTime
-  isActive  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  startDate DateTime?
+  endDate   DateTime?
+  isActive  Boolean   @default(false)
+  createdAt DateTime  @default(now())
 
   // Relations
-  students Student[]
-  classes  SchoolClass[]
+  students                Student[]
+  classes                 SchoolClass[]
+  studentClassEnrollments StudentClassEnrollment[]
 
   @@unique([schoolId, year])
   @@index([schoolId])
@@ -235,6 +248,7 @@ model Course {
   studentEnrollments StudentEnrollment[]  @relation("StudentEnrollments")
   Payment            Payment[]
   PaymentCourse      PaymentCourse[]
+  assignments        CourseAssignment[]
 
   @@index([schoolId])
   @@map("courses")
@@ -930,4 +944,72 @@ model StudentAnswer {
   @@index([attemptId])
   @@index([questionId])
   @@map("student_answers")
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name      String
+  code      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments       TeacherSubjectAssignment[]
+  courseAssignments CourseAssignment[]
+
+  @@unique([schoolId, name])
+  @@map("subjects")
+}
+
+model TeacherSubjectAssignment {
+  id             String      @id @default(cuid())
+  schoolId       String
+  school         School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacherStaffId String
+  teacherStaff   SchoolStaff @relation(fields: [teacherStaffId], references: [id], onDelete: Cascade)
+  classId        String
+  class          SchoolClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subjectId      String
+  subject        Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+
+  @@index([schoolId])
+  @@map("teacher_subject_assignments")
+}
+
+model StudentClassEnrollment {
+  id             String       @id @default(cuid())
+  studentId      String
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId        String
+  class          SchoolClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  status         String       @default("ACTIVE") // ACTIVE, COMPLETED, WITHDRAWN
+  enrolledAt     DateTime     @default(now())
+
+  @@unique([studentId, academicYearId])
+  @@map("student_class_enrollments")
+}
+
+model CourseAssignment {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Assignment targets (choose one)
+  classId   String?
+  class     SchoolClass? @relation(fields: [classId], references: [id], onDelete: Cascade)
+  studentId String?
+  student   Student?     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId String?
+  subject   Subject?     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([schoolId, courseId, classId, studentId, subjectId])
+  @@map("course_assignments")
 }
