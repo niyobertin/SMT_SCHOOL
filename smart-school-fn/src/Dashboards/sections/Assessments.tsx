@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { fetchAssessments } from "../../redux/features/assessments/assessmentSlice";
+import { fetchAssessments, createAssessment, saveScores, submitResults } from "../../redux/features/assessments/assessmentSlice";
+import { fetchClasses, fetchSubjects, fetchClassStudents } from "../../redux/features/academic/academicSlice";
 
 export function Assessments() {
+    // ...
+    // (Skipping down to CreateAssessmentModal)
+    // I will actually use a multi_replace for this to be safer. Wait, I'll just rewrite the import block and the `useEffect`/`handleSubmit` blocks. I'll abort this replace.
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
@@ -133,8 +137,8 @@ function CreateAssessmentModal({ schoolId, onClose }: { schoolId: string; onClos
 
     useEffect(() => {
         if (schoolId) {
-            dispatch(import("../../redux/features/academic/academicSlice").then(m => m.fetchClasses({ schoolId })) as any);
-            dispatch(import("../../redux/features/academic/academicSlice").then(m => m.fetchSubjects(schoolId)) as any);
+            dispatch(fetchClasses({ schoolId }));
+            dispatch(fetchSubjects(schoolId));
         }
     }, [dispatch, schoolId]);
 
@@ -142,7 +146,6 @@ function CreateAssessmentModal({ schoolId, onClose }: { schoolId: string; onClos
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            const { createAssessment } = await import("../../redux/features/assessments/assessmentSlice");
             await dispatch(createAssessment({
                 schoolId,
                 ...formData,
@@ -290,7 +293,7 @@ function ManageMarksModal({ schoolId, assessment, onClose }: { schoolId: string;
 
     useEffect(() => {
         if (schoolId && assessment.classId) {
-            dispatch(import("../../redux/features/academic/academicSlice").then(m => m.fetchClassStudents({ schoolId, classId: assessment.classId })) as any);
+            dispatch(fetchClassStudents({ schoolId, classId: assessment.classId }));
         }
     }, [dispatch, schoolId, assessment.classId]);
 
@@ -309,7 +312,6 @@ function ManageMarksModal({ schoolId, assessment, onClose }: { schoolId: string;
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const { saveScores } = await import("../../redux/features/assessments/assessmentSlice");
             await dispatch(saveScores({
                 assessmentId: assessment.id,
                 data: { scores }
@@ -326,7 +328,6 @@ function ManageMarksModal({ schoolId, assessment, onClose }: { schoolId: string;
         if (!confirm("Are you sure you want to finalize and submit these marks? You won't be able to edit them afterward.")) return;
         setIsSubmittingResults(true);
         try {
-            const { submitResults } = await import("../../redux/features/assessments/assessmentSlice");
             await dispatch(submitResults({
                 schoolId,
                 classId: assessment.classId,

@@ -21,6 +21,7 @@ router.delete(
 router.get(
     "/schools/:schoolId/course-assignments",
     authenticate,
+    authorize("ADMIN", "SCHOOL_ADMIN"),
     courseAssignmentController.listSchoolAssignments
 );
 
