@@ -60,4 +60,10 @@ router.get(
     academicController.getStudentEnrollmentHistory
 );
 
+router.get(
+    "/schools/:schoolId/classes/:classId/students",
+    authenticate,
+    academicController.getStudentsByClass
+);
+
 export default router;

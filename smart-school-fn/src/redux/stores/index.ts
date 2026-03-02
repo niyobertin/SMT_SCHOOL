@@ -10,6 +10,7 @@ import examPortalReducer from "../features/examPortalSlice";
 import examAdminReducer from "../features/examAdminSlice";
 import studentAuthReducer from "../features/studentAuth";
 import academicReducer from "../features/academic/academicSlice";
+import assessmentReducer from "../features/assessments/assessmentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     examAdmin: examAdminReducer,
     studentAuth: studentAuthReducer,
     academic: academicReducer,
+    assessments: assessmentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

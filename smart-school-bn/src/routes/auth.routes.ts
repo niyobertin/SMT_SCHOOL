@@ -3,6 +3,7 @@ import { validateRequest } from "../middleware/validation";
 import { createUser, verifyUser, login, requestResetPassword, resetPassword, getProfile } from "../controller/user.controller";
 import { forgotPasswordValidation, loginValidation, registerValidation, resetPasswordValidation } from "../schema/authSchema";
 import { authenticate } from "../middleware/auth";
+import { rateLimiter } from "../middleware/rateLimiter";
 
 const authRoutes = Router();
 
@@ -340,11 +341,11 @@ const authRoutes = Router();
  *               $ref: '#/components/schemas/Error'
  */
 
-authRoutes.post("/verify", verifyUser);
-authRoutes.post("/login", loginValidation, validateRequest, login); // attach login handler
-authRoutes.post("/register", registerValidation, validateRequest, createUser);
-authRoutes.post("/request-reset-password", forgotPasswordValidation, validateRequest, requestResetPassword);
-authRoutes.post("/reset-password", resetPasswordValidation, validateRequest, resetPassword);
+authRoutes.post("/verify", rateLimiter, verifyUser);
+authRoutes.post("/login", rateLimiter, loginValidation, validateRequest, login); // attach login handler
+authRoutes.post("/register", rateLimiter, registerValidation, validateRequest, createUser);
+authRoutes.post("/request-reset-password", rateLimiter, forgotPasswordValidation, validateRequest, requestResetPassword);
+authRoutes.post("/reset-password", rateLimiter, resetPasswordValidation, validateRequest, resetPassword);
 authRoutes.get("/profile", authenticate, getProfile);
 // authRoutes.post("/logout", authenticate, logout);
 

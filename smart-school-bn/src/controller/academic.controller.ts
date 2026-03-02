@@ -183,4 +183,18 @@ export const academicController = {
             next(error);
         }
     },
+
+    async getStudentsByClass(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { schoolId, classId } = req.params;
+            const students = await academicService.getStudentsByClass(schoolId, classId);
+
+            return res.status(200).json({
+                status: "success",
+                data: students,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
 };

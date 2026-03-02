@@ -10,6 +10,7 @@ import {
   FileQuestion,
   GraduationCap,
   Share2,
+  ClipboardCheck,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -20,6 +21,7 @@ const sidebarItems = [
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
   { id: "academic", label: "Academic Setup", icon: GraduationCap, path: "/dashboard/academic" },
   { id: "assignments", label: "Course Access", icon: Share2, path: "/dashboard/assignments" },
+  { id: "assessments", label: "Assessments", icon: ClipboardCheck, path: "/dashboard/assessments" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
   { id: "home", label: "Home", icon: Home, path: "/" },
 ];

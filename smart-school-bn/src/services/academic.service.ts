@@ -179,4 +179,15 @@ export const academicService = {
             orderBy: { enrolledAt: "desc" },
         });
     },
+
+    async getStudentsByClass(schoolId: string, classId: string) {
+        // Find students assigned to this class
+        return prisma.student.findMany({
+            where: {
+                schoolId: schoolId,
+                classId: classId,
+                status: "ACTIVE",
+            }
+        });
+    },
 };

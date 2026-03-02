@@ -6,6 +6,7 @@ interface AcademicState {
     classes: any[];
     subjects: any[];
     assignments: any[];
+    classStudents: any[];
     loading: boolean;
     error: string | null;
 }
@@ -15,6 +16,7 @@ const initialState: AcademicState = {
     classes: [],
     subjects: [],
     assignments: [],
+    classStudents: [],
     loading: false,
     error: null,
 };
@@ -60,6 +62,15 @@ export const fetchSubjects = createAsyncThunk(
         return response.data.data;
     }
 );
+
+export const fetchClassStudents = createAsyncThunk(
+    "academic/fetchClassStudents",
+    async ({ schoolId, classId }: { schoolId: string; classId: string }) => {
+        const response = await api.get(`/academic/schools/${schoolId}/classes/${classId}/students`);
+        return response.data.data;
+    }
+);
+
 
 export const createSubject = createAsyncThunk(
     "academic/createSubject",
@@ -124,6 +135,10 @@ const academicSlice = createSlice({
             // Fetch Assignments
             .addCase(fetchAssignments.fulfilled, (state, action) => {
                 state.assignments = action.payload;
+            })
+            // Fetch Class Students
+            .addCase(fetchClassStudents.fulfilled, (state, action) => {
+                state.classStudents = action.payload;
             })
             // Delete Assignment
             .addCase(deleteAssignment.fulfilled, (state, action) => {
