@@ -71,7 +71,9 @@ export const createCourse = async (
         tags: courseData.tags,
         requirements: courseData.requirements,
         objectives: courseData.objectives,
-        schoolId: (req.user as any)?.schoolStaff?.[0]?.schoolId || courseData.schoolId || null,
+        school: ((req.user as any)?.schoolStaff?.[0]?.schoolId || courseData.schoolId)
+          ? { connect: { id: (req.user as any)?.schoolStaff?.[0]?.schoolId || courseData.schoolId } }
+          : undefined,
       },
       include: {
         instructor: true,
@@ -334,16 +336,18 @@ export const updateCourse = async (
       );
     }
 
+    const { schoolId, ...otherData } = courseData;
     const updatedCourse = await prisma.course.update({
       where: { id },
       data: {
-        ...courseData,
+        ...otherData,
         isPublished:
           courseData.status !== "PUBLISHED"
             ? false
             : Boolean(courseData.isPublished),
         isFeatured: Boolean(courseData.isFeatured),
         ...(thumbnail && { thumbnail }),
+        school: schoolId ? { connect: { id: schoolId } } : undefined,
       },
     });
 
