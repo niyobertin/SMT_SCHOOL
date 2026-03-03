@@ -142,10 +142,21 @@ export const academicService = {
         try {
             // Use a transaction to update both the history and the current class on student record
             const result = await prisma.$transaction([
-                prisma.studentClassEnrollment.create({
-                    data: {
+                prisma.studentClassEnrollment.upsert({
+                    where: {
+                        studentId_academicYearId: {
+                            studentId: data.studentId,
+                            academicYearId: data.academicYearId
+                        }
+                    },
+                    update: {
+                        classId: data.classId,
+                        status: "ACTIVE"
+                    },
+                    create: {
                         id: uuidv4(),
                         ...data,
+                        status: "ACTIVE"
                     },
                 }),
                 prisma.student.update({
@@ -188,6 +199,100 @@ export const academicService = {
                 classId: classId,
                 status: "ACTIVE",
             }
+        });
+    },
+
+    // Attendance
+    async recordAttendance(data: {
+        schoolId: string;
+        studentId: string;
+        classId?: string;
+        subjectId?: string;
+        date: Date;
+        status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+        remarks?: string;
+        recordedBy: string;
+    }) {
+        try {
+            const attendance = await prisma.attendance.upsert({
+                where: {
+                    // We need a unique constraint or just use create if we want history
+                    // The schema doesn't have a unique constraint on [studentId, date, subjectId] yet
+                    // Let's just use create for now to keep a history, or find and update
+                    id: uuidv4(), // Placeholder or we could search for existing record for that day/subject
+                },
+                update: {
+                    status: data.status,
+                    remarks: data.remarks,
+                    recordedBy: data.recordedBy,
+                },
+                create: {
+                    id: uuidv4(),
+                    ...data,
+                }
+            });
+            return attendance;
+        } catch (error) {
+            logger.error("Failed to record attendance", error);
+            throw error;
+        }
+    },
+
+    // Better attendance recording: Bulk for a class/subject
+    async bulkRecordAttendance(data: {
+        schoolId: string;
+        classId: string;
+        subjectId?: string;
+        date: Date;
+        records: Array<{ studentId: string; status: any; remarks?: string }>;
+        recordedBy: string;
+    }) {
+        const results = [];
+        for (const record of data.records) {
+            const res = await prisma.attendance.create({
+                data: {
+                    id: uuidv4(),
+                    schoolId: data.schoolId,
+                    classId: data.classId,
+                    subjectId: data.subjectId,
+                    date: data.date,
+                    studentId: record.studentId,
+                    status: record.status,
+                    remarks: record.remarks,
+                    recordedBy: data.recordedBy,
+                }
+            });
+            results.push(res);
+        }
+        return results;
+    },
+
+    async getAttendance(filters: {
+        schoolId: string;
+        classId?: string;
+        subjectId?: string;
+        studentId?: string;
+        startDate?: Date;
+        endDate?: Date;
+    }) {
+        const where: any = { schoolId: filters.schoolId };
+        if (filters.classId) where.classId = filters.classId;
+        if (filters.subjectId) where.subjectId = filters.subjectId;
+        if (filters.studentId) where.studentId = filters.studentId;
+        if (filters.startDate || filters.endDate) {
+            where.date = {};
+            if (filters.startDate) where.date.gte = filters.startDate;
+            if (filters.endDate) where.date.lte = filters.endDate;
+        }
+
+        return prisma.attendance.findMany({
+            where,
+            include: {
+                student: { select: { firstName: true, lastName: true, studentId: true } },
+                subject: { select: { name: true } },
+                class: { select: { name: true } },
+            },
+            orderBy: { date: "desc" },
         });
     },
 };

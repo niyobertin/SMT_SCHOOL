@@ -29,6 +29,7 @@ const staffSchema = yup.object().shape({
 const studentSchema = yup.object().shape({
   schoolCode: yup.string().required("School code is required"),
   studentId: yup.string().required("Student ID is required"),
+  password: yup.string().required("Password is required").min(4, "Password must be at least 4 characters"),
 });
 
 type FormData = {
@@ -325,7 +326,7 @@ export const LoginPage = () => {
               </AnimatePresence>
 
               <AnimatePresence>
-                {loginType === "staff" && (
+                {(loginType === "staff" || loginType === "student") && (
                   <motion.div
                     key="password-field"
                     initial={{ opacity: 0, height: 0 }}
@@ -351,11 +352,13 @@ export const LoginPage = () => {
                       {errors.password && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.password.message}</p>}
                     </div>
 
-                    <div className="flex justify-end">
-                      <Link to="/request-link" className="text-xs text-[#1a7ea5] hover:underline font-medium">
-                        Forgot password?
-                      </Link>
-                    </div>
+                    {loginType === "staff" && (
+                      <div className="flex justify-end">
+                        <Link to="/request-link" className="text-xs text-[#1a7ea5] hover:underline font-medium">
+                          Forgot password?
+                        </Link>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

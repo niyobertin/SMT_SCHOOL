@@ -7,6 +7,9 @@ export class AssessmentService {
      * Assessment Management
      */
     async createAssessment(data: any) {
+        if (data.date && typeof data.date === 'string') {
+            data.date = new Date(data.date);
+        }
         return prisma.assessment.create({ data });
     }
 

@@ -26,9 +26,9 @@ export const authenticateStudent = async (
       });
     }
 
-    (req as any).student = decoded;
-    (req as any).studentId = decoded.studentId;
-    (req as any).schoolId = decoded.schoolId;
+    req.student = decoded;
+    req.studentId = decoded.studentId;
+    req.schoolId = decoded.schoolId;
 
     next();
   } catch (error: any) {
@@ -43,7 +43,7 @@ export const authenticateStudent = async (
 export const requireStudentSchoolScope = (paramName = "schoolId") => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const student = (req as any).student;
+      const student = req.student;
       const paramSchoolId = req.params[paramName];
 
       if (!student || student.schoolId !== paramSchoolId) {
@@ -79,9 +79,9 @@ export const optionalStudentAuth = async (
     const decoded = studentAuthService.verifyStudentToken(token);
 
     if (decoded && decoded.actorType === "STUDENT") {
-      (req as any).student = decoded;
-      (req as any).studentId = decoded.studentId;
-      (req as any).schoolId = decoded.schoolId;
+      req.student = decoded;
+      req.studentId = decoded.studentId;
+      req.schoolId = decoded.schoolId;
     }
 
     next();

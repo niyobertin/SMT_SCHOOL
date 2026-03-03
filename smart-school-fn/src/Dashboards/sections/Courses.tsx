@@ -21,6 +21,8 @@ export const CoursesSection = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(9);
+  const userRole = localStorage.getItem("userRole");
+  const isAdmin = userRole === "SUPER_ADMIN" || userRole === "ADMIN";
 
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -245,18 +247,20 @@ export const CoursesSection = () => {
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">Curriculum</h1>
           <p className="text-slate-500 font-medium mt-3">Design and organize your educational programs and tracks.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              setEditingCourse(null);
-              setIsModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
-          >
-            <Plus size={16} />
-            New Course
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setEditingCourse(null);
+                setIsModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+            >
+              <Plus size={16} />
+              New Course
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modern Tabs */}
@@ -299,12 +303,14 @@ export const CoursesSection = () => {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">No courses yet</h3>
                 <p className="text-slate-500 font-medium mt-2 max-w-xs text-center">Start building your curriculum by creating your first course.</p>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="mt-8 px-6 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
-                >
-                  Create Course
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="mt-8 px-6 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+                  >
+                    Create Course
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -347,22 +353,24 @@ export const CoursesSection = () => {
                           {course?.lessons?.length || 0} Lessons
                         </button>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEditCourse(course.id)}
-                            className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl transition-all"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(course.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 rounded-xl transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                        {isAdmin && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleEditCourse(course.id)}
+                              className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl transition-all"
+                              title="Edit"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(course.id)}
+                              className="p-2 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 rounded-xl transition-all"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -428,13 +436,15 @@ export const CoursesSection = () => {
                 <h2 className="text-xl font-black text-slate-900 tracking-tight">Categories</h2>
                 <p className="text-xs font-medium text-slate-400 mt-1">Classification and taxonomies</p>
               </div>
-              <button
-                onClick={() => openModal()}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-2xl font-bold text-xs text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
-              >
-                <Tag size={14} className="text-[#1a7ea5]" />
-                Create Category
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => openModal()}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-2xl font-bold text-xs text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  <Tag size={14} className="text-[#1a7ea5]" />
+                  Create Category
+                </button>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
@@ -480,20 +490,22 @@ export const CoursesSection = () => {
                           </span>
                         </td>
                         <td className="px-8 py-5">
-                          <div className="flex items-center justify-end gap-2 transition-all">
-                            <button
-                              onClick={() => openModal(category)}
-                              className="p-2 text-slate-400 hover:text-[#1a7ea5] hover:bg-blue-50 bg-white border border-slate-100 rounded-xl transition-all shadow-sm"
-                            >
-                              <Edit size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleCategoryDeleteClick(category.id)}
-                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 bg-white border border-slate-100 rounded-xl transition-all shadow-sm"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
+                          {isAdmin && (
+                            <div className="flex items-center justify-end gap-2 transition-all">
+                              <button
+                                onClick={() => openModal(category)}
+                                className="p-2 text-slate-400 hover:text-[#1a7ea5] hover:bg-blue-50 bg-white border border-slate-100 rounded-xl transition-all shadow-sm"
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleCategoryDeleteClick(category.id)}
+                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 bg-white border border-slate-100 rounded-xl transition-all shadow-sm"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </motion.tr>
                     ))}

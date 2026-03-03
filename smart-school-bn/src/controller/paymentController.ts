@@ -182,7 +182,7 @@ export const handlePaypackWebhook = async (req: Request, res: Response) => {
         if (!webhookSecret) {
             logger.warn("[WEBHOOK] Missing PAYPACK_WEBHOOK_SECRET");
         } else if (signature) {
-            const rawBody = (req as any).rawBody;
+            const rawBody = req.rawBody;
             if (rawBody) {
                 const hash = crypto
                     .createHmac("sha256", webhookSecret)
@@ -222,7 +222,6 @@ export const handlePaypackWebhook = async (req: Request, res: Response) => {
     }
 };
 export const cashin = async (req: Request, res: Response, next: NextFunction) => {
-    // @ts-ignore
     const userId = req.user?.id;
     const { amount, phoneNumber, channel, subscribedCourseIds, subscriptionPeriod, isActive } = req.body;
     try {

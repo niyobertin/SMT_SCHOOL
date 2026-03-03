@@ -16,7 +16,7 @@ interface StudentJWTPayload {
 }
 
 export const studentAuthService = {
-  async login(schoolCode: string, studentId: string) {
+  async login(schoolCode: string, studentId: string, password: string) {
     try {
       const school = await schoolService.getSchoolByCode(schoolCode);
       if (!school) {
@@ -39,6 +39,13 @@ export const studentAuthService = {
           studentId,
         });
         return { error: "Invalid student ID" };
+      }
+
+      // Verify password
+      const isValid = await studentService.verifyStudentCredential(student.id, password);
+      if (!isValid) {
+        logger.warn("Invalid student credentials", { studentId: student.id });
+        return { error: "Invalid credentials" };
       }
 
       if (student.status !== "ACTIVE") {
@@ -137,5 +144,29 @@ export const studentAuthService = {
       progressCount: progress.length,
       createdAt: student.createdAt,
     };
+  },
+
+  async getStudentResults(studentId: string) {
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { id: true },
+    });
+    if (!student) return [];
+
+    const attempts = await prisma.studentTestAttempt.findMany({
+      where: { studentId: student.id },
+      orderBy: { startTime: 'desc' },
+      include: {
+        test: {
+          select: {
+            id: true,
+            title: true,
+            passingScore: true,
+            course: { select: { title: true } },
+          },
+        },
+      },
+    });
+    return attempts;
   },
 };

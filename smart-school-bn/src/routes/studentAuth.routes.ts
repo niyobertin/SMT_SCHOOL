@@ -27,4 +27,10 @@ router.post(
   studentAuthController.refreshToken
 );
 
+router.get(
+  "/results",
+  authenticateStudent,
+  studentAuthController.getResults
+);
+
 export default router;

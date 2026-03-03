@@ -7,6 +7,10 @@ export enum Action {
     SUBMIT_MARKS = "SUBMIT_MARKS",
     APPROVE_MARKS = "APPROVE_MARKS",
     VIEW_RESULTS = "VIEW_RESULTS",
+    VIEW_ASSIGNED_COURSES = "VIEW_ASSIGNED_COURSES",
+    TAKE_TEST = "TAKE_TEST",
+    UPLOAD_RESOURCES = "UPLOAD_RESOURCES",
+    MANAGE_ATTENDANCE = "MANAGE_ATTENDANCE",
 }
 
 export class PermissionService {
@@ -31,11 +35,23 @@ export class PermissionService {
         if (user.role === "SUPER_ADMIN" || user.role === "ADMIN") return true;
 
         const isSchoolAdmin = user.schoolStaff?.some(s => s.roleInSchool === "SCHOOL_ADMIN");
+        const isSchoolTeacher = user.schoolStaff?.some(s => s.roleInSchool === "TEACHER");
+        const isUnifiedTeacher = isSchoolTeacher || user.role === "INSTRUCTOR" || user.role === "EXAMINER";
 
         switch (action) {
             case Action.ENTER_MARKS:
             case Action.SUBMIT_MARKS:
-                if (isSchoolAdmin) return true; // Admins can also enter marks if needed
+            case Action.UPLOAD_RESOURCES:
+            case Action.MANAGE_ATTENDANCE:
+                if (isSchoolAdmin) return true;
+                if (!isUnifiedTeacher) return false;
+
+                // If schoolId is provided, check if they belong to that school
+                if (resource.schoolId && !user.schoolStaff?.some(s => s.schoolId === resource.schoolId)) {
+                    return false;
+                }
+
+                // Granular check for subject/class assignment
                 return this.isTeacherAssigned(
                     userId,
                     resource.schoolId,
@@ -47,21 +63,25 @@ export class PermissionService {
                 return isSchoolAdmin;
 
             case Action.VIEW_RESULTS:
+            case Action.VIEW_ASSIGNED_COURSES:
+            case Action.TAKE_TEST:
                 // If it's the student themselves, let them see it
-                // (Assuming controller ensures they only see approved results, or we check it here: but result status is better checked in queries)
                 if (user.role === "STUDENT") {
                     return true;
                 }
 
                 // Teachers and admins can view results
                 if (isSchoolAdmin) return true;
-                if (resource.schoolId && resource.classId && resource.subjectId) {
-                    return this.isTeacherAssigned(
-                        userId,
-                        resource.schoolId,
-                        resource.classId,
-                        resource.subjectId
-                    );
+                if (isUnifiedTeacher) {
+                    if (resource.schoolId && resource.classId && resource.subjectId) {
+                        return this.isTeacherAssigned(
+                            userId,
+                            resource.schoolId,
+                            resource.classId,
+                            resource.subjectId
+                        );
+                    }
+                    return true; // General view if no specific resource
                 }
 
                 return false;

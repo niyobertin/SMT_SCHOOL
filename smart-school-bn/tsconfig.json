@@ -20,7 +20,12 @@
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "types": [
-      "node"
+      "node",
+      "express"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
     ],
     "baseUrl": "./",
     "paths": {
@@ -54,5 +59,9 @@
     "node_modules",
     "dist",
     "**/*.test.ts"
-  ]
+  ],
+  "ts-node": {
+    "files": true,
+    "transpileOnly": true
+  }
 }

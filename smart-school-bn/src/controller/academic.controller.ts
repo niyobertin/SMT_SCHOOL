@@ -197,4 +197,108 @@ export const academicController = {
             next(error);
         }
     },
+
+    // Attendance
+    async recordAttendance(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { schoolId } = req.params;
+            const { studentId, classId, subjectId, date, status, remarks } = req.body;
+            // @ts-ignore
+            const userId = req.user.id;
+
+            const attendance = await academicService.recordAttendance({
+                schoolId,
+                studentId,
+                classId,
+                subjectId,
+                date: new Date(date),
+                status,
+                remarks,
+                recordedBy: userId,
+            });
+
+            return res.status(201).json({
+                status: "success",
+                message: "Attendance recorded successfully",
+                data: attendance,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async bulkRecordAttendance(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { schoolId } = req.params;
+            const { classId, subjectId, date, records } = req.body;
+            // @ts-ignore
+            const userId = req.user.id;
+
+            const results = await academicService.bulkRecordAttendance({
+                schoolId,
+                classId,
+                subjectId,
+                date: new Date(date),
+                records,
+                recordedBy: userId,
+            });
+
+            return res.status(201).json({
+                status: "success",
+                message: `${results.length} attendance records created`,
+                data: results,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async getAttendance(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { schoolId } = req.params;
+            const { classId, subjectId, studentId, startDate, endDate } = req.query;
+
+            const attendance = await academicService.getAttendance({
+                schoolId,
+                classId: classId as string,
+                subjectId: subjectId as string,
+                studentId: studentId as string,
+                startDate: startDate ? new Date(startDate as string) : undefined,
+                endDate: endDate ? new Date(endDate as string) : undefined,
+            });
+
+            return res.status(200).json({
+                status: "success",
+                data: attendance,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async bulkImportStudents(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { schoolId } = req.params;
+            const { students } = req.body;
+
+            if (!students || !Array.isArray(students)) {
+                return res.status(400).json({
+                    status: "error",
+                    message: "students array is required",
+                });
+            }
+
+            // We use studentService for this as it already has the logic
+            const { studentService } = require("../services/student.service");
+            const result = await studentService.bulkImportStudents(schoolId, students);
+
+            return res.status(201).json({
+                status: "success",
+                message: "Bulk import completed",
+                data: result,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
 };

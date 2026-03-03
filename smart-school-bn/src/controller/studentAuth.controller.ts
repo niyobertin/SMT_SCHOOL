@@ -5,18 +5,19 @@ import { logger } from "../utils/logger";
 export const studentAuthController = {
   async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const { schoolCode, studentId } = req.body;
+      const { schoolCode, studentId, password } = req.body;
 
-      if (!schoolCode || !studentId) {
+      if (!schoolCode || !studentId || !password) {
         return res.status(400).json({
           status: "error",
-          message: "schoolCode and studentId are required",
+          message: "schoolCode, studentId and password are required",
         });
       }
 
       const result = await studentAuthService.login(
         schoolCode,
-        studentId
+        studentId,
+        password
       );
 
       if ("error" in result) {
@@ -40,7 +41,7 @@ export const studentAuthController = {
 
   async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const studentId = (req as any).studentId;
+      const studentId = req.studentId;
 
       const profile = await studentAuthService.getStudentProfile(studentId);
 
@@ -65,7 +66,7 @@ export const studentAuthController = {
 
   async getAssignedCourses(req: Request, res: Response, next: NextFunction) {
     try {
-      const studentId = (req as any).studentId;
+      const studentId = req.studentId;
       const profile = await studentAuthService.getStudentProfile(studentId);
 
       if (!profile) {
@@ -87,7 +88,7 @@ export const studentAuthController = {
 
   async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-      const student = (req as any).student;
+      const student = req.student;
 
       if (!student) {
         return res.status(401).json({
@@ -115,6 +116,21 @@ export const studentAuthController = {
       });
     } catch (error) {
       logger.error("Token refresh error", error);
+      next(error);
+    }
+  },
+
+  async getResults(req: Request, res: Response, next: NextFunction) {
+    try {
+      const studentId = req.studentId;
+      const results = await studentAuthService.getStudentResults(studentId);
+      return res.status(200).json({
+        status: "success",
+        data: results,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error("Student results error", error);
       next(error);
     }
   },

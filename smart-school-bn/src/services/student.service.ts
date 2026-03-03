@@ -8,10 +8,11 @@ const prisma = new PrismaClient();
 export const studentService = {
   async createStudent(data: {
     schoolId: string;
-    studentId: string;
+    studentId?: string;
     firstName: string;
-    lastName: string;
-    credentialHash: string;
+    lastName?: string;
+    password?: string;
+    credentialHash?: string;
     email?: string;
     phoneNumber?: string;
     dateOfBirth?: string;
@@ -20,11 +21,57 @@ export const studentService = {
     academicYearId?: string;
   }) {
     try {
+      // Check for existing student ID in school if provided
+      if (data.studentId) {
+        const existing = await prisma.student.findUnique({
+          where: {
+            schoolId_studentId: {
+              schoolId: data.schoolId,
+              studentId: data.studentId
+            },
+          },
+        });
+
+        if (existing) {
+          throw new Error(`Student with ID ${data.studentId} already exists in this school.`);
+        }
+      }
+
+      // Strip out non-Prisma fields (e.g. className, academicYearName from Excel mapping)
+      const {
+        password,
+        credentialHash: providedHash,
+        studentId: providedId,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        className: _className,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        academicYearName: _academicYearName,
+        ...rest
+      } = data as any;
+
+      let finalHash = providedHash;
+      if (password) {
+        finalHash = await bcrypt.hash(String(password), 10);
+      } else if (!finalHash) {
+        // Default password to studentId if nothing provided
+        finalHash = await bcrypt.hash(String(providedId || data.firstName), 10);
+      }
+
+      // Auto-generate a studentId if not supplied
+      let studentId = providedId;
+      if (!studentId) {
+        const count = await prisma.student.count({ where: { schoolId: data.schoolId } });
+        const year = new Date().getFullYear();
+        studentId = `STU-${year}-${String(count + 1).padStart(4, "0")}`;
+      }
+
       const student = await prisma.student.create({
         data: {
           id: uuidv4(),
-          ...data,
-          credentialHash: await bcrypt.hash(data.credentialHash, 10),
+          ...rest,
+          studentId: studentId!,
+          lastName: data.lastName || "",
+          credentialHash: finalHash!,
         },
         include: { school: true, class: true, academicYear: true },
       });
@@ -114,27 +161,43 @@ export const studentService = {
   async bulkImportStudents(
     schoolId: string,
     students: Array<{
-      studentId: string;
+      studentId?: string;
       firstName: string;
-      lastName: string;
-      credentialHash: string;
+      lastName?: string;
+      password?: string;
+      credentialHash?: string;
       email?: string;
+      phoneNumber?: string;
+      gender?: string;
+      dateOfBirth?: string;
       classId?: string;
+      academicYearId?: string;
     }>
   ) {
     const created = [];
     const errors = [];
 
-    for (const student of students) {
+    for (const studentData of students) {
       try {
+        // Sanitize all string fields — Excel may parse numbers as JS numbers
+        const sanitized = {
+          ...studentData,
+          firstName: String(studentData.firstName || "").trim(),
+          lastName: studentData.lastName ? String(studentData.lastName).trim() : undefined,
+          studentId: studentData.studentId ? String(studentData.studentId).trim() : undefined,
+          email: studentData.email ? String(studentData.email).trim() : undefined,
+          phoneNumber: studentData.phoneNumber ? String(studentData.phoneNumber).trim() : undefined,
+          password: studentData.password ? String(studentData.password).trim() : undefined,
+          gender: studentData.gender ? String(studentData.gender).trim().toUpperCase() : undefined,
+        };
+
         const s = await this.createStudent({
           schoolId,
-          ...student,
-          credentialHash: student.credentialHash,
+          ...sanitized,
         });
         created.push(s);
-      } catch (error) {
-        errors.push({ studentId: student.studentId, error });
+      } catch (error: any) {
+        errors.push({ firstName: studentData.firstName, error: error.message || error });
       }
     }
 

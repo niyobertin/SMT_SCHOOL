@@ -11,6 +11,7 @@ import {
     ChevronRight,
     Search,
     Shield,
+    BarChart3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -52,8 +53,8 @@ export const StudentLayout = () => {
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", path: "/student/dashboard" },
         { icon: BookOpen, label: "My Courses", path: "/student/courses" },
+        { icon: BarChart3, label: "My Results", path: "/student/results" },
         { icon: User, label: "Profile", path: "/profile" },
-        // { icon: Settings, label: "Settings", path: "/student/settings" },
     ];
 
     return (

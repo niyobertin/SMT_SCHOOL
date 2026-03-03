@@ -37,6 +37,18 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
               }
             }
           }
+        },
+        schoolStaff: {
+          select: {
+            schoolId: true,
+            roleInSchool: true,
+            school: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
         }
       }
     });
@@ -96,8 +108,8 @@ export const optionalAuthenticate = async (req: Request, res: Response, next: Ne
 };
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    // @ts-ignore
-    if (req.user.role !== 'SUPER_ADMIN' && !roles.includes(req.user.role)) {
+    const user = req.user as any;
+    if (user && user.role !== 'SUPER_ADMIN' && !roles.includes(user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. You do not have permissions to perform this action.'

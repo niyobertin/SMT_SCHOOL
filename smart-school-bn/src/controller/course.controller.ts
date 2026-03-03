@@ -3,6 +3,7 @@ import { logger } from "../utils/logger";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
+import { applySchoolFilter } from "../middleware/schoolScope.middleware";
 const prisma = new PrismaClient();
 
 export const createCourse = async (
@@ -12,8 +13,7 @@ export const createCourse = async (
 ): Promise<void> => {
   try {
     const courseData = req.body;
-    //@ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
     const categoryId = req.params.categoryId;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
@@ -71,6 +71,7 @@ export const createCourse = async (
         tags: courseData.tags,
         requirements: courseData.requirements,
         objectives: courseData.objectives,
+        schoolId: (req.user as any)?.schoolStaff?.[0]?.schoolId || courseData.schoolId || null,
       },
       include: {
         instructor: true,
@@ -98,8 +99,7 @@ export const getCouses = async (
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const query = (req.query.q as string) || "";
-    //@ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
     const courses = await prisma.course.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -119,20 +119,20 @@ export const getCouses = async (
         lessons: true,
         enrollments: userId
           ? {
-              where: { userId },
-              select: {
-                id: true,
-                userId: true,
-                courseId: true,
-                status: true,
-              },
-            }
+            where: { userId },
+            select: {
+              id: true,
+              userId: true,
+              courseId: true,
+              status: true,
+            },
+          }
           : false,
         tests: true,
       },
       take: limit,
       skip: startIndex,
-      where: {
+      where: applySchoolFilter(req, {
         title: {
           contains: query,
           mode: "insensitive",
@@ -140,15 +140,15 @@ export const getCouses = async (
         category: {
           id: req.query.categoryId as string,
         },
-      },
+      }),
     });
     const total = await prisma.course.count({
-      where: {
+      where: applySchoolFilter(req, {
         title: {
           contains: query,
           mode: "insensitive",
         },
-      },
+      }),
     });
     const totalPages = Math.ceil(total / limit);
     res.status(200).json({
@@ -176,8 +176,7 @@ export const getCourseById = async (
 ): Promise<void> => {
   try {
     const id = req.params.id;
-    //@ts-ignore
-    const userId = req.user?.id;
+    const userId = (req.user as any)?.id;
     const course = await prisma.course.findUnique({
       where: { id },
       include: {
@@ -197,14 +196,14 @@ export const getCourseById = async (
         lessons: true,
         enrollments: userId
           ? {
-              where: { userId },
-              select: {
-                id: true,
-                userId: true,
-                courseId: true,
-                status: true,
-              },
-            }
+            where: { userId },
+            select: {
+              id: true,
+              userId: true,
+              courseId: true,
+              status: true,
+            },
+          }
           : false,
         tests: true,
       },
@@ -216,6 +215,21 @@ export const getCourseById = async (
       });
       return;
     }
+
+    // Check school access if course is school-scoped
+    if (course.schoolId) {
+      const userSchoolIds = (req.user as any)?.schoolStaff?.map((ss: any) => ss.schoolId) || [];
+      const isAdmin = (req.user as any)?.role === 'SUPER_ADMIN' || (req.user as any)?.role === 'ADMIN';
+
+      if (!isAdmin && !userSchoolIds.includes(course.schoolId)) {
+        res.status(403).json({
+          status: "error",
+          message: "Access denied. You do not have access to this course's school.",
+        });
+        return;
+      }
+    }
+
     res.status(200).json({
       status: "success",
       message: "Course retrieved successfully",

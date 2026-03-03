@@ -10,6 +10,7 @@ import { LessonContent } from '../Dashboards/sections/Content';
 import { Tests } from '../Dashboards/sections/Tests';
 import { JobBoard } from '../Dashboards/sections/Jobs';
 import { AcademicSection } from '../Dashboards/sections/Academic/AcademicSection';
+import { AttendanceSection } from '../Dashboards/sections/Academic/AttendanceSection';
 import { CourseAssignmentSection } from '../Dashboards/sections/Academic/CourseAssignmentSection';
 import ExamAdminDashboard from '../pages/admin/ExamAdminDashboard';
 
@@ -65,6 +66,10 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'academic',
         element: <AcademicSection />,
+      },
+      {
+        path: 'attendance',
+        element: <AttendanceSection />,
       },
       {
         path: 'assignments',

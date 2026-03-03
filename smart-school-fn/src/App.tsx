@@ -8,6 +8,7 @@ import { LoginPage as UnifiedLogin } from "./pages/auth/Login";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import { StudentDashboard } from "./pages/student/StudentDashboard";
 import { StudentCourses } from "./pages/student/StudentCourses";
+import { StudentResults } from "./pages/student/StudentResults";
 import { StudentProtectedRoute } from "./routes/StudentProtectedRoute";
 import { RequestReset } from "./pages/auth/RequestLink";
 import VerifyOtp from "./pages/auth/VerifyOtp";
@@ -144,6 +145,7 @@ function App() {
           >
             <Route path="dashboard" element={<StudentDashboard />} />
             <Route path="courses" element={<StudentCourses />} />
+            <Route path="results" element={<StudentResults />} />
             {/* Add more student routes here */}
             <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
           </Route>

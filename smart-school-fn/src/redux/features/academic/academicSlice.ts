@@ -7,6 +7,7 @@ interface AcademicState {
     subjects: any[];
     assignments: any[];
     classStudents: any[];
+    attendance: any[];
     loading: boolean;
     error: string | null;
 }
@@ -17,6 +18,7 @@ const initialState: AcademicState = {
     subjects: [],
     assignments: [],
     classStudents: [],
+    attendance: [],
     loading: false,
     error: null,
 };
@@ -104,6 +106,32 @@ export const deleteAssignment = createAsyncThunk(
     }
 );
 
+export const fetchAttendance = createAsyncThunk(
+    "academic/fetchAttendance",
+    async (params: { schoolId: string; classId?: string; subjectId?: string; studentId?: string; startDate?: string; endDate?: string }) => {
+        const response = await api.get(`/academic/schools/${params.schoolId}/attendance`, {
+            params,
+        });
+        return response.data.data;
+    }
+);
+
+export const recordAttendance = createAsyncThunk(
+    "academic/recordAttendance",
+    async ({ schoolId, data }: { schoolId: string; data: any }) => {
+        const response = await api.post(`/academic/schools/${schoolId}/attendance`, data);
+        return response.data.data;
+    }
+);
+
+export const bulkRecordAttendance = createAsyncThunk(
+    "academic/bulkRecordAttendance",
+    async ({ schoolId, data }: { schoolId: string; data: any }) => {
+        const response = await api.post(`/academic/schools/${schoolId}/attendance/bulk`, data);
+        return response.data.data;
+    }
+);
+
 const academicSlice = createSlice({
     name: "academic",
     initialState,
@@ -139,6 +167,10 @@ const academicSlice = createSlice({
             // Fetch Class Students
             .addCase(fetchClassStudents.fulfilled, (state, action) => {
                 state.classStudents = action.payload;
+            })
+            // Fetch Attendance
+            .addCase(fetchAttendance.fulfilled, (state, action) => {
+                state.attendance = action.payload;
             })
             // Delete Assignment
             .addCase(deleteAssignment.fulfilled, (state, action) => {

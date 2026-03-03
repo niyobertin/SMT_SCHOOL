@@ -22,10 +22,35 @@ export const schoolService = {
         },
       });
       logger.info("School created", { schoolId: school.id, code: school.code });
+
+      // Setup default data (Academic Year)
+      await this.setupDefaultSchoolData(school.id);
+
       return school;
     } catch (error) {
       logger.error("Failed to create school", error);
       throw error;
+    }
+  },
+
+  async setupDefaultSchoolData(schoolId: string) {
+    try {
+      const currentYear = new Date().getFullYear();
+      const academicYear = await prisma.academicYear.create({
+        data: {
+          id: uuidv4(),
+          schoolId,
+          year: `${currentYear}-${currentYear + 1}`,
+          isActive: true,
+          startDate: new Date(currentYear, 8, 1), // September 1st
+          endDate: new Date(currentYear + 1, 5, 30), // June 30th
+        },
+      });
+
+      logger.info("Default school data setup complete", { schoolId });
+      return { academicYear };
+    } catch (error) {
+      logger.error("Failed to setup default school data", error);
     }
   },
 

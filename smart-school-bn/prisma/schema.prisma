@@ -43,6 +43,7 @@ model User {
   assessmentScores   AssessmentScore[]
   submittedResults   ResultSubmission[]   @relation("SubmittedBy")
   approvedResults    ResultSubmission[]   @relation("ApprovedBy")
+  attendances        Attendance[]
 
   @@map("users")
 }
@@ -107,6 +108,7 @@ model School {
   courseAssignments  CourseAssignment[]
   assessments        Assessment[]
   resultSubmissions  ResultSubmission[]
+  attendances        Attendance[]
 
   @@map("schools")
 }
@@ -138,6 +140,7 @@ model Student {
   classEnrollments  StudentClassEnrollment[]
   courseAssignments CourseAssignment[]
   assessmentScores  AssessmentScore[]
+  attendances       Attendance[]
 
   @@unique([schoolId, studentId])
   @@index([schoolId])
@@ -183,6 +186,7 @@ model SchoolClass {
   courseAssignments  CourseAssignment[]
   assessments        Assessment[]
   resultSubmissions  ResultSubmission[]
+  attendances        Attendance[]
 
   @@unique([schoolId, name])
   @@index([schoolId])
@@ -973,6 +977,7 @@ model Subject {
   assignments       TeacherSubjectAssignment[]
   courseAssignments CourseAssignment[]
   assessments       Assessment[]
+  attendances       Attendance[]
 
   @@unique([schoolId, name])
   @@map("subjects")
@@ -1108,4 +1113,36 @@ model ResultSubmission {
   @@unique([schoolId, classId, term])
   @@index([schoolId])
   @@map("result_submissions")
+}
+
+model Attendance {
+  id         String           @id @default(cuid())
+  schoolId   String
+  school     School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId    String?
+  class      SchoolClass?     @relation(fields: [classId], references: [id], onDelete: SetNull)
+  subjectId  String?
+  subject    Subject?         @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  date       DateTime         @default(now())
+  status     AttendanceStatus @default(PRESENT)
+  remarks    String?
+  recordedBy String // userId
+  teacher    User             @relation(fields: [recordedBy], references: [id])
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([classId])
+  @@index([date])
+  @@map("attendance")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
 }

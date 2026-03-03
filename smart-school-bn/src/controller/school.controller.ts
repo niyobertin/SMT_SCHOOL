@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
+import { PrismaClient } from "@prisma/client";
 import { schoolService } from "../services/school.service";
 import { studentService } from "../services/student.service";
 import { logger } from "../utils/logger";
+
+const prisma = new PrismaClient();
+
 
 export const schoolAdminController = {
   async createSchool(req: Request, res: Response, next: NextFunction) {
@@ -191,7 +195,7 @@ export const studentManagementController = {
         studentId,
         firstName,
         lastName,
-        credentialHash,
+        password,
         email,
         phoneNumber,
         dateOfBirth,
@@ -200,11 +204,10 @@ export const studentManagementController = {
         academicYearId,
       } = req.body;
 
-      if (!studentId || !firstName || !lastName || !credentialHash) {
+      if (!firstName) {
         return res.status(400).json({
           status: "error",
-          message:
-            "studentId, firstName, lastName, and credentialHash are required",
+          message: "firstName is required",
         });
       }
 
@@ -213,7 +216,7 @@ export const studentManagementController = {
         studentId,
         firstName,
         lastName,
-        credentialHash,
+        password,
         email,
         phoneNumber,
         dateOfBirth,

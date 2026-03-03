@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Share2,
   ClipboardCheck,
+  ListChecks,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -20,6 +21,7 @@ const sidebarItems = [
   { id: "tests", label: "Test Management", icon: FileQuestion, path: "/dashboard/tests" },
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
   { id: "academic", label: "Academic Setup", icon: GraduationCap, path: "/dashboard/academic" },
+  { id: "attendance", label: "Attendance", icon: ListChecks, path: "/dashboard/attendance" },
   { id: "assignments", label: "Course Access", icon: Share2, path: "/dashboard/assignments" },
   { id: "assessments", label: "Assessments", icon: ClipboardCheck, path: "/dashboard/assessments" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
@@ -75,36 +77,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
           <ul className="space-y-2">
-            {sidebarItems.map((item) => {
-              const isActive = item.path === "/"
-                ? location.pathname === "/"
-                : item.path === "/dashboard"
-                  ? location.pathname === "/dashboard"
-                  : location.pathname.startsWith(item.path);
-              return (
-                <li key={item.id}>
-                  <Link
-                    to={item.path}
-                    className={`flex items-center px-2 py-2 rounded-xl transition-all duration-300 group ${isActive
-                      ? "bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/25"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-[#1a7ea5]"
-                      }`}
-                  >
-                    <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#1a7ea5]"}`}>
-                      <item.icon size={20} strokeWidth={2.5} />
-                    </div>
-                    {!isCollapsed && (
-                      <span className="ml-3 text-sm font-medium capitalize tracking-wide truncate">
-                        {item.label}
-                      </span>
-                    )}
-                    {isActive && !isCollapsed && (
-                      <div className="ml-auto w-1.5 h-1.5 bg-white/40 rounded-full ring-4 ring-white/10" />
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
+            {sidebarItems
+              .filter((item) => {
+                const userRole = localStorage.getItem("userRole") || "INSTRUCTOR";
+                const permissions: Record<string, string[]> = {
+                  SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "home"],
+                  ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "home"],
+                  INSTRUCTOR: ["dashboard", "tests", "courses", "academic", "attendance", "assessments", "content", "home"],
+                  EXAMINER: ["dashboard", "tests", "assessments", "home"],
+                };
+                return permissions[userRole]?.includes(item.id);
+              })
+              .map((item) => {
+                const isActive = item.path === "/"
+                  ? location.pathname === "/"
+                  : item.path === "/dashboard"
+                    ? location.pathname === "/dashboard"
+                    : location.pathname.startsWith(item.path);
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-2 py-2 rounded-xl transition-all duration-300 group ${isActive
+                        ? "bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/25"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#1a7ea5]"
+                        }`}
+                    >
+                      <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#1a7ea5]"}`}>
+                        <item.icon size={20} strokeWidth={2.5} />
+                      </div>
+                      {!isCollapsed && (
+                        <span className="ml-3 text-sm font-medium capitalize tracking-wide truncate">
+                          {item.label}
+                        </span>
+                      )}
+                      {isActive && !isCollapsed && (
+                        <div className="ml-auto w-1.5 h-1.5 bg-white/40 rounded-full ring-4 ring-white/10" />
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
         </nav>
 

@@ -66,4 +66,32 @@ router.get(
     academicController.getStudentsByClass
 );
 
+// Attendance
+router.post(
+    "/schools/:schoolId/attendance",
+    authenticate,
+    authorize("ADMIN", "SCHOOL_ADMIN", "TEACHER"),
+    academicController.recordAttendance
+);
+
+router.post(
+    "/schools/:schoolId/attendance/bulk",
+    authenticate,
+    authorize("ADMIN", "SCHOOL_ADMIN", "TEACHER"),
+    academicController.bulkRecordAttendance
+);
+
+router.get(
+    "/schools/:schoolId/attendance",
+    authenticate,
+    academicController.getAttendance
+);
+
+router.post(
+    "/schools/:schoolId/students/bulk",
+    authenticate,
+    authorize("ADMIN", "SCHOOL_ADMIN"),
+    academicController.bulkImportStudents
+);
+
 export default router;
