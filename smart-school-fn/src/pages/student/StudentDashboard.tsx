@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../redux/api/api";
 import { useNavigate } from "react-router-dom";
+import { BookOpen } from "lucide-react";
 
 interface StudentProfile {
   id: string;
@@ -13,17 +14,13 @@ interface StudentProfile {
     name: string;
     code: string;
   };
-  enrollments: Array<{
+  assignedCourses: Array<{
     id: string;
-    courseId: string;
-    course: {
-      id: string;
-      title: string;
-      thumbnail?: string;
-      progress?: number;
-    };
-    enrollmentDate: string;
-    isCompleted: boolean;
+    title: string;
+    description?: string;
+    thumbnail?: string;
+    category?: { name: string };
+    instructor?: { firstName: string, lastName: string };
   }>;
   progressCount: number;
   createdAt: string;
@@ -47,14 +44,7 @@ export const StudentDashboard = () => {
         return;
       }
 
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/student-auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const { data } = await api.get("/student-auth/me");
 
       setProfile(data.data);
     } catch (err: any) {
@@ -127,9 +117,9 @@ export const StudentDashboard = () => {
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-gray-600 text-sm">Enrolled Courses</p>
+          <p className="text-gray-600 text-sm">Assigned Courses</p>
           <p className="text-2xl font-bold text-green-600">
-            {profile.enrollments.length}
+            {profile.assignedCourses?.length || 0}
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
@@ -142,35 +132,35 @@ export const StudentDashboard = () => {
 
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-xl font-bold mb-4">Your Courses</h2>
-        {profile.enrollments.length === 0 ? (
-          <p className="text-gray-600">No courses enrolled yet</p>
+        {!profile.assignedCourses || profile.assignedCourses.length === 0 ? (
+          <p className="text-gray-600">No courses assigned yet</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {profile.enrollments.map((enrollment) => (
+            {profile.assignedCourses.map((course) => (
               <div
-                key={enrollment.id}
+                key={course.id}
                 className="border rounded-lg overflow-hidden hover:shadow-lg transition cursor-pointer"
                 onClick={() =>
-                  navigate(`/student/courses/${enrollment.courseId}`)
+                  navigate(`/courses/${course.id}/lessons`)
                 }
               >
-                {enrollment.course.thumbnail && (
+                {course.thumbnail ? (
                   <img
-                    src={enrollment.course.thumbnail}
-                    alt={enrollment.course.title}
+                    src={course.thumbnail}
+                    alt={course.title}
                     className="w-full h-32 object-cover"
                   />
+                ) : (
+                  <div className="w-full h-32 bg-slate-100 flex items-center justify-center">
+                    <BookOpen size={24} className="text-slate-300" />
+                  </div>
                 )}
                 <div className="p-4">
                   <h3 className="font-bold line-clamp-2">
-                    {enrollment.course.title}
+                    {course.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {enrollment.isCompleted ? (
-                      <span className="text-green-600">✓ Completed</span>
-                    ) : (
-                      <span className="text-blue-600">In Progress</span>
-                    )}
+                  <p className="text-xs text-gray-400 mt-2 uppercase tracking-widest font-black">
+                    {course.category?.name || "Learning"}
                   </p>
                 </div>
               </div>

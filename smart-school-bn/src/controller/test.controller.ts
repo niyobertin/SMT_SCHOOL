@@ -307,24 +307,65 @@ export const startTestAttempt = async (
     const { testId } = req.params;
     // @ts-ignore
     const userId = req.user?.id;
+    // @ts-ignore
+    const userRole = req.user?.role;
+    // @ts-ignore
+    const studentId = req.studentId;
 
-    // Check if user is enrolled in the course
+    const isStudent = userRole === "STUDENT";
+
+    // 1. Fetch test and verify access/enrollment
     const test = await prisma.test.findUnique({
       where: { id: testId },
       include: {
         course: {
           include: {
-            enrollments: {
+            enrollments: isStudent ? false : {
+              where: { userId, status: "ACTIVE" },
+            },
+            studentEnrollments: !isStudent ? false : {
+              where: { studentId: studentId, status: "ACTIVE" },
+            },
+            assignments: !isStudent ? false : {
               where: {
-                userId,
-                status: "ACTIVE",
+                studentId: studentId,
               },
             },
           },
         },
       },
     });
-    // Get questions
+
+    if (!test) {
+      throw new NotFoundError("Test not found");
+    }
+
+    // For students, check if enrolled or assigned
+    if (isStudent) {
+      const isAssigned = (test.course.assignments?.length || 0) > 0;
+      const isEnrolled = (test.course.studentEnrollments?.length || 0) > 0;
+
+      if (!isAssigned && !isEnrolled) {
+        res.status(403).json({
+          status: "error",
+          message: "You are not enrolled in or assigned to this course",
+        });
+        return;
+      }
+    } else {
+      // For staff, check if enrolled (if applicable) or if they are admin/instructor
+      if (userRole !== "ADMIN" && userRole !== "INSTRUCTOR" && userRole !== "SUPER_ADMIN") {
+        if ((test.course.enrollments?.length || 0) === 0) {
+          res.status(403).json({
+            status: "error",
+            message: "You are not enrolled in this course",
+          });
+          return;
+        }
+      }
+    }
+
+    // 2. Get questions
     const questions = await prisma.question.findMany({
       where: { testId, isActive: true },
       include: {
@@ -337,7 +378,7 @@ export const startTestAttempt = async (
           },
         },
       },
-      orderBy: test?.randomizeQuestions ? { id: "asc" } : { order: "asc" },
+      orderBy: test.randomizeQuestions ? { id: "asc" } : { order: "asc" },
     });
 
     if (questions.length === 0) {
@@ -349,41 +390,55 @@ export const startTestAttempt = async (
     }
 
     // Randomize questions if needed
-    const randomizedQuestions = test?.randomizeQuestions
+    const randomizedQuestions = test.randomizeQuestions
       ? questions.sort(() => Math.random() - 0.5)
       : questions;
 
-    // Create test attempt
-    const testAttempt = await prisma.testAttempt.create({
-      data: {
-        id: uuidv4(),
-        totalQuestions: questions.length,
-        test: {
-          connect: { id: testId },
+    // 3. Create test attempt (Branch based on role)
+    let attemptId: string;
+    let startTime: Date;
+
+    if (isStudent) {
+      const studentAttempt = await prisma.studentTestAttempt.create({
+        data: {
+          id: uuidv4(),
+          totalQuestions: questions.length,
+          testId: testId,
+          studentId: studentId,
         },
-        user: {
-          connect: { id: userId },
+      });
+      attemptId = studentAttempt.id;
+      startTime = studentAttempt.startTime;
+    } else {
+      const testAttempt = await prisma.testAttempt.create({
+        data: {
+          id: uuidv4(),
+          totalQuestions: questions.length,
+          testId: testId,
+          userId: userId,
         },
-      },
-    });
+      });
+      attemptId = testAttempt.id;
+      startTime = testAttempt.startTime;
+    }
 
     // Calculate end time if duration is set
-    const endTime = test?.duration
-      ? new Date(Date.now() + test.duration * 60 * 1000)
+    const durationEndTime = test.duration
+      ? new Date(startTime.getTime() + test.duration * 60 * 1000)
       : null;
 
     res.status(200).json({
       status: "success",
       data: {
-        attemptId: testAttempt.id,
+        attemptId,
         test: {
-          id: test?.id,
-          title: test?.title,
-          description: test?.description,
-          instructions: test?.instructions,
-          duration: test?.duration,
-          passingScore: test?.passingScore,
-          showResults: test?.showResults,
+          id: test.id,
+          title: test.title,
+          description: test.description,
+          instructions: test.instructions,
+          duration: test.duration,
+          passingScore: test.passingScore,
+          showResults: test.showResults,
         },
         questions: randomizedQuestions.map((q) => ({
           id: q.id,
@@ -394,9 +449,9 @@ export const startTestAttempt = async (
           options: q.options,
           order: q.order,
         })),
-        startTime: testAttempt.startTime,
-        endTime,
-        timeRemaining: test?.duration ? test.duration * 60 : null, // in seconds
+        startTime,
+        endTime: durationEndTime,
+        timeRemaining: test.duration ? test.duration * 60 : null, // in seconds
       },
     });
   } catch (error) {
@@ -415,31 +470,51 @@ export const submitAnswer = async (
     const { questionId, answerText, selectedOptions } = req.body;
     // @ts-ignore
     const userId = req.user?.id;
+    // @ts-ignore
+    const userRole = req.user?.role;
+    // @ts-ignore
+    const studentId = req.studentId;
 
-    // Validate test attempt
-    const testAttempt = await prisma.testAttempt.findFirst({
-      where: {
-        id: attemptId,
-        userId,
-      },
-      include: {
-        test: {
-          include: {
-            questions: {
-              where: { id: questionId },
-              include: {
-                options: true,
+    const isStudent = userRole === "STUDENT";
+
+    // 1. Fetch attempt and question
+    let testAttempt: any;
+    let questions: any[];
+
+    if (isStudent) {
+      testAttempt = await prisma.studentTestAttempt.findFirst({
+        where: { id: attemptId, studentId },
+        include: {
+          test: {
+            include: {
+              questions: {
+                where: { id: questionId },
+                include: { options: true },
               },
             },
           },
         },
-      },
-    });
+      });
+    } else {
+      testAttempt = await prisma.testAttempt.findFirst({
+        where: { id: attemptId, userId },
+        include: {
+          test: {
+            include: {
+              questions: {
+                where: { id: questionId },
+                include: { options: true },
+              },
+            },
+          },
+        },
+      });
+    }
 
     if (!testAttempt) {
       res.status(404).json({
         status: "error",
-        message: "Test attempt not found ",
+        message: "Test attempt not found",
       });
       return;
     } else if (testAttempt.status === "COMPLETED") {
@@ -459,91 +534,119 @@ export const submitAnswer = async (
       return;
     }
 
-    // Get the selected option texts
-    const selectedOptionTexts = question.options
-      .filter((opt) => selectedOptions?.includes(opt.id))
-      .map((opt) => opt.option);
-
-    // Check if answer already exists
-    const existingAnswer = await prisma.answer.findFirst({
-      where: {
-        testAttemptId: attemptId,
-        questionId,
-      },
-    });
-
+    // 2. Grade the answer
     let isCorrect = false;
     let points = 0;
 
-    // Auto-grade if possible
     if (question.type === "MULTIPLE_CHOICE" || question.type === "TRUE_FALSE") {
       const correctOptions = question.options
-        .filter((opt) => opt.isCorrect)
-        .map((opt) => opt.id);
+        .filter((opt: any) => opt.isCorrect)
+        .map((opt: any) => opt.id);
 
       const selected = Array.isArray(selectedOptions) ? selectedOptions : [];
 
-      // Check if all correct options are selected and no incorrect ones
       isCorrect =
         correctOptions.length === selected.length &&
-        correctOptions.every((optId) => selected.includes(optId));
+        correctOptions.every((optId: string) => selected.includes(optId));
 
       points = isCorrect ? question.points : 0;
     }
-    // For other question types, manual grading is required
 
-    // Create or update answer
-    const answer = await prisma.answer.upsert({
-      where: {
-        id: existingAnswer?.id || uuidv4(),
-      },
-      create: {
-        id: uuidv4(),
-        answerText: answerText || null,
-        selectedOptions: selectedOptions || [],
-        userAnswer: selectedOptionTexts || [],
-        isCorrect,
-        points,
-        testAttempt: {
-          connect: { id: attemptId },
-        },
-        question: {
-          connect: { id: questionId },
-        },
-      },
-      update: {
-        answerText: answerText || null,
-        selectedOptions: selectedOptions || [],
-        userAnswer: selectedOptionTexts || [],
-        isCorrect,
-        points,
-      },
-    });
+    // 3. Upsert answer and update attempt stats
+    const result = await prisma.$transaction(async (tx) => {
+      let savedAnswer;
 
-    // Update test attempt stats
-    const answers = await prisma.answer.findMany({
-      where: { testAttemptId: attemptId },
-    });
+      if (isStudent) {
+        // Find existing student answer
+        const existing = await tx.studentAnswer.findFirst({
+          where: { attemptId, questionId },
+        });
 
-    const correctAnswers = answers.filter((a) => a.isCorrect).length;
-    const totalPoints = answers.reduce((sum, a) => sum + (a.points || 0), 0);
+        savedAnswer = await tx.studentAnswer.upsert({
+          where: { id: existing?.id || uuidv4() },
+          create: {
+            id: uuidv4(),
+            attemptId,
+            questionId,
+            answerText: answerText || null,
+            selectedOptions: selectedOptions || [],
+            isCorrect,
+            points,
+          },
+          update: {
+            answerText: answerText || null,
+            selectedOptions: selectedOptions || [],
+            isCorrect,
+            points,
+          },
+        });
+      } else {
+        const selectedOptionTexts = question.options
+          .filter((opt: any) => selectedOptions?.includes(opt.id))
+          .map((opt: any) => opt.option);
 
-    await prisma.testAttempt.update({
-      where: { id: attemptId },
-      data: {
-        correctAnswers,
-        score: (totalPoints / testAttempt.totalQuestions) * 100,
-      },
+        const existing = await tx.answer.findFirst({
+          where: { testAttemptId: attemptId, questionId },
+        });
+
+        savedAnswer = await tx.answer.upsert({
+          where: { id: existing?.id || uuidv4() },
+          create: {
+            id: uuidv4(),
+            testAttemptId: attemptId,
+            questionId,
+            answerText: answerText || null,
+            selectedOptions: selectedOptions || [],
+            userAnswer: selectedOptionTexts || [],
+            isCorrect,
+            points,
+          },
+          update: {
+            answerText: answerText || null,
+            selectedOptions: selectedOptions || [],
+            userAnswer: selectedOptionTexts || [],
+            isCorrect,
+            points,
+          },
+        });
+      }
+
+      // Update test attempt stats
+      const allAnswers = isStudent
+        ? await tx.studentAnswer.findMany({ where: { attemptId } })
+        : await tx.answer.findMany({ where: { testAttemptId: attemptId } });
+
+      const correctAnswersCount = allAnswers.filter((a: any) => a.isCorrect).length;
+      const totalEarnedPoints = allAnswers.reduce((sum: number, a: any) => sum + (a.points || 0), 0);
+
+      const updateData = {
+        correctAnswers: correctAnswersCount,
+        score: (totalEarnedPoints / testAttempt.totalQuestions) * 100,
+      };
+
+      if (isStudent) {
+        await tx.studentTestAttempt.update({
+          where: { id: attemptId },
+          data: updateData,
+        });
+      } else {
+        await tx.testAttempt.update({
+          where: { id: attemptId },
+          data: updateData,
+        });
+      }
+
+      return { savedAnswer, correctAnswersCount, totalAnswered: allAnswers.length };
     });
 
     res.status(200).json({
       status: "success",
       data: {
-        answer,
+        answer: result.savedAnswer,
         isCorrect,
         points,
-        correctAnswers,
-        totalAnswered: answers.length,
+        correctAnswers: result.correctAnswersCount,
+        totalAnswered: result.totalAnswered,
         totalQuestions: testAttempt.totalQuestions,
       },
     });
@@ -562,38 +665,59 @@ export const submitTest = async (
     const { attemptId } = req.params;
     // @ts-ignore
     const userId = req.user?.id;
+    // @ts-ignore
+    const userRole = req.user?.role;
+    // @ts-ignore
+    const studentId = req.studentId;
+
+    const isStudent = userRole === "STUDENT";
+
     // 1. Validate test attempt
-    const testAttempt = await prisma.testAttempt.findFirst({
-      where: {
-        id: attemptId,
-        userId,
-      },
-      include: {
-        test: {
-          include: {
-            course: {
-              include: {
-                instructor: true,
+    let testAttempt: any;
+    if (isStudent) {
+      testAttempt = await prisma.studentTestAttempt.findFirst({
+        where: { id: attemptId, studentId },
+        include: {
+          test: {
+            include: {
+              course: {
+                include: { instructor: true },
               },
-            },
-            questions: {
-              include: {
-                options: true,
+              questions: {
+                include: { options: true },
               },
             },
           },
-        },
-        user: true,
-        answers: {
-          include: {
-            question: true,
+          student: true,
+          answers: {
+            include: { question: true },
           },
         },
-      },
-    });
+      });
+    } else {
+      testAttempt = await prisma.testAttempt.findFirst({
+        where: { id: attemptId, userId },
+        include: {
+          test: {
+            include: {
+              course: {
+                include: { instructor: true },
+              },
+              questions: {
+                include: { options: true },
+              },
+            },
+          },
+          user: true,
+          answers: {
+            include: { question: true },
+          },
+        },
+      });
+    }
 
     if (!testAttempt) {
-      throw new NotFoundError("Test attempt not found ");
+      throw new NotFoundError("Test attempt not found");
     }
 
     // 2. Calculate final score
@@ -608,10 +732,10 @@ export const submitTest = async (
     const totalQuestions = questions.length;
     const answeredQuestions = testAttempt.answers.length;
     const correctAnswers = testAttempt.answers.filter(
-      (a) => a.isCorrect
+      (a: any) => a.isCorrect
     ).length;
     const totalPoints = testAttempt.answers.reduce(
-      (sum, a) => sum + (a.points || 0),
+      (sum: number, a: any) => sum + (a.points || 0),
       0
     );
     const score = (totalPoints / totalScoreForQuestions) * 100;
@@ -619,21 +743,30 @@ export const submitTest = async (
 
     // 3. Update test attempt
     const now = new Date();
-    await prisma.testAttempt.update({
-      where: { id: attemptId },
-      data: {
-        endTime: now,
-        score,
-        isPassed,
-        status: "COMPLETED",
-        timeSpent: Math.floor(
-          (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
-        ), // in minutes
-      },
-    });
+    const updateData = {
+      endTime: now,
+      score,
+      isPassed,
+      status: "COMPLETED",
+      timeSpent: Math.floor(
+        (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
+      ), // in minutes
+    };
 
-    // 4. Update user progress (achievements = completed tests; recorded in UserCourseProgress.completedTests)
-    if (isPassed) {
+    if (isStudent) {
+      await prisma.studentTestAttempt.update({
+        where: { id: attemptId },
+        data: updateData,
+      });
+    } else {
+      await prisma.testAttempt.update({
+        where: { id: attemptId },
+        data: updateData,
+      });
+    }
+
+    // 4. Update user progress
+    if (isPassed && !isStudent) {
       await updateUserProgress(
         userId,
         testAttempt.test.courseId,
@@ -645,7 +778,8 @@ export const submitTest = async (
     if (testAttempt.test.type === "INTERVIEW" || testAttempt.test.type === "OPENENDED") {
       await sendTestResponseEmailNotification(
         testAttempt,
-        userId
+        isStudent ? studentId : userId,
+        isStudent
       );
     }
 
@@ -662,9 +796,7 @@ export const submitTest = async (
         correctAnswers,
         pointsEarned: totalPoints,
         totalPoints: totalScoreForQuestions,
-        timeSpent: Math.floor(
-          (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
-        ),
+        timeSpent: updateData.timeSpent,
         submittedAt: now.toISOString(),
       },
       message: "Test submitted successfully",
@@ -672,28 +804,42 @@ export const submitTest = async (
 
     // 7. Include detailed results if showResults is enabled
     if (testAttempt.test.showResults) {
-      const detailedAnswers = await prisma.answer.findMany({
-        where: { testAttemptId: attemptId },
-        include: {
-          question: {
-            include: {
-              options: {
-                where: { isCorrect: true },
-                select: { id: true, option: true },
+      const detailedAnswers = isStudent
+        ? await prisma.studentAnswer.findMany({
+          where: { attemptId },
+          include: {
+            question: {
+              include: {
+                options: {
+                  where: { isCorrect: true },
+                  select: { id: true, option: true },
+                },
               },
             },
           },
-        },
-      });
+        })
+        : await prisma.answer.findMany({
+          where: { testAttemptId: attemptId },
+          include: {
+            question: {
+              include: {
+                options: {
+                  where: { isCorrect: true },
+                  select: { id: true, option: true },
+                },
+              },
+            },
+          },
+        });
 
-      response.data.details = detailedAnswers.map((a) => ({
+      response.data.details = detailedAnswers.map((a: any) => ({
         questionId: a.questionId,
         question: a.question.question,
         type: a.question.type,
         isCorrect: a.isCorrect,
         points: a.points,
-        userAnswer: a.answerText || a.userAnswer,
-        correctAnswers: a.question.options.map((opt) => ({
+        userAnswer: a.answerText || (isStudent ? a.selectedOptions : a.userAnswer),
+        correctAnswers: a.question.options.map((opt: any) => ({
           id: opt.id,
           option: opt.option,
         })),
@@ -702,10 +848,11 @@ export const submitTest = async (
 
     // 8. Send notifications
     await sendTestCompletionNotification(
-      userId,
+      isStudent ? studentId : userId,
       testAttempt.test,
       isPassed,
-      score
+      score,
+      isStudent
     );
 
     res.status(200).json(response);
@@ -751,42 +898,45 @@ const sendTestCompletionNotification = async (
   userId: string,
   test: any,
   isPassed: boolean,
-  score: number
+  score: number,
+  isStudent: boolean = false
 ) => {
   try {
-    // Send notification to student
+    // Send notification to instructor
     await prisma.notification.create({
       data: {
         id: uuidv4(),
         userId: test.course.instructorId,
         type: "TEST_GRADED",
-        title: `Student completed test "${test.title}"`,
-        message: `A student has completed the test with ${score.toFixed(2)}%`,
+        title: `${isStudent ? "Student" : "User"} completed test "${test.title}"`,
+        message: `A ${isStudent ? "student" : "user"} has completed the test with ${score.toFixed(2)}%`,
         metadata: {
           testId: test.id,
-          studentId: userId,
+          [isStudent ? 'studentId' : 'userId']: userId,
           score,
           passed: isPassed,
           timestamp: new Date().toISOString(),
+          isStudent
         },
       },
     });
 
-    // Send notification to instructor if needed
+    // Send notification to instructor if explicitly needed (original logic)
     if (test.notifyInstructor) {
       await prisma.notification.create({
         data: {
           id: uuidv4(),
           userId: test.course.instructorId,
           type: "TEST_GRADED",
-          title: `Student completed test "${test.title}"`,
-          message: `A student has completed the test with ${score.toFixed(2)}%`,
+          title: `${isStudent ? "Student" : "User"} completed test "${test.title}"`,
+          message: `A ${isStudent ? "student" : "user"} has completed the test with ${score.toFixed(2)}%`,
           metadata: {
             testId: test.id,
-            studentId: userId,
+            [isStudent ? 'studentId' : 'userId']: userId,
             score,
             passed: isPassed,
             timestamp: new Date().toISOString(),
+            isStudent
           },
         },
       });
@@ -799,11 +949,12 @@ const sendTestCompletionNotification = async (
 // Send email notification for INTERVIEW and OPENENDED test responses
 const sendTestResponseEmailNotification = async (
   testAttempt: any,
-  userId: string
+  actorId: string,
+  isStudent: boolean = false
 ) => {
   try {
     const instructor = testAttempt.test.course.instructor;
-    const student = testAttempt.user;
+    const actor = isStudent ? testAttempt.student : testAttempt.user;
 
     if (!instructor || !instructor.email) {
       logger.warn(`No instructor email found for test ${testAttempt.test.title}`);
@@ -811,23 +962,23 @@ const sendTestResponseEmailNotification = async (
     }
 
     // Get all answers with questions
-    const answersWithQuestions = await prisma.answer.findMany({
-      where: { testAttemptId: testAttempt.id },
-      include: {
-        question: true,
-      },
-      orderBy: {
-        question: {
-          order: 'asc',
-        },
-      },
-    });
+    const answersWithQuestions = isStudent
+      ? await prisma.studentAnswer.findMany({
+        where: { attemptId: testAttempt.id },
+        include: { question: true },
+        orderBy: { question: { order: 'asc' } },
+      })
+      : await prisma.answer.findMany({
+        where: { testAttemptId: testAttempt.id },
+        include: { question: true },
+        orderBy: { question: { order: 'asc' } },
+      });
 
     // Format questions and responses for email
-    const questions = answersWithQuestions.map((answer) => ({
+    const questions = answersWithQuestions.map((answer: any) => ({
       question: answer.question.question,
       image: answer.question.image || undefined,
-      studentAnswer: answer.answerText || "No response provided",
+      studentAnswer: answer.answerText || (isStudent ? answer.selectedOptions.join(", ") : (answer.userAnswer?.join(", ") || "No response provided")),
       solution: answer.question.explanation || undefined,
       explanation: answer.question.explanation || undefined,
     }));
@@ -835,8 +986,8 @@ const sendTestResponseEmailNotification = async (
     // Send email
     await sendTestResponseEmail({
       instructorEmail: instructor.email,
-      studentName: `${student.firstName} ${student.lastName}`,
-      studentEmail: student.email,
+      studentName: `${actor.firstName} ${actor.lastName}`,
+      studentEmail: actor.email,
       testTitle: testAttempt.test.title,
       testType: testAttempt.test.type,
       submissionTime: testAttempt.endTime?.toISOString() || new Date().toISOString(),
@@ -848,7 +999,6 @@ const sendTestResponseEmailNotification = async (
     );
   } catch (error) {
     logger.error("Error sending test response email:", error);
-    // Don't throw - email failure shouldn't block test submission
   }
 };
 

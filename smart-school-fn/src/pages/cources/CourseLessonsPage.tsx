@@ -71,7 +71,8 @@ const CourseLessonsPage = () => {
   /** Check token for login modal */
   useEffect(() => {
     const localToken = localStorage.getItem("accessToken");
-    if (!localToken) setIsModalOpen(true);
+    const studentToken = localStorage.getItem("accessToken_student");
+    if (!localToken && !studentToken) setIsModalOpen(true);
   }, []);
 
   const handleClose = () => {
@@ -84,7 +85,7 @@ const CourseLessonsPage = () => {
   };
 
   const course = lessons[0]?.course;
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem("accessToken") || localStorage.getItem("accessToken_student");
 
   let decodedUser: any = null;
   if (token) {
@@ -97,13 +98,16 @@ const CourseLessonsPage = () => {
 
   /** Payment modal logic */
   useEffect(() => {
-    const storedUser = localStorage.getItem("user") || decodedUser;
+    const storedUser = localStorage.getItem("user") || localStorage.getItem("student") || decodedUser;
     if (storedUser) {
       const userData =
         typeof storedUser === "string" ? JSON.parse(storedUser) : storedUser;
 
-      const isRestricted =
-        userData.role !== "ADMIN" && userData.role !== "INSTRUCTOR";
+      // Skip payment for students or specific staff roles
+      const isStudent = !!localStorage.getItem("accessToken_student") || userData.actorType === "STUDENT";
+      const isStaffPriveleged = userData.role === "ADMIN" || userData.role === "INSTRUCTOR" || userData.role === "SUPER_ADMIN";
+
+      const isRestricted = !isStaffPriveleged && !isStudent;
 
       const requiresPayment = course?.type !== "free";
 

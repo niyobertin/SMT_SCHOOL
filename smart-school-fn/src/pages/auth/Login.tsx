@@ -20,23 +20,18 @@ import facebookLogo from "../../assets/facebook.png";
 type LoginType = "staff" | "student";
 
 const staffSchema = yup.object().shape({
-  identifier: yup.string().required("Email or phone is required"),
+  identifier: yup.string().required("Email is required"),
   password: yup.string().required("Password is required").min(6, "Password must be at least 6 characters"),
-  loginWithPhone: yup.boolean().required(),
-  selectedCountryCode: yup.string().required(),
 });
 
 const studentSchema = yup.object().shape({
   schoolCode: yup.string().required("School code is required"),
   studentId: yup.string().required("Student ID is required"),
-  password: yup.string().required("Password is required").min(4, "Password must be at least 4 characters"),
 });
 
 type FormData = {
   // Staff fields
   identifier?: string;
-  loginWithPhone?: boolean;
-  selectedCountryCode?: string;
   // Student fields
   schoolCode?: string;
   studentId?: string;
@@ -54,9 +49,6 @@ export const LoginPage = () => {
 
   const [loginType, setLoginType] = useState<LoginType>("staff");
   const [showPassword, setShowPassword] = useState(false);
-  const [showCountryCodeDropdown, setShowCountryCodeDropdown] = useState(false);
-  const [loginWithPhone, setLoginWithPhone] = useState(false);
-  const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
 
   const toast = useRef<Toast>(null);
 
@@ -71,8 +63,6 @@ export const LoginPage = () => {
       (loginType === "staff" ? staffSchema : studentSchema) as any
     ) as any,
     defaultValues: {
-      loginWithPhone: false,
-      selectedCountryCode: "+250",
       schoolCode: "",
       studentId: "",
     },
@@ -90,13 +80,6 @@ export const LoginPage = () => {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    if (loginType === "staff") {
-      setValue("loginWithPhone", loginWithPhone);
-      setValue("selectedCountryCode", selectedCountryCode);
-    }
-  }, [loginWithPhone, selectedCountryCode, setValue, loginType]);
-
   const handleToggleLoginType = (type: LoginType) => {
     setLoginType(type);
     reset(); // Clear form when switching
@@ -106,9 +89,7 @@ export const LoginPage = () => {
     try {
       if (loginType === "staff") {
         const loginData = {
-          identifier: data.loginWithPhone
-            ? `${data.selectedCountryCode}${data.identifier}`
-            : data.identifier!,
+          identifier: data.identifier!,
           password: data.password!,
         };
         const result = await dispatch(loginUser(loginData));
@@ -227,72 +208,15 @@ export const LoginPage = () => {
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     className="space-y-4 overflow-hidden"
                   >
-                    {/* Phone/Email Toggle for Staff */}
-                    <div className="flex p-0.5 bg-[#eeeeee] rounded-sm border border-gray-200">
-                      <button
-                        type="button"
-                        onClick={() => setLoginWithPhone(false)}
-                        className={`flex-1 py-1 rounded-sm text-xs transition-all ${!loginWithPhone ? "bg-white text-[#1a7ea5] shadow-sm font-bold" : "text-gray-400"}`}
-                      >
-                        Email
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setLoginWithPhone(true)}
-                        className={`flex-1 py-1 rounded-sm text-xs transition-all ${loginWithPhone ? "bg-white text-[#1a7ea5] shadow-sm font-bold" : "text-gray-400"}`}
-                      >
-                        Phone
-                      </button>
+                    <div>
+                      <input
+                        type="email"
+                        {...register("identifier")}
+                        placeholder="Email Address"
+                        className="w-full bg-[#f9fafb] border border-gray-200 rounded-lg py-2.5 px-4 text-gray-700 focus:ring-2 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
+                      />
+                      {errors.identifier && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.identifier.message}</p>}
                     </div>
-
-                    {!loginWithPhone ? (
-                      <div>
-                        <input
-                          type="email"
-                          {...register("identifier")}
-                          placeholder="Email Address"
-                          className="w-full bg-[#f9fafb] border border-gray-200 rounded-lg py-2.5 px-4 text-gray-700 focus:ring-2 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
-                        />
-                        {errors.identifier && <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.identifier.message}</p>}
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setShowCountryCodeDropdown(!showCountryCodeDropdown)}
-                            className="h-full px-3 bg-[#f9fafb] border border-gray-200 rounded-lg text-sm text-gray-500 flex items-center gap-1 min-w-[75px]"
-                          >
-                            {selectedCountryCode}
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
-                          {showCountryCodeDropdown && (
-                            <div className="absolute z-50 mt-1 w-40 bg-white border border-gray-100 shadow-2xl rounded-lg max-h-48 overflow-auto p-1">
-                              {countryCodes.map((country) => (
-                                <div
-                                  key={country.code}
-                                  className="px-3 py-2 text-xs text-gray-600 hover:bg-[#f3f4f6] hover:text-[#1a7ea5] cursor-pointer rounded-md"
-                                  onClick={() => {
-                                    setSelectedCountryCode(country.code);
-                                    setShowCountryCodeDropdown(false);
-                                  }}
-                                >
-                                  {country.code} <span className="text-gray-400 ml-1">{country.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <input
-                          type="tel"
-                          {...register("identifier")}
-                          placeholder="Phone Number"
-                          className="flex-1 bg-[#f9fafb] border border-gray-200 rounded-lg py-2.5 px-4 text-gray-700 focus:ring-2 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
-                        />
-                      </div>
-                    )}
                   </motion.div>
                 ) : (
                   <motion.div
@@ -326,7 +250,7 @@ export const LoginPage = () => {
               </AnimatePresence>
 
               <AnimatePresence>
-                {(loginType === "staff" || loginType === "student") && (
+                {loginType === "staff" && (
                   <motion.div
                     key="password-field"
                     initial={{ opacity: 0, height: 0 }}

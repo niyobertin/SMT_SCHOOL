@@ -33,7 +33,7 @@ textarea {
   border: 1px solid #e2e8f0;
   /* Default Slate-200 border */
   outline: none;
-  padding: 0.375rem 0.625rem;
+  padding: 0.5rem 0.75rem;
   transition: all 0.2s ease-in-out;
 }
 

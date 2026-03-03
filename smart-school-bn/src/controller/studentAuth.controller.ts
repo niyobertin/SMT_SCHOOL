@@ -7,10 +7,10 @@ export const studentAuthController = {
     try {
       const { schoolCode, studentId, password } = req.body;
 
-      if (!schoolCode || !studentId || !password) {
+      if (!schoolCode || !studentId) {
         return res.status(400).json({
           status: "error",
-          message: "schoolCode, studentId and password are required",
+          message: "schoolCode and studentId are required",
         });
       }
 

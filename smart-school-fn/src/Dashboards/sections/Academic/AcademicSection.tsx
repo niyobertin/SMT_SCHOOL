@@ -25,6 +25,7 @@ interface Student {
     status: string;
     class?: { id: string; name: string } | null;
     academicYear?: { id: string; year: string } | null;
+    school?: { id: string; name: string; code: string } | null;
     createdAt: string;
 }
 
@@ -169,6 +170,7 @@ export const AcademicSection = () => {
                                         <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">student</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">id</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">class</th>
+                                        <th className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">sch. code</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">year</th>
                                         <th className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">status</th>
                                         {isAdmin && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">actions</th>}
@@ -214,6 +216,7 @@ export const AcademicSection = () => {
                                                     </td>
                                                     <td className="px-5 py-4 font-mono text-xs font-bold text-[#1a7ea5]">{student.studentId}</td>
                                                     <td className="px-5 py-4 text-sm text-slate-500">{student.class?.name || "—"}</td>
+                                                    <td className="px-5 py-4 font-mono text-[10px] font-bold text-slate-400 uppercase tracking-tight">{student.school?.code || "—"}</td>
                                                     <td className="px-5 py-4 text-sm text-slate-500">{student.academicYear?.year || "—"}</td>
                                                     <td className="px-5 py-4 text-center">
                                                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${student.status === "ACTIVE" ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"}`}>

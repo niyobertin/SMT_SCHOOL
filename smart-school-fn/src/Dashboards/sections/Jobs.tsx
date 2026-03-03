@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../redux/api/api';
 import { Toast } from 'primereact/toast';
-import JoditEditor from 'jodit-react';
+import TipTapEditor from '../../components/common/TipTapEditor';
 import { CategoryModal } from '../Modals/CategoryModal';
 
 interface JobFormData {
@@ -39,7 +39,6 @@ export const JobBoard = () => {
     });
     const jobsPerPage = 10;
     const toast = useRef<Toast>(null);
-    const editor = useRef(null);
 
     // Add editing state
     const [isEditing, setIsEditing] = useState(false);
@@ -793,18 +792,13 @@ export const JobBoard = () => {
                                                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                                                     Job Description *
                                                 </label>
-                                                <JoditEditor
-                                                    ref={editor}
-                                                    value={formData.description}
-                                                    onBlur={(newContent: any) => {
+                                                <TipTapEditor
+                                                    content={formData.description}
+                                                    onChange={(newContent: string) => {
                                                         setFormData((prev: any) => ({ ...prev, description: newContent }));
                                                     }}
-                                                    config={{
-                                                        readonly: false,
-                                                        height: 300,
-                                                        placeholder: "Write your job description here...",
-                                                        toolbarAdaptive: false,
-                                                    }}
+                                                    placeholder="Write your job description here..."
+                                                    minHeight="300px"
                                                 />
                                             </div>
 

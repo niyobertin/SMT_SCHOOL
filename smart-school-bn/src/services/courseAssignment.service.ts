@@ -61,7 +61,7 @@ export const courseAssignmentService = {
                 schoolId,
                 OR: [
                     { studentId },
-                    { classId: classId || undefined },
+                    ...(classId ? [{ classId }] : []),
                 ],
             },
             include: {
@@ -75,9 +75,13 @@ export const courseAssignmentService = {
         });
 
         // Extract unique courses from assignments
-        const courses = assignments.map(a => a.course);
-        const uniqueCourses = Array.from(new Map(courses.map(c => [c.id, c])).values());
+        const coursesMap = new Map();
+        assignments.forEach(a => {
+            if (a.course && !coursesMap.has(a.course.id)) {
+                coursesMap.set(a.course.id, a.course);
+            }
+        });
 
-        return uniqueCourses;
+        return Array.from(coursesMap.values());
     }
 };

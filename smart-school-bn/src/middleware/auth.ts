@@ -15,9 +15,48 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId?: string; actorType?: string; studentId?: string; schoolId?: string };
+
+    if (decoded.actorType === 'STUDENT') {
+      const student = await prisma.student.findUnique({
+        where: { id: decoded.studentId },
+        include: { school: true }
+      });
+
+      if (!student || student.status !== 'ACTIVE') {
+        return res.status(401).json({
+          success: false,
+          message: 'Student account is inactive or not found'
+        });
+      }
+
+      //@ts-ignore
+      req.student = student;
+      //@ts-ignore
+      req.studentId = student.id;
+      //@ts-ignore
+      req.schoolId = student.schoolId;
+      //@ts-ignore
+      req.user = {
+        id: student.id,
+        role: 'STUDENT',
+        firstName: student.firstName,
+        lastName: student.lastName
+      };
+
+      return next();
+    }
+
+    if (!decoded.userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token payload: userId missing'
+      });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
+      // ... (rest of the select remains same)
       select: {
         id: true,
         email: true,
@@ -78,7 +117,26 @@ export const optionalAuthenticate = async (req: Request, res: Response, next: Ne
       return next();
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & { userId?: string; actorType?: string; studentId?: string };
+
+    if (decoded.actorType === 'STUDENT') {
+      const student = await prisma.student.findUnique({
+        where: { id: decoded.studentId }
+      });
+
+      if (student && student.status === 'ACTIVE') {
+        //@ts-ignore
+        req.student = student;
+        //@ts-ignore
+        req.studentId = student.id;
+        //@ts-ignore
+        req.user = { id: student.id, role: 'STUDENT' };
+      }
+      return next();
+    }
+
+    if (!decoded.userId) return next();
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -93,13 +151,10 @@ export const optionalAuthenticate = async (req: Request, res: Response, next: Ne
       }
     });
 
-    if (!user || !user.isActive) {
-      // invalid token, treat as guest
-      return next();
+    if (user && user.isActive) {
+      //@ts-ignore
+      req.user = user;
     }
-
-    //@ts-ignore
-    req.user = user;
     next();
   } catch (err) {
     // token invalid, just treat as guest
