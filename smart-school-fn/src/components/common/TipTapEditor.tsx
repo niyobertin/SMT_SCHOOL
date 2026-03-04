@@ -21,7 +21,6 @@ import {
     Italic,
     List,
     ListOrdered,
-    Quote,
     Undo,
     Redo,
     Code2,
@@ -46,7 +45,6 @@ import {
     Table as TableIcon,
     Trash2,
     PlusSquare,
-    Columns,
     Rows
 } from 'lucide-react';
 
@@ -209,7 +207,7 @@ const TipTapEditor = ({ content, onChange, placeholder = 'Start typing...', minH
     });
 
     if (editor && editor.getHTML() !== content) {
-        editor.commands.setContent(content || '', false);
+        editor.commands.setContent(content || '');
     }
 
     return (

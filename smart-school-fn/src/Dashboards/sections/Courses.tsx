@@ -11,6 +11,8 @@ import { Toast } from 'primereact/toast';
 import { Dialog } from 'primereact/dialog';
 import { fetchCategories, createCategory } from "../../redux/features/courses/category";
 import api from "../../redux/api/api";
+import { StatsCard } from "../StatsCard";
+import { CheckCircle2 } from "lucide-react";
 
 export const CoursesSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -263,6 +265,38 @@ export const CoursesSection = () => {
         )}
       </div>
 
+      {/* High-Level Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Total Tracks"
+          value={courses.length}
+          icon={BookOpen}
+          color="bg-blue-500"
+          change="Curriculum"
+        />
+        <StatsCard
+          title="Active Tracks"
+          value={courses.filter((c: any) => c.status === 'PUBLISHED').length}
+          icon={CheckCircle2}
+          color="bg-emerald-500"
+          change="Live"
+        />
+        <StatsCard
+          title="Segments"
+          value={categories.length}
+          icon={Layers}
+          color="bg-purple-500"
+          change="Categories"
+        />
+        <StatsCard
+          title="Total Lessons"
+          value={courses.reduce((acc: number, c: any) => acc + (c.lessons?.length || 0), 0)}
+          icon={Plus}
+          color="bg-amber-500"
+          change="Content"
+        />
+      </div>
+
       {/* Modern Tabs */}
       <div className="flex gap-2 p-1.5 bg-slate-100/50 rounded-xl w-fit border border-slate-100">
         <button
@@ -320,54 +354,53 @@ export const CoursesSection = () => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="group bg-white rounded-2xl p-2 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 overflow-hidden"
+                    className="group bg-white rounded-2xl p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-500 overflow-hidden"
                   >
-                    <div className="relative h-44 bg-slate-100 rounded-xl overflow-hidden">
+                    <div className="relative h-32 bg-slate-100 rounded-xl overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-[#1a7ea5]/20 to-transparent" />
-                      <div className="absolute top-4 left-4 flex gap-2">
-                        <span className="px-3 py-1.5 bg-white/80 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-900 shadow-sm">
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        <span className="px-2 py-1 bg-white/80 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-900 shadow-sm">
                           {course?.status}
                         </span>
-                        <span className="px-3 py-1.5 bg-[#1a7ea5] rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-sm">
+                        <span className="px-2 py-1 bg-[#1a7ea5] rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-sm">
                           {course?.type}
                         </span>
                       </div>
-                      {/* If thumbnail exists, use it here */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <BookOpen size={40} className="text-[#1a7ea5]/20" />
+                        <BookOpen size={32} className="text-[#1a7ea5]/20" />
                       </div>
                     </div>
 
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors">{course?.title}</h3>
-                      <p className="text-sm text-slate-500 font-medium mt-3 line-clamp-2 leading-relaxed">
+                    <div className="p-4">
+                      <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors line-clamp-1">{course?.title}</h3>
+                      <p className="text-xs text-slate-500 font-medium mt-2 line-clamp-1 leading-relaxed">
                         {course?.description || 'No detailed description provided for this track.'}
                       </p>
 
-                      <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
+                      <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
                         <button
                           onClick={() => handleViewCourse(course.id)}
-                          className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all"
                         >
-                          <Eye size={14} />
+                          <Eye size={12} />
                           {course?.lessons?.length || 0} Lessons
                         </button>
 
                         {isAdmin && (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => handleEditCourse(course.id)}
-                              className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl transition-all"
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-lg transition-all"
                               title="Edit"
                             >
-                              <Edit size={16} />
+                              <Edit size={14} />
                             </button>
                             <button
                               onClick={() => handleDeleteClick(course.id)}
-                              className="p-2 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 rounded-xl transition-all"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 rounded-lg transition-all"
                               title="Delete"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         )}

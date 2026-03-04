@@ -15,6 +15,7 @@ import { CourseAssignmentSection } from '../Dashboards/sections/Academic/CourseA
 import ExamAdminDashboard from '../pages/admin/ExamAdminDashboard';
 
 import { Assessments } from '../Dashboards/sections/Assessments';
+import { ActivityLogs } from '../Dashboards/sections/ActivityLogs';
 
 export const dashboardRoutes: RouteObject[] = [
   {
@@ -82,6 +83,10 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'exam-admin',
         element: <ExamAdminDashboard />,
+      },
+      {
+        path: 'activity-logs',
+        element: <ActivityLogs />,
       },
       {
         path: '*',

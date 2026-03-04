@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  Activity,
   LayoutDashboard,
   Users,
   CreditCard,
@@ -24,6 +25,7 @@ const sidebarItems = [
   { id: "attendance", label: "Attendance", icon: ListChecks, path: "/dashboard/attendance" },
   { id: "assignments", label: "Course Access", icon: Share2, path: "/dashboard/assignments" },
   { id: "assessments", label: "Assessments", icon: ClipboardCheck, path: "/dashboard/assessments" },
+  { id: "activity-logs", label: "Activity Logs", icon: Activity, path: "/dashboard/activity-logs" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
   { id: "home", label: "Home", icon: Home, path: "/" },
 ];
@@ -81,8 +83,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               .filter((item) => {
                 const userRole = localStorage.getItem("userRole") || "INSTRUCTOR";
                 const permissions: Record<string, string[]> = {
-                  SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "home"],
-                  ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "home"],
+                  SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "activity-logs", "home"],
+                  ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "activity-logs", "home"],
                   INSTRUCTOR: ["dashboard", "tests", "courses", "academic", "attendance", "assessments", "content", "home"],
                   EXAMINER: ["dashboard", "tests", "assessments", "home"],
                 };

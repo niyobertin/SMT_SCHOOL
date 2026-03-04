@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, Save, X, BookOpen, Award, ImagePlus, Upload, Clock, Trash, Loader2, Eye, ArrowLeft, FileQuestion, ChevronRight, Search, Layout, Settings, FileText, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Image as ImageIcon, Upload, Clock, Trash, Loader2, Eye, ArrowLeft, FileQuestion, ChevronRight, Search, Layout, Settings, FileText, CheckCircle2 } from 'lucide-react';
 import { fetchCourses } from "../../redux/features/courses/courseSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,7 +10,7 @@ import { Toast } from 'primereact/toast';
 import { ConfirmDeleteModal } from '../Modals/ConfirmDeleteModal';
 import api from '../../redux/api/api';
 import TipTapEditor from '../../components/common/TipTapEditor';
-
+import { StatsCard } from "../StatsCard";
 
 const TestQuestionManager = () => {
   const [currentTest, setCurrentTest] = useState<any | null>(null);
@@ -391,7 +391,38 @@ const TestQuestionManager = () => {
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">Test Management</h1>
           <p className="text-slate-500 font-medium mt-2 text-sm">Create and manage your courses tests.</p>
         </div>
+      </div>
 
+      {/* High-Level Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Course Contexts"
+          value={courses.length}
+          icon={Layout}
+          color="bg-indigo-500"
+          change="Available"
+        />
+        <StatsCard
+          title="Eval Modules"
+          value={tests.length}
+          icon={Award}
+          color="bg-[#1a7ea5]"
+          change="Active"
+        />
+        <StatsCard
+          title="Question Bank"
+          value={questions.length}
+          icon={FileQuestion}
+          color="bg-purple-500"
+          change="Repository"
+        />
+        <StatsCard
+          title="Avg Items"
+          value={tests.length > 0 ? Math.round(questions.length / tests.length) : 0}
+          icon={Settings}
+          color="bg-slate-500"
+          change="Density"
+        />
       </div>
 
       {/* Navigation Tabs */}
@@ -451,26 +482,26 @@ const TestQuestionManager = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="group relative bg-white border border-slate-100 rounded-[32px] p-2 shadow-[0_15px_50px_rgba(0,0,0,0.02)] hover:shadow-[0_25px_70px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-500 overflow-hidden"
+                  className="group relative bg-white border border-slate-100 rounded-[24px] p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_25px_70px_rgba(0,0,0,0.05)] hover:-translate_y_1 transition-all duration-500 overflow-hidden"
                 >
-                  <div className="p-6">
-                    <div className="w-12 h-12 bg-[#1a7ea5]/10 rounded-2xl flex items-center justify-center text-[#1a7ea5] mb-6 group-hover:scale-110 transition-transform duration-500">
-                      <BookOpen size={24} />
+                  <div className="p-4">
+                    <div className="w-10 h-10 bg-[#1a7ea5]/10 rounded-xl flex items-center justify-center text-[#1a7ea5] mb-4 group-hover:scale-110 transition-transform duration-500">
+                      <BookOpen size={20} />
                     </div>
-                    <h3 className="font-bold text-xl text-slate-900 mb-3 leading-tight">{course.title}</h3>
-                    <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-6">{course.description}</p>
+                    <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight line-clamp-1">{course.title}</h3>
+                    <p className="text-slate-500 text-xs font-medium line-clamp-1 mb-4">{course.description}</p>
 
-                    <div className="flex items-center gap-4 pt-6 border-t border-slate-50">
+                    <div className="flex items-center gap-4 pt-4 border-t border-slate-50">
                       <div className="flex-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Tests</span>
-                        <span className="text-lg font-bold text-slate-900">{course.tests?.length || 0}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Tests</span>
+                        <span className="text-base font-bold text-slate-900">{course.tests?.length || 0}</span>
                       </div>
                       <button
                         onClick={() => startCreatingTest(course.id)}
-                        className="w-10 h-10 bg-[#1a7ea5] text-white rounded-xl flex items-center justify-center hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all"
+                        className="w-8 h-8 bg-[#1a7ea5] text-white rounded-lg flex items-center justify-center hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all font-bold"
                         title="Quick Add Test"
                       >
-                        <Plus size={20} />
+                        <Plus size={16} />
                       </button>
                     </div>
                   </div>
@@ -483,9 +514,9 @@ const TestQuestionManager = () => {
                     className="absolute inset-0 bg-[#1a7ea5]/0 group-hover:bg-[#1a7ea5]/[0.02] cursor-pointer transition-colors"
                   />
 
-                  <div className="absolute right-6 top-6 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                    <div className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center text-[#1a7ea5] shadow-sm">
-                      <ChevronRight size={20} />
+                  <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                    <div className="w-8 h-8 bg-white border border-slate-100 rounded-full flex items-center justify-center text-[#1a7ea5] shadow-sm">
+                      <ChevronRight size={16} />
                     </div>
                   </div>
                 </motion.div>

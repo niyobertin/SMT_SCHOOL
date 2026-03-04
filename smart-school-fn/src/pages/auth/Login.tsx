@@ -11,7 +11,6 @@ import { Toast } from "primereact/toast";
 import { loginUser } from "../../redux/features/auth";
 import { studentLogin } from "../../redux/features/studentAuthActions";
 import useLanguage from "../../hooks/useLanguage";
-import { countryCodes } from "../../constants/countryCodes";
 import type { AppDispatch, RootState } from "../../redux/stores";
 
 import googleLogo from "../../assets/search.png";
@@ -55,7 +54,6 @@ export const LoginPage = () => {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
     reset,
   } = useForm<FormData>({
