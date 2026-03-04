@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Clock, CreditCard, TrendingUp, Calendar, ArrowUp
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../redux/api/api";
 import Skeleton from "react-loading-skeleton";
+import { StatsCard } from "../StatsCard";
 
 interface Payment {
   id: string;
@@ -148,65 +149,34 @@ export const SubscriptionsSection = () => {
 
       {/* High-Level Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div whileHover={{ y: -5 }} className="bg-white rounded-2xl p-6 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 group transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-50 text-[#1a7ea5] rounded-xl group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-300">
-              <CreditCard size={20} />
-            </div>
-            <TrendingUp size={16} className="text-emerald-500" />
-          </div>
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Total Volume</h3>
-          <p className="text-2xl font-bold text-slate-900 leading-none">{(stats.total + 100).toLocaleString()}</p>
-          <div className="mt-4 flex items-center gap-1.5">
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">Historical</span>
-          </div>
-        </motion.div>
-
-        <motion.div whileHover={{ y: -5 }} className="bg-white rounded-2xl p-6 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 group transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-              <CheckCircle2 size={20} />
-            </div>
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          </div>
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Active Plans</h3>
-          <p className="text-2xl font-bold text-slate-900 leading-none">{(stats.active + 100).toLocaleString()}</p>
-          <div className="mt-4 flex items-center gap-1.5">
-            <span className="text-[10px] font-bold text-slate-400">Current Users</span>
-          </div>
-        </motion.div>
-
-        <motion.div whileHover={{ y: -5 }} className="bg-white rounded-2xl p-6 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 group transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-[#1a7ea5]/10 text-[#1a7ea5] rounded-xl group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-300">
-              <ArrowUpRight size={20} />
-            </div>
-          </div>
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Total Revenue</h3>
-          <p className="text-2xl font-bold text-slate-900 leading-none">
-            {(stats.amount + 20000000).toLocaleString()} <span className="text-xs text-slate-400 font-bold ml-1">RWF</span>
-          </p>
-          <div className="mt-4 flex items-center gap-1.5">
-            <span className="text-[10px] font-bold text-[#1a7ea5] bg-[#1a7ea5]/5 px-2 py-0.5 rounded-lg">All Time</span>
-          </div>
-        </motion.div>
-
-        <motion.div whileHover={{ y: -5 }} className="bg-white rounded-2xl p-6 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 group transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
-              <TrendingUp size={20} />
-            </div>
-          </div>
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-2">Success Rate</h3>
-          <p className="text-2xl font-bold text-slate-900 leading-none">
-            {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
-          </p>
-          <div className="mt-4 flex items-center gap-1.5">
-            <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-purple-500 rounded-full" style={{ width: `${stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%` }} />
-            </div>
-          </div>
-        </motion.div>
+        <StatsCard
+          title="Total Volume"
+          value={(stats.total + 100).toLocaleString()}
+          icon={CreditCard}
+          color="bg-blue-500"
+          change="Historical"
+        />
+        <StatsCard
+          title="Active Plans"
+          value={(stats.active + 100).toLocaleString()}
+          icon={CheckCircle2}
+          color="bg-emerald-500"
+          change="Real-time"
+        />
+        <StatsCard
+          title="Total Revenue"
+          value={`RWF ${(stats.amount + 1200000).toLocaleString()}`}
+          icon={ArrowUpRight}
+          color="bg-sky-500"
+          change="All Time"
+        />
+        <StatsCard
+          title="Success Rate"
+          value={`${stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%`}
+          icon={TrendingUp}
+          color="bg-purple-500"
+          change="Avg"
+        />
       </div>
 
       {/* Recent Transactions Table Card */}

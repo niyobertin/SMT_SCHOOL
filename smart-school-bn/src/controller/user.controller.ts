@@ -128,7 +128,17 @@ export const getProfile = async (
       where: { id },
       include: {
         enrollments: true,
-        testAttempts: true
+        testAttempts: true,
+        userOrganizations: {
+          include: {
+            organization: true
+          }
+        },
+        schoolStaff: {
+          include: {
+            school: true
+          }
+        }
       },
     });
     if (!user) {
@@ -329,7 +339,12 @@ export const login = async (
         OR: [
           { email: userData.identifier },
           { phoneNumber: userData.identifier },
+          { username: userData.identifier },
         ],
+      },
+      include: {
+        userOrganizations: true,
+        schoolStaff: true
       },
     });
     if (!user) {

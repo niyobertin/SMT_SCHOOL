@@ -1,0 +1,276 @@
+
+> smart-school-fn@0.0.0 build
+> tsc -b && vite build
+
+src/components/common/TipTapEditor.tsx(24,5): error TS6133: 'Quote' is declared but its value is never read.
+src/components/common/TipTapEditor.tsx(49,5): error TS6133: 'Columns' is declared but its value is never read.
+src/components/common/TipTapEditor.tsx(212,51): error TS2559: Type 'false' has no properties in common with type 'SetContentOptions'.
+src/Dashboards/DashboardHome.tsx(2,71): error TS6133: 'ArrowUpRight' is declared but its value is never read.
+src/Dashboards/sections/ActivityLogs.tsx(2,27): error TS6133: 'User' is declared but its value is never read.
+src/Dashboards/sections/ActivityLogs.tsx(2,33): error TS6133: 'Shield' is declared but its value is never read.
+src/Dashboards/sections/ActivityLogs.tsx(2,41): error TS6133: 'Info' is declared but its value is never read.
+src/Dashboards/sections/ActivityLogs.tsx(2,47): error TS6133: 'Calendar' is declared but its value is never read.
+src/Dashboards/sections/Courses.tsx(2,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/Courses.tsx(3,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/Courses.tsx(4,1): error TS6133: 'useNavigate' is declared but its value is never read.
+src/Dashboards/sections/Courses.tsx(6,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/Courses.tsx(9,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/Courses.tsx(12,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/Courses.tsx(13,1): error TS6133: 'api' is declared but its value is never read.
+src/Dashboards/sections/Courses.tsx(25,19): error TS2552: Cannot find name 'toast'. Did you mean 'Toast'?
+src/Dashboards/sections/Courses.tsx(33,10): error TS2304: Cannot find name 'isAdmin'.
+src/Dashboards/sections/Courses.tsx(37,17): error TS2304: Cannot find name 'setEditingCourse'.
+src/Dashboards/sections/Courses.tsx(38,17): error TS2304: Cannot find name 'setIsModalOpen'.
+src/Dashboards/sections/Courses.tsx(53,18): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/Courses.tsx(60,18): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/Courses.tsx(61,17): error TS2304: Cannot find name 'CheckCircle2'.
+src/Dashboards/sections/Courses.tsx(67,18): error TS2304: Cannot find name 'categories'.
+src/Dashboards/sections/Courses.tsx(74,18): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/Courses.tsx(84,131): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/Courses.tsx(85,26): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/Courses.tsx(91,131): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/Courses.tsx(92,26): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/Courses.tsx(100,10): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/Courses.tsx(108,14): error TS2304: Cannot find name 'loading'.
+src/Dashboards/sections/Courses.tsx(114,17): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/Courses.tsx(121,18): error TS2304: Cannot find name 'isAdmin'.
+src/Dashboards/sections/Courses.tsx(123,36): error TS2304: Cannot find name 'setIsModalOpen'.
+src/Dashboards/sections/Courses.tsx(132,18): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/Courses.tsx(163,42): error TS2304: Cannot find name 'handleViewCourse'.
+src/Dashboards/sections/Courses.tsx(170,26): error TS2304: Cannot find name 'isAdmin'.
+src/Dashboards/sections/Courses.tsx(173,46): error TS2304: Cannot find name 'handleEditCourse'.
+src/Dashboards/sections/Courses.tsx(180,46): error TS2304: Cannot find name 'handleDeleteClick'.
+src/Dashboards/sections/Courses.tsx(196,14): error TS2304: Cannot find name 'totalPages'.
+src/Dashboards/sections/Courses.tsx(201,28): error TS2304: Cannot find name 'itemsPerPage'.
+src/Dashboards/sections/Courses.tsx(202,36): error TS2304: Cannot find name 'handleItemsPerPageChange'.
+src/Dashboards/sections/Courses.tsx(211,36): error TS2304: Cannot find name 'handlePageChange'.
+src/Dashboards/sections/Courses.tsx(211,53): error TS2304: Cannot find name 'page'.
+src/Dashboards/sections/Courses.tsx(212,31): error TS2304: Cannot find name 'page'.
+src/Dashboards/sections/Courses.tsx(218,55): error TS2304: Cannot find name 'totalPages'.
+src/Dashboards/sections/Courses.tsx(221,40): error TS2304: Cannot find name 'handlePageChange'.
+src/Dashboards/sections/Courses.tsx(222,92): error TS2304: Cannot find name 'page'.
+src/Dashboards/sections/Courses.tsx(227,22): error TS2304: Cannot find name 'totalPages'.
+src/Dashboards/sections/Courses.tsx(230,36): error TS2304: Cannot find name 'handlePageChange'.
+src/Dashboards/sections/Courses.tsx(230,53): error TS2304: Cannot find name 'page'.
+src/Dashboards/sections/Courses.tsx(231,31): error TS2304: Cannot find name 'page'.
+src/Dashboards/sections/Courses.tsx(231,40): error TS2304: Cannot find name 'totalPages'.
+src/Dashboards/sections/Courses.tsx(253,16): error TS2304: Cannot find name 'isAdmin'.
+src/Dashboards/sections/Courses.tsx(255,34): error TS2304: Cannot find name 'openModal'.
+src/Dashboards/sections/Courses.tsx(277,22): error TS2304: Cannot find name 'categories'.
+src/Dashboards/sections/Courses.tsx(277,38): error TS7006: Parameter 'category' implicitly has an 'any' type.
+src/Dashboards/sections/Courses.tsx(277,48): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/Dashboards/sections/Courses.tsx(293,30): error TS2304: Cannot find name 'truncateDescription'.
+src/Dashboards/sections/Courses.tsx(307,28): error TS2304: Cannot find name 'isAdmin'.
+src/Dashboards/sections/Courses.tsx(310,48): error TS2304: Cannot find name 'openModal'.
+src/Dashboards/sections/Courses.tsx(316,48): error TS2304: Cannot find name 'handleCategoryDeleteClick'.
+src/Dashboards/sections/Courses.tsx(333,80): error TS2304: Cannot find name 'categories'.
+src/Dashboards/sections/Courses.tsx(344,18): error TS2304: Cannot find name 'showDeleteDialog'.
+src/Dashboards/sections/Courses.tsx(344,40): error TS2304: Cannot find name 'courseToDelete'.
+src/Dashboards/sections/Courses.tsx(345,23): error TS2304: Cannot find name 'setShowDeleteDialog'.
+src/Dashboards/sections/Courses.tsx(346,20): error TS2304: Cannot find name 'confirmDelete'.
+src/Dashboards/sections/Courses.tsx(351,18): error TS2304: Cannot find name 'showDeleteDialog'.
+src/Dashboards/sections/Courses.tsx(351,40): error TS2304: Cannot find name 'categoryToDelete'.
+src/Dashboards/sections/Courses.tsx(352,23): error TS2304: Cannot find name 'setShowDeleteDialog'.
+src/Dashboards/sections/Courses.tsx(353,20): error TS2304: Cannot find name 'confirmDeleteCategory'.
+src/Dashboards/sections/Courses.tsx(357,8): error TS2304: Cannot find name 'isModalOpen'.
+src/Dashboards/sections/Courses.tsx(359,17): error TS2304: Cannot find name 'isModalOpen'.
+src/Dashboards/sections/Courses.tsx(361,13): error TS2304: Cannot find name 'setIsModalOpen'.
+src/Dashboards/sections/Courses.tsx(362,13): error TS2304: Cannot find name 'setEditingCourse'.
+src/Dashboards/sections/Courses.tsx(364,22): error TS2304: Cannot find name 'handleFormSuccess'.
+src/Dashboards/sections/Courses.tsx(365,19): error TS2304: Cannot find name 'editingCourse'.
+src/Dashboards/sections/Courses.tsx(370,8): error TS2304: Cannot find name 'showCategoryModal'.
+src/Dashboards/sections/Courses.tsx(378,30): error TS2304: Cannot find name 'setShowCategoryModal'.
+src/Dashboards/sections/Courses.tsx(400,26): error TS2304: Cannot find name 'newCategory'.
+src/Dashboards/sections/Courses.tsx(401,36): error TS2304: Cannot find name 'setNewCategory'.
+src/Dashboards/sections/Courses.tsx(401,52): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/Dashboards/sections/Courses.tsx(410,26): error TS2304: Cannot find name 'newCategory'.
+src/Dashboards/sections/Courses.tsx(411,36): error TS2304: Cannot find name 'setNewCategory'.
+src/Dashboards/sections/Courses.tsx(411,52): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/Dashboards/sections/Courses.tsx(417,82): error TS2304: Cannot find name 'newCategory'.
+src/Dashboards/sections/Courses.tsx(418,105): error TS2304: Cannot find name 'newCategory'.
+src/Dashboards/sections/Courses.tsx(422,28): error TS2304: Cannot find name 'newCategory'.
+src/Dashboards/sections/Courses.tsx(423,36): error TS2304: Cannot find name 'setNewCategory'.
+src/Dashboards/sections/Courses.tsx(423,52): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/Dashboards/sections/Courses.tsx(430,26): error TS2304: Cannot find name 'handleAddCategory'.
+src/Dashboards/sections/Courses.tsx(432,28): error TS2304: Cannot find name 'newCategory'.
+src/Dashboards/sections/Courses.tsx(432,48): error TS2304: Cannot find name 'categoriesLoading'.
+src/Dashboards/sections/Courses.tsx(434,18): error TS2304: Cannot find name 'categoriesLoading'.
+src/Dashboards/sections/Courses.tsx(434,56): error TS2304: Cannot find name 'editingCategory'.
+src/Dashboards/sections/TestQuestionManager.tsx(1,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/TestQuestionManager.tsx(2,56): error TS6133: 'ImagePlus' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(3,1): error TS6133: 'fetchCourses' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(4,1): error TS6133: 'fetchTestsByCourseId' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(5,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/TestQuestionManager.tsx(7,1): error TS6192: All imports in import declaration are unused.
+src/Dashboards/sections/TestQuestionManager.tsx(8,10): error TS6133: 'addQuestion' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(8,23): error TS6133: 'createTest' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(8,35): error TS6133: 'deleteQuestion' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(8,51): error TS6133: 'deleteTest' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(8,87): error TS6133: 'updateQuestion' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(8,103): error TS6133: 'updateTest' is declared but its value is never read.
+src/Dashboards/sections/TestQuestionManager.tsx(36,18): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/TestQuestionManager.tsx(43,18): error TS2304: Cannot find name 'tests'.
+src/Dashboards/sections/TestQuestionManager.tsx(50,18): error TS2304: Cannot find name 'questions'.
+src/Dashboards/sections/TestQuestionManager.tsx(57,18): error TS2304: Cannot find name 'tests'.
+src/Dashboards/sections/TestQuestionManager.tsx(57,48): error TS2304: Cannot find name 'questions'.
+src/Dashboards/sections/TestQuestionManager.tsx(57,67): error TS2304: Cannot find name 'tests'.
+src/Dashboards/sections/TestQuestionManager.tsx(75,39): error TS2304: Cannot find name 'selectedCourseId'.
+src/Dashboards/sections/TestQuestionManager.tsx(76,48): error TS2304: Cannot find name 'selectedTestId'.
+src/Dashboards/sections/TestQuestionManager.tsx(77,45): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(77,61): error TS2304: Cannot find name 'selectedCourseId'.
+src/Dashboards/sections/TestQuestionManager.tsx(78,15): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(80,109): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(83,41): error TS2304: Cannot find name 'selectedCourseId'.
+src/Dashboards/sections/TestQuestionManager.tsx(83,92): error TS2304: Cannot find name 'selectedTestId'.
+src/Dashboards/sections/TestQuestionManager.tsx(93,10): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(109,16): error TS2304: Cannot find name 'loading'.
+src/Dashboards/sections/TestQuestionManager.tsx(114,16): error TS2304: Cannot find name 'error'.
+src/Dashboards/sections/TestQuestionManager.tsx(114,120): error TS2304: Cannot find name 'error'.
+src/Dashboards/sections/TestQuestionManager.tsx(115,17): error TS2304: Cannot find name 'loading'.
+src/Dashboards/sections/TestQuestionManager.tsx(115,29): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/TestQuestionManager.tsx(115,49): error TS7006: Parameter 'course' implicitly has an 'any' type.
+src/Dashboards/sections/TestQuestionManager.tsx(115,57): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/Dashboards/sections/TestQuestionManager.tsx(136,40): error TS2304: Cannot find name 'startCreatingTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(147,23): error TS2304: Cannot find name 'setSelectedCourseId'.
+src/Dashboards/sections/TestQuestionManager.tsx(148,23): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(165,10): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(178,23): error TS2304: Cannot find name 'courses'.
+src/Dashboards/sections/TestQuestionManager.tsx(178,43): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/Dashboards/sections/TestQuestionManager.tsx(178,57): error TS2304: Cannot find name 'selectedCourseId'.
+src/Dashboards/sections/TestQuestionManager.tsx(184,23): error TS2304: Cannot find name 'selectedCourseId'.
+src/Dashboards/sections/TestQuestionManager.tsx(184,41): error TS2304: Cannot find name 'startCreatingTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(184,59): error TS2304: Cannot find name 'selectedCourseId'.
+src/Dashboards/sections/TestQuestionManager.tsx(185,24): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(194,14): error TS2304: Cannot find name 'testsLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(198,15): error TS2304: Cannot find name 'testsLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(213,24): error TS2304: Cannot find name 'tests'.
+src/Dashboards/sections/TestQuestionManager.tsx(213,35): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/Dashboards/sections/TestQuestionManager.tsx(213,41): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/Dashboards/sections/TestQuestionManager.tsx(263,35): error TS2304: Cannot find name 'setSelectedTestId'.
+src/Dashboards/sections/TestQuestionManager.tsx(264,35): error TS2304: Cannot find name 'setSelectedTestType'.
+src/Dashboards/sections/TestQuestionManager.tsx(265,35): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(274,35): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(275,35): error TS2304: Cannot find name 'setIsEditingTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(276,35): error TS2304: Cannot find name 'setSelectedTestId'.
+src/Dashboards/sections/TestQuestionManager.tsx(277,35): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(286,35): error TS2304: Cannot find name 'setTestToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(287,35): error TS2304: Cannot find name 'setShowDeleteModal'.
+src/Dashboards/sections/TestQuestionManager.tsx(298,24): error TS2304: Cannot find name 'tests'.
+src/Dashboards/sections/TestQuestionManager.tsx(319,10): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(328,34): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(337,26): error TS2304: Cannot find name 'startCreatingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(354,24): error TS2304: Cannot find name 'tests'.
+src/Dashboards/sections/TestQuestionManager.tsx(354,35): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/Dashboards/sections/TestQuestionManager.tsx(354,49): error TS2304: Cannot find name 'selectedTestId'.
+src/Dashboards/sections/TestQuestionManager.tsx(359,125): error TS2304: Cannot find name 'questions'.
+src/Dashboards/sections/TestQuestionManager.tsx(365,20): error TS2304: Cannot find name 'questionsLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(371,21): error TS2304: Cannot find name 'questionsLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(371,41): error TS2304: Cannot find name 'questions'.
+src/Dashboards/sections/TestQuestionManager.tsx(378,21): error TS2304: Cannot find name 'questionsLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(378,41): error TS2304: Cannot find name 'questions'.
+src/Dashboards/sections/TestQuestionManager.tsx(427,44): error TS2304: Cannot find name 'handleEditQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(434,31): error TS2304: Cannot find name 'setQuestionToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(435,31): error TS2304: Cannot find name 'setIsDeleteModalOpen'.
+src/Dashboards/sections/TestQuestionManager.tsx(452,12): error TS2304: Cannot find name 'isCreatingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(469,26): error TS2304: Cannot find name 'isEditingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(475,23): error TS2304: Cannot find name 'setIsCreatingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(476,23): error TS2304: Cannot find name 'setCurrentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(477,23): error TS2304: Cannot find name 'setIsEditingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(478,23): error TS2304: Cannot find name 'setQuestionToEditId'.
+src/Dashboards/sections/TestQuestionManager.tsx(511,58): error TS2304: Cannot find name 'setExcelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(515,32): error TS2304: Cannot find name 'excelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(515,45): error TS2304: Cannot find name 'excelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(515,74): error TS2304: Cannot find name 'excelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(515,116): error TS2304: Cannot find name 'excelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(519,40): error TS2304: Cannot find name 'excelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(519,53): error TS2304: Cannot find name 'uploading'.
+src/Dashboards/sections/TestQuestionManager.tsx(521,36): error TS2304: Cannot find name 'excelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(522,31): error TS2304: Cannot find name 'setUploading'.
+src/Dashboards/sections/TestQuestionManager.tsx(525,57): error TS2304: Cannot find name 'excelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(526,75): error TS2304: Cannot find name 'selectedTestId'.
+src/Dashboards/sections/TestQuestionManager.tsx(529,33): error TS2304: Cannot find name 'toast'.
+src/Dashboards/sections/TestQuestionManager.tsx(535,33): error TS2304: Cannot find name 'setExcelFile'.
+src/Dashboards/sections/TestQuestionManager.tsx(536,39): error TS2304: Cannot find name 'dispatch'.
+src/Dashboards/sections/TestQuestionManager.tsx(536,71): error TS2304: Cannot find name 'selectedTestId'.
+src/Dashboards/sections/TestQuestionManager.tsx(538,33): error TS2304: Cannot find name 'toast'.
+src/Dashboards/sections/TestQuestionManager.tsx(545,33): error TS2304: Cannot find name 'setUploading'.
+src/Dashboards/sections/TestQuestionManager.tsx(550,30): error TS2304: Cannot find name 'uploading'.
+src/Dashboards/sections/TestQuestionManager.tsx(561,40): error TS2304: Cannot find name 'currentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(562,62): error TS2304: Cannot find name 'setCurrentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(571,40): error TS2304: Cannot find name 'currentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(572,50): error TS2304: Cannot find name 'setCurrentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(583,40): error TS2304: Cannot find name 'currentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(584,50): error TS2304: Cannot find name 'setCurrentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(597,30): error TS2304: Cannot find name 'previewUrl'.
+src/Dashboards/sections/TestQuestionManager.tsx(598,41): error TS2304: Cannot find name 'previewUrl'.
+src/Dashboards/sections/TestQuestionManager.tsx(601,34): error TS2304: Cannot find name 'ImageIcon'.
+src/Dashboards/sections/TestQuestionManager.tsx(608,96): error TS2304: Cannot find name 'handleFileChange'.
+src/Dashboards/sections/TestQuestionManager.tsx(610,34): error TS2304: Cannot find name 'previewUrl'.
+src/Dashboards/sections/TestQuestionManager.tsx(617,27): error TS2304: Cannot find name 'selectedTestType'.
+src/Dashboards/sections/TestQuestionManager.tsx(617,66): error TS2304: Cannot find name 'selectedTestType'.
+src/Dashboards/sections/TestQuestionManager.tsx(617,100): error TS2304: Cannot find name 'selectedTestType'.
+src/Dashboards/sections/TestQuestionManager.tsx(628,40): error TS2304: Cannot find name 'currentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(629,62): error TS2304: Cannot find name 'setCurrentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(630,44): error TS2304: Cannot find name 'selectedTestType'.
+src/Dashboards/sections/TestQuestionManager.tsx(637,27): error TS2304: Cannot find name 'selectedTestType'.
+src/Dashboards/sections/TestQuestionManager.tsx(637,66): error TS2304: Cannot find name 'selectedTestType'.
+src/Dashboards/sections/TestQuestionManager.tsx(644,42): error TS2304: Cannot find name 'addOption'.
+src/Dashboards/sections/TestQuestionManager.tsx(653,33): error TS2304: Cannot find name 'currentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(662,56): error TS2304: Cannot find name 'updateOption'.
+src/Dashboards/sections/TestQuestionManager.tsx(669,54): error TS2304: Cannot find name 'updateOption'.
+src/Dashboards/sections/TestQuestionManager.tsx(674,39): error TS2304: Cannot find name 'currentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(676,56): error TS2304: Cannot find name 'removeOption'.
+src/Dashboards/sections/TestQuestionManager.tsx(701,23): error TS2304: Cannot find name 'setIsCreatingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(702,23): error TS2304: Cannot find name 'setCurrentQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(703,23): error TS2304: Cannot find name 'setIsEditingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(704,23): error TS2304: Cannot find name 'setQuestionToEditId'.
+src/Dashboards/sections/TestQuestionManager.tsx(711,30): error TS2304: Cannot find name 'saveQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(712,31): error TS2304: Cannot find name 'creatingQuestionLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(715,22): error TS2304: Cannot find name 'creatingQuestionLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(716,22): error TS2304: Cannot find name 'isEditingQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(724,10): error TS2304: Cannot find name 'activeTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(730,15): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(738,34): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(763,32): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(764,42): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(773,32): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(774,42): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(787,32): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(788,42): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(798,32): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(799,42): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(813,32): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(814,42): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(826,32): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(827,42): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(838,32): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(839,42): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(854,36): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(855,44): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(858,84): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(859,117): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(868,36): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(869,44): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(872,84): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(873,117): error TS2304: Cannot find name 'currentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(884,23): error TS2304: Cannot find name 'setCurrentTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(885,23): error TS2304: Cannot find name 'setActiveTab'.
+src/Dashboards/sections/TestQuestionManager.tsx(892,30): error TS2304: Cannot find name 'saveTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(893,31): error TS2304: Cannot find name 'creatingTestLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(896,22): error TS2304: Cannot find name 'creatingTestLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(908,10): error TS2304: Cannot find name 'showDeleteModal'.
+src/Dashboards/sections/TestQuestionManager.tsx(908,29): error TS2304: Cannot find name 'testToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(921,86): error TS2304: Cannot find name 'testToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(925,34): error TS2304: Cannot find name 'setShowDeleteModal'.
+src/Dashboards/sections/TestQuestionManager.tsx(931,28): error TS2304: Cannot find name 'handleDeleteTest'.
+src/Dashboards/sections/TestQuestionManager.tsx(943,17): error TS2304: Cannot find name 'isDeleteModalOpen'.
+src/Dashboards/sections/TestQuestionManager.tsx(944,24): error TS2304: Cannot find name 'setIsDeleteModalOpen'.
+src/Dashboards/sections/TestQuestionManager.tsx(946,15): error TS2304: Cannot find name 'questionToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(947,13): error TS2304: Cannot find name 'handleDeleteQuestion'.
+src/Dashboards/sections/TestQuestionManager.tsx(947,34): error TS2304: Cannot find name 'questionToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(948,13): error TS2304: Cannot find name 'setQuestionToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(952,54): error TS2304: Cannot find name 'questionToDelete'.
+src/Dashboards/sections/TestQuestionManager.tsx(953,18): error TS2304: Cannot find name 'deletingQuestionLoading'.
+src/Dashboards/sections/TestQuestionManager.tsx(956,19): error TS2304: Cannot find name 'toast'.
+src/pages/auth/Login.tsx(14,1): error TS6133: 'countryCodes' is declared but its value is never read.
+src/pages/auth/Login.tsx(58,5): error TS6133: 'setValue' is declared but its value is never read.

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit, Save, X, BookOpen, Award, ImagePlus, Upload, Clock, Trash, Loader2, Eye, ArrowLeft, FileQuestion, ChevronRight, Search, Layout, Settings, FileText, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, BookOpen, Award, Image as ImageIcon, Upload, Clock, Trash, Loader2, Eye, ArrowLeft, FileQuestion, ChevronRight, Search, Layout, Settings, FileText, CheckCircle2 } from 'lucide-react';
 import { fetchCourses } from "../../redux/features/courses/courseSlice";
 import { fetchTestsByCourseId } from "../../redux/features/test/testSlice";
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,7 +9,8 @@ import { addQuestion, createTest, deleteQuestion, deleteTest, fetchQuestionsByTe
 import { Toast } from 'primereact/toast';
 import { ConfirmDeleteModal } from '../Modals/ConfirmDeleteModal';
 import api from '../../redux/api/api';
-
+import TipTapEditor from '../../components/common/TipTapEditor';
+import { StatsCard } from "../StatsCard";
 
 const TestQuestionManager = () => {
   const [currentTest, setCurrentTest] = useState<any | null>(null);
@@ -387,23 +388,50 @@ const TestQuestionManager = () => {
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-gray-100">
         <div>
-          <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">Assessment Lab</h1>
-          <p className="text-slate-500 font-medium mt-3 text-sm">Design high-impact tests and evaluate candidate knowledge.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">Test Management</h1>
+          <p className="text-slate-500 font-medium mt-2 text-sm">Create and manage your courses tests.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Active Test Context: {currentTest?.title || 'None Selected'}</span>
-          </div>
-        </div>
+      </div>
+
+      {/* High-Level Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Course Contexts"
+          value={courses.length}
+          icon={Layout}
+          color="bg-indigo-500"
+          change="Available"
+        />
+        <StatsCard
+          title="Eval Modules"
+          value={tests.length}
+          icon={Award}
+          color="bg-[#1a7ea5]"
+          change="Active"
+        />
+        <StatsCard
+          title="Question Bank"
+          value={questions.length}
+          icon={FileQuestion}
+          color="bg-purple-500"
+          change="Repository"
+        />
+        <StatsCard
+          title="Avg Items"
+          value={tests.length > 0 ? Math.round(questions.length / tests.length) : 0}
+          icon={Settings}
+          color="bg-slate-500"
+          change="Density"
+        />
       </div>
 
       {/* Navigation Tabs */}
       <div className="bg-slate-100/50 p-1 rounded-xl inline-flex items-center gap-1 w-full lg:w-auto">
         {[
-          { key: 'courses', label: 'Curriculum', icon: Layout },
-          { key: 'tests', label: 'Assessments', icon: Award },
-          { key: 'test-questions', label: 'Question Bank', icon: FileQuestion },
-          { key: 'test-editor', label: 'Studio Editor', icon: Settings }
+          { key: 'courses', label: 'Courses', icon: Layout },
+          { key: 'tests', label: 'Tests', icon: Award },
+          { key: 'test-questions', label: 'Questions', icon: FileQuestion },
+          { key: 'test-editor', label: 'Editor', icon: Settings }
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -413,7 +441,7 @@ const TestQuestionManager = () => {
               if (key === 'test-editor' && !currentTest && !selectedCourseId) return;
               setActiveTab(key);
             }}
-            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === key
+            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === key
               ? 'bg-white text-[#1a7ea5] shadow-lg shadow-[#1a7ea5]/5 scale-[1.02]'
               : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
               } ${((key === 'tests' && !selectedCourseId) || (key === 'test-questions' && !selectedTestId)) ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -434,7 +462,7 @@ const TestQuestionManager = () => {
             className="space-y-8"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Select a Curriculum</h2>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Select a Course</h2>
               <div className="relative max-w-xs w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input type="text" placeholder="Search courses..." className="w-full pl-11 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all" />
@@ -454,26 +482,26 @@ const TestQuestionManager = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="group relative bg-white border border-slate-100 rounded-[32px] p-2 shadow-[0_15px_50px_rgba(0,0,0,0.02)] hover:shadow-[0_25px_70px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-500 overflow-hidden"
+                  className="group relative bg-white border border-slate-100 rounded-[24px] p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_25px_70px_rgba(0,0,0,0.05)] hover:-translate_y_1 transition-all duration-500 overflow-hidden"
                 >
-                  <div className="p-6">
-                    <div className="w-12 h-12 bg-[#1a7ea5]/10 rounded-2xl flex items-center justify-center text-[#1a7ea5] mb-6 group-hover:scale-110 transition-transform duration-500">
-                      <BookOpen size={24} />
+                  <div className="p-4">
+                    <div className="w-10 h-10 bg-[#1a7ea5]/10 rounded-xl flex items-center justify-center text-[#1a7ea5] mb-4 group-hover:scale-110 transition-transform duration-500">
+                      <BookOpen size={20} />
                     </div>
-                    <h3 className="font-black text-xl text-slate-900 mb-3 leading-tight">{course.title}</h3>
-                    <p className="text-slate-500 text-sm font-medium line-clamp-2 mb-6">{course.description}</p>
+                    <h3 className="font-bold text-lg text-slate-900 mb-1 leading-tight line-clamp-1">{course.title}</h3>
+                    <p className="text-slate-500 text-xs font-medium line-clamp-1 mb-4">{course.description}</p>
 
-                    <div className="flex items-center gap-4 pt-6 border-t border-slate-50">
+                    <div className="flex items-center gap-4 pt-4 border-t border-slate-50">
                       <div className="flex-1">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Assessments</span>
-                        <span className="text-lg font-black text-slate-900">{course.tests?.length || 0}</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Tests</span>
+                        <span className="text-base font-bold text-slate-900">{course.tests?.length || 0}</span>
                       </div>
                       <button
                         onClick={() => startCreatingTest(course.id)}
-                        className="w-10 h-10 bg-[#1a7ea5] text-white rounded-xl flex items-center justify-center hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all"
+                        className="w-8 h-8 bg-[#1a7ea5] text-white rounded-lg flex items-center justify-center hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all font-bold"
                         title="Quick Add Test"
                       >
-                        <Plus size={20} />
+                        <Plus size={16} />
                       </button>
                     </div>
                   </div>
@@ -486,9 +514,9 @@ const TestQuestionManager = () => {
                     className="absolute inset-0 bg-[#1a7ea5]/0 group-hover:bg-[#1a7ea5]/[0.02] cursor-pointer transition-colors"
                   />
 
-                  <div className="absolute right-6 top-6 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                    <div className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center text-[#1a7ea5] shadow-sm">
-                      <ChevronRight size={20} />
+                  <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                    <div className="w-8 h-8 bg-white border border-slate-100 rounded-full flex items-center justify-center text-[#1a7ea5] shadow-sm">
+                      <ChevronRight size={16} />
                     </div>
                   </div>
                 </motion.div>
@@ -507,11 +535,11 @@ const TestQuestionManager = () => {
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Assessments Pipeline</h2>
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Tests</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs font-bold text-slate-500">Filtered by:</span>
                   <span className="px-3 py-1 bg-white border border-slate-100 rounded-lg text-[10px] font-bold tracking-widest text-[#1a7ea5] uppercase">
-                    {(courses || []).find(c => c.id === selectedCourseId)?.title || 'All Projects'}
+                    {(courses || []).find(c => c.id === selectedCourseId)?.title || 'All Courses'}
                   </span>
                 </div>
               </div>
@@ -523,7 +551,7 @@ const TestQuestionManager = () => {
                 className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all shrink-0"
               >
                 <Plus size={16} />
-                New Assessment
+                New Test
               </button>
             </div>
 
@@ -537,7 +565,7 @@ const TestQuestionManager = () => {
                   <table className="min-w-full text-left">
                     <thead>
                       <tr className="border-b border-slate-50">
-                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assessment Title</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Test Title</th>
                         <th className="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Type</th>
                         <th className="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Metrics</th>
                         <th className="px-5 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Duration</th>
@@ -566,7 +594,7 @@ const TestQuestionManager = () => {
                             </div>
                           </td>
                           <td className="px-6 py-6">
-                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest uppercase ${test.type === 'PSYCHOMETRIC' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
+                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-widest uppercase ${test.type === 'PSYCHOMETRIC' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
                               test.type === 'INTERVIEW' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
                                 test.type === 'OPENENDED' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
                                   'bg-slate-50 text-slate-600 border border-slate-100'
@@ -665,9 +693,9 @@ const TestQuestionManager = () => {
                   className="flex items-center gap-2 text-[#1a7ea5] mb-2 hover:-translate-x-1 transition-transform"
                 >
                   <ArrowLeft size={16} />
-                  <span className="text-[10px] font-black uppercase tracking-widest leading-none pt-0.5">Back to Assessments</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest leading-none pt-0.5">Back to Tests</span>
                 </button>
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Question Portfolio</h2>
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Questions</h2>
               </div>
               <button
                 onClick={startCreatingQuestion}
@@ -681,18 +709,18 @@ const TestQuestionManager = () => {
             <div className="bg-white rounded-2xl shadow-[0_30px_80px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600">
                     <FileQuestion size={24} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#1a7ea5]">Deployment Context</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Selected Test</span>
                     <h3 className="text-base font-bold text-slate-900 leading-none mt-1">
                       {tests.find(t => t.id === selectedTestId)?.title || 'Selected Module'}
                     </h3>
                   </div>
                 </div>
                 <div className="px-4 py-2 bg-slate-50 rounded-xl">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Questions: {questions.length}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Questions: {questions.length}</span>
                 </div>
               </div>
 
@@ -722,14 +750,14 @@ const TestQuestionManager = () => {
                       <div className="flex justify-between items-start gap-6">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-3">
-                            <span className="w-8 h-8 rounded-lg bg-[#1a7ea5]/5 flex items-center justify-center text-[#1a7ea5] font-black text-xs">
+                            <span className="w-8 h-8 rounded-lg bg-[#1a7ea5]/5 flex items-center justify-center text-[#1a7ea5] font-bold text-xs">
                               {index + 1}
                             </span>
-                            <span className="px-2.5 py-1 bg-slate-50 rounded-lg text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <span className="px-2.5 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                               {question.type}
                             </span>
-                            <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 rounded-lg text-[10px] font-black text-amber-600 uppercase tracking-widest">
-                              <Award size={10} />
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-widest border border-slate-100">
+                              <Award size={10} className="text-slate-400" />
                               <span>{question.points} PTS</span>
                             </div>
                           </div>
@@ -747,7 +775,7 @@ const TestQuestionManager = () => {
                               <div
                                 key={idx}
                                 className={`flex items-center gap-3 p-3 rounded-xl border text-sm transition-all ${option.isCorrect
-                                  ? 'bg-emerald-50 border-emerald-100 text-emerald-700 font-bold'
+                                  ? 'bg-emerald-50 border-emerald-100 text-emerald-700 font-medium'
                                   : 'bg-slate-50/50 border-slate-100 text-slate-500'
                                   }`}
                               >
@@ -786,23 +814,23 @@ const TestQuestionManager = () => {
         {/* Question Creator Modal */}
         <AnimatePresence>
           {isCreatingQuestion && (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 md:p-8">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[110] p-2 md:p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="bg-white rounded-2xl shadow-[0_50px_100px_rgba(0,0,0,0.1)] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative"
+                className="bg-white rounded-2xl shadow-[0_50px_100px_rgba(0,0,0,0.1)] w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col relative"
               >
                 {/* Modal Header */}
-                <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#1a7ea5] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#1a7ea5]/20">
-                      <FileQuestion size={24} />
+                    <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white">
+                      <FileQuestion size={20} />
                     </div>
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[#1a7ea5]">Design Studio</span>
-                      <h3 className="text-xl font-black text-slate-900 leading-none mt-1">
-                        {isEditingQuestion ? 'Modify Question' : 'Architect Question'}
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Editor</span>
+                      <h3 className="text-lg font-bold text-slate-900 leading-none mt-1">
+                        {isEditingQuestion ? 'Edit Question' : 'Create Question'}
                       </h3>
                     </div>
                   </div>
@@ -813,28 +841,28 @@ const TestQuestionManager = () => {
                       setIsEditingQuestion(false);
                       setQuestionToEditId(null);
                     }}
-                    className="w-10 h-10 bg-white border border-slate-100 text-slate-400 hover:text-slate-600 rounded-full flex items-center justify-center transition-all hover:rotate-90"
+                    className="w-10 h-10 bg-white border border-slate-100 text-slate-400 hover:text-slate-600 rounded-xl flex items-center justify-center transition-all hover:bg-slate-50"
                   >
                     <X size={20} />
                   </button>
                 </div>
 
                 {/* Scrollable Content Area */}
-                <div className="overflow-y-auto px-6 py-6 flex-1 custom-scrollbar space-y-10">
+                <div className="overflow-y-auto px-6 py-6 flex-1 custom-scrollbar space-y-6">
                   {/* Grid Layout for Meta and Content */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                     {/* Left Column: Core Data */}
-                    <div className="lg:col-span-12 space-y-8">
-                      {/* Bulk Upload Strip */}
-                      <div className="bg-emerald-50/50 rounded-[32px] border border-emerald-100/50 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="lg:col-span-12 space-y-6">
+                      {/* Excel Upload Strip */}
+                      <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                            <Upload size={18} />
+                          <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center text-slate-600">
+                            <Upload size={16} />
                           </div>
                           <div>
-                            <h4 className="text-sm font-black text-emerald-900 uppercase tracking-tight">Bulk Precision Upload</h4>
-                            <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mt-0.5">Import from Excel Schema</p>
+                            <h4 className="text-sm font-bold text-slate-900 tracking-tight">Excel Upload</h4>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Import questions from file</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -847,8 +875,8 @@ const TestQuestionManager = () => {
                                 if (e.target.files?.[0]) setExcelFile(e.target.files[0]);
                               }}
                             />
-                            <div className="px-6 py-3 bg-white border border-emerald-100 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest group-hover:bg-emerald-500 group-hover:text-white transition-all text-center">
-                              {excelFile ? excelFile.name : 'Select Workbook'}
+                            <div className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-widest group-hover:bg-slate-50 transition-all text-center">
+                              {excelFile ? (excelFile.name.length > 20 ? excelFile.name.substring(0, 17) + '...' : excelFile.name) : 'Select File'}
                             </div>
                           </label>
                           <button
@@ -881,144 +909,122 @@ const TestQuestionManager = () => {
                                 setUploading(false);
                               }
                             }}
-                            className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-30"
+                            className="px-6 py-2 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-30"
                           >
-                            {uploading ? <Loader2 size={14} className="animate-spin" /> : 'Execute Import'}
+                            {uploading ? <Loader2 size={14} className="animate-spin" /> : 'Import'}
                           </button>
                         </div>
                       </div>
 
                       {/* Main Question Editor */}
                       <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <div className="md:col-span-2">
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Question Content *</label>
-                            <textarea
-                              value={currentQuestion?.question}
-                              onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, question: e.target.value }))}
-                              className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all resize-none shadow-sm"
-                              placeholder="Draft the core question prompt..."
-                              rows={4}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div className="md:col-span-3">
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Question *</label>
+                            <TipTapEditor
+                              content={currentQuestion?.question || ''}
+                              onChange={(content: string) => setCurrentQuestion((prev: any) => ({ ...prev, question: content }))}
+                              placeholder="Type your question here..."
+                              minHeight="120px"
                             />
                           </div>
-                          <div className="space-y-6">
+                          <div className="space-y-4">
                             <div>
-                              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Complexity / Type</label>
+                              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Type</label>
                               <select
                                 value={currentQuestion?.type}
                                 onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, type: e.target.value }))}
-                                className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all appearance-none cursor-pointer shadow-sm"
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-4 focus:ring-slate-400/5 transition-all shadow-sm"
                               >
                                 <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
                                 <option value="TRUE_FALSE">TRUE / FALSE</option>
                               </select>
                             </div>
                             <div>
-                              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">Knowledge Weight (PTS)</label>
-                              <div className="relative">
-                                <Award className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                <input
-                                  type="number"
-                                  value={currentQuestion?.points}
-                                  onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, points: parseInt(e.target.value) }))}
-                                  className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
-                                  placeholder="0"
-                                  min="0"
-                                />
-                              </div>
+                              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Points</label>
+                              <input
+                                type="number"
+                                value={currentQuestion?.points}
+                                onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, points: parseInt(e.target.value) }))}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-4 focus:ring-slate-400/5 transition-all shadow-sm"
+                                placeholder="0"
+                                min="0"
+                              />
                             </div>
                           </div>
                         </div>
 
                         {/* Media Asset Section */}
-                        <div className="bg-slate-50/50 rounded-[32px] p-6 border border-dashed border-slate-200">
-                          <div className="flex items-center gap-2 mb-4">
-                            <ImagePlus size={16} className="text-slate-400" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Supporting Media (Optional)</span>
+                        {/* Compact Image Section */}
+                        <div className="bg-slate-50/50 rounded-xl p-3 border border-dashed border-slate-200 flex items-center gap-4">
+                          <div className="w-16 h-12 bg-white rounded-lg border border-slate-100 overflow-hidden relative group">
+                            {previewUrl ? (
+                              <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                <ImageIcon size={20} />
+                              </div>
+                            )}
                           </div>
-                          <div className="flex flex-col md:flex-row gap-6 items-center">
-                            <div className="w-full md:w-48 h-32 bg-white rounded-2xl border border-slate-100 overflow-hidden relative group">
-                              {previewUrl ? (
-                                <>
-                                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                                  <button
-                                    onClick={() => setPreviewUrl(null)}
-                                    className="absolute top-2 right-2 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center scale-0 group-hover:scale-100 transition-transform shadow-lg"
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                </>
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-200">
-                                  <ImagePlus size={32} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 space-y-4 w-full">
-                              <p className="text-xs text-slate-500 font-medium">Attach an image to provide visual context for this question. Supported formats: JPG, PNG (Max 5MB).</p>
-                              <label className="inline-block relative cursor-pointer group">
-                                <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                                <div className="px-6 py-3 bg-[#1a7ea5] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all">
-                                  {previewUrl ? 'Replace Asset' : 'Inject Image'}
-                                </div>
-                              </label>
-                            </div>
+                          <div className="flex-1 flex items-center justify-between">
+                            <span className="text-[10px] font-medium text-slate-500">Add context image (Max 5MB)</span>
+                            <label className="cursor-pointer">
+                              <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                              <div className="px-4 py-1.5 bg-slate-900 text-white rounded-lg font-bold text-[10px] uppercase tracking-widest">
+                                {previewUrl ? 'Replace' : 'Add Image'}
+                              </div>
+                            </label>
                           </div>
                         </div>
 
                         {/* Reasoning / Explanation */}
                         {(selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL' || selectedTestType === 'INTERVIEW') && (
-                          <div className="bg-amber-50/30 rounded-[32px] p-8 border border-amber-100/50">
-                            <div className="flex items-center gap-3 mb-6">
-                              <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-amber-500/10">
-                                <Settings size={18} />
+                          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center text-slate-600">
+                                <Settings size={16} />
                               </div>
-                              <div>
-                                <h4 className="text-sm font-black text-amber-900 uppercase tracking-tight">
-                                  {selectedTestType === 'INTERVIEW' ? 'Proprietary Solution' : 'Pedagogical Reasoning'}
-                                </h4>
-                                <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-0.5">Visible post-assessment feedback</p>
-                              </div>
+                              <h4 className="text-sm font-bold text-slate-900 tracking-tight">
+                                Explanation
+                              </h4>
                             </div>
-                            <textarea
-                              value={currentQuestion?.explanation}
-                              onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, explanation: e.target.value }))}
-                              className="w-full px-6 py-4 bg-white border border-amber-100/50 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-amber-500/5 transition-all resize-none"
-                              placeholder={selectedTestType === 'INTERVIEW' ? "Define the expected ideal response..." : "Elaborate on why the correct answer is valid..."}
-                              rows={3}
+                            <TipTapEditor
+                              content={currentQuestion?.explanation || ''}
+                              onChange={(content: string) => setCurrentQuestion((prev: any) => ({ ...prev, explanation: content }))}
+                              placeholder={selectedTestType === 'INTERVIEW' ? "Ideal response..." : "Explanation..."}
+                              minHeight="80px"
                             />
                           </div>
                         )}
 
                         {/* Options System for Choice-based tests */}
                         {(selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') && (
-                          <div className="space-y-6">
+                          <div className="space-y-4">
                             <div className="flex items-center justify-between px-2">
-                              <div className="flex items-center gap-3">
-                                <div className="w-1.5 h-6 bg-[#1a7ea5] rounded-full" />
-                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest">Logic Options</h4>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest">Options</h4>
                               </div>
                               <button
                                 onClick={addOption}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:opacity-90 shadow-lg shadow-slate-900/10 transition-all"
+                                className="flex items-center gap-2 px-4 py-1.5 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm"
                               >
-                                <Plus size={14} />
-                                Extend Set
+                                <Plus size={12} />
+                                Add
                               </button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {(currentQuestion?.options || []).map((option: any, index: number) => (
-                                <div key={index} className="group relative bg-white border border-slate-100 rounded-[24px] p-2 pr-12 shadow-sm hover:shadow-md transition-all">
+                                <div key={index} className="group relative bg-white border border-slate-100 rounded-xl p-2 pr-12 shadow-sm hover:shadow-md transition-all">
                                   <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs transition-colors ${option.isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-colors ${option.isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                       {String.fromCharCode(65 + index)}
                                     </div>
                                     <input
                                       type="text"
                                       value={option.option}
                                       onChange={(e) => updateOption(index, 'option', e.target.value)}
-                                      className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none transition-all shadow-sm"
+                                      className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-700 outline-none transition-all"
                                       placeholder={`Option ${String.fromCharCode(65 + index)}...`}
                                     />
                                   </div>
@@ -1049,10 +1055,10 @@ const TestQuestionManager = () => {
                 </div>
 
                 {/* Modal Footer */}
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-50 flex justify-end gap-3 items-center">
+                <div className="px-6 py-4 bg-white border-t border-slate-100 flex justify-end gap-3 items-center">
                   <div className="hidden md:flex items-center gap-2 mr-auto">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Validation Active</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Values autosaved</span>
                   </div>
                   <button
                     onClick={() => {
@@ -1061,24 +1067,24 @@ const TestQuestionManager = () => {
                       setIsEditingQuestion(false);
                       setQuestionToEditId(null);
                     }}
-                    className="px-8 py-3.5 bg-white border border-slate-100 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:text-slate-600 transition-all font-black"
+                    className="px-6 py-2 bg-white border border-slate-100 text-slate-400 rounded-xl font-bold text-xs uppercase tracking-widest hover:text-slate-600 hover:bg-slate-50 transition-all"
                   >
-                    Abort
+                    Cancel
                   </button>
                   <button
                     onClick={saveQuestion}
                     disabled={creatingQuestionLoading}
-                    className="flex items-center gap-2 px-10 py-3.5 bg-[#1a7ea5] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-8 py-2 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
                   >
                     {creatingQuestionLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                    {isEditingQuestion ? 'Update Schematic' : 'Commit Question'}
+                    {isEditingQuestion ? 'Save' : 'Save Question'}
                   </button>
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
-        {/* Test Editor Tab (Studio Editor) */}
+        {/* Test Editor Tab (Editor) */}
         {activeTab === 'test-editor' && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
@@ -1090,13 +1096,13 @@ const TestQuestionManager = () => {
                 <div className="w-20 h-20 bg-white rounded-[32px] flex items-center justify-center text-slate-300 shadow-sm mb-6">
                   <Settings size={40} />
                 </div>
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">No Active Session</h3>
-                <p className="text-slate-400 font-medium mt-2 mb-8">Select a curriculum to initialize the studio editor.</p>
+                <h3 className="text-xl font-bold text-slate-900 tracking-tight">No Active Session</h3>
+                <p className="text-slate-400 font-medium mt-2 mb-8">Select a course to initialize the editor.</p>
                 <button
                   onClick={() => setActiveTab('courses')}
-                  className="px-8 py-3.5 bg-[#1a7ea5] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all"
+                  className="px-8 py-3.5 bg-[#1a7ea5] text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all"
                 >
-                  Browse Curriculum
+                  Browse Courses
                 </button>
               </div>
             ) : (
@@ -1104,18 +1110,18 @@ const TestQuestionManager = () => {
                 {/* Configuration Card */}
                 <div className="bg-white rounded-2xl shadow-[0_30px_80px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
                   <div className="p-8 border-b border-slate-50 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600">
+                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600">
                       <Settings size={22} />
                     </div>
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Global Configuration</span>
-                      <h3 className="text-base font-black text-slate-900 leading-none mt-1">Assessment Parameters</h3>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Test Configuration</span>
+                      <h3 className="text-base font-bold text-slate-900 leading-none mt-1">Test Parameters</h3>
                     </div>
                   </div>
 
                   <div className="p-10 grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-2">
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Assessment Identity *</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">Test Title *</label>
                       <input
                         type="text"
                         value={currentTest.title}
@@ -1126,7 +1132,7 @@ const TestQuestionManager = () => {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Classification</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">Category</label>
                       <select
                         value={currentTest.type || ''}
                         onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, type: e.target.value }))}
@@ -1140,31 +1146,31 @@ const TestQuestionManager = () => {
                     </div>
 
                     <div className="md:col-span-3">
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Project Objective</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">Test Description</label>
                       <textarea
                         value={currentTest.description}
                         onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, description: e.target.value }))}
                         className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all resize-none shadow-sm"
-                        placeholder="Describe the core objectives of this assessment..."
+                        placeholder="Describe the core objectives of this test..."
                         rows={3}
                       />
                     </div>
 
                     <div className="md:col-span-3">
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">Candidate Instructions (One per line)</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">Instructions (One per line)</label>
                       <textarea
                         value={currentTest.instructions?.join('\n') || ''}
                         onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, instructions: e.target.value.split('\n') }))}
                         className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all resize-none shadow-sm"
-                        placeholder="Instructions to be displayed before commencement..."
+                        placeholder="Instructions for the student..."
                         rows={4}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">
                         <Clock size={12} />
-                        Duration Limit (Min)
+                        Duration (Min)
                       </label>
                       <input
                         type="number"
@@ -1175,9 +1181,9 @@ const TestQuestionManager = () => {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">
                         <Award size={12} />
-                        Benchmark Score (%)
+                        Passing Score (%)
                       </label>
                       <input
                         type="number"
@@ -1188,7 +1194,7 @@ const TestQuestionManager = () => {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">
                         <Search size={12} />
                         Result Visibility
                       </label>
@@ -1216,7 +1222,7 @@ const TestQuestionManager = () => {
                         <div className={`w-10 h-6 rounded-full transition-colors ${currentTest.randomizeQuestions ? 'bg-[#1a7ea5]' : 'bg-slate-200'}`} />
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${currentTest.randomizeQuestions ? 'translate-x-4' : ''}`} />
                       </div>
-                      <span className="text-xs font-black text-slate-700 uppercase tracking-widest">Shuffle items</span>
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">Shuffle questions</span>
                     </label>
 
                     <label className="flex items-center gap-3 cursor-pointer group">
@@ -1230,7 +1236,7 @@ const TestQuestionManager = () => {
                         <div className={`w-10 h-6 rounded-full transition-colors ${currentTest.randomizeOptions ? 'bg-[#1a7ea5]' : 'bg-slate-200'}`} />
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${currentTest.randomizeOptions ? 'translate-x-4' : ''}`} />
                       </div>
-                      <span className="text-xs font-black text-slate-700 uppercase tracking-widest">Shuffle options</span>
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">Shuffle options</span>
                     </label>
                   </div>
                 </div>
@@ -1242,17 +1248,17 @@ const TestQuestionManager = () => {
                       setCurrentTest(null);
                       setActiveTab('tests');
                     }}
-                    className="px-8 py-3.5 bg-white border border-slate-100 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:text-slate-600 transition-all"
+                    className="px-8 py-3.5 bg-white border border-slate-100 text-slate-400 rounded-2xl font-bold text-xs uppercase tracking-widest hover:text-slate-600 transition-all font-bold"
                   >
                     Discard
                   </button>
                   <button
                     onClick={saveTest}
                     disabled={creatingTestLoading}
-                    className="flex items-center gap-2 px-10 py-3.5 bg-[#1a7ea5] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-10 py-3.5 bg-[#1a7ea5] text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-[#1a7ea5]/20 transition-all disabled:opacity-50"
                   >
                     {creatingTestLoading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                    Commit Assessment
+                    Save Test
                   </button>
                 </div>
               </div>
@@ -1274,22 +1280,22 @@ const TestQuestionManager = () => {
               <div className="w-20 h-20 bg-rose-50 rounded-[32px] flex items-center justify-center text-rose-500 mx-auto mb-8">
                 <Trash size={40} />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-4">Purge Assessment?</h3>
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight leading-none mb-4">Delete Test?</h3>
               <p className="text-slate-500 font-medium mb-10">
-                You are about to delete <span className="text-slate-900 font-bold">"{testToDelete.title}"</span>. This operation is destructive and cannot be reversed.
+                You are about to delete <span className="text-slate-900 font-bold">"{testToDelete.title}"</span>. This action cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+                  className="flex-1 px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
                 >
-                  Safe Exit
+                  Cancel
                 </button>
                 <button
                   onClick={handleDeleteTest}
-                  className="flex-1 px-6 py-4 bg-rose-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-rose-500/20 transition-all"
+                  className="flex-1 px-6 py-4 bg-rose-500 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:opacity-90 shadow-lg shadow-rose-500/20 transition-all"
                 >
-                  Confirm Purge
+                  Confirm Delete
                 </button>
               </div>
             </motion.div>

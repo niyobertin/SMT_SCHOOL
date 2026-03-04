@@ -91,7 +91,7 @@ const userRouter = Router();
  */
 userRouter.get("/",
     authenticate,
-    authorize("SUPER_ADMIN", "ADMIN"),
+    authorize("SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN"),
     getUsers
 );
 
@@ -351,7 +351,7 @@ userRouter.patch("/:id/password",
 );
 userRouter.get("/dashboard/stats",
     authenticate,
-    authorize("ADMIN"),
+    authorize("ADMIN", "SCHOOL_ADMIN"),
     getDashboardStats
 );
 userRouter.get("/callback-url",

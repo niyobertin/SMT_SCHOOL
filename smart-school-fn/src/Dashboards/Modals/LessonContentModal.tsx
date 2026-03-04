@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
-import JoditEditor from "jodit-react";
-import "react-quill-new/dist/quill.snow.css";
+import { useState, useEffect } from "react";
+import TipTapEditor from "../../components/common/TipTapEditor";
+import { X } from "lucide-react";
 const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10 MB
 type LessonContentModalProps = {
   isOpen: boolean;
@@ -19,7 +19,6 @@ export const LessonContentModal = ({
   isLoading = false,
   isSuccess = false,
 }: LessonContentModalProps) => {
-  const editor = useRef(null);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -107,97 +106,95 @@ export const LessonContentModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-700/70 backdrop-blur-sm z-50 overflow-auto p-4">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl h-[600px] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">
-          {initialData ? "Edit Lesson Content" : "Add Lesson Content"}
-        </h2>
+      <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-5xl h-[min(90vh,900px)] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            {initialData ? "Edit Lesson Content" : "Add Lesson Content"}
+          </h2>
+          <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <X size={24} />
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-              required
-            />
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto pr-2 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-3">
+              <label className="block mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-blue-500/5 outline-none transition-all"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Order</label>
+              <input
+                type="number"
+                name="order"
+                value={formData.order}
+                onChange={handleChange}
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-blue-500/5 outline-none transition-all"
+                required
+              />
+            </div>
           </div>
 
-          {/* React Quill Rich Text Editor */}
           <div>
-            <label className="block mb-1 text-sm font-medium">Text Body</label>
-            <JoditEditor
-              ref={editor}
-              value={formData.textBody}
-              onBlur={(newContent) => {
+            <label className="block mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Content Body</label>
+            <TipTapEditor
+              content={formData.textBody || ""}
+              onChange={(newContent: string) => {
                 setFormData((prev) => ({ ...prev, textBody: newContent }));
               }}
-              config={{
-                readonly: false,
-                height: 400,
-                placeholder: "Write your lesson content here...",
-                toolbarAdaptive: false,
-              }}
+              placeholder="Write your lesson content here..."
+              minHeight="350px"
             />
           </div>
 
-          {/* Order */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Order</label>
-            <input
-              type="number"
-              name="order"
-              value={formData.order}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-              required
-            />
-          </div>
-
-          {/* File Uploads */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: "Video", name: "fileVideo", accept: "video/*", icon: "🎬" },
-              { label: "Audio", name: "fileAudio", accept: "audio/*", icon: "🎵" },
-              { label: "PDF", name: "filePDF", accept: "application/pdf", icon: "📄" },
-              { label: "Image", name: "fileImage", accept: "image/*", icon: "🖼️" },
+              { label: "Video", name: "fileVideo", accept: "video/*" },
+              { label: "Audio", name: "fileAudio", accept: "audio/*" },
+              { label: "PDF", name: "filePDF", accept: "application/pdf" },
+              { label: "Image", name: "fileImage", accept: "image/*" },
             ].map((file) => (
               <div key={file.name} className="flex flex-col">
-                <label className="block mb-1 text-sm font-medium">{file.label}</label>
-                <label className="flex items-center justify-between border rounded-lg px-3 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
-                  <span className="text-gray-600">{file.icon}</span>
+                <label className="block mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{file.label}</label>
+                <label className="flex items-center justify-center border border-dashed border-slate-200 rounded-xl p-2 bg-slate-50/50 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all">
+                  <span className="text-xs font-semibold text-slate-600 truncate max-w-full">
+                    {formData[file.name as keyof typeof formData] ? (formData[file.name as keyof typeof formData] as File).name : 'Clip...'}
+                  </span>
                   <input
                     type="file"
                     name={file.name}
                     accept={file.accept}
                     onChange={handleChange}
+                    className="hidden"
                   />
                 </label>
               </div>
             ))}
           </div>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {error && <p className="text-red-500 text-[10px] font-bold uppercase tracking-tight">{error}</p>}
 
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"
               onClick={handleCloseModal}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+              className="px-6 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-8 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg"
               disabled={isLoading}
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isLoading ? "Saving..." : "Save Content"}
             </button>
           </div>
         </form>

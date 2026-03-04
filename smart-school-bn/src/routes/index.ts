@@ -11,6 +11,12 @@ import paymentRouter from "./payment.route";
 import jobPostRoutes from "./jobPost.routes";
 import jobCategoriesRouter from "./jobCategories";
 import examRoutes from "./exam.routes";
+import schoolRoutes from "./school.routes";
+import studentAuthRoutes from "./studentAuth.routes";
+import academicRoutes from "./academic.routes";
+import courseAssignmentRoutes from "./courseAssignment.routes";
+import assessmentRoutes from "./assessment.routes";
+
 const router = Router();
 
 /**
@@ -48,6 +54,7 @@ const router = Router();
 
 // Mount route modules
 router.use("/auth", authRoutes);
+router.use("/student-auth", studentAuthRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/courses", courseRouters);
 router.use("/lessons", lessonRoutes);
@@ -58,6 +65,10 @@ router.use("/payments", paymentRouter);
 router.use("/job-posts", jobPostRoutes);
 router.use("/job-categories", jobCategoriesRouter);
 router.use("/exams", examRoutes);
+router.use("/schools", schoolRoutes);
+router.use("/academic", academicRoutes);
+router.use("/assignments", courseAssignmentRoutes);
+router.use("/", assessmentRoutes); // Note: paths in assessmentRoutes handle /assessments and /schools/:id/assessments
 
 // API info endpoint
 /**

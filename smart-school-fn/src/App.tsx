@@ -4,8 +4,12 @@ import { HomePage } from "./pages/Home";
 import { About } from "./pages/About";
 import { TranslationProvider } from "./contexts/TranslationContext";
 import { RegisterPage } from "./pages/auth/Register";
-import { LoginPage } from "./pages/auth/Login";
+import { LoginPage as UnifiedLogin } from "./pages/auth/Login";
 import { ResetPassword } from "./pages/auth/ResetPassword";
+import { StudentDashboard } from "./pages/student/StudentDashboard";
+import { StudentCourses } from "./pages/student/StudentCourses";
+import { StudentResults } from "./pages/student/StudentResults";
+import { StudentProtectedRoute } from "./routes/StudentProtectedRoute";
 import { RequestReset } from "./pages/auth/RequestLink";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Tuition from "./pages/Tuition";
@@ -39,6 +43,7 @@ import Results from "./pages/exam-admin/Results";
 import Marking from "./pages/exam-admin/Marking";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { StudentLayout } from "./components/Layouts/Student/StudentLayout";
 
 const DashboardRoutes = () => {
   const element = useRoutes(dashboardRoutes);
@@ -98,11 +103,6 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<About />} />
             <Route path="/tuition" element={<Tuition />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/request-link" element={<RequestReset />} />
-            <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route
               path="/profile"
               element={
@@ -126,6 +126,28 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/job-listing" element={<JobListing />} />
             <Route path="/job-listing/:slug" element={<JobDetails />} />
+          </Route>
+
+          {/* Authentication Routes (Standalone to avoid layout shifts) */}
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<UnifiedLogin />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/request-link" element={<RequestReset />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          {/* Student Portal Routes */}
+          <Route
+            path="/student"
+            element={
+              <StudentProtectedRoute>
+                <StudentLayout />
+              </StudentProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<StudentDashboard />} />
+            <Route path="courses" element={<StudentCourses />} />
+            <Route path="results" element={<StudentResults />} />
+            {/* Add more student routes here */}
+            <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

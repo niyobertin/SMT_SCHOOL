@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, BookOpen, DollarSign, Activity, TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
+import { Users, BookOpen, DollarSign, Activity, TrendingUp, Calendar } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -273,7 +273,7 @@ export const DashboardHome = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="lg:col-span-2 bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100"
+          className="lg:col-span-3 bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100"
         >
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -288,52 +288,6 @@ export const DashboardHome = () => {
           <div className="h-80 w-full">
             <Line data={chartData} options={chartOptions} />
           </div>
-        </motion.div>
-
-        {/* Recent Activity Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col"
-        >
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Pulse</h2>
-            <div className="p-2 bg-[#1a7ea5]/10 rounded-xl">
-              <Activity className="w-5 h-5 text-[#1a7ea5]" />
-            </div>
-          </div>
-          <div className="space-y-6 flex-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
-            {stats.logs.slice(0, 8).map((log, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + (idx * 0.05) }}
-                className="flex items-start gap-4 group"
-              >
-                <div className="flex-shrink-0 relative">
-                  <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:border-[#1a7ea5]/30 group-hover:bg-[#1a7ea5]/5 transition-all duration-300">
-                    <span className="text-slate-900 font-bold text-sm">
-                      {log.user?.username ? log.user.username.charAt(0).toUpperCase() : 'U'}
-                    </span>
-                  </div>
-                  {idx === 0 && <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white ring-2 ring-emerald-500/20" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-slate-900 line-clamp-1">{log.action}</p>
-                  <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">{log.user?.username} • {log.user?.role}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[10px] font-bold text-[#1a7ea5] bg-[#1a7ea5]/10 px-2 py-0.5 rounded-lg uppercase tracking-wider">{new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <button className="mt-8 w-full py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-widest rounded-xl transition-all border border-slate-100 flex items-center justify-center gap-2 group">
-            View All Activity
-            <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </button>
         </motion.div>
       </div>
     </motion.div>

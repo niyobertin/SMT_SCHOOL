@@ -30,12 +30,13 @@ initSocket(server);
 app.use(helmet());
 app.use(
   cors({
-    origin: "*",
+    origin: process.env.NODE_ENV === "production" ? ["https://yourdomain.com", "https://admin.yourdomain.com"] : ["http://localhost:5173", "http://localhost:3000"],
+    credentials: true,
   })
 );
 
 // Compression middleware
-app.use(compression());
+app.use(compression() as any);
 
 // Body parsing middleware
 app.use(express.json({
@@ -46,13 +47,16 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 
+// @ts-ignore
 app.use(session({
   secret: process.env.SESSION_SECRET || "keyboard cat",
   resave: false,
   saveUninitialized: false,
 }));
 // Passport middleware
+// @ts-ignore
 app.use(passport.initialize());
+// @ts-ignore
 app.use(passport.session());
 
 // Request logging middleware

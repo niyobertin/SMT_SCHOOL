@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  Activity,
   LayoutDashboard,
   Users,
   CreditCard,
@@ -8,6 +9,10 @@ import {
   FileText,
   Home,
   FileQuestion,
+  GraduationCap,
+  Share2,
+  ClipboardCheck,
+  ListChecks,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -16,6 +21,11 @@ const sidebarItems = [
   { id: "subscriptions", label: "Subscription Management", icon: CreditCard, path: "/dashboard/subscriptions" },
   { id: "tests", label: "Test Management", icon: FileQuestion, path: "/dashboard/tests" },
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
+  { id: "academic", label: "Academic Setup", icon: GraduationCap, path: "/dashboard/academic" },
+  { id: "attendance", label: "Attendance", icon: ListChecks, path: "/dashboard/attendance" },
+  { id: "assignments", label: "Course Access", icon: Share2, path: "/dashboard/assignments" },
+  { id: "assessments", label: "Assessments", icon: ClipboardCheck, path: "/dashboard/assessments" },
+  { id: "activity-logs", label: "Activity Logs", icon: Activity, path: "/dashboard/activity-logs" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
   { id: "home", label: "Home", icon: Home, path: "/" },
 ];
@@ -41,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between p-6 mb-4">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-[#1a7ea5] rounded-xl flex items-center justify-center shadow-lg shadow-[#1a7ea5]/20">
+              <div className="h-8 w-8 bg-[#1a7ea5] rounded-md flex items-center justify-center shadow-lg shadow-[#1a7ea5]/20">
                 <img
                   src="/nbglogo.png"
                   alt="Logo"
@@ -49,14 +59,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-black text-slate-900 uppercase tracking-tighter leading-none">Smart School</span>
-                <span className="text-[10px] font-bold text-[#6cb9cc] uppercase tracking-widest mt-1">Admin</span>
+                <span className="text-base font-semibold text-slate-900 capitalize tracking-tighter leading-none">smart school</span>
+                <span className="text-[11px] font-medium text-[#6cb9cc] capitalize tracking-widest mt-1">admin</span>
               </div>
             </div>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className={`p-2 rounded-xl transition-all duration-300 ${isCollapsed ? "mx-auto bg-[#1a7ea5]/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
+            className={`p-1 rounded-lg transition-all duration-300 ${isCollapsed ? "mx-auto bg-[#1a7ea5]/5" : "hover:bg-slate-50 border border-transparent hover:border-slate-100"}`}
           >
             <div className="flex flex-col gap-1 w-4">
               <div className={`h-0.5 bg-slate-400 rounded-full transition-all duration-300 ${!isCollapsed ? 'w-full' : 'w-4'}`} />
@@ -67,55 +77,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
           <ul className="space-y-2">
-            {sidebarItems.map((item) => {
-              const isActive = item.path === "/"
-                ? location.pathname === "/"
-                : item.path === "/dashboard"
-                  ? location.pathname === "/dashboard"
-                  : location.pathname.startsWith(item.path);
-              return (
-                <li key={item.id}>
-                  <Link
-                    to={item.path}
-                    className={`flex items-center px-4 py-3.5 rounded-2xl transition-all duration-300 group ${isActive
-                      ? "bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/25"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-[#1a7ea5]"
-                      }`}
-                  >
-                    <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#1a7ea5]"}`}>
-                      <item.icon size={20} strokeWidth={2.5} />
-                    </div>
-                    {!isCollapsed && (
-                      <span className="ml-3 text-xs font-black uppercase tracking-widest truncate">
-                        {item.label}
-                      </span>
-                    )}
-                    {isActive && !isCollapsed && (
-                      <div className="ml-auto w-1.5 h-1.5 bg-white/40 rounded-full ring-4 ring-white/10" />
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
+            {sidebarItems
+              .filter((item) => {
+                const userRole = localStorage.getItem("userRole") || "INSTRUCTOR";
+                const permissions: Record<string, string[]> = {
+                  SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "activity-logs", "home"],
+                  ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "activity-logs", "home"],
+                  INSTRUCTOR: ["dashboard", "tests", "courses", "academic", "attendance", "assessments", "content", "home"],
+                  EXAMINER: ["dashboard", "tests", "assessments", "home"],
+                };
+                return permissions[userRole]?.includes(item.id);
+              })
+              .map((item) => {
+                const isActive = item.path === "/"
+                  ? location.pathname === "/"
+                  : item.path === "/dashboard"
+                    ? location.pathname === "/dashboard"
+                    : location.pathname.startsWith(item.path);
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-2 py-2 rounded-xl transition-all duration-300 group ${isActive
+                        ? "bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/25"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#1a7ea5]"
+                        }`}
+                    >
+                      <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#1a7ea5]"}`}>
+                        <item.icon size={20} strokeWidth={2.5} />
+                      </div>
+                      {!isCollapsed && (
+                        <span className="ml-3 text-sm font-medium capitalize tracking-wide truncate">
+                          {item.label}
+                        </span>
+                      )}
+                      {isActive && !isCollapsed && (
+                        <div className="ml-auto w-1.5 h-1.5 bg-white/40 rounded-full ring-4 ring-white/10" />
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
         </nav>
 
         {/* Bottom Section */}
         {!isCollapsed && (
           <div className="p-6">
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Platform Status</p>
+            <div className="bg-slate-50 rounded-xl p-2 border border-slate-100">
+              <p className="text-[11px] font-semibold text-slate-400 capitalize tracking-widest mb-2">platform status</p>
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-xs font-bold text-slate-700">Healthy</span>
+                <span className="text-sm font-medium text-slate-700 capitalize">healthy</span>
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

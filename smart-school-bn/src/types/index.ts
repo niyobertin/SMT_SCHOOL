@@ -25,6 +25,14 @@ export interface User {
       name: string;
     };
   }>;
+  schoolStaff?: Array<{
+    schoolId: string;
+    roleInSchool: string;
+    school: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 export interface EmailOptions {

@@ -44,6 +44,7 @@ export const loginUser = createAsyncThunk(
       const response = await api.post('/auth/login', credentials);
       localStorage.setItem('accessToken', response.data.data.accessToken);
       localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      localStorage.setItem('userRole', response.data.data.user.role);
       localStorage.setItem('refreshToken', response.data.data.refreshToken);
       return response.data;
     } catch (error: any) {
@@ -206,6 +207,8 @@ const authSlice = createSlice({
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.data;
+        localStorage.setItem('userRole', action.payload.data.role);
+        localStorage.setItem('user', JSON.stringify(action.payload.data));
         state.isAuthenticated = true;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {

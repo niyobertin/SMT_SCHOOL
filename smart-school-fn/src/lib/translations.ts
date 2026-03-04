@@ -127,6 +127,12 @@ export const translations = {
     or: "or",
     continueWithGoogle: "Continue with Google",
     continueWithFacebook: "Continue with Facebook",
+    loginSuccess: "Login Successful",
+    welcomeBackMsg: "Welcome back!",
+    loginFailed: "Login Failed",
+    invalidCredentials: "Invalid identifier or password",
+    studentLoginSuccess: "Student Login Successful",
+    studentWelcomeMsg: "Welcome to your student portal!",
 
     // Common
     loading: "Loading...",
@@ -415,6 +421,12 @@ export const translations = {
     or: "ou",
     continueWithGoogle: "Continuer avec Google",
     continueWithFacebook: "Continuer avec Facebook",
+    loginSuccess: "Connexion Réussie",
+    welcomeBackMsg: "Bon retour !",
+    loginFailed: "Échec de la Connexion",
+    invalidCredentials: "Identifiant ou mot de passe invalide",
+    studentLoginSuccess: "Connexion Étudiante Réussie",
+    studentWelcomeMsg: "Bienvenue sur votre portail étudiant !",
 
     // Common
     loading: "Chargement...",
@@ -701,6 +713,12 @@ export const translations = {
     or: "cyangwa",
     continueWithGoogle: "Komeza na Google",
     continueWithFacebook: "Komeza na Facebook",
+    loginSuccess: "Winjiye Neza",
+    welcomeBackMsg: "Murakaza Neza!",
+    loginFailed: "Kwinjira Binze",
+    invalidCredentials: "Umwirondoro cyangwa ijambo ry'ibanga ntibyo",
+    studentLoginSuccess: "Umunyeshuri Winjiye Neza",
+    studentWelcomeMsg: "Murakaza neza kuri paje y'abanyeshuri!",
 
     // Common
     loading: "Biracyaza...",
