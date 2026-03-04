@@ -190,6 +190,7 @@ model SchoolClass {
 
   @@unique([schoolId, name])
   @@index([schoolId])
+  @@index([academicYearId])
   @@map("school_classes")
 }
 
@@ -980,6 +981,7 @@ model Subject {
   attendances       Attendance[]
 
   @@unique([schoolId, name])
+  @@index([schoolId])
   @@map("subjects")
 }
 

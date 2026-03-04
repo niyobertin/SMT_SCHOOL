@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Trash2, Shield, UserPlus, Filter, CheckCircle2, XCircle, Building2, Crown } from "lucide-react";
+import { Search, Trash2, Shield, UserPlus, Filter, CheckCircle2, XCircle, Building2, Crown, Users, UserCheck, ShieldCheck, UserCog } from "lucide-react";
 import { Toast } from "primereact/toast";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../redux/api/api";
@@ -8,6 +8,7 @@ import { ExaminerAssignmentModal } from "../Modals/ExaminerAssignmentModal";
 import { AssignUserToOrgModal } from "../Modals/AssignUserToOrgModal";
 import { CreateUserModal } from "../Modals/CreateUserModal";
 import Skeleton from "react-loading-skeleton";
+import { StatsCard } from "../StatsCard";
 
 interface User {
   id: string;
@@ -75,6 +76,12 @@ export const UsersSection = () => {
   useEffect(() => {
     fetchUsers();
   }, [debouncedSearch, page]);
+
+  // Derive stats from current view for UI consistency
+  const totalUsers = users.length;
+  const activeUsers = users.filter(u => u.isActive).length;
+  const admins = users.filter(u => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN').length;
+  const instructors = users.filter(u => u.role === 'INSTRUCTOR').length;
 
   const handleDelete = (id: string) => {
     setDeleteId(id);
@@ -186,6 +193,39 @@ export const UsersSection = () => {
           </button>
         </div>
       </div>
+
+      {/* High-Level Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Total Users"
+          value={totalUsers}
+          icon={Users}
+          color="bg-blue-500"
+          change="Community"
+        />
+        <StatsCard
+          title="Active Now"
+          value={activeUsers}
+          icon={UserCheck}
+          color="bg-emerald-500"
+          change="Status"
+        />
+        <StatsCard
+          title="Administrators"
+          value={admins}
+          icon={ShieldCheck}
+          color="bg-purple-500"
+          change="Access"
+        />
+        <StatsCard
+          title="Instructors"
+          value={instructors}
+          icon={UserCog}
+          color="bg-amber-500"
+          change="Faculty"
+        />
+      </div>
+
 
       {/* Filters Area */}
       <div className="flex flex-col md:flex-row gap-4">

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { assessmentController } from "../controller/assessment.controller";
 import { authenticate } from "../middleware/auth";
 import { validateRequest } from "../middleware/validation";
+import { requireSchoolAccess } from "../middleware/schoolScope.middleware";
 import {
     createAssessmentSchema,
     saveScoresSchema,
@@ -23,6 +24,7 @@ router.post(
 router.get(
     "/schools/:schoolId/assessments",
     authenticate,
+    requireSchoolAccess(),
     assessmentController.getAssessments
 );
 
@@ -46,6 +48,7 @@ router.post(
 router.get(
     "/schools/:schoolId/submissions",
     authenticate,
+    requireSchoolAccess(),
     assessmentController.getSubmissions
 );
 
@@ -61,7 +64,9 @@ router.put(
 router.get(
     "/schools/:schoolId/students/:studentId/results",
     authenticate,
+    requireSchoolAccess(),
     assessmentController.getStudentResults
 );
 
 export default router;
+

@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, GraduationCap, ClipboardCheck, Users, TrendingUp } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { fetchAssessments, createAssessment, saveScores, submitResults } from "../../redux/features/assessments/assessmentSlice";
 import { fetchClasses, fetchSubjects, fetchClassStudents } from "../../redux/features/academic/academicSlice";
+import { StatsCard } from "../StatsCard";
 
 export function Assessments() {
-    // ...
-    // (Skipping down to CreateAssessmentModal)
-    // I will actually use a multi_replace for this to be safer. Wait, I'll just rewrite the import block and the `useEffect`/`handleSubmit` blocks. I'll abort this replace.
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedAssessment, setSelectedAssessment] = useState<any | null>(null);
 
@@ -22,79 +20,120 @@ export function Assessments() {
         }
     }, [dispatch, schoolId]);
 
+    // Calculate stats
+    const totalAssessments = assessments.length;
+    const pendingMarks = assessments.filter((a: any) => !a.scores || a.scores.length === 0).length;
+    const highScorers = assessments.filter((a: any) => {
+        if (!a.scores || a.scores.length === 0) return false;
+        const avg = a.scores.reduce((acc: number, s: any) => acc + s.score, 0) / a.scores.length;
+        return avg > (a.maxScore * 0.8);
+    }).length;
+
     return (
-        <div className="space-y-6 animate-fade-in custom-scrollbar">
-            {/* Header Section */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-8 animate-fade-in custom-scrollbar">
+            {/* Premium Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-gray-100">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 capitalize tracking-tight">
-                        Assessments
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Manage tests, exams, and record student marks.
-                    </p>
+                    <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">Assessments</h1>
+                    <p className="text-slate-500 font-medium mt-3">Manage tests, exams, and record student performance metrics.</p>
                 </div>
-                <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="inline-flex flex-shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:scale-105 active:scale-95 bg-[#1a7ea5] text-white hover:bg-[#1a7ea5]/90 h-9 sm:h-10 px-4 py-2 shadow-lg shadow-[#1a7ea5]/20"
-                >
-                    <Plus size={18} strokeWidth={2.5} />
-                    <span>New Assessment</span>
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="flex items-center gap-2 px-5 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+                    >
+                        <Plus size={16} />
+                        New Assessment
+                    </button>
+                </div>
+            </div>
+
+            {/* High-Level Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatsCard
+                    title="Total Checks"
+                    value={totalAssessments}
+                    icon={ClipboardCheck}
+                    color="bg-blue-500"
+                    change="Assessments"
+                />
+                <StatsCard
+                    title="Pending Marks"
+                    value={pendingMarks}
+                    icon={TrendingUp}
+                    color="bg-amber-500"
+                    change="Action Needed"
+                />
+                <StatsCard
+                    title="Excellence Rate"
+                    value={highScorers}
+                    icon={GraduationCap}
+                    color="bg-emerald-500"
+                    change="High Performers"
+                />
+                <StatsCard
+                    title="Participation"
+                    value={`${totalAssessments > 0 ? 100 : 0}%`}
+                    icon={Users}
+                    color="bg-purple-500"
+                    change="Engagement"
+                />
             </div>
 
             {/* Main Content Area */}
             {loading ? (
-                <div className="flex justify-center py-10">
-                    <div className="w-8 h-8 border-4 border-[#1a7ea5] border-t-transparent rounded-full animate-spin"></div>
+                <div className="flex justify-center py-20">
+                    <div className="w-10 h-10 border-4 border-[#1a7ea5] border-t-transparent rounded-full animate-spin"></div>
                 </div>
             ) : error ? (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
+                <div className="bg-rose-50 text-rose-600 p-6 rounded-2xl text-sm font-bold border border-rose-100 shadow-sm animate-shake">
                     {error}
                 </div>
             ) : assessments.length === 0 ? (
-                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-10 text-center flex flex-col items-center justify-center">
-                    <div className="h-12 w-12 bg-[#1a7ea5]/10 rounded-full flex items-center justify-center mb-3">
-                        <Plus className="text-[#1a7ea5]" size={24} />
+                <div className="bg-white border border-dashed border-slate-200 rounded-[32px] p-16 text-center flex flex-col items-center justify-center shadow-sm">
+                    <div className="h-20 w-20 bg-[#1a7ea5]/5 rounded-3xl flex items-center justify-center mb-6">
+                        <ClipboardCheck className="text-[#1a7ea5]" size={40} />
                     </div>
-                    <p className="text-slate-600 font-medium">No assessments found.</p>
-                    <p className="text-slate-400 text-sm mt-1">Create one to get started.</p>
+                    <h3 className="text-xl font-bold text-slate-800">No assessments yet</h3>
+                    <p className="text-slate-400 font-medium mt-2 max-w-xs mx-auto text-sm">Create your first assessment to begin tracking student academic progress.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {assessments.map((assessment: any) => (
-                        <div key={assessment.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-[#1a7ea5]/30 hover:shadow-xl hover:shadow-[#1a7ea5]/10 transition-all duration-300 flex flex-col group">
-                            <div className="p-5 border-b border-slate-100 flex-1">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 uppercase tracking-wider">
+                        <div key={assessment.id} className="bg-white rounded-[24px] border border-slate-100 overflow-hidden hover:border-[#1a7ea5]/20 hover:shadow-2xl hover:shadow-[#1a7ea5]/5 transition-all duration-500 flex flex-col group relative">
+                            <div className="p-6 flex-1">
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${assessment.type === 'EXAM' ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
                                         {assessment.type}
                                     </span>
-                                    <span className="text-sm font-medium text-slate-500">
-                                        Max: {assessment.maxScore}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-400 uppercase tracking-tighter">
+                                        <span className="text-slate-900">{assessment.maxScore}</span>
+                                        <span>Max Pts</span>
+                                    </div>
                                 </div>
 
-                                <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-[#1a7ea5] transition-colors line-clamp-1">
+                                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-[#1a7ea5] transition-colors line-clamp-1 tracking-tight">
                                     {assessment.subject?.name || "Unknown Subject"}
                                 </h3>
 
-                                <div className="flex justify-between items-center text-sm text-slate-500 mb-4">
-                                    <span className="font-medium bg-slate-50 px-2 py-1 rounded-md">{assessment.class?.name || "Unknown Class"}</span>
+                                <div className="flex items-center gap-3 text-xs font-bold text-slate-500 mb-6">
+                                    <span className="bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">{assessment.class?.name || "Unknown Class"}</span>
+                                    <div className="h-1 w-1 rounded-full bg-slate-300" />
                                     <span>{assessment.term}</span>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50/50 p-4 border-t border-slate-100 flex items-center justify-between">
+                            <div className="bg-slate-50/50 p-6 border-t border-slate-50 flex items-center justify-between">
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-medium text-slate-500">Status</span>
-                                    <span className={`text-sm font-semibold ${assessment.scores?.length > 0 ? "text-emerald-600" : "text-amber-600"}`}>
-                                        {assessment.scores?.length > 0 ? "Marks Entered" : "Pending Marks"}
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Grading Status</span>
+                                    <span className={`text-xs font-black uppercase tracking-tighter mt-0.5 ${assessment.scores?.length > 0 ? "text-emerald-600" : "text-amber-600"}`}>
+                                        {assessment.scores?.length > 0 ? "Entry Complete" : "Pending Entry"}
                                     </span>
                                 </div>
 
                                 <button
                                     onClick={() => setSelectedAssessment(assessment)}
-                                    className="text-sm font-semibold text-[#1a7ea5] hover:text-[#135d7a] transition-colors"
+                                    className="px-4 py-2 bg-white border border-slate-200 text-[#1a7ea5] text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-[#1a7ea5] hover:text-white hover:border-[#1a7ea5] transition-all shadow-sm active:scale-95"
                                 >
                                     Manage Marks
                                 </button>
@@ -103,6 +142,7 @@ export function Assessments() {
                     ))}
                 </div>
             )}
+
 
             {isCreateModalOpen && (
                 <CreateAssessmentModal

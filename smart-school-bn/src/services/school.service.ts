@@ -47,12 +47,39 @@ export const schoolService = {
         },
       });
 
-      logger.info("Default school data setup complete", { schoolId });
+      // Default Classes
+      const defaultClasses = ["Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5", "Primary 6"];
+      await Promise.all(defaultClasses.map(name =>
+        prisma.schoolClass.create({
+          data: {
+            id: uuidv4(),
+            schoolId,
+            name,
+            academicYearId: academicYear.id,
+            level: name,
+          }
+        })
+      ));
+
+      // Default Subjects
+      const defaultSubjects = ["Mathematics", "English", "Kinyarwanda", "Science", "Social Studies"];
+      await Promise.all(defaultSubjects.map(name =>
+        prisma.subject.create({
+          data: {
+            id: uuidv4(),
+            schoolId,
+            name,
+          }
+        })
+      ));
+
+      logger.info("Default school data setup complete (Year, Classes, Subjects)", { schoolId });
       return { academicYear };
     } catch (error) {
       logger.error("Failed to setup default school data", error);
     }
   },
+
 
   async getSchoolByCode(code: string) {
     return prisma.school.findUnique({
