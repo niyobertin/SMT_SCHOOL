@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  Search,
   ChevronLeft,
   ChevronRight,
   Book,
@@ -152,14 +151,13 @@ export const CourseList = () => {
         >
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Search Input */}
-            <div className="relative flex-grow w-full">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#1a7ea5] w-5 h-5" />
+            <div className="relative flex-grow w-full group">
               <input
                 type="text"
                 placeholder="Search courses by name or subject..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-16 pr-8 py-4 bg-slate-50 border border-slate-100 rounded-full focus:outline-none focus:ring-[#6cb9cc] transition-all text-slate-700 placeholder:text-slate-400 font-semibold text-sm"
+                className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-full focus:outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all text-slate-700 placeholder:text-slate-400 font-bold text-sm shadow-sm"
               />
             </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, Trash2, BookOpen, FileText, Video, ListChecks, Edit, Inbox, ChevronLeft, MoreVertical } from 'lucide-react';
+import { Plus, Trash2, BookOpen, FileText, Video, ListChecks, Edit, Inbox, ChevronLeft, MoreVertical } from 'lucide-react';
 import { LessonContentModal } from '../Modals/LessonContentModal';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -214,14 +214,13 @@ export const LessonContent = () => {
 
       <div className="bg-white rounded-2xl shadow-[0_30px_80px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
         <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="relative group w-full max-w-sm">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1a7ea5] transition-colors" size={20} />
+          <div className="relative group flex-1 max-w-sm">
             <input
               type="text"
               placeholder="Find resources..."
+              className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#1a7ea5]/10 focus:border-[#1a7ea5]/30 transition-all shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
             />
           </div>
           <div className="flex items-center gap-4">
@@ -267,13 +266,13 @@ export const LessonContent = () => {
                       onClick={() => handleOpenContentModal(item as unknown as Lesson)}
                       className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                     >
-                      <Edit size={14} /> Edit
+                      <Edit size={16} /> Edit
                     </button>
                     <button
                       onClick={() => handleDeleteContent(item.id)}
-                      className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 border border-slate-50 rounded-xl transition-all shadow-sm"
+                      className="p-2 text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-50 rounded-xl transition-all shadow-sm"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={18} />
                     </button>
                     <div className="w-8 h-8 flex items-center justify-center text-slate-300">
                       <MoreVertical size={16} />

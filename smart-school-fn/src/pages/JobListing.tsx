@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, Clock, ChevronLeft, ChevronRight, AlertCircle, ArrowRight, Briefcase } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, AlertCircle, ArrowRight, Briefcase } from 'lucide-react';
 import api from '../redux/api/api';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from "use-debounce";
@@ -124,14 +124,13 @@ export const JobListing = () => {
                 >
                     <div className="flex flex-col gap-8">
                         {/* Search Input */}
-                        <div className="relative">
-                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#1a7ea5] w-5 h-5" />
+                        <div className="relative group">
                             <input
                                 type="text"
                                 placeholder="Search by job title or keyword..."
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                className="w-full pl-16 pr-8 py-5 bg-slate-50 border-none rounded-full focus:ring-2 focus:ring-[#6cb9cc] transition-all text-slate-700 placeholder:text-slate-400 font-medium"
+                                className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 focus:bg-white transition-all text-slate-700 placeholder:text-slate-400 font-bold outline-none shadow-sm"
                             />
                         </div>
 
