@@ -1,4 +1,4 @@
-import { Plus, Edit, Calendar, Users, BookOpen, X, GraduationCap, Search, Trash2, CheckCircle2, Upload, Download, FileSpreadsheet, AlertCircle } from "lucide-react";
+import { Plus, Edit, Calendar, Users, BookOpen, X, GraduationCap, Trash2, CheckCircle2, Upload, Download, FileSpreadsheet, AlertCircle } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,7 +43,7 @@ export const AcademicSection = () => {
     const [studentsLoading, setStudentsLoading] = useState(false);
     const [studentSearch, setStudentSearch] = useState("");
 
-    const { years, classes, subjects } = useSelector((state: RootState) => state.academic);
+    const { years, classes, subjects, selectedYearId } = useSelector((state: RootState) => state.academic);
     const { user } = useSelector((state: RootState) => state.auth);
     const userRole = localStorage.getItem("userRole");
     const isAdmin = userRole === "SUPER_ADMIN" || userRole === "ADMIN";
@@ -54,7 +54,10 @@ export const AcademicSection = () => {
         setStudentsLoading(true);
         try {
             const { data } = await api.get(`/schools/${schoolId}/students`, {
-                params: { q: studentSearch || undefined },
+                params: {
+                    q: studentSearch || undefined,
+                    academicYearId: selectedYearId || undefined
+                },
             });
             setStudents(data.data || data.students || []);
         } catch {
@@ -62,16 +65,16 @@ export const AcademicSection = () => {
         } finally {
             setStudentsLoading(false);
         }
-    }, [schoolId, studentSearch]);
+    }, [schoolId, studentSearch, selectedYearId]);
 
     useEffect(() => {
         if (schoolId) {
             if (activeTab === "years") dispatch(fetchAcademicYears(schoolId));
-            if (activeTab === "classes") dispatch(fetchClasses({ schoolId }));
+            if (activeTab === "classes") dispatch(fetchClasses({ schoolId, academicYearId: selectedYearId || undefined }));
             if (activeTab === "subjects") dispatch(fetchSubjects(schoolId));
             if (activeTab === "students") fetchStudents();
         }
-    }, [dispatch, schoolId, activeTab, fetchStudents]);
+    }, [dispatch, schoolId, activeTab, fetchStudents, selectedYearId]);
 
     const handleCreateSuccess = (message: string) => {
         toast.current?.show({ severity: 'success', summary: 'success', detail: message, life: 3000 });
@@ -150,15 +153,13 @@ export const AcademicSection = () => {
             {/* Students Tab Content */}
             {activeTab === "students" && (
                 <div className="space-y-4">
-                    {/* Search */}
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <div className="relative group flex-1 max-w-sm">
                         <input
                             type="text"
                             placeholder="search by name or id..."
                             value={studentSearch}
                             onChange={(e) => setStudentSearch(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#1a7ea5]/10 focus:border-[#1a7ea5]/30 transition-all shadow-sm"
+                            className="w-full px-6 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
                         />
                     </div>
 
@@ -232,19 +233,19 @@ export const AcademicSection = () => {
                                                                         setSelectedStudent(student);
                                                                         setShowAssignModal(true);
                                                                     }}
-                                                                    className="p-2 text-slate-400 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm flex items-center gap-2 px-3"
+                                                                    className="p-2 text-slate-500 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm flex items-center gap-2 px-3"
                                                                 >
-                                                                    <Plus size={14} />
+                                                                    <Plus size={16} />
                                                                     <span className="text-[10px] font-black uppercase tracking-widest">assign class</span>
                                                                 </button>
-                                                                <button className="p-2 text-slate-400 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm">
-                                                                    <Edit size={14} />
+                                                                <button className="p-2 text-slate-500 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm">
+                                                                    <Edit size={18} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDeleteStudent(student.id)}
-                                                                    className="p-2 text-slate-400 hover:text-red-500 bg-white hover:bg-red-50 border border-slate-100 hover:border-red-100 rounded-xl transition-all shadow-sm"
+                                                                    className="p-2 text-slate-500 hover:text-red-500 bg-white hover:bg-red-50 border border-slate-100 hover:border-red-100 rounded-xl transition-all shadow-sm"
                                                                 >
-                                                                    <Trash2 size={14} />
+                                                                    <Trash2 size={18} />
                                                                 </button>
                                                             </div>
                                                         </td>

@@ -1,9 +1,8 @@
-import { PrismaClient, StudentStatus } from "@prisma/client";
+import { StudentStatus } from "@prisma/client";
+import prisma from "../config/prisma";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 import { logger } from "../utils/logger";
-
-const prisma = new PrismaClient();
 
 export const studentService = {
   async createStudent(data: {

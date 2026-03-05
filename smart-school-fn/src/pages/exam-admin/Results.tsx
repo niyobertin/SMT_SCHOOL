@@ -14,7 +14,6 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import {
     Building2,
-    Search,
     Download,
     Filter,
     FileText,
@@ -515,9 +514,6 @@ const Results = () => {
                         </>
                     ) : (
                         <div className="p-12 text-center min-h-[400px] flex flex-col justify-center">
-                            <div className="bg-gray-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                <Search className="w-8 h-8 text-gray-400" />
-                            </div>
                             <h3 className="text-lg font-medium text-gray-900 mb-1">No Results Found</h3>
                             <p className="text-gray-500">Try adjusting your filters to see candidate results.</p>
                         </div>

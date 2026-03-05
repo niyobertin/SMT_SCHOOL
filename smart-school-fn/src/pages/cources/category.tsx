@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ArrowRight, CheckCircle, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowRight, CheckCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchCategories, setSearch, setPage } from "../../redux/features/courses/category"
@@ -9,10 +9,10 @@ import type { AppDispatch, RootState } from "../../redux/stores"
 export const CourseCategories = () => {
   const { t } = useLanguage()
   const dispatch = useDispatch<AppDispatch>()
-  const { 
-    items: categories, 
-    loading, 
-    error, 
+  const {
+    items: categories,
+    loading,
+    error,
     search,
     page,
     totalPages,
@@ -27,7 +27,7 @@ export const CourseCategories = () => {
         dispatch(fetchCategories({ page: 1, search: searchTerm }));
       }
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, [searchTerm, dispatch, search]);
 
@@ -71,13 +71,12 @@ export const CourseCategories = () => {
         <div className="flex gap-8">
           <div className="flex-1">
             <div className="relative w-full lg:w-1/3 mb-8">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
                 placeholder="Search categories..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full border border-gray-300 bg-white rounded-lg pl-10 pr-4 py-2 shadow-sm focus:outline-none"
+                className="w-full border border-gray-300 bg-white rounded-lg px-4 py-2 shadow-sm focus:outline-none"
               />
             </div>
 
@@ -90,7 +89,7 @@ export const CourseCategories = () => {
                   <h2 className="text-xl font-bold text-gray-900 mb-2">{category.name}</h2>
                   <p className="text-gray-600 text-sm mb-4">{category.description}</p>
 
-                  { category?.courses && category?.courses?.length   > 0 && (
+                  {category?.courses && category?.courses?.length > 0 && (
                     <ul className="space-y-2 mb-4">
                       {category?.courses?.slice(0, 4).map((course: any, idx: number) => (
                         <li key={idx} className="flex items-start">
@@ -128,25 +127,24 @@ export const CourseCategories = () => {
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                
+
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum = page - 2 + i;
                   if (pageNum < 1) pageNum = i + 1;
                   if (pageNum > totalPages) return null;
-                  
+
                   return (
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 border rounded-md ${
-                        page === pageNum ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
-                      }`}
+                      className={`px-4 py-2 border rounded-md ${page === pageNum ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
+                        }`}
                     >
                       {pageNum}
                     </button>
                   );
                 })}
-                
+
                 <button
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page === totalPages}

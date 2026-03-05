@@ -14,15 +14,15 @@ export const AttendanceSection = () => {
     const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
-    const { classes, classStudents, loading } = useSelector((state: RootState) => state.academic);
+    const { classes, classStudents, loading, selectedYearId } = useSelector((state: RootState) => state.academic);
     const { user } = useSelector((state: RootState) => state.auth);
     const schoolId = user?.schoolStaff?.[0]?.schoolId || user?.userOrganizations?.[0]?.organizationId;
 
     useEffect(() => {
         if (schoolId) {
-            dispatch(fetchClasses({ schoolId }));
+            dispatch(fetchClasses({ schoolId, academicYearId: selectedYearId || undefined }));
         }
-    }, [dispatch, schoolId]);
+    }, [dispatch, schoolId, selectedYearId]);
 
     useEffect(() => {
         if (selectedClass && schoolId) {

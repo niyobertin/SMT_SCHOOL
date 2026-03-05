@@ -456,6 +456,7 @@ const TestQuestionManager = () => {
       <AnimatePresence mode="wait">
         {activeTab === 'courses' && (
           <motion.div
+            key="courses-tab"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
@@ -478,7 +479,7 @@ const TestQuestionManager = () => {
               {error && <p className='text-center col-span-full py-12 text-rose-500 font-bold'>Error loading courses: {error}</p>}
               {!loading && (courses || []).map((course, idx) => (
                 <motion.div
-                  key={course.id}
+                  key={course.id || `course-${idx}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
@@ -528,6 +529,7 @@ const TestQuestionManager = () => {
         {/* Tests Tab (Assessments) */}
         {activeTab === 'tests' && (
           <motion.div
+            key="tests-tab"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
@@ -576,7 +578,7 @@ const TestQuestionManager = () => {
                     <tbody className="divide-y divide-slate-50">
                       {tests.map((test, idx) => (
                         <motion.tr
-                          key={test.id}
+                          key={test.id || `test-${idx}`}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: idx * 0.03 }}
@@ -682,8 +684,10 @@ const TestQuestionManager = () => {
         {/* Test Questions Tab (Question Bank) */}
         {activeTab === 'test-questions' && (
           <motion.div
+            key="test-questions-tab"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
             className="space-y-8"
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -741,7 +745,7 @@ const TestQuestionManager = () => {
 
                   {!questionsLoading && questions.map((question: any, index: number) => (
                     <motion.div
-                      key={question.id}
+                      key={question.id || `question-${index}`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -816,6 +820,7 @@ const TestQuestionManager = () => {
           {isCreatingQuestion && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[110] p-2 md:p-4">
               <motion.div
+                key="question-creator-modal"
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -1087,8 +1092,10 @@ const TestQuestionManager = () => {
         {/* Test Editor Tab (Editor) */}
         {activeTab === 'test-editor' && (
           <motion.div
+            key="test-editor-tab"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
             className="space-y-10"
           >
             {!currentTest ? (

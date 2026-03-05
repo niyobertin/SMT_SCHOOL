@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Plus, Eye, Edit, Trash2, BookOpen, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, BookOpen, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { LessonModal } from "../Modals/LessonModal";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { useNavigate, useParams } from "react-router-dom";
@@ -160,11 +160,10 @@ export const Lessons = () => {
         <div className="p-6 border-b border-slate-50">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="relative group flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1a7ea5] transition-colors" size={20} />
               <input
                 type="text"
                 placeholder="Find a lesson..."
-                className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-xl w-full text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
+                className="w-full px-6 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -239,15 +238,15 @@ export const Lessons = () => {
                             setEditingLesson(lesson);
                             setIsModalOpen(true);
                           }}
-                          className="p-2.5 bg-white border border-slate-100 text-slate-400 hover:text-[#1a7ea5] hover:border-[#1a7ea5]/20 rounded-xl transition-all shadow-sm"
+                          className="p-2.5 bg-white border border-slate-100 text-slate-500 hover:text-[#1a7ea5] hover:border-[#1a7ea5]/20 rounded-xl transition-all shadow-sm"
                         >
-                          <Edit size={16} />
+                          <Edit size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(lesson.id)}
-                          className="p-2.5 bg-white border border-slate-100 text-slate-400 hover:text-rose-500 hover:border-rose-100 rounded-xl transition-all shadow-sm"
+                          className="p-2.5 bg-white border border-slate-100 text-slate-500 hover:text-rose-500 hover:border-rose-100 rounded-xl transition-all shadow-sm"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>

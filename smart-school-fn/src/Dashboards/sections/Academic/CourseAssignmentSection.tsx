@@ -16,7 +16,7 @@ export const CourseAssignmentSection = () => {
     const dispatch = useDispatch<AppDispatch>();
     const toast = useRef<Toast>(null);
 
-    const { assignments, classes, loading } = useSelector((state: RootState) => state.academic);
+    const { assignments, classes, loading, selectedYearId } = useSelector((state: RootState) => state.academic);
     const { items: courses } = useSelector((state: RootState) => state.courses);
     const { user } = useSelector((state: RootState) => state.auth);
     const schoolId = user?.schoolStaff?.[0]?.schoolId || user?.userOrganizations?.[0]?.organizationId;
@@ -24,11 +24,11 @@ export const CourseAssignmentSection = () => {
     useEffect(() => {
         if (schoolId) {
             dispatch(fetchAssignments(schoolId));
-            dispatch(fetchClasses({ schoolId }));
+            dispatch(fetchClasses({ schoolId, academicYearId: selectedYearId || undefined }));
             dispatch(fetchAcademicYears(schoolId));
             dispatch(fetchCourses({ page: 1, limit: 100 }));
         }
-    }, [dispatch, schoolId]);
+    }, [dispatch, schoolId, selectedYearId]);
 
     const handleDelete = async (id: string) => {
         try {

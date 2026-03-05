@@ -10,11 +10,14 @@ import { Toast } from "primereact/toast";
 
 import { loginUser } from "../../redux/features/auth";
 import { studentLogin } from "../../redux/features/studentAuthActions";
+import { setSelectedAcademicYear } from "../../redux/features/studentAuth";
+import { fetchAcademicYears } from "../../redux/features/academic/academicSlice";
 import useLanguage from "../../hooks/useLanguage";
 import type { AppDispatch, RootState } from "../../redux/stores";
 
 import googleLogo from "../../assets/search.png";
 import facebookLogo from "../../assets/facebook.png";
+import { YearSelectionModal } from "../../components/Modals/YearSelectionModal";
 
 type LoginType = "staff" | "student";
 
@@ -48,6 +51,8 @@ export const LoginPage = () => {
 
   const [loginType, setLoginType] = useState<LoginType>("staff");
   const [showPassword, setShowPassword] = useState(false);
+  const [showYearModal, setShowYearModal] = useState(false);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
 
   const toast = useRef<Toast>(null);
 
@@ -105,13 +110,16 @@ export const LoginPage = () => {
         // Student Login
         const result = await dispatch(studentLogin(data as any));
         if (studentLogin.fulfilled.match(result)) {
-          toast.current?.show({
-            severity: "success",
-            summary: t("studentLoginSuccess") || "Login Successful",
-            detail: t("studentWelcomeMsg") || "Welcome to your student portal!",
-            life: 3000,
-          });
-          setTimeout(() => navigate("/student/dashboard"), 1500);
+          const student = result.payload.data.student;
+          const yearsResult = await dispatch(fetchAcademicYears(student.schoolId));
+
+          if (fetchAcademicYears.fulfilled.match(yearsResult)) {
+            setAcademicYears(yearsResult.payload);
+            setShowYearModal(true);
+          } else {
+            // Fallback if years fail to fetch
+            navigate("/student/dashboard");
+          }
         }
       }
     } catch (err: any) {
@@ -349,6 +357,26 @@ export const LoginPage = () => {
           </motion.div>
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {showYearModal && (
+          <YearSelectionModal
+            years={academicYears}
+            onSelect={(year) => {
+              dispatch(setSelectedAcademicYear(year));
+              toast.current?.show({
+                severity: "success",
+                summary: t("studentLoginSuccess") || "Login Successful",
+                detail: t("studentWelcomeMsg") || "Welcome to your student portal!",
+                life: 3000,
+              });
+              setShowYearModal(false);
+              setTimeout(() => navigate("/student/dashboard"), 1000);
+            }}
+            onClose={() => setShowYearModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

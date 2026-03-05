@@ -1,11 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../config/prisma";
 import jwt from "jsonwebtoken";
 import { logger } from "../utils/logger";
 import { studentService } from "./student.service";
 import { schoolService } from "./school.service";
 import { courseAssignmentService } from "./courseAssignment.service";
-
-const prisma = new PrismaClient();
 
 interface StudentJWTPayload {
   actorType: "STUDENT";

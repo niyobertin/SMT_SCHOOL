@@ -8,6 +8,8 @@ interface AcademicState {
     assignments: any[];
     classStudents: any[];
     attendance: any[];
+    selectedYearId: string | null;
+    selectedYear: any | null;
     loading: boolean;
     error: string | null;
 }
@@ -19,6 +21,8 @@ const initialState: AcademicState = {
     assignments: [],
     classStudents: [],
     attendance: [],
+    selectedYearId: localStorage.getItem("selectedYearId") || null,
+    selectedYear: localStorage.getItem("selectedYear") ? JSON.parse(localStorage.getItem("selectedYear")!) : null,
     loading: false,
     error: null,
 };
@@ -139,6 +143,17 @@ const academicSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
+        setSelectedYear: (state, action) => {
+            state.selectedYear = action.payload;
+            state.selectedYearId = action.payload?.id || null;
+            if (action.payload) {
+                localStorage.setItem("selectedYearId", action.payload.id);
+                localStorage.setItem("selectedYear", JSON.stringify(action.payload));
+            } else {
+                localStorage.removeItem("selectedYearId");
+                localStorage.removeItem("selectedYear");
+            }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -195,5 +210,5 @@ const academicSlice = createSlice({
     },
 });
 
-export const { clearError } = academicSlice.actions;
+export const { clearError, setSelectedYear } = academicSlice.actions;
 export default academicSlice.reducer;

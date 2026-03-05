@@ -13,10 +13,13 @@ export const createCourse = async (
 ): Promise<void> => {
   try {
     const courseData = req.body;
-    const userId = (req.user as any)?.id;
+    const user = req.user as any;
+    const userId = user?.id;
+    const userRole = user?.role;
     const categoryId = req.params.categoryId;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
+    // ... category and existence checks remain same ...
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
     });
@@ -37,6 +40,7 @@ export const createCourse = async (
       });
       return;
     }
+
     let thumbnail: string | undefined;
     const thumbnailFile = files?.thumbnail?.[0];
     if (thumbnailFile) {
@@ -46,6 +50,12 @@ export const createCourse = async (
         thumbnailFile.originalname
       );
     }
+
+    // Determine instructor (Super Admin can specify any instructor)
+    const instructorId = (userRole === 'SUPER_ADMIN' && courseData.instructorId)
+      ? courseData.instructorId
+      : userId;
+
     const course = await prisma.course.create({
       data: {
         ...courseData,
@@ -53,7 +63,7 @@ export const createCourse = async (
         slug: courseData.title.toLowerCase().replace(/\s/g, "-"),
         instructor: {
           connect: {
-            id: userId,
+            id: instructorId,
           },
         },
         category: {

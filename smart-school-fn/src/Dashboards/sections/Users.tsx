@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Trash2, Shield, UserPlus, Filter, CheckCircle2, XCircle, Building2, Crown, Users, UserCheck, ShieldCheck, UserCog } from "lucide-react";
+import { Trash2, Shield, UserPlus, Filter, CheckCircle2, XCircle, Building2, Crown, Users, UserCheck, ShieldCheck, UserCog } from "lucide-react";
 import { Toast } from "primereact/toast";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../redux/api/api";
@@ -227,16 +227,14 @@ export const UsersSection = () => {
       </div>
 
 
-      {/* Filters Area */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative group">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-[#1a7ea5] transition-colors" size={18} />
           <input
             type="text"
             placeholder="Search by name, username or email..."
+            className="w-full px-6 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium text-slate-700 shadow-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 focus:border-[#1a7ea5]/20 transition-all outline-none text-sm font-medium text-slate-700 shadow-sm"
           />
         </div>
         <button className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
@@ -356,17 +354,17 @@ export const UsersSection = () => {
                         <div className="flex items-center justify-end gap-3 transition-opacity">
                           <button
                             onClick={() => handleAssignToOrg(user)}
-                            className="p-2.5 text-slate-400 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm"
+                            className="p-2.5 text-slate-500 hover:text-[#1a7ea5] bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-all shadow-sm"
                             title="Assign to organization"
                           >
-                            <Building2 size={16} />
+                            <Building2 size={18} />
                           </button>
                           <button
                             onClick={() => handleDelete(user.id)}
-                            className="p-2.5 text-slate-400 hover:text-red-500 bg-white hover:bg-red-50 border border-slate-100 hover:border-red-100 rounded-xl transition-all shadow-sm"
+                            className="p-2.5 text-slate-500 hover:text-red-500 bg-white hover:bg-red-50 border border-slate-100 hover:border-red-100 rounded-xl transition-all shadow-sm"
                             disabled={isDeleteModalOpen}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>
@@ -421,32 +419,36 @@ export const UsersSection = () => {
         message="This will permanently revoke all access for this user. Are you absolutely sure?"
       />
 
-      {selectedUserForRole && (
-        <ExaminerAssignmentModal
-          isOpen={isExaminerModalOpen}
-          onClose={() => {
-            setIsExaminerModalOpen(false);
-            setSelectedUserForRole(null);
-          }}
-          onConfirm={confirmExaminerAssignment}
-          userId={selectedUserForRole.id}
-          loading={!!updatingRoleId}
-        />
-      )}
+      {
+        selectedUserForRole && (
+          <ExaminerAssignmentModal
+            isOpen={isExaminerModalOpen}
+            onClose={() => {
+              setIsExaminerModalOpen(false);
+              setSelectedUserForRole(null);
+            }}
+            onConfirm={confirmExaminerAssignment}
+            userId={selectedUserForRole.id}
+            loading={!!updatingRoleId}
+          />
+        )
+      }
 
-      {selectedUserForOrg && (
-        <AssignUserToOrgModal
-          isOpen={isAssignOrgModalOpen}
-          onClose={() => {
-            setIsAssignOrgModalOpen(false);
-            setSelectedUserForOrg(null);
-          }}
-          onSuccess={handleAssignToOrgSuccess}
-          onError={(message) => toast.current?.show({ severity: "error", summary: "Error", detail: message })}
-          userId={selectedUserForOrg.id}
-          userName={`${selectedUserForOrg.firstName} ${selectedUserForOrg.lastName}`}
-        />
-      )}
+      {
+        selectedUserForOrg && (
+          <AssignUserToOrgModal
+            isOpen={isAssignOrgModalOpen}
+            onClose={() => {
+              setIsAssignOrgModalOpen(false);
+              setSelectedUserForOrg(null);
+            }}
+            onSuccess={handleAssignToOrgSuccess}
+            onError={(message) => toast.current?.show({ severity: "error", summary: "Error", detail: message })}
+            userId={selectedUserForOrg.id}
+            userName={`${selectedUserForOrg.firstName} ${selectedUserForOrg.lastName}`}
+          />
+        )
+      }
 
       <CreateUserModal
         isOpen={isCreateUserModalOpen}
@@ -459,7 +461,7 @@ export const UsersSection = () => {
       />
 
       <Toast ref={toast} position="top-right" />
-    </motion.div>
+    </motion.div >
   );
 };
 
