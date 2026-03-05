@@ -10,7 +10,6 @@ import {
 import {
     Building2,
     FileText,
-    Search,
     CheckCircle,
     AlertCircle,
     Save,
@@ -205,13 +204,12 @@ const Marking = () => {
 
                     <div className="flex-1 w-full relative">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Search responses</label>
-                        <Search className="absolute left-3 top-9 h-4 w-4 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Student name or question..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                     </div>
 

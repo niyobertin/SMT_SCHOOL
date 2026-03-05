@@ -97,6 +97,19 @@ export const getOrganizations = async (
                 take: Number(limit),
                 orderBy: { createdAt: 'desc' },
                 include: {
+                    userOrganizations: {
+                        include: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    firstName: true,
+                                    lastName: true,
+                                    role: true
+                                }
+                            }
+                        }
+                    },
                     _count: {
                         select: {
                             exams: true,
@@ -139,6 +152,27 @@ export const getOrganizationById = async (
         const organization = await prisma.organization.findFirst({
             where: orgWhere,
             include: {
+                userOrganizations: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                firstName: true,
+                                lastName: true,
+                                role: true
+                            }
+                        }
+                    }
+                },
+                exams: {
+                    take: 5,
+                    orderBy: { createdAt: 'desc' }
+                },
+                candidates: {
+                    take: 5,
+                    orderBy: { createdAt: 'desc' }
+                },
                 _count: {
                     select: {
                         exams: true,
@@ -462,9 +496,7 @@ export const getAllCandidates = async (
                 take: Number(limit),
                 orderBy: { createdAt: 'desc' },
                 include: {
-                    organization: {
-                        select: { name: true }
-                    },
+                    organization: true,
                     _count: {
                         select: {
                             examAssignments: true,
@@ -547,6 +579,7 @@ export const getCandidates = async (
                 take: Number(limit) === -1 ? undefined : Number(limit),
                 orderBy: { createdAt: 'desc' },
                 include: {
+                    organization: true,
                     _count: {
                         select: {
                             examAssignments: true,
@@ -3066,8 +3099,20 @@ export const getOpenEndedResponses = async (
                     examQuestion: true,
                     examAttempt: {
                         include: {
-                            candidate: true
-                        }
+                            candidate: true,
+                            exam: {
+                                include: {
+                                    organization: true,
+                                    _count: {
+                                        select: {
+                                            questions: true,
+                                            assignments: true,
+                                            attempts: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
                     },
                     marker: {
                         select: {

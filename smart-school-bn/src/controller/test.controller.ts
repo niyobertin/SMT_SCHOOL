@@ -58,8 +58,11 @@ export const createTest = async (
     // Verify user owns the course
     // @ts-ignore
     const userId = req.user?.id;
+    // @ts-ignore
+    const userRole = req.user?.role;
+
     const course = await prisma.course.findUnique({
-      where: { id: courseId, instructorId: userId },
+      where: (userRole as any) === 'SUPER_ADMIN' ? { id: courseId } : { id: courseId, instructorId: userId },
     });
 
     if (!course) {
@@ -324,7 +327,7 @@ export const startTestAttempt = async (
               where: { userId, status: "ACTIVE" },
             },
             studentEnrollments: !isStudent ? false : {
-              where: { studentId: studentId, status: "ACTIVE" },
+              where: { studentId: studentId },
             },
             assignments: !isStudent ? false : {
               where: {
@@ -483,7 +486,7 @@ export const submitAnswer = async (
 
     if (isStudent) {
       testAttempt = await prisma.studentTestAttempt.findFirst({
-        where: { id: attemptId, studentId },
+        where: { id: attemptId, studentId: (userRole as any) === 'SUPER_ADMIN' ? undefined : studentId },
         include: {
           test: {
             include: {
@@ -497,7 +500,7 @@ export const submitAnswer = async (
       });
     } else {
       testAttempt = await prisma.testAttempt.findFirst({
-        where: { id: attemptId, userId },
+        where: { id: attemptId, userId: (userRole as any) === 'SUPER_ADMIN' ? undefined : userId },
         include: {
           test: {
             include: {
@@ -676,7 +679,7 @@ export const submitTest = async (
     let testAttempt: any;
     if (isStudent) {
       testAttempt = await prisma.studentTestAttempt.findFirst({
-        where: { id: attemptId, studentId },
+        where: { id: attemptId, studentId: (userRole as any) === 'SUPER_ADMIN' ? undefined : studentId },
         include: {
           test: {
             include: {
@@ -696,7 +699,7 @@ export const submitTest = async (
       });
     } else {
       testAttempt = await prisma.testAttempt.findFirst({
-        where: { id: attemptId, userId },
+        where: { id: attemptId, userId: (userRole as any) === 'SUPER_ADMIN' ? undefined : userId },
         include: {
           test: {
             include: {
@@ -743,7 +746,7 @@ export const submitTest = async (
 
     // 3. Update test attempt
     const now = new Date();
-    const updateData = {
+    const updateData: any = {
       endTime: now,
       score,
       isPassed,

@@ -36,7 +36,6 @@ import {
     Users,
     Filter,
     Building2,
-    Search,
     ChevronDown,
     HelpCircle,
     AlertTriangle,
@@ -462,13 +461,12 @@ const Exams = () => {
 
                 {/* Search */}
                 <div className="relative col-span-1 md:col-span-1">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     <input
                         type="text"
                         placeholder="Search exams..."
                         value={filters.search}
                         onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                        className="pl-9 w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full rounded-lg border-gray-300 border py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
                 </div>
 

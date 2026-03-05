@@ -19,23 +19,27 @@ export function TestResults() {
 
   if (!results) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-        <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md w-full">
-          <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">No Results Found</h2>
-          <p className="text-gray-600 mb-6">We couldn't find your test results. Please try again.</p>
-          <div className="flex justify-center gap-3">
+      <div className="flex items-center justify-center py-20 p-4">
+        <div className="text-center p-8 bg-white rounded-2xl shadow-sm border border-slate-100 max-w-md w-full animate-fade-in-up">
+          <div className="flex justify-center mb-6">
+            <div className="p-3 bg-amber-50 rounded-2xl">
+              <AlertCircle className="w-10 h-10 text-amber-500" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">No Results Found</h2>
+          <p className="text-slate-500 font-medium mb-8 leading-relaxed">We couldn't find your test results. They may still be processing or the session expired.</p>
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-colors flex items-center"
+              className="px-6 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center"
             >
               <ArrowLeft className="w-4 h-4 mr-2" /> Go Back
             </button>
             <button
-              onClick={() => navigate('/')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              onClick={() => navigate('/student/dashboard')}
+              className="px-6 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
             >
-              Return Home
+              Dashboard
             </button>
           </div>
         </div>
@@ -49,25 +53,10 @@ export function TestResults() {
     totalPoints,
     isPassed,
     details = [],
-    submittedAt,
-    timeSpent
+    submittedAt
   } = results;
   const submissionTime = new Date(submittedAt).toLocaleString();
-  const timeSpentSeconds = timeSpent % 60;
 
-  interface ProgressBarProps {
-    value: number;
-    className?: string;
-  }
-
-  const ProgressBar = ({ value, className = '' }: ProgressBarProps) => (
-    <div className={`w-full bg-gray-200 rounded-full h-2.5 ${className}`}>
-      <div
-        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-        style={{ width: `${value}%` }}
-      />
-    </div>
-  );
 
   type BadgeVariant = 'success' | 'destructive' | 'default';
 
@@ -95,55 +84,79 @@ export function TestResults() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+    <div className="py-4 px-2 animate-fade-in">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Header Action */}
+        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
+            onClick={() => navigate('/student/available-tests')}
+            className="flex items-center text-slate-600 font-bold text-xs uppercase tracking-widest hover:text-[#1a7ea5] transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" /> Back to Test
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Available Tests
           </button>
-
+          <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border ${isPassed ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+            {isPassed ? 'Passed' : 'Failed'}
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Test Results</h2>
-            <p className="text-gray-500 mt-1">
-              Submitted on {submissionTime} •  {timeSpentSeconds} minutes <span className={`ml-2 px-4 py-2 text-xl rounded-full text-white  ${isPassed ? 'bg-green-600' : 'bg-red-600'}`} >
-                {isPassed ? 'Passed' : 'Failed'}
-              </span>
+        {/* Results Hero Card */}
+        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+          <div className={`p-8 text-center ${isPassed ? 'bg-emerald-50/30' : 'bg-rose-50/30'}`}>
+            <div className="flex justify-center mb-6">
+              {isPassed ? (
+                <div className="p-4 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20">
+                  <CheckCircle className="w-12 h-12 text-white" />
+                </div>
+              ) : (
+                <div className="p-4 bg-rose-500 rounded-full shadow-lg shadow-rose-500/20">
+                  <XCircle className="w-12 h-12 text-white" />
+                </div>
+              )}
+            </div>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">
+              {isPassed ? 'Congratulations!' : 'Keep Practicing!'}
+            </h1>
+            <p className="text-slate-500 font-medium mb-2">
+              {isPassed
+                ? "You've successfully passed the assessment."
+                : "You didn't reach the passing score this time."}
             </p>
-
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+              Submitted on {submissionTime}
+            </div>
           </div>
 
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-5xl font-bold text-gray-900 mb-2">{score.toFixed(2)}%</div>
-                <div className="text-gray-500">Score</div>
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center group hover:border-[#1a7ea5]/20 transition-all">
+                <div className="text-4xl font-black text-slate-900 mb-1">{score.toFixed(1)}%</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Final Grade</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-5xl font-bold text-gray-900 mb-2">
-                  {pointsEarned} / {totalPoints}
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center group hover:border-[#1a7ea5]/20 transition-all">
+                <div className="text-4xl font-black text-slate-900 mb-1">
+                  {pointsEarned} <span className="text-slate-300">/</span> {totalPoints}
                 </div>
-                <div className="text-gray-500">Points</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Total Points</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-5xl font-bold text-gray-900 mb-2">
-                  {details.filter((q: any) => q.isCorrect).length} / {details.length}
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center group hover:border-[#1a7ea5]/20 transition-all">
+                <div className="text-4xl font-black text-slate-900 mb-1">
+                  {details.filter((q: any) => q.isCorrect).length} <span className="text-slate-300">/</span> {details.length}
                 </div>
-                <div className="text-gray-500">Correct Answers</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Accuracy</div>
               </div>
             </div>
 
-            <div className="mt-6">
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Progress</span>
-                <span>{score.toFixed(2)}%</span>
+            <div className="space-y-3">
+              <div className="flex justify-between items-end">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Performance Goal</span>
+                <span className={`text-xs font-black ${isPassed ? 'text-emerald-600' : 'text-rose-600'}`}>{score.toFixed(1)}% Achieved</span>
               </div>
-              <ProgressBar value={score} />
+              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-1000 ease-out ${isPassed ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-rose-500'}`}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>

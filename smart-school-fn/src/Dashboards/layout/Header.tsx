@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import api from "../../redux/api/api";
+import { fetchAcademicYears, setSelectedYear } from "../../redux/features/academic/academicSlice";
+import type { AppDispatch, RootState } from "../../redux/stores";
 
 interface HeaderProps {
   activeSection: string;
@@ -18,6 +21,26 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { years, selectedYear } = useSelector((state: RootState) => state.academic);
+  const authUser = useSelector((state: RootState) => state.auth.user);
+
+  const schoolId = authUser?.schoolStaff?.[0]?.schoolId || authUser?.userOrganizations?.[0]?.organizationId;
+
+  useEffect(() => {
+    if (schoolId) {
+      dispatch(fetchAcademicYears(schoolId));
+    }
+  }, [dispatch, schoolId]);
+
+  useEffect(() => {
+    // If no year is selected but we have years, select the active one or the first one
+    if (!selectedYear && years.length > 0) {
+      const activeYear = years.find((y: any) => y.isActive) || years[0];
+      dispatch(setSelectedYear(activeYear));
+    }
+  }, [years, selectedYear, dispatch]);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -58,6 +81,30 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Academic Year Selector */}
+          {user && (user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "INSTRUCTOR") && (
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="relative group">
+                <select
+                  value={selectedYear?.id || ""}
+                  onChange={(e) => {
+                    const year = years.find((y: any) => y.id === e.target.value);
+                    dispatch(setSelectedYear(year));
+                  }}
+                  className="appearance-none bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#1a7ea5]/20"
+                >
+                  <option value="" disabled>Select Year</option>
+                  {years.map((year: any) => (
+                    <option key={year.id} value={year.id}>{year.year}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#1a7ea5]">
+                  <Calendar size={14} />
+                </div>
+              </div>
+            </div>
+          )}
+
           {loadingUser ? (
             <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (

@@ -12,13 +12,14 @@ export function Assessments() {
     const dispatch = useAppDispatch();
     const { assessments, loading, error } = useAppSelector((state) => state.assessments);
     const { user } = useAppSelector((state) => state.auth);
+    const { selectedYearId } = useAppSelector((state) => state.academic);
     const schoolId = user?.schoolStaff?.[0]?.schoolId || user?.userOrganizations?.[0]?.organizationId;
 
     useEffect(() => {
         if (schoolId) {
-            dispatch(fetchAssessments({ schoolId }));
+            dispatch(fetchAssessments({ schoolId, academicYearId: selectedYearId || undefined }));
         }
-    }, [dispatch, schoolId]);
+    }, [dispatch, schoolId, selectedYearId]);
 
     // Calculate stats
     const totalAssessments = assessments.length;

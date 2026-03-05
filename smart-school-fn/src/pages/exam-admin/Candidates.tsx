@@ -21,7 +21,6 @@ import {
     Mail,
     Phone,
     X,
-    Search,
     Copy,
     Upload,
     Loader2,
@@ -294,13 +293,12 @@ const Candidates = () => {
             <div className="flex flex-col gap-4 mb-6">
                 <div className="flex flex-col md:flex-row items-center gap-4">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search candidates..."
-                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                     </div>
 

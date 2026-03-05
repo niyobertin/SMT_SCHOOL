@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Users, BookOpen, DollarSign, Activity, TrendingUp, Calendar } from 'lucide-react';
+import { Users, BookOpen, DollarSign, Activity, TrendingUp, Calendar, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -62,28 +63,36 @@ interface DashboardStats {
 }
 
 export const DashboardHome = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDashboardStats = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/users/dashboard/stats');
-        if (response.data.status === 'success') {
-          setStats(response.data.data);
-        } else {
-          throw new Error('Failed to fetch dashboard stats');
+        const [statsResponse, coursesResponse] = await Promise.all([
+          api.get('/users/dashboard/stats'),
+          api.get('/courses')
+        ]);
+
+        if (statsResponse.data.status === 'success') {
+          setStats(statsResponse.data.data);
+        }
+
+        if (coursesResponse.data.status === 'success') {
+          setCourses(coursesResponse.data.data.slice(0, 6)); // Show first 6 courses
         }
       } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
+        console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardStats();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -287,6 +296,76 @@ export const DashboardHome = () => {
           </div>
           <div className="h-80 w-full">
             <Line data={chartData} options={chartOptions} />
+          </div>
+        </motion.div>
+
+        {/* Recent Courses List Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="lg:col-span-3 bg-white rounded-2xl p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-slate-100"
+        >
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Active Courses</h2>
+              <p className="text-slate-500 text-sm font-medium">Manage and monitor academic offerings</p>
+            </div>
+            <button
+              onClick={() => navigate('/dashboard/courses')}
+              className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-[#1a7ea5] hover:bg-slate-100 transition-all flex items-center gap-2"
+            >
+              View All Courses
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.length > 0 ? (
+              courses.map((course) => (
+                <div
+                  key={course.id}
+                  className="bg-slate-50 border border-slate-100 p-6 rounded-2xl group hover:border-[#1a7ea5]/30 hover:bg-white hover:shadow-xl hover:shadow-[#1a7ea5]/5 transition-all cursor-pointer"
+                  onClick={() => navigate(`/dashboard/courses/${course.id}`)}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="h-12 w-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:bg-[#1a7ea5]/5 transition-colors">
+                      <BookOpen size={20} className="text-[#1a7ea5]" />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                      {course.lessons?.length || 0} Lessons
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors leading-tight mb-2 line-clamp-2">
+                    {course.title}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200/50">
+                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
+                      <Users size={12} className="text-slate-500" />
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {course.category?.name || "Academic"}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="md:col-span-2 lg:col-span-3 bg-slate-50/50 p-12 rounded-[32px] border border-dashed border-slate-200 text-center">
+                <div className="h-16 w-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <BookOpen size={24} className="text-[#1a7ea5]" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">Explore and Manage Courses</h3>
+                <p className="text-slate-500 text-sm mt-2 mb-6 max-w-sm mx-auto">
+                  Navigate to the courses section to view, edit, and create new learning materials for your students.
+                </p>
+                <button
+                  onClick={() => navigate('/dashboard/courses')}
+                  className="px-8 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+                >
+                  Go to Courses Section
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

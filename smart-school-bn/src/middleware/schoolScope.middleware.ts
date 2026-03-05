@@ -26,6 +26,12 @@ export const requireSchoolAccess = (schoolIdParam: string = 'schoolId') => {
         // For INSTRUCTOR and other roles, check school assignment
         const userSchoolIds = user.schoolStaff?.map((ss: any) => ss.schoolId) || [];
 
+        // Add student's own school ID if applicable
+        const studentSchoolId = (req as any).schoolId;
+        if (studentSchoolId) {
+            userSchoolIds.push(studentSchoolId);
+        }
+
         if (!userSchoolIds.includes(requestedSchoolId)) {
             return res.status(403).json({
                 success: false,
@@ -55,7 +61,15 @@ export const getUserSchoolIds = (req: Request): string[] | null => {
     }
 
     // Return assigned schools
-    return user.schoolStaff?.map((ss: any) => ss.schoolId) || [];
+    const schoolIds = user.schoolStaff?.map((ss: any) => ss.schoolId) || [];
+
+    // Include student's school if applicable
+    const studentSchoolId = (req as any).schoolId;
+    if (studentSchoolId) {
+        schoolIds.push(studentSchoolId);
+    }
+
+    return schoolIds;
 };
 
 /**

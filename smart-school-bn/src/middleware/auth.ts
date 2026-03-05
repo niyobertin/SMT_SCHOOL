@@ -164,12 +164,36 @@ export const optionalAuthenticate = async (req: Request, res: Response, next: Ne
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as any;
-    if (user && user.role !== 'SUPER_ADMIN' && !roles.includes(user.role)) {
-      return res.status(403).json({
+
+    if (!user) {
+      return res.status(401).json({
         success: false,
-        message: 'Access denied. You do not have permissions to perform this action.'
+        message: 'Authentication required.'
       });
     }
-    next();
+
+    // Role-based bypass for SUPER_ADMIN
+    if (user.role === 'SUPER_ADMIN') {
+      return next();
+    }
+
+    // Check if user has one of the required roles directly
+    if (roles.includes(user.role)) {
+      return next();
+    }
+
+    // Special check for SCHOOL_ADMIN if it's in the roles list
+    if (roles.includes('SCHOOL_ADMIN')) {
+      const isSchoolAdmin = user.schoolStaff?.some((s: any) => s.roleInSchool === 'SCHOOL_ADMIN');
+      if (isSchoolAdmin) {
+        return next();
+      }
+    }
+
+    // If none of the conditions met, deny access
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. You do not have permissions to perform this action.'
+    });
   };
 };

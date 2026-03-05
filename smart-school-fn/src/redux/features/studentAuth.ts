@@ -13,6 +13,7 @@ interface StudentType {
 interface StudentAuthState {
   student: StudentType | null;
   token: string | null;
+  selectedAcademicYear: any | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -22,6 +23,9 @@ const initialState: StudentAuthState = {
     ? JSON.parse(localStorage.getItem("student")!)
     : null,
   token: localStorage.getItem("accessToken_student") || null,
+  selectedAcademicYear: localStorage.getItem("selectedAcademicYear")
+    ? JSON.parse(localStorage.getItem("selectedAcademicYear")!)
+    : null,
   isLoading: false,
   error: null,
 };
@@ -69,6 +73,14 @@ const studentAuthSlice = createSlice({
         );
       }
     },
+    setSelectedAcademicYear: (state, action: PayloadAction<any>) => {
+      state.selectedAcademicYear = action.payload;
+      if (action.payload) {
+        localStorage.setItem("selectedAcademicYear", JSON.stringify(action.payload));
+      } else {
+        localStorage.removeItem("selectedAcademicYear");
+      }
+    },
   },
 });
 
@@ -78,6 +90,7 @@ export const {
   studentLoginFailure,
   studentLogout,
   updateStudentProfile,
+  setSelectedAcademicYear,
 } = studentAuthSlice.actions;
 
 export default studentAuthSlice.reducer;

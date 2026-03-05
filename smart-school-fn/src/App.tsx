@@ -11,6 +11,7 @@ import { StudentCourses } from "./pages/student/StudentCourses";
 import { StudentResults } from "./pages/student/StudentResults";
 import { StudentProtectedRoute } from "./routes/StudentProtectedRoute";
 import { RequestReset } from "./pages/auth/RequestLink";
+import { AvailableTests } from "./pages/student/AvailableTests";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import Tuition from "./pages/Tuition";
 import { CourseCategories } from "./pages/cources/category";
@@ -146,6 +147,9 @@ function App() {
             <Route path="dashboard" element={<StudentDashboard />} />
             <Route path="courses" element={<StudentCourses />} />
             <Route path="results" element={<StudentResults />} />
+            <Route path="available-tests" element={<AvailableTests />} />
+            <Route path="take-test/:testId" element={<TestPage />} />
+            <Route path="test-results/:testId" element={<TestResults />} />
             {/* Add more student routes here */}
             <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
           </Route>

@@ -12,20 +12,41 @@ import {
     Search,
     Shield,
     BarChart3,
+    Calendar,
+    FileQuestion,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { useAppSelector, useAppDispatch } from "../../../redux/hooks";
+import { setSelectedAcademicYear } from "../../../redux/features/studentAuth";
+import { fetchAcademicYears } from "../../../redux/features/academic/academicSlice";
+import { YearSelectionModal } from "../../Modals/YearSelectionModal";
 
 export const StudentLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [profile, setProfile] = useState<any>(null);
+    const [showYearModal, setShowYearModal] = useState(false);
+    const [academicYears, setAcademicYears] = useState<any[]>([]);
+
     const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+
+    const { selectedAcademicYear } = useAppSelector((state) => state.studentAuth);
 
     useEffect(() => {
-        fetchProfile();
+        const loadInitialData = async () => {
+            await fetchProfile();
+        };
+        loadInitialData();
     }, []);
+
+    useEffect(() => {
+        if (profile && !selectedAcademicYear && !showYearModal) {
+            handleOpenYearModal();
+        }
+    }, [profile, selectedAcademicYear]);
 
     const fetchProfile = async () => {
         try {
@@ -47,12 +68,24 @@ export const StudentLayout = () => {
     const handleLogout = () => {
         localStorage.removeItem("accessToken_student");
         localStorage.removeItem("student");
+        localStorage.removeItem("selectedAcademicYear");
         navigate("/login");
+    };
+
+    const handleOpenYearModal = async () => {
+        if (profile?.schoolId) {
+            const result = await dispatch(fetchAcademicYears(profile.schoolId));
+            if (fetchAcademicYears.fulfilled.match(result)) {
+                setAcademicYears(result.payload);
+                setShowYearModal(true);
+            }
+        }
     };
 
     const menuItems = [
         { icon: LayoutDashboard, label: "Dashboard", path: "/student/dashboard" },
         { icon: BookOpen, label: "My Courses", path: "/student/courses" },
+        { icon: FileQuestion, label: "Take Test", path: "/student/available-tests" },
         { icon: BarChart3, label: "My Results", path: "/student/results" },
         { icon: User, label: "Profile", path: "/profile" },
     ];
@@ -172,6 +205,26 @@ export const StudentLayout = () => {
 
                         <div className="h-8 w-px bg-gray-200 mx-1" />
 
+                        {/* Academic Year Selector */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleOpenYearModal}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-all group"
+                            >
+                                <Calendar size={14} className="text-[#1a7ea5]" />
+                                <div className="text-left">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                                        Academic Year
+                                    </p>
+                                    <p className="text-xs font-bold text-slate-700 leading-tight">
+                                        {selectedAcademicYear?.year || "Select Year"}
+                                    </p>
+                                </div>
+                            </button>
+                        </div>
+
+                        <div className="h-8 w-px bg-gray-200 mx-1" />
+
                         <div className="flex items-center gap-3">
                             <div className="hidden text-right sm:block">
                                 <p className="text-sm font-semibold text-gray-800">
@@ -262,6 +315,22 @@ export const StudentLayout = () => {
                             </div>
                         </motion.aside>
                     </>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showYearModal && (
+                    <YearSelectionModal
+                        years={academicYears}
+                        selectedYearId={selectedAcademicYear?.id}
+                        onSelect={(year) => {
+                            dispatch(setSelectedAcademicYear(year));
+                            setShowYearModal(false);
+                            // Optionally refresh data based on new year
+                            window.location.reload();
+                        }}
+                        onClose={() => setShowYearModal(false)}
+                    />
                 )}
             </AnimatePresence>
         </div>

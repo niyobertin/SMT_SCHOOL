@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { TestInstructions } from '../../components/test/TestInstructions';
 import { TestQuestion } from '../../components/test/TestQuestion';
@@ -87,7 +87,10 @@ export function TestPage() {
 
     try {
       await dispatch(submitTestAttempt(attemptId)).unwrap();
-      navigate(`/test/${testId}/results`);
+      const resultsPath = location.pathname.startsWith('/student')
+        ? `/student/test-results/${testId}`
+        : `/test/${testId}/results`;
+      navigate(resultsPath);
     } catch (err: any) {
       console.error('Failed to submit exam:', err);
       toast.error(err.message || 'Failed to auto-submit exam.');
@@ -138,10 +141,13 @@ export function TestPage() {
       } else {
         // Verify we have results before navigating
         if (result?.data || result?.score !== undefined) {
-          navigate(`/test/${testId}/results`);
+          const resultsPath = location.pathname.startsWith('/student')
+            ? `/student/test-results/${testId}`
+            : `/test/${testId}/results`;
+          navigate(resultsPath);
         } else {
           toast.warning("Test submitted but no results returned. Please check your dashboard.");
-          navigate(`/courses`);
+          navigate(location.pathname.startsWith('/student') ? `/student/dashboard` : `/courses`);
         }
       }
     } catch (err: any) {
@@ -188,18 +194,20 @@ export function TestPage() {
   /** Error */
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
-          <div className="flex justify-center mb-4">
-            <AlertCircle className="w-12 h-12 text-red-500" />
+      <div className="flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center animate-fade-in-up">
+          <div className="flex justify-center mb-6">
+            <div className="p-3 bg-rose-50 rounded-2xl">
+              <AlertCircle className="w-10 h-10 text-rose-500" />
+            </div>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Test</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">Error Loading Test</h2>
+          <p className="text-slate-500 font-medium mb-8 leading-relaxed">{error}</p>
           <div className="flex flex-col space-y-3">
             <BackButton className="self-center" />
             <button
               onClick={() => testId && dispatch(startTest(testId))}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
             >
               Try Again
             </button>
@@ -212,10 +220,13 @@ export function TestPage() {
   /** Instructions */
   if (!testStarted && test?.data) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-6">
-            <BackButton className="mb-4" />
+      <div className="py-4 px-2">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <BackButton />
+            <div className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-100">
+              Exam Instructions
+            </div>
           </div>
           <TestInstructions
             test={{
@@ -238,13 +249,13 @@ export function TestPage() {
   }
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
-          <div className="flex justify-center mb-4">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      <div className="flex items-center justify-center py-20">
+        <div className="max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            <div className="w-12 h-12 border-4 border-[#1a7ea5] border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Test</h2>
-          <p className="text-gray-600 mb-6">Please wait while the test is loading...</p>
+          <h2 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">Loading Test</h2>
+          <p className="text-slate-500 font-medium">Preparing your examination environment...</p>
         </div>
       </div>
     );

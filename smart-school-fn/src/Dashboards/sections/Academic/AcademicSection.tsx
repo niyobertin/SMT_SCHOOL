@@ -43,7 +43,7 @@ export const AcademicSection = () => {
     const [studentsLoading, setStudentsLoading] = useState(false);
     const [studentSearch, setStudentSearch] = useState("");
 
-    const { years, classes, subjects } = useSelector((state: RootState) => state.academic);
+    const { years, classes, subjects, selectedYearId } = useSelector((state: RootState) => state.academic);
     const { user } = useSelector((state: RootState) => state.auth);
     const userRole = localStorage.getItem("userRole");
     const isAdmin = userRole === "SUPER_ADMIN" || userRole === "ADMIN";
@@ -54,7 +54,10 @@ export const AcademicSection = () => {
         setStudentsLoading(true);
         try {
             const { data } = await api.get(`/schools/${schoolId}/students`, {
-                params: { q: studentSearch || undefined },
+                params: {
+                    q: studentSearch || undefined,
+                    academicYearId: selectedYearId || undefined
+                },
             });
             setStudents(data.data || data.students || []);
         } catch {
@@ -62,16 +65,16 @@ export const AcademicSection = () => {
         } finally {
             setStudentsLoading(false);
         }
-    }, [schoolId, studentSearch]);
+    }, [schoolId, studentSearch, selectedYearId]);
 
     useEffect(() => {
         if (schoolId) {
             if (activeTab === "years") dispatch(fetchAcademicYears(schoolId));
-            if (activeTab === "classes") dispatch(fetchClasses({ schoolId }));
+            if (activeTab === "classes") dispatch(fetchClasses({ schoolId, academicYearId: selectedYearId || undefined }));
             if (activeTab === "subjects") dispatch(fetchSubjects(schoolId));
             if (activeTab === "students") fetchStudents();
         }
-    }, [dispatch, schoolId, activeTab, fetchStudents]);
+    }, [dispatch, schoolId, activeTab, fetchStudents, selectedYearId]);
 
     const handleCreateSuccess = (message: string) => {
         toast.current?.show({ severity: 'success', summary: 'success', detail: message, life: 3000 });

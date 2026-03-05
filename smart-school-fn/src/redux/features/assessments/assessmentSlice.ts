@@ -17,9 +17,9 @@ const initialState: AssessmentState = {
 
 export const fetchAssessments = createAsyncThunk(
     "assessments/fetchAssessments",
-    async ({ schoolId, classId, subjectId, term }: { schoolId: string; classId?: string; subjectId?: string; term?: string }) => {
+    async ({ schoolId, classId, subjectId, term, academicYearId }: { schoolId: string; classId?: string; subjectId?: string; term?: string; academicYearId?: string }) => {
         const response = await api.get(`/schools/${schoolId}/assessments`, {
-            params: { classId, subjectId, term },
+            params: { classId, subjectId, term, academicYearId },
         });
         return response.data.data;
     }
@@ -51,9 +51,9 @@ export const submitResults = createAsyncThunk(
 
 export const fetchSubmissions = createAsyncThunk(
     "assessments/fetchSubmissions",
-    async ({ schoolId, classId, term }: { schoolId: string; classId?: string; term?: string }) => {
+    async ({ schoolId, classId, term, academicYearId }: { schoolId: string; classId?: string; term?: string; academicYearId?: string }) => {
         const response = await api.get(`/schools/${schoolId}/submissions`, {
-            params: { classId, term },
+            params: { classId, term, academicYearId },
         });
         return response.data.data;
     }
