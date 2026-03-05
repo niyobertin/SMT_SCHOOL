@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useDebounce } from "use-debounce";
 import {
-    Search, Calendar, ChevronLeft, ChevronRight, Plus,
+    Calendar, ChevronLeft, ChevronRight, Plus,
     Eye, Edit, Trash2, X, Upload, Send, AlertCircle,
     Globe, Building2, FileText, Link, MoreVertical,
 } from 'lucide-react';
@@ -500,7 +500,7 @@ export const JobBoard = () => {
                         {/* Search Bar */}
                         <div className="flex-1">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+
                                 <input
                                     type="text"
                                     placeholder="Search by job title or company..."
@@ -509,7 +509,7 @@ export const JobBoard = () => {
                                         setSearchTerm(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    className="w-full pl-11 pr-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all outline-none text-sm font-bold text-slate-700 shadow-sm"
+                                    className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all outline-none text-sm font-bold text-slate-700 shadow-sm"
                                 />
                             </div>
                         </div>
