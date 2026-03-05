@@ -82,7 +82,7 @@ export const DashboardHome = () => {
         }
 
         if (coursesResponse.data.status === 'success') {
-          setCourses(coursesResponse.data.data.slice(0, 6)); // Show first 6 courses
+          setCourses(coursesResponse.data.data.courses.slice(0, 6)); // Show first 6 courses
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
