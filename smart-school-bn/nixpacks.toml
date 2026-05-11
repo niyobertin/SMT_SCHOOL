@@ -1,5 +1,12 @@
+[start]
+cmd = "yarn run start"
+
 [phases.setup]
-nodeVersion = "20"
+nodejs = "20"
+yarn = "1"
 
 [phases.install]
-npm = "yarn"
+build = "yarn install --frozen-lockfile"
+
+[phases.build]
+cmd = "yarn build"
