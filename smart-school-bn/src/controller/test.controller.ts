@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, TestAttemptStatus } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import * as XLSX from "xlsx";
 import { NotFoundError } from "../utils/errors";
@@ -324,7 +324,7 @@ export const startTestAttempt = async (
               where: { userId, status: "ACTIVE" },
             },
             studentEnrollments: !isStudent ? false : {
-              where: { studentId: studentId, status: "ACTIVE" },
+              where: { studentId: studentId, isCompleted: false },
             },
             assignments: !isStudent ? false : {
               where: {
@@ -342,8 +342,9 @@ export const startTestAttempt = async (
 
     // For students, check if enrolled or assigned
     if (isStudent) {
-      const isAssigned = (test.course.assignments?.length || 0) > 0;
-      const isEnrolled = (test.course.studentEnrollments?.length || 0) > 0;
+      const testWithCourse = test as any;
+      const isAssigned = (testWithCourse.course?.assignments?.length || 0) > 0;
+      const isEnrolled = (testWithCourse.course?.studentEnrollments?.length || 0) > 0;
 
       if (!isAssigned && !isEnrolled) {
         res.status(403).json({
@@ -355,7 +356,8 @@ export const startTestAttempt = async (
     } else {
       // For staff, check if enrolled (if applicable) or if they are admin/instructor
       if (userRole !== "ADMIN" && userRole !== "INSTRUCTOR" && userRole !== "SUPER_ADMIN") {
-        if ((test.course.enrollments?.length || 0) === 0) {
+        const testWithCourse = test as any;
+        if ((testWithCourse.course?.enrollments?.length || 0) === 0) {
           res.status(403).json({
             status: "error",
             message: "You are not enrolled in this course",
@@ -747,7 +749,7 @@ export const submitTest = async (
       endTime: now,
       score,
       isPassed,
-      status: "COMPLETED",
+      status: TestAttemptStatus.COMPLETED,
       timeSpent: Math.floor(
         (now.getTime() - testAttempt.startTime.getTime()) / 1000 / 60
       ), // in minutes
