@@ -1,8 +1,8 @@
 [start]
 cmd = "yarn run start"
 
-[phases.setup]
-nodejs = "20"
+[nodejs]
+version = "20"
 
 [phases.install]
 build = "yarn install --ignore-engines"
