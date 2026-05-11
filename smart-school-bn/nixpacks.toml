@@ -3,10 +3,9 @@ cmd = "yarn run start"
 
 [phases.setup]
 nodejs = "20"
-yarn = "1"
 
 [phases.install]
-build = "yarn install --frozen-lockfile"
+build = "yarn install --ignore-engines"
 
 [phases.build]
 cmd = "yarn build"
