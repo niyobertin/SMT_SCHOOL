@@ -8,4 +8,4 @@ build = "yarn install --ignore-engines"
 build = "tsc -b && vite build"
 
 [start]
-cmd = "vite preview --host 0.0.0.0 --port ${PORT:-4173}"
+cmd = "vite preview --host 0.0.0.0"
