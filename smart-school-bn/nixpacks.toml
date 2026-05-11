@@ -1,0 +1,5 @@
+[phases.setup]
+nodeVersion = "20"
+
+[phases.install]
+npm = "yarn"
