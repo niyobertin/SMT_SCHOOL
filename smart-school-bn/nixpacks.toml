@@ -1,7 +1,7 @@
 [start]
 cmd = "yarn run start"
 
-[nodejs]
+[node]
 version = "20"
 
 [phases.install]
