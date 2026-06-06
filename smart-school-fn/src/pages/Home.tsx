@@ -1,6 +1,6 @@
 import { ArrowRight, Play, Star, Award, Users, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import type { Variants } from "framer-motion";
 
 import { useEffect, useRef } from "react";
@@ -68,12 +68,6 @@ export const HomePage: React.FC = () => {
       navigate("/");
     }
   }, [navigate]);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"]
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   return (
     <div ref={ref} className="bg-white">

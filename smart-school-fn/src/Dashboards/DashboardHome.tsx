@@ -326,7 +326,7 @@ export const DashboardHome = () => {
 
           <div className="space-y-3 max-h-[320px] overflow-y-auto custom-scrollbar">
             {stats.logs && stats.logs.length > 0 ? (
-              stats.logs.slice(0, 8).map((log, idx) => (
+              stats.logs.slice(0, 8).map((log) => (
                 <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors">
                   <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 shrink-0">
                     <Activity size={14} />
