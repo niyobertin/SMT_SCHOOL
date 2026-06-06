@@ -13,7 +13,6 @@ import { countryCodes } from "../../constants/countryCodes";
 import { registerUser, clearError } from "../../redux/features/auth";
 import type { AppDispatch, RootState } from "../../redux/stores";
 import googleLogo from "../../assets/search.png";
-import facebookLogo from "../../assets/facebook.png";
 
 // --- Schema ---
 const registerSchema = yup.object().shape({
@@ -369,20 +368,13 @@ export const RegisterPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <a
                 href={`${import.meta.env.VITE_API_URL}/api/users/auth/google`}
                 className="flex items-center justify-center gap-2 bg-[#eeeeee] py-1.5 transition-all hover:bg-gray-200"
               >
                 <img src={googleLogo} alt="Google" className="h-4 w-4" />
                 <span className="text-[10px] text-gray-500 font-medium">Google</span>
-              </a>
-              <a
-                href={`${import.meta.env.VITE_API_URL}/api/users/auth/facebook`}
-                className="flex items-center justify-center gap-2 bg-[#1877F2] py-1.5 transition-all hover:bg-[#166fe5]"
-              >
-                <img src={facebookLogo} alt="Facebook" className="h-4 w-4 brightness-0 invert" />
-                <span className="text-[10px] text-white font-medium">Facebook</span>
               </a>
             </div>
 

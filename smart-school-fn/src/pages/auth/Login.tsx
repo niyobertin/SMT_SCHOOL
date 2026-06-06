@@ -102,7 +102,7 @@ export const LoginPage = () => {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="Email or Phone Number"
-                    className="w-full bg-[#f9fafb] border border-gray-200 rounded-lg py-3 pl-12 pr-4 text-gray-700 focus:ring-2 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
+                    className="w-full bg-[#f9fafb] border border-gray-200 rounded-lg py-3 pl-16 pr-4 text-gray-700 focus:ring-2 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
                   />
                 </div>
               </div>
@@ -114,7 +114,7 @@ export const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full bg-[#f9fafb] border border-gray-200 rounded-lg py-3 pl-12 pr-10 text-gray-700 focus:ring-2 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
+                  className="w-full bg-[#f9fafb] border border-gray-200 rounded-lg py-3 pl-16 pr-10 text-gray-700 focus:ring-2 focus:ring-[#1a7ea5] focus:outline-none transition-all placeholder:text-gray-400 text-sm"
                 />
                 <button
                   type="button"
