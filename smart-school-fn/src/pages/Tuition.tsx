@@ -127,61 +127,57 @@ export default function TuitionPage() {
 
   const cpaPlanTemplate = [
     {
-      id: "Foundation",
+      id: "Technical Level",
       type: "cpa",
       basePrice: 30000,
       period: 90,
+      description: "Lays the foundation of accounting knowledge and professional values.",
       features: [
-        "Business Mathematics & Quantitative Methods",
-        "Introduction to Law",
         "Financial Accounting",
-        "Business Management, Ethics & Entrepreneurship",
         "Management Accounting",
-        "Economics and Business Environment",
-        "Information Systems",
-        "Taxation"
+        "Taxation",
+        "Audit and Assurance"
       ],
     },
     {
-      id: "Intermediate",
+      id: "Operational Level",
       type: "cpa",
-      basePrice: 40000,
+      basePrice: 30000,
       period: 90,
+      description: "Develops application skills and operational decision making.",
       features: [
-        "Managerial Finance",
+        "Ethics, Law and Governance",
+        "Digital Finance",
+        "Financial Management",
         "Financial Reporting",
-        "Company Law",
-        "Auditing"
-      ],
-    },
-    {
-      id: "Advanced",
-      type: "cpa",
-      basePrice: 50000,
-      period: 90,
-      features: [
-        "Strategy & Leadership",
-        "Audit Practice & Assurance Services",
-        "Advanced Financial Reporting",
-        "Strategic Corporate Finance",
-        "Strategic Performance Management",
         "Advanced Taxation"
       ],
     },
     {
-      id: "CAT",
+      id: "Strategic Level",
       type: "cpa",
-      basePrice: 30000,
+      basePrice: 40000,
       period: 90,
+      description: "Builds strategic insight, leadership, and sector specific expertise.",
       features: [
-        "Recording Financial Transactions",
-        "Principles of Costing",
-        "Effective Working In Accountancy",
-        "Preparation of Basic Accounts",
-        "Managing Costs and Cash Flows",
-        "Professional Ethics",
-        "Financial Accounting",
-        "Public Finance Management"
+        "Strategic Management",
+        "Advanced Audit and Assurance",
+        "Advanced Financial Reporting",
+        "Advanced Financial Management",
+        "Managing Business Performance",
+        "Managing Performance in the Public Sector",
+        "Advanced Public Financial Management"
+      ],
+    },
+    {
+      id: "Professional Level",
+      type: "cpa",
+      basePrice: 50000,
+      period: 90,
+      description: "The final stage focuses on integrated, real-life decision-making through a Test of Professional Competence.",
+      features: [
+        "Public Sector Pathway",
+        "Private Sector Pathway"
       ],
     },
   ];
@@ -313,12 +309,12 @@ export default function TuitionPage() {
         </div>
       </section>
 
-      {/* CPA Section */}
+      {/* CPA Section - Professional Accounting Plans */}
       <section className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-20">
-            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">CPA Specialized Plans</h2>
-            <p className="text-slate-500 font-medium">Professional preparation for Certified Public Accountant success. Comprehensive materials and structured roadmaps for every section.</p>
+            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Professional Accounting Certification Plans</h2>
+            <p className="text-slate-500 font-medium">Comprehensive pathways for accounting and finance professionals at every career stage.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
@@ -333,7 +329,10 @@ export default function TuitionPage() {
                 whileHover={{ y: -8 }}
               >
                 <div className="mb-8">
-                  <h3 className="text-xl font-bold text-slate-900 mb-4 uppercase tracking-tight h-14 flex items-center">{plan.name}</h3>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">{plan.name}</h3>
+                  {plan.description && (
+                    <p className="text-slate-500 text-[11px] font-medium leading-relaxed mb-4">{plan.description}</p>
+                  )}
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-black text-[#1a7ea5]">{plan.basePrice}</span>
                     <span className="text-slate-400 font-bold text-[10px] uppercase">Frw / Quarter</span>

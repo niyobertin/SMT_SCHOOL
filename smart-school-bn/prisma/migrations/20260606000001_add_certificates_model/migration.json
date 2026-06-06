@@ -1,0 +1,35 @@
+{
+  "version": "5.19.1",
+  "steps": [
+    {
+      "tag": "CreateTable",
+      "table": "certificates",
+      "columns": [
+        { "name": "id", "type": "Text", "default": { "name": "cuid", "args": [] }, "isGenerated": false },
+        { "name": "userId", "type": "Text", "isRequired": true },
+        { "name": "certificationId", "type": "Text", "isRequired": true },
+        { "name": "certificateNumber", "type": "Text", "isRequired": true, "isUnique": true },
+        { "name": "score", "type": "Double", "isRequired": true },
+        { "name": "issuedAt", "type": "DateTime", "default": { "name": "now", "args": [] }, "isRequired": true },
+        { "name": "pdfUrl", "type": "Text", "isRequired": false },
+        { "name": "status", "type": "Text", "default": "'ACTIVE'", "isRequired": true },
+        { "name": "createdAt", "type": "DateTime", "default": { "name": "now", "args": [] }, "isRequired": true },
+        { "name": "updatedAt", "type": "DateTime", "default": { "name": "now", "args": [] }, "isRequired": true }
+      ],
+      "foreignKeys": [
+        {
+          "columns": ["userId"],
+          "referencedTable": "users",
+          "referencedColumns": ["id"],
+          "onDelete": "Cascade"
+        }
+      ],
+      "indexes": [
+        { "name": "certificates_userId_idx", "columns": ["userId"] },
+        { "name": "certificates_certificationId_idx", "columns": ["certificationId"] },
+        { "name": "certificates_certificateNumber_idx", "columns": ["certificateNumber"] }
+      ],
+      "primaryKey": { "columns": ["id"] }
+    }
+  ]
+}

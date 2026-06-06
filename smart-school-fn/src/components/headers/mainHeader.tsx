@@ -37,6 +37,7 @@ export function Header() {
     { href: "/tuition", label: t("tuition") },
     { href: "/job-listing", label: "Jobs" },
     { href: "/contact", label: t("contactUs") },
+    { href: "/certificates", label: "Certificates" },
   ];
 
   const isActive = (href: string, exact: boolean = false) =>
@@ -45,25 +46,25 @@ export function Header() {
   return (
     <header className="bg-white/90 backdrop-blur-lg border-b border-slate-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
+        <div className="flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group transition-all">
-            <img src={Logo} alt="Logo" className="w-7 h-7 rounded-sm shadow-sm group-hover:scale-105 transition-transform" />
-            <h1 className="text-xl font-bold tracking-tight text-[#1a7ea5]">Smart school</h1>
+          <Link to="/" className="flex items-center gap-3 group transition-all py-2 min-h-[44px]" aria-label="Smart school Home">
+            <img src={Logo} alt="Logo" className="w-8 h-8 md:w-9 md:h-9 rounded-sm shadow-sm group-hover:scale-105 transition-transform" />
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#1a7ea5]">Smart school</h1>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-6">
+          <nav className="hidden lg:flex items-center gap-1 whitespace-nowrap" aria-label="Main navigation">
             {navigationLinks.map(({ href, label, exact = false }) => {
               const active = isActive(href, exact);
               return (
                 <Link
                   key={href}
                   to={href}
-                  className={`text-[13px] uppercase tracking-wider ${active ? "text-[#1a7ea5] font-semibold" : "text-gray-500 hover:text-[#1a7ea5]"} transition-colors relative group`}
+                  className={`px-3 py-3 text-[14px] tracking-wider min-h-[44px] flex items-center ${active ? "text-[#1a7ea5] font-semibold" : "text-gray-500 hover:text-[#1a7ea5]"} transition-colors relative group rounded-lg hover:bg-slate-50`}
                 >
                   {label}
-                  <span className={`absolute -bottom-1 left-0 w-full h-[1.5px] bg-[#1a7ea5] transition-transform duration-300 origin-left ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
+                  <span className={`absolute bottom-0 left-2 right-2 h-[2px] bg-[#1a7ea5] transition-transform duration-300 origin-left ${active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`} />
                 </Link>
               );
             })}
@@ -71,7 +72,7 @@ export function Header() {
             {/* Exam Portal Link */}
             <Link
               to="/exam-portal/login"
-              className="text-[13px] uppercase tracking-wider text-gray-500 hover:text-[#1a7ea5] transition-colors py-2"
+              className="px-3 py-3 text-[14px] tracking-wider text-gray-500 hover:text-[#1a7ea5] transition-colors min-h-[44px] flex items-center rounded-lg hover:bg-slate-50"
             >
               {t("examPortal")}
             </Link>
@@ -88,11 +89,11 @@ export function Header() {
               <div className="relative">
                 <button
                   onClick={() => setShowUserDropdown((v) => !v)}
-                  className="flex items-center gap-2 text-white bg-gradient-to-r from-[#1a7ea5] to-[#6cb9cc] hover:shadow-md transition-all px-3 py-1.5 rounded-full cursor-pointer"
+                  className="flex items-center gap-2 text-white bg-gradient-to-r from-[#1a7ea5] to-[#6cb9cc] hover:shadow-md transition-all px-4 py-2.5 min-h-[44px] rounded-full cursor-pointer"
                 >
-                  <User size={14} />
-                  <span className="hidden sm:inline text-[13px] font-medium">{user?.firstName}</span>
-                  <ChevronDown size={12} className={`transition-transform duration-200 ${showUserDropdown ? 'rotate-180' : ''}`} />
+                  <User size={16} />
+                  <span className="hidden sm:inline text-[14px] font-medium">{user?.firstName}</span>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${showUserDropdown ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showUserDropdown && (
@@ -125,10 +126,10 @@ export function Header() {
               </div>
             ) : (
               <div className="hidden lg:flex items-center gap-3">
-                <Link to="/login" className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-[#1a7ea5] transition-colors">
+                <Link to="/login" className="px-4 py-2.5 min-h-[44px] flex items-center text-[13px] font-semibold uppercase tracking-wider text-gray-500 hover:text-[#1a7ea5] transition-colors rounded-lg hover:bg-slate-50">
                   {t("login")}
                 </Link>
-                <Link to="/register" className="px-5 py-1.5 text-xs font-semibold uppercase tracking-wider text-white bg-[#1a7ea5] rounded-full hover:bg-[#156d8f] shadow-sm hover:shadow-md transition-all">
+                <Link to="/register" className="px-6 py-2.5 min-h-[44px] flex items-center text-[13px] font-semibold uppercase tracking-wider text-white bg-[#1a7ea5] rounded-full hover:bg-[#156d8f] shadow-sm hover:shadow-md transition-all">
                   {t("register")}
                 </Link>
               </div>
@@ -136,16 +137,16 @@ export function Header() {
 
             {/* Mobile menu toggle */}
             <button
-              className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-[#1a7ea5] hover:bg-gray-50 transition-colors"
+              className="lg:hidden p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 hover:text-[#1a7ea5] hover:bg-gray-50 transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? "Close main menu" : "Open main menu"}
             >
-              <span className="sr-only">Open main menu</span>
               {isMobileMenuOpen ? (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
@@ -164,7 +165,7 @@ export function Header() {
                 <Link
                   key={href}
                   to={href}
-                  className={`block px-3 py-2.5 rounded-lg text-[13px] font-semibold uppercase tracking-wider ${active ? "bg-[#6cb9cc]/10 text-[#1a7ea5]" : "text-gray-500 hover:bg-gray-50"}`}
+                  className={`block px-3 py-2.5 rounded-lg text-[13px] font-semibold tracking-wider ${active ? "bg-[#6cb9cc]/10 text-[#1a7ea5]" : "text-gray-500 hover:bg-gray-50"}`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {label}

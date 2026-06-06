@@ -887,6 +887,30 @@ model ExamAnswer {
 }
 
 // ============================================
+// CERTIFICATION SYSTEM
+// ============================================
+
+model Certificate {
+  id                String   @id @default(cuid())
+  userId            String
+  certificationId   String
+  certificateNumber String   @unique
+  score             Float
+  issuedAt          DateTime @default(now())
+  pdfUrl            String?
+  status            String   @default("ACTIVE") // ACTIVE, REVOKED, EXPIRED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([certificationId])
+  @@index([certificateNumber])
+  @@map("certificates")
+}
+
+// ============================================
 // STUDENT-SCOPED LEARNING ENTITIES
 // ============================================
 

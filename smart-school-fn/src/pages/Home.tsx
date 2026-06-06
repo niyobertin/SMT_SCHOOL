@@ -11,7 +11,6 @@ import type { AppDispatch } from "../redux/stores";
 import { fetchCurrentUser } from "../redux/features/auth";
 import { ourPrograms } from "../constants/programs";
 
-// Enhanced animation variants
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -51,8 +50,6 @@ const bidirectionalFadeUp: Variants = {
   }
 };
 
-
-
 export const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const ref = useRef(null);
@@ -80,51 +77,62 @@ export const HomePage: React.FC = () => {
 
   return (
     <div ref={ref} className="bg-white">
-      {/* Hero Section - Refined Headline Size */}
-      <motion.section
+      {/* H1 - Hidden for SEO (visible via hero title) */}
+      <h1 className="sr-only">JobExam Rwanda - Rwanda's Leading Exam Preparation & Career Development Platform</h1>
+
+      {/* Hero Section */}
+      <section
         style={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          y,
         }}
-        className="relative py-24 lg:py-32 h-[80vh] flex items-center justify-center overflow-hidden"
-        initial={{ scale: 1.05 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
+        className="relative py-24 lg:py-32 min-h-[80vh] flex items-center justify-center overflow-hidden"
       >
-        {/* Refined overlay */}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 w-full text-center">
           <motion.div
-            className="max-w-3xl mx-auto"
+            className="max-w-4xl mx-auto"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <motion.h1
+            <motion.h2
               variants={itemVariants}
-              className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight tracking-tight"
+              className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight drop-shadow-lg [text-shadow:0_2px_10px_rgba(0,0,0,0.5)]"
             >
-              <motion.span
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-              >
-                {t("transformYourFuture")}
-              </motion.span>
-            </motion.h1>
+              Rwanda's Leading Exam Preparation & Career Development Platform
+            </motion.h2>
 
             <motion.p
               variants={itemVariants}
-              className="hidden md:block text-lg text-gray-100 mb-10 leading-relaxed font-medium max-w-3xl mx-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
+              className="text-xl md:text-2xl font-bold text-[#6cb9cc] mb-4"
             >
-              {t("homeSubtitle")}
+              Pass Exams. Build Skills. Advance Your Career.
+            </motion.p>
+
+            <motion.p
+              variants={itemVariants}
+              className="hidden md:block text-base md:text-lg text-gray-100 mb-6 leading-relaxed font-medium max-w-3xl mx-auto"
+            >
+              JobExam Rwanda empowers students, graduates, job seekers, and professionals with comprehensive exam preparation resources, practical learning materials, and career-focused training designed to improve academic performance, professional competence, and employment opportunities.
+            </motion.p>
+
+            <motion.p
+              variants={itemVariants}
+              className="hidden md:block text-base text-gray-200 mb-10 leading-relaxed max-w-3xl mx-auto"
+            >
+              Whether you are preparing for government recruitment exams, professional certification assessments, university entrance examinations, or workplace competency tests, JobExam Rwanda provides the tools, guidance, and practice you need to succeed.
+            </motion.p>
+
+            <motion.p
+              variants={itemVariants}
+              className="text-lg font-bold text-white mb-10 italic"
+            >
+              One Platform. Unlimited Opportunities.
             </motion.p>
 
             <motion.div
@@ -159,10 +167,10 @@ export const HomePage: React.FC = () => {
             </motion.div>
           </motion.div>
         </div>
-      </motion.section>
+      </section>
 
       {/* What We Focus On - Asymmetrical Grid */}
-      <section className="py-24 bg-slate-50 relative overflow-hidden">
+      <section className="py-24 bg-slate-50 relative overflow-hidden" aria-label="Featured Programs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             className="text-center mb-20"
@@ -180,10 +188,8 @@ export const HomePage: React.FC = () => {
             </p>
           </motion.div>
 
-          {/* Asymmetrical layout using 12-column grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             {ourPrograms.map((program, i) => {
-              // Create alternating pattern: Big/Small, then Small/Big
               const isFirstInPair = i % 2 === 0;
               const isEvenRow = Math.floor(i / 2) % 2 === 0;
               const colSpan = isEvenRow
@@ -191,7 +197,7 @@ export const HomePage: React.FC = () => {
                 : (isFirstInPair ? "lg:col-span-5" : "lg:col-span-7");
 
               return (
-                <motion.div
+                <motion.article
                   key={program.id}
                   className={`group relative bg-white ${colSpan} p-8 md:p-12 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100/50 flex flex-col justify-between`}
                   initial={{ opacity: 0, y: 20 }}
@@ -211,18 +217,18 @@ export const HomePage: React.FC = () => {
                       {program.description}
                     </p>
                   </div>
-                  <Link to="/courses" className="inline-flex items-center gap-2 text-[14px] font-black uppercase tracking-[0.2em] text-[#1a7ea5] hover:gap-4 transition-all group/link">
+                  <Link to="/courses" className="inline-flex items-center gap-2 text-[14px] font-black uppercase tracking-[0.2em] text-[#1a7ea5] hover:gap-4 transition-all group/link" aria-label={`Explore ${program.title}`}>
                     Explore Details <ArrowRight size={14} />
                   </Link>
-                </motion.div>
+                </motion.article>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* Why Choose Us - Enhanced Readability */}
-      <section className="py-24 bg-white">
+      {/* Why Choose Us */}
+      <section className="py-24 bg-white" aria-label="Why Choose Us">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <motion.h2
@@ -257,7 +263,7 @@ export const HomePage: React.FC = () => {
                 <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-transform">
                   <item.icon size={24} className="text-[#1a7ea5]" />
                 </div>
-                <h4 className="font-bold text-slate-900 text-lg mb-2 group-hover:text-white transition-colors uppercase tracking-tight">{item.title}</h4>
+                <h3 className="font-bold text-slate-900 text-lg mb-2 group-hover:text-white transition-colors uppercase tracking-tight">{item.title}</h3>
                 <p className="text-slate-500 text-[15px] leading-relaxed group-hover:text-white/80 transition-colors font-medium">
                   {item.desc}
                 </p>
@@ -267,8 +273,8 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Impact Section - Visual "98%" Hook */}
-      <section className="py-20 bg-[#6cb9cc] relative overflow-hidden">
+      {/* Impact Section */}
+      <section className="py-20 bg-[#6cb9cc] relative overflow-hidden" aria-label="Impact Statistics">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -296,8 +302,8 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Enhanced CTA Section */}
-      <section className="py-24">
+      {/* CTA Section */}
+      <section className="py-24" aria-label="Call to Action">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             className="bg-[#1a7ea5] rounded-3xl p-16 text-center text-white relative overflow-hidden shadow-[0_30px_60px_rgba(26,126,165,0.3)]"
@@ -330,5 +336,3 @@ export const HomePage: React.FC = () => {
     </div>
   );
 };
-
-// do yur best in desig and desgin home page for mordern website and reduce a lot of corol just make thing very good and more attractive with less color but vyery clear

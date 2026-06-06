@@ -27,6 +27,7 @@ import { PaymentFlow } from "./components/common/Payment";
 import { JobListing } from "./pages/JobListing";
 import { JobDetails } from "./pages/JobDetails";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { CertificatesPage } from "./pages/Certificates";
 // Exam Portal (Candidate Side)
 import ExamLogin from "./pages/exam-portal/ExamLogin";
 import ExamPage from "./pages/exam-portal/ExamPage";
@@ -126,6 +127,8 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/job-listing" element={<JobListing />} />
             <Route path="/job-listing/:slug" element={<JobDetails />} />
+            <Route path="/certificates" element={<CertificatesPage />} />
+            <Route path="/certificates/:id" element={<CertificatesPage />} />
           </Route>
 
           {/* Authentication Routes (Standalone to avoid layout shifts) */}

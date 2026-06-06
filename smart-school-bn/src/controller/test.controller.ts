@@ -1094,13 +1094,6 @@ export const updateTestQuestion = async (
     const { question, type, options, points, order, explanation } = req.body;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const imageFile = files?.["fileImage"]?.[0];
-    let imageUrl = "";
-    if (imageFile) {
-      imageUrl = await uploadBufferToCloudinary(
-        imageFile.buffer,
-        imageFile.mimetype
-      );
-    }
 
     const existingQuestion = await prisma.question.findUnique({
       where: { id: questionId },
@@ -1109,6 +1102,17 @@ export const updateTestQuestion = async (
 
     if (!existingQuestion) {
       throw new NotFoundError("Question not found");
+    }
+
+    const removeImage = req.body.removeImage === "true";
+    let imageUrl = existingQuestion.image || "";
+    if (removeImage) {
+      imageUrl = "";
+    } else if (imageFile) {
+      imageUrl = await uploadBufferToCloudinary(
+        imageFile.buffer,
+        imageFile.mimetype
+      );
     }
 
     const updatedQuestion = await prisma.question.update({

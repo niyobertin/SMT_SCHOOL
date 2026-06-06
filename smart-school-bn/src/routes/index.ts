@@ -11,6 +11,7 @@ import paymentRouter from "./payment.route";
 import jobPostRoutes from "./jobPost.routes";
 import jobCategoriesRouter from "./jobCategories";
 import examRoutes from "./exam.routes";
+import certificateRoutes from "./certificate.routes";
 import schoolRoutes from "./school.routes";
 import studentAuthRoutes from "./studentAuth.routes";
 import academicRoutes from "./academic.routes";
@@ -69,6 +70,7 @@ router.use("/schools", schoolRoutes);
 router.use("/academic", academicRoutes);
 router.use("/assignments", courseAssignmentRoutes);
 router.use("/", assessmentRoutes); // Note: paths in assessmentRoutes handle /assessments and /schools/:id/assessments
+router.use("/certificates", certificateRoutes);
 
 // API info endpoint
 /**
