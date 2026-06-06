@@ -44,6 +44,7 @@ model User {
   submittedResults   ResultSubmission[]   @relation("SubmittedBy")
   approvedResults    ResultSubmission[]   @relation("ApprovedBy")
   attendances        Attendance[]
+  certificates       Certificate[]
 
   @@map("users")
 }
