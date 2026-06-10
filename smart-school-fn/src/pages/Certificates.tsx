@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Award, Download, ExternalLink, Search, Shield, Calendar, CheckCircle, AlertCircle } from "lucide-react";
+import { Award, Download, ExternalLink, Search, Shield, Calendar, CheckCircle, AlertCircle, QrCode, User, Percent, Hash } from "lucide-react";
 import api from "../redux/api/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -8,10 +8,12 @@ import "react-loading-skeleton/dist/skeleton.css";
 interface Certificate {
   id: string;
   certificationId: string;
+  certificationName: string | null;
   certificateNumber: string;
   score: number;
   issuedAt: string;
   pdfUrl: string | null;
+  qrCode: string | null;
   status: string;
 }
 
@@ -22,6 +24,7 @@ export const CertificatesPage: React.FC = () => {
   const [verifyNumber, setVerifyNumber] = useState("");
   const [verifyResult, setVerifyResult] = useState<any>(null);
   const [verifying, setVerifying] = useState(false);
+  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
 
   useEffect(() => {
     fetchCertificates();
@@ -64,11 +67,10 @@ export const CertificatesPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-gray-100 mb-10">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">My Certificates</h1>
-            <p className="text-slate-500 font-medium mt-2">View and download your earned certificates</p>
+            <p className="text-slate-500 font-medium mt-2">View, download, and verify your earned certificates</p>
           </div>
           <div className="flex items-center gap-3 bg-[#1a7ea5]/5 px-4 py-2 rounded-xl border border-[#1a7ea5]/10">
             <Award className="w-5 h-5 text-[#1a7ea5]" />
@@ -108,14 +110,16 @@ export const CertificatesPage: React.FC = () => {
                   <AlertCircle className="w-5 h-5 text-rose-500" />
                 )}
                 <span className={`font-bold text-sm ${verifyResult.valid ? 'text-emerald-700' : 'text-rose-700'}`}>
-                  {verifyResult.valid ? 'Certificate is valid' : 'Certificate not found or invalid'}
+                  {verifyResult.valid ? 'Certificate is valid' : verifyResult.message || 'Certificate not found or invalid'}
                 </span>
               </div>
               {verifyResult.valid && verifyResult.data && (
                 <div className="mt-3 text-sm text-slate-600 space-y-1">
                   <p><span className="font-medium">Issued to:</span> {verifyResult.data.fullName}</p>
+                  <p><span className="font-medium">Certification:</span> {verifyResult.data.certificationName || verifyResult.data.certificationId}</p>
                   <p><span className="font-medium">Score:</span> {verifyResult.data.score}%</p>
-                  <p><span className="font-medium">Issued:</span> {new Date(verifyResult.data.issuedAt).toLocaleDateString()}</p>
+                  <p><span className="font-medium">Certificate #:</span> {verifyResult.data.certificateNumber}</p>
+                  <p><span className="font-medium">Issued:</span> {new Date(verifyResult.data.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
               )}
             </div>
@@ -155,34 +159,49 @@ export const CertificatesPage: React.FC = () => {
                 transition={{ delay: i * 0.05 }}
                 className="bg-white rounded-2xl p-6 border border-slate-100 hover:shadow-lg transition-all group"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-[#1a7ea5]/10 rounded-xl flex items-center justify-center text-[#1a7ea5] shrink-0">
-                      <Award size={24} />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="w-14 h-14 bg-[#1a7ea5]/10 rounded-xl flex items-center justify-center text-[#1a7ea5] shrink-0">
+                      <Award size={28} />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900">{cert.certificationId}</h3>
-                      <p className="text-sm text-slate-500 font-medium flex items-center gap-2 mt-1">
-                        <Calendar size={14} />
-                        Issued: {new Date(cert.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-                          Score: {cert.score}%
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-slate-900">{cert.certificationName || cert.certificationId}</h3>
+                      <div className="flex flex-wrap items-center gap-3 mt-2">
+                        <span className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
+                          <Calendar size={14} />
+                          {new Date(cert.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                          <Percent size={12} />
+                          {cert.score}%
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                          <Hash size={10} />
                           {cert.certificateNumber}
                         </span>
                       </div>
+                      {cert.qrCode && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <QrCode size={14} className="text-[#1a7ea5]" />
+                          <a
+                            href={cert.qrCode}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-bold text-[#1a7ea5] hover:underline"
+                          >
+                            Verify Online
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => window.open(`/certificates/${cert.id}`, '_blank')}
+                      onClick={() => setSelectedCert(selectedCert?.id === cert.id ? null : cert)}
                       className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
                     >
                       <ExternalLink size={14} />
-                      View
+                      Details
                     </button>
                     {cert.pdfUrl && (
                       <a
@@ -197,6 +216,63 @@ export const CertificatesPage: React.FC = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Expanded Details */}
+                {selectedCert?.id === cert.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <User size={14} className="text-slate-400" />
+                        <span className="font-medium text-slate-600">User:</span>
+                        <span className="font-bold text-slate-900">You</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Award size={14} className="text-slate-400" />
+                        <span className="font-medium text-slate-600">Certification:</span>
+                        <span className="font-bold text-slate-900">{cert.certificationName || cert.certificationId}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Percent size={14} className="text-slate-400" />
+                        <span className="font-medium text-slate-600">Score:</span>
+                        <span className="font-bold text-slate-900">{cert.score}%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar size={14} className="text-slate-400" />
+                        <span className="font-medium text-slate-600">Issue Date:</span>
+                        <span className="font-bold text-slate-900">
+                          {new Date(cert.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Hash size={14} className="text-slate-400" />
+                        <span className="font-medium text-slate-600">Certificate #:</span>
+                        <span className="font-bold text-slate-900">{cert.certificateNumber}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <QrCode size={14} className="text-slate-400" />
+                        <span className="font-medium text-slate-600">QR Code:</span>
+                        {cert.qrCode ? (
+                          <a
+                            href={cert.qrCode}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-[#1a7ea5] hover:underline text-sm"
+                          >
+                            {cert.qrCode}
+                          </a>
+                        ) : (
+                          <span className="text-slate-400">Not available</span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             ))}
           </div>

@@ -72,10 +72,35 @@ const TestQuestionManager = () => {
   const { items: courses, loading, error } = useSelector((state: RootState) => state.courses);
   const { tests, loading: testsLoading } = useSelector((state: RootState) => state.test);
   const { questions, loading: questionsLoading } = useSelector((state: RootState) => state.manageTest);
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+  const [imageError, setImageError] = useState<string | null>(null);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
+    setImageError(null);
     if (files && files.length > 0) {
       const file = files[0];
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        setImageError('Invalid format. Supported: JPG, JPEG, PNG, WebP');
+        toast.current?.show({
+          severity: "error",
+          summary: "Invalid Format",
+          detail: "Supported formats: JPG, JPEG, PNG, WebP. Max 5MB.",
+          life: 4000,
+        });
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        setImageError('File too large. Maximum size is 5MB');
+        toast.current?.show({
+          severity: "error",
+          summary: "File Too Large",
+          detail: "Maximum image size is 5MB.",
+          life: 4000,
+        });
+        return;
+      }
       setCurrentQuestion((prev: any) => ({ ...prev, image: file }));
       if (file.type.startsWith("image/")) {
         setPreviewUrl(URL.createObjectURL(file));
@@ -92,6 +117,7 @@ const TestQuestionManager = () => {
     setCurrentQuestion((prev: any) => ({ ...prev, image: null }));
     setIsNewImageUploaded(false);
     setRemoveExistingImage(true);
+    setImageError(null);
   };
 
   useEffect(() => {
@@ -974,7 +1000,7 @@ const TestQuestionManager = () => {
                         </div>
 
                         {/* Image Upload Section */}
-                        <div className="bg-slate-50/50 rounded-xl p-4 border border-dashed border-slate-200">
+                        <div className={`bg-slate-50/50 rounded-xl p-4 border ${imageError ? 'border-red-300 bg-red-50/50' : 'border-dashed border-slate-200'}`}>
                           <div className="flex items-center gap-4">
                             <div className="w-20 h-16 bg-white rounded-lg border border-slate-100 overflow-hidden relative shrink-0">
                               {previewUrl ? (
@@ -987,7 +1013,8 @@ const TestQuestionManager = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Question Image</p>
-                              <p className="text-[10px] text-slate-400 font-medium">Supported: JPG, PNG, GIF. Max 5MB</p>
+                              <p className="text-[10px] text-slate-400 font-medium">Supported: JPG, JPEG, PNG, WebP. Max 5MB</p>
+                              {imageError && <p className="text-[10px] font-bold text-red-500 mt-1">{imageError}</p>}
                             </div>
                             <div className="flex items-center gap-2">
                               {previewUrl && (
@@ -1000,7 +1027,7 @@ const TestQuestionManager = () => {
                                 </button>
                               )}
                               <label className="cursor-pointer">
-                                <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                                <input type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleFileChange} />
                                 <div className="px-4 py-1.5 bg-slate-900 text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all cursor-pointer">
                                   {previewUrl ? 'Replace' : 'Add Image'}
                                 </div>
@@ -1174,7 +1201,6 @@ const TestQuestionManager = () => {
                       >
                         <option value="GENERAL">GENERAL</option>
                         <option value="PSYCHOMETRIC">PSYCHOMETRIC</option>
-                        <option value="OPENENDED">OPENENDED</option>
                         <option value="INTERVIEW">INTERVIEW</option>
                       </select>
                     </div>

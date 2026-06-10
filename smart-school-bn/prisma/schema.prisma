@@ -899,6 +899,8 @@ model Certificate {
   score             Float
   issuedAt          DateTime @default(now())
   pdfUrl            String?
+  qrCode            String?
+  certificationName String?
   status            String   @default("ACTIVE") // ACTIVE, REVOKED, EXPIRED
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

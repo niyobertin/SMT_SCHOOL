@@ -1,11 +1,8 @@
 import { Check, Users, Award, BookOpen, TrendingUp } from "lucide-react"
 import useLanguage from "../hooks/useLanguage"
 import { useNavigate } from "react-router-dom"
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { LoginRequestModal } from "../components/RequestModal"
-import type { AppDispatch, RootState } from "../redux/stores"
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchCourses } from "../redux/features/courses/courseSlice"
 import { motion, useScroll, useTransform } from "framer-motion"
 import backgroundImage from "../assets/background.jpg"
 
@@ -14,10 +11,6 @@ export default function TuitionPage() {
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false);
   const ref = useRef(null);
-
-  const {
-    items: courses,
-  } = useSelector((state: RootState) => state.courses);
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -34,17 +27,6 @@ export default function TuitionPage() {
       navigate(`/payment-flow/${price}/${period}?type=${type}&name=${name}`);
     }
   };
-
-  const dispatch = useDispatch<AppDispatch>();
-  useEffect(() => {
-    dispatch(fetchCourses({ page: 1, q: '', limit: 1000, categoryId: null }));
-  }, [dispatch]);
-
-  const filterCpaCourses = courses.filter((course: any) => {
-    const categoryName = course.category.name.toLowerCase().replace(/\s+/g, "");
-    const targetName = "cpa(r)".toLowerCase().replace(/\s+/g, "");
-    return categoryName === targetName;
-  });
 
   const handleClose = () => {
     setIsModalOpen(false);
@@ -125,12 +107,14 @@ export default function TuitionPage() {
     },
   ];
 
-  const cpaPlanTemplate = [
+  const cpaPlans = [
     {
       id: "Technical Level",
       type: "cpa",
       basePrice: 30000,
       period: 90,
+      popular: false,
+      level: "Technical Level",
       description: "Lays the foundation of accounting knowledge and professional values.",
       features: [
         "Financial Accounting",
@@ -142,8 +126,10 @@ export default function TuitionPage() {
     {
       id: "Operational Level",
       type: "cpa",
-      basePrice: 30000,
+      basePrice: 35000,
       period: 90,
+      popular: true,
+      level: "Operational Level",
       description: "Develops application skills and operational decision making.",
       features: [
         "Ethics, Law and Governance",
@@ -156,8 +142,10 @@ export default function TuitionPage() {
     {
       id: "Strategic Level",
       type: "cpa",
-      basePrice: 40000,
+      basePrice: 45000,
       period: 90,
+      popular: false,
+      level: "Strategic Level",
       description: "Builds strategic insight, leadership, and sector specific expertise.",
       features: [
         "Strategic Management",
@@ -174,36 +162,15 @@ export default function TuitionPage() {
       type: "cpa",
       basePrice: 50000,
       period: 90,
-      description: "The final stage focuses on integrated, real-life decision-making through a Test of Professional Competence.",
+      popular: false,
+      level: "Professional Level",
+      description: "Final stage focusing on integrated real-life decision making.",
       features: [
         "Public Sector Pathway",
         "Private Sector Pathway"
       ],
     },
   ];
-
-  const cpaPlans = cpaPlanTemplate
-    .map((plan, index) => {
-      const apiCourse = filterCpaCourses[index];
-      let price = plan.basePrice;
-      if (apiCourse) {
-        const title = apiCourse.title.toLowerCase();
-        if (title.includes("all courses") || title.includes("foundation")) {
-          price = 30000;
-        } else if (title.includes("intermediate")) {
-          price = 40000;
-        } else if (title.includes("advanced")) {
-          price = 50000;
-        }
-      }
-
-      return {
-        ...plan,
-        name: apiCourse ? apiCourse.title : `${plan.id} Plan`,
-        basePrice: price,
-      };
-    })
-    .sort((a, b) => a.basePrice - b.basePrice);
 
   return (
     <div ref={ref} className="bg-white">
@@ -309,50 +276,56 @@ export default function TuitionPage() {
         </div>
       </section>
 
-      {/* CPA Section - Professional Accounting Plans */}
+      {/* CPA Professional Accounting Certification Plans */}
       <section className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-20">
+          <div className="max-w-4xl mx-auto text-center mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#1a7ea5]/5 rounded-full text-[#1a7ea5] text-[10px] font-bold uppercase tracking-widest mb-4 border border-[#1a7ea5]/10">
+              CPA Rwanda
+            </div>
             <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Professional Accounting Certification Plans</h2>
-            <p className="text-slate-500 font-medium">Comprehensive pathways for accounting and finance professionals at every career stage.</p>
+            <p className="text-slate-500 font-medium text-lg">Comprehensive pathways for accounting and finance professionals at every career stage.</p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {cpaPlans.map((plan, i) => (
               <motion.div
                 key={plan.id}
-                className="bg-white p-8 rounded-3xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col h-full"
+                className={`relative group bg-white p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full ${plan.popular ? "border-[#1a7ea5] shadow-[0_30px_60px_rgba(26,126,165,0.1)] ring-1 ring-[#1a7ea5]/20" : "border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)]"}`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 whileHover={{ y: -8 }}
               >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#1a7ea5] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-10">Most Popular</div>
+                )}
                 <div className="mb-8">
-                  <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">{plan.name}</h3>
-                  {plan.description && (
-                    <p className="text-slate-500 text-[11px] font-medium leading-relaxed mb-4">{plan.description}</p>
-                  )}
+                  <div className="w-12 h-12 bg-[#6cb9cc]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-500 text-[#1a7ea5]">
+                    <Award size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">{plan.level}</h3>
+                  {plan.description && <p className="text-slate-500 text-[12px] font-medium leading-relaxed mb-6 min-h-[40px]">{plan.description}</p>}
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-[#1a7ea5]">{plan.basePrice}</span>
+                    <span className="text-3xl font-black text-[#1a7ea5]">{plan.basePrice.toLocaleString()}</span>
                     <span className="text-slate-400 font-bold text-[10px] uppercase">Frw / Quarter</span>
                   </div>
                 </div>
-
-                <div className="space-y-3 mb-8 flex-grow overflow-y-auto max-h-[300px] pr-2 scrollbar-hide">
+                <div className="space-y-3 mb-8 flex-grow">
                   {plan.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-0.5">
-                      <Check size={14} className="text-[#1a7ea5] mt-1 flex-shrink-0" />
+                    <div key={idx} className="flex items-start gap-2">
+                      <div className="mt-0.5 w-4 h-4 rounded-full bg-[#6cb9cc]/20 flex items-center justify-center flex-shrink-0">
+                        <Check size={10} className="text-[#1a7ea5]" />
+                      </div>
                       <span className="text-slate-600 text-[12px] font-medium leading-relaxed">{feature}</span>
                     </div>
                   ))}
                 </div>
-
                 <button
-                  onClick={() => handleModalOpen(plan.basePrice, plan.period, plan.type, plan.name)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-[#1a7ea5] transition-all shadow-lg"
+                  onClick={() => handleModalOpen(plan.basePrice, plan.period, plan.type, plan.level)}
+                  className={`w-full py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${plan.popular ? "bg-[#1a7ea5] text-white shadow-xl hover:bg-[#156d8f]" : "bg-slate-900 text-white hover:bg-[#1a7ea5]"} shadow-lg`}
                 >
-                  Enroll in {plan.id}
+                  Enroll in {plan.level}
                 </button>
               </motion.div>
             ))}

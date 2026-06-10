@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /login
+Disallow: /reset-password
+Disallow: /request-link
+Disallow: /verify-otp
+Disallow: /dashboard
+Disallow: /exam-admin
+Disallow: /exam-portal
+
+Sitemap: https://jobexam.rw/sitemap.xml
+
+# Crawl budget optimization
+Crawl-Delay: 10
