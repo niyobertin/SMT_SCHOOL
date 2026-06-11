@@ -9,10 +9,6 @@ import {
   FileText,
   Home,
   FileQuestion,
-  GraduationCap,
-  Share2,
-  ClipboardCheck,
-  ListChecks,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -21,10 +17,6 @@ const sidebarItems = [
   { id: "subscriptions", label: "Subscription Management", icon: CreditCard, path: "/dashboard/subscriptions" },
   { id: "tests", label: "Test Management", icon: FileQuestion, path: "/dashboard/tests" },
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
-  { id: "academic", label: "Academic Setup", icon: GraduationCap, path: "/dashboard/academic" },
-  { id: "attendance", label: "Attendance", icon: ListChecks, path: "/dashboard/attendance" },
-  { id: "assignments", label: "Course Access", icon: Share2, path: "/dashboard/assignments" },
-  { id: "assessments", label: "Assessments", icon: ClipboardCheck, path: "/dashboard/assessments" },
   { id: "activity-logs", label: "Activity Logs", icon: Activity, path: "/dashboard/activity-logs" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
   { id: "home", label: "Home", icon: Home, path: "/" },
@@ -83,10 +75,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               .filter((item) => {
                 const userRole = localStorage.getItem("userRole") || "INSTRUCTOR";
                 const permissions: Record<string, string[]> = {
-                  SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "activity-logs", "home"],
-                  ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "academic", "attendance", "assignments", "assessments", "content", "activity-logs", "home"],
-                  INSTRUCTOR: ["dashboard", "tests", "courses", "academic", "attendance", "assessments", "content", "home"],
-                  EXAMINER: ["dashboard", "tests", "assessments", "home"],
+                  SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
+                  ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
+                  INSTRUCTOR: ["dashboard", "tests", "courses", "content", "home"],
+                  EXAMINER: ["dashboard", "tests", "home"],
                 };
                 return permissions[userRole]?.includes(item.id);
               })
