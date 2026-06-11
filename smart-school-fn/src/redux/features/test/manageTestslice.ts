@@ -271,12 +271,12 @@ const testSlice = createSlice({
     });
 
     // Add Question
-    builder.addCase(addQuestion.fulfilled, (state) => {
+    builder.addCase(addQuestion.fulfilled, () => {
       // Questions are re-fetched via fetchQuestionsByTestId after add
     });
 
     // Update Question
-    builder.addCase(updateQuestion.fulfilled, (state) => {
+    builder.addCase(updateQuestion.fulfilled, () => {
       // Questions are re-fetched via fetchQuestionsByTestId after update
     });
 
