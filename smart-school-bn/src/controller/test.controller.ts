@@ -107,7 +107,10 @@ export const addQuestionToTest = async (
 ): Promise<void> => {
   try {
     const { testId } = req.params;
-    const { question, type, points, explanation, options } = req.body;
+    let { question, type, points, explanation, options } = req.body;
+    if (typeof options === 'string') {
+      try { options = JSON.parse(options); } catch { options = []; }
+    }
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     // Verify test exists
@@ -1091,7 +1094,10 @@ export const updateTestQuestion = async (
 ): Promise<void> => {
   try {
     const { questionId } = req.params;
-    const { question, type, options, points, order, explanation } = req.body;
+    let { question, type, options, points, order, explanation } = req.body;
+    if (typeof options === 'string') {
+      try { options = JSON.parse(options); } catch { options = undefined; }
+    }
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const imageFile = files?.["fileImage"]?.[0];
 

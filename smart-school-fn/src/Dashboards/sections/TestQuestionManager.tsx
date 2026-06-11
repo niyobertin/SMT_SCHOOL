@@ -60,6 +60,7 @@ const TestQuestionManager = () => {
     type: "MULTIPLE_CHOICE",
     points: 0,
     explanation: "",
+    image: null,
     options: [
       {
         option: "",
@@ -323,12 +324,10 @@ const TestQuestionManager = () => {
         const correctAnswer =
           currentQuestion.options.find((opt: any) => opt.isCorrect)?.option || "";
         formData.append("correctAnswer", correctAnswer);
-
-        // Add options
-        currentQuestion.options.forEach((opt: any, index: number) => {
-          formData.append(`options[${index}][isCorrect]`, String(opt.isCorrect === true || opt.isCorrect === "true"));
-          formData.append(`options[${index}][option]`, opt.option);
-        });
+        formData.append("options", JSON.stringify(currentQuestion.options.map((opt: any) => ({
+          option: opt.option,
+          isCorrect: opt.isCorrect === true || opt.isCorrect === "true",
+        }))));
       } else {
         // For OPENENDED and INTERVIEW, set empty correctAnswer
         formData.append("correctAnswer", "");
@@ -361,6 +360,10 @@ const TestQuestionManager = () => {
       setIsCreatingQuestion(false);
       setIsEditingQuestion(false);
       setQuestionToEditId(null);
+      setPreviewUrl(null);
+      setIsNewImageUploaded(false);
+      setRemoveExistingImage(false);
+      setImageError(null);
 
     } catch (error) {
       toast.current?.show({
@@ -885,6 +888,10 @@ const TestQuestionManager = () => {
                       setCurrentQuestion(null);
                       setIsEditingQuestion(false);
                       setQuestionToEditId(null);
+                      setPreviewUrl(null);
+                      setIsNewImageUploaded(false);
+                      setRemoveExistingImage(false);
+                      setImageError(null);
                     }}
                     className="w-10 h-10 bg-white border border-slate-100 text-slate-400 hover:text-slate-600 rounded-xl flex items-center justify-center transition-all hover:bg-slate-50"
                   >
@@ -1127,6 +1134,10 @@ const TestQuestionManager = () => {
                       setCurrentQuestion(null);
                       setIsEditingQuestion(false);
                       setQuestionToEditId(null);
+                      setPreviewUrl(null);
+                      setIsNewImageUploaded(false);
+                      setRemoveExistingImage(false);
+                      setImageError(null);
                     }}
                     className="px-6 py-2 bg-white border border-slate-100 text-slate-400 rounded-xl font-bold text-xs uppercase tracking-widest hover:text-slate-600 hover:bg-slate-50 transition-all"
                   >

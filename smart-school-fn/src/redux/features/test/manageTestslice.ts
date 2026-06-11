@@ -15,6 +15,7 @@ export interface Question {
   points: number;
   options: QuestionOption[];
   explanation?: string;
+  image?: string;
   order: number;
   testId: string;
   createdAt?: string;
@@ -270,13 +271,13 @@ const testSlice = createSlice({
     });
 
     // Add Question
-    builder.addCase(addQuestion.fulfilled, (state, action) => {
-      state.currentTest = action.payload.test;
+    builder.addCase(addQuestion.fulfilled, (state) => {
+      // Questions are re-fetched via fetchQuestionsByTestId after add
     });
 
     // Update Question
-    builder.addCase(updateQuestion.fulfilled, (state, action) => {
-      state.currentTest = action.payload.test;
+    builder.addCase(updateQuestion.fulfilled, (state) => {
+      // Questions are re-fetched via fetchQuestionsByTestId after update
     });
 
     // Fetch Questions By Test ID
