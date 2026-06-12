@@ -128,7 +128,7 @@ export const About = () => {
               variants={fadeInUp}
               className="text-3xl md:text-5xl font-bold text-white mb-8 leading-tight tracking-tight uppercase"
             >
-              About Smart School
+              About JobExam
             </motion.h1>
             <motion.p
               variants={fadeInUp}
@@ -151,7 +151,7 @@ export const About = () => {
           >
             <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-10 rounded-full" />
             <p className="text-xl md:text-2xl text-slate-700 leading-relaxed font-medium">
-              Welcome to <span className="text-[#1a7ea5] font-bold">Smart School</span>. Here, continuous learning is made accessible through flexible, interactive, and personalized experiences designed to fit seamlessly into your life.
+              Welcome to <span className="text-[#1a7ea5] font-bold">JobExam Rwanda</span>. Here, continuous learning is made accessible through flexible, interactive, and personalized experiences designed to fit seamlessly into your life.
             </p>
           </motion.div>
         </div>
@@ -244,7 +244,7 @@ export const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Meet Our Team</h2>
-            <p className="text-lg text-slate-500 font-medium">The passionate individuals behind Smart School.</p>
+            <p className="text-lg text-slate-500 font-medium">The passionate individuals behind JobExam Rwanda.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

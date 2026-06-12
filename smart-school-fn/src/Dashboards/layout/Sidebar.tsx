@@ -11,7 +11,7 @@ import {
   FileQuestion,
 } from "lucide-react";
 
-const sidebarItems = [
+const managementItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { id: "users", label: "User Management", icon: Users, path: "/dashboard/users" },
   { id: "subscriptions", label: "Subscription Management", icon: CreditCard, path: "/dashboard/subscriptions" },
@@ -19,6 +19,9 @@ const sidebarItems = [
   { id: "courses", label: "Course Management", icon: BookOpen, path: "/dashboard/courses" },
   { id: "activity-logs", label: "Activity Logs", icon: Activity, path: "/dashboard/activity-logs" },
   { id: "content", label: "Content Management", icon: FileText, path: "/dashboard/content" },
+];
+
+const secondaryItems = [
   { id: "home", label: "Home", icon: Home, path: "/" },
 ];
 
@@ -51,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-base font-semibold text-slate-900 capitalize tracking-tighter leading-none">smart school</span>
+                <span className="text-base font-semibold text-slate-900 capitalize tracking-tighter leading-none">JobExam Rwanda</span>
                 <span className="text-[11px] font-medium text-[#6cb9cc] capitalize tracking-widest mt-1">admin</span>
               </div>
             </div>
@@ -70,29 +73,79 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar">
-          <ul className="space-y-2">
-            {sidebarItems
-              .filter((item) => {
-                const userRole = localStorage.getItem("userRole") || "INSTRUCTOR";
-                const permissions: Record<string, string[]> = {
-                  SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
-                  ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
-                  INSTRUCTOR: ["dashboard", "tests", "courses", "content", "home"],
-                  EXAMINER: ["dashboard", "tests", "home"],
-                };
-                return permissions[userRole]?.includes(item.id);
-              })
+          {!isCollapsed && (
+            <div className="px-2 mb-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Management</p>
+            </div>
+          )}
+          <ul className="space-y-1">
+            {(() => {
+              const userRole = localStorage.getItem("userRole") || "INSTRUCTOR";
+              const permissions: Record<string, string[]> = {
+                SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
+                ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
+                INSTRUCTOR: ["dashboard", "tests", "courses", "content", "home"],
+                EXAMINER: ["dashboard", "tests", "home"],
+              };
+              const allowed = permissions[userRole] || [];
+              return allowed;
+            })()
+              .filter(id => managementItems.some(item => item.id === id))
+              .map(id => managementItems.find(item => item.id === id)!)
               .map((item) => {
-                const isActive = item.path === "/"
-                  ? location.pathname === "/"
-                  : item.path === "/dashboard"
-                    ? location.pathname === "/dashboard"
-                    : location.pathname.startsWith(item.path);
+                const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
                 return (
                   <li key={item.id}>
                     <Link
                       to={item.path}
-                      className={`flex items-center px-2 py-2 rounded-xl transition-all duration-300 group ${isActive
+                      className={`flex items-center px-3 py-2.5 rounded-xl transition-all duration-300 group ${isActive
+                        ? "bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/25"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#1a7ea5]"
+                        }`}
+                    >
+                      <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-white" : "text-slate-400 group-hover:text-[#1a7ea5]"}`}>
+                        <item.icon size={20} strokeWidth={2.5} />
+                      </div>
+                      {!isCollapsed && (
+                        <span className="ml-3 text-sm font-medium capitalize tracking-wide truncate">
+                          {item.label}
+                        </span>
+                      )}
+                      {isActive && !isCollapsed && (
+                        <div className="ml-auto w-1.5 h-1.5 bg-white/40 rounded-full ring-4 ring-white/10" />
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+          </ul>
+
+          {/* Section Divider */}
+          {!isCollapsed && (
+            <div className="border-t border-slate-100 my-3 mx-4" />
+          )}
+
+          <ul className="space-y-1">
+            {(() => {
+              const userRole = localStorage.getItem("userRole") || "INSTRUCTOR";
+              const permissions: Record<string, string[]> = {
+                SUPER_ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
+                ADMIN: ["dashboard", "users", "subscriptions", "tests", "courses", "content", "activity-logs", "home"],
+                INSTRUCTOR: ["dashboard", "tests", "courses", "content", "home"],
+                EXAMINER: ["dashboard", "tests", "home"],
+              };
+              const allowed = permissions[userRole] || [];
+              return allowed;
+            })()
+              .filter(id => secondaryItems.some(item => item.id === id))
+              .map(id => secondaryItems.find(item => item.id === id)!)
+              .map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-3 py-2.5 rounded-xl transition-all duration-300 group ${isActive
                         ? "bg-[#1a7ea5] text-white shadow-lg shadow-[#1a7ea5]/25"
                         : "text-slate-500 hover:bg-slate-50 hover:text-[#1a7ea5]"
                         }`}

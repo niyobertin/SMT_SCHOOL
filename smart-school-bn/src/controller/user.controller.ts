@@ -226,10 +226,10 @@ export const createUser = async (
       // Send welcome email with credentials for admin-created users
       await sendEmail({
         to: userData.email,
-        subject: "Welcome to Smart School - Your Account is Ready",
-        text: `Welcome to Smart School! Your account has been created and is ready to use.`,
+        subject: "Welcome to JobExam Rwanda - Your Account is Ready",
+        text: `Welcome to JobExam Rwanda! Your account has been created and is ready to use.`,
         html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                 <h2 style="color: #1a7ea5;">Welcome to Smart School!</h2>
+                 <h2 style="color: #1a7ea5;">Welcome to JobExam Rwanda!</h2>
                  <p>Hello ${userData.firstName} ${userData.lastName},</p>
                  <p>Your account has been created by an administrator and is ready to use.</p>
                  
@@ -242,9 +242,9 @@ export const createUser = async (
                  
                  <p style="color: #d9534f;"><strong>Important:</strong> Please change your password after your first login for security purposes.</p>
                  
-                 <p>You can login at: <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="color: #1a7ea5;">Smart School Login</a></p>
+                 <p>You can login at: <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="color: #1a7ea5;">JobExam Rwanda Login</a></p>
                  
-                 <p>Best regards,<br/>Smart School Team</p>
+                 <p>Best regards,<br/>JobExam Rwanda Team</p>
                </div>`,
       });
     } else if (!isAdminCreation) {
@@ -254,16 +254,16 @@ export const createUser = async (
           to: userData.email,
           subject: "Verification Code",
           text: `Here is your verification code: ${verificationCode}`,
-          html: `<p>Hello ${userData.username}, Thank you for signing up to Smart School</p>
+          html: `<p>Hello ${userData.username}, Thank you for signing up to JobExam Rwanda</p>
                  <p>You can verify your account with this code:</p>
                  <h2>${verificationCode}</h2>
                  <p>Best regards, </p>
-                 <p>Smart School Team</p>`,
+                 <p>JobExam Rwanda Team</p>`,
         });
       } else if (userData.phoneNumber) {
         await sendSmsTo(
           userData.phoneNumber,
-          `Your verification code is ${verificationCode}. Thank you for signing up to Smart School`
+          `Your verification code is ${verificationCode}. Thank you for signing up to JobExam Rwanda`
         );
       }
     }
@@ -438,14 +438,14 @@ export const requestResetPassword = async (
                 <p>${process.env.FRONTEND_URL}/reset-password?token=${resetPasswordToken}</p>
                 <p>This link will expire in 20 minutes.Make sure to use it within that time.</p>
                 <p>Best regards, </p>
-                <p>Smart School Team</p>`,
+                <p>JobExam Rwanda Team</p>`,
       });
     } else if (user.phoneNumber) {
       await sendSmsTo(
         user.phoneNumber,
         `Your reset password link is ${process.env.FRONTEND_URL}/reset-password?token=${resetPasswordToken}. 
         This link will expire in 20 minutes.Make sure to use it within that time. 
-        Thank you for signing up to Smart School`
+        Thank you for signing up to JobExam Rwanda`
       );
     }
     res.status(200).json({
@@ -590,7 +590,7 @@ export const updateUserPassword = async (
              <p>It is always a good idea to keep your password secure and change it periodically.</p>
              <p>If you did not request this change, please contact us immediately.</p>
              <p>Best regards, </p>
-             <p>Smart School Team</p>`,
+             <p>JobExam Rwanda Team</p>`,
       });
     }
     if (user.phoneNumber) {

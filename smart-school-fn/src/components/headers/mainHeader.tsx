@@ -31,32 +31,38 @@ export function Header() {
     navigate("/");
   };
 
-  const navigationLinks = [
+  const mainLinks = [
     { href: "/", label: t("home"), exact: true },
     { href: "/about", label: t("aboutUs") },
-    { href: "/courses", label: t("courses") },
-    { href: "/tuition", label: t("tuition") },
-    { href: "/job-listing", label: "Jobs" },
+    { href: "/courses", label: "Programs" },
+    { href: "/tuition", label: "Pricing" },
     { href: "/contact", label: t("contactUs") },
-    { href: "/certificates", label: "Certificates" },
+  ];
+
+  const moreLinks: { href: string; label: string; exact?: boolean }[] = [
+    { href: "/exam-portal/login", label: "Exam Portal" },
+    { href: "/job-listing", label: "Jobs" },
+    { href: "/certificates", label: "Certificate Verification" },
   ];
 
   const isActive = (href: string, exact: boolean = false) =>
     exact ? location.pathname === href : location.pathname.startsWith(href);
+
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
 
   return (
     <header className="bg-white/95 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20 lg:h-22">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group transition-all py-2 min-h-[48px]" aria-label="Smart school Home">
+          <Link to="/" className="flex items-center gap-3 group transition-all py-2 min-h-[48px]" aria-label="JobExam Rwanda Home">
             <img src={Logo} alt="Logo" className="w-9 h-9 md:w-10 md:h-10 rounded-md shadow-sm group-hover:scale-105 transition-transform" />
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-[#1a7ea5]">Smart school</h1>
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#1a7ea5]">JobExam Rwanda</h1>
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1 whitespace-nowrap" aria-label="Main navigation">
-            {navigationLinks.map(({ href, label, exact = false }) => {
+            {mainLinks.map(({ href, label, exact = false }) => {
               const active = isActive(href, exact);
               return (
                 <Link
@@ -70,13 +76,34 @@ export function Header() {
               );
             })}
 
-            {/* Exam Portal Link */}
-            <Link
-              to="/exam-portal/login"
-              className="px-4 py-3 text-[15px] md:text-[16px] tracking-wider text-gray-600 hover:text-[#1a7ea5] transition-colors min-h-[48px] flex items-center rounded-lg hover:bg-slate-50"
-            >
-              {t("examPortal")}
-            </Link>
+            {/* More dropdown */}
+            <div className="relative" onMouseLeave={() => setShowMoreDropdown(false)}>
+              <button
+                onClick={() => setShowMoreDropdown((v) => !v)}
+                className={`px-4 py-3 text-[15px] md:text-[16px] tracking-wider min-h-[48px] flex items-center gap-1 text-gray-600 hover:text-[#1a7ea5] transition-colors rounded-lg hover:bg-slate-50`}
+              >
+                More
+                <ChevronDown size={16} className={`transition-transform duration-200 ${showMoreDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              {showMoreDropdown && (
+                <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100">
+                  {moreLinks.map(({ href, label }) => {
+                    const active = isActive(href);
+                    return (
+                      <Link
+                        key={href}
+                        to={href}
+                        className={`flex items-center gap-3 px-4 py-3 text-[15px] min-h-[44px] ${active ? "text-[#1a7ea5] font-semibold bg-[#6cb9cc]/10" : "text-gray-600 hover:bg-gray-50 hover:text-[#1a7ea5]"} transition-colors`}
+                        onClick={() => setShowMoreDropdown(false)}
+                      >
+                        {label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
           </nav>
 
           {/* Right side */}
@@ -160,7 +187,7 @@ export function Header() {
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 animate-in slide-in-from-top duration-300">
           <div className="px-4 pt-2 pb-6 space-y-1">
-            {navigationLinks.map(({ href, label, exact = false }) => {
+            {[...mainLinks, ...moreLinks].map(({ href, label, exact }) => {
               const active = isActive(href, exact);
               return (
                 <Link

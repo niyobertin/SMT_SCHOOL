@@ -71,66 +71,57 @@ export const HomePage: React.FC = () => {
 
   return (
     <div ref={ref} className="bg-white">
-      {/* H1 - Hidden for SEO (visible via hero title) */}
-      <h1 className="sr-only">JobExam Rwanda - Rwanda's Leading Exam Preparation & Career Development Platform</h1>
-
       {/* Hero Section */}
-      <section
+      <header
         style={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
         }}
-        className="relative py-24 lg:py-32 min-h-[80vh] flex items-center justify-center overflow-hidden"
+        className="relative py-20 lg:py-28 min-h-[70vh] flex items-center justify-center overflow-hidden"
+        aria-label="Hero Banner"
       >
         <div className="absolute inset-0 bg-black/70" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10 w-full text-center">
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 xl:px-16 z-10 w-full text-center">
           <motion.div
-            className="max-w-4xl mx-auto"
+            className="max-w-6xl mx-auto"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
           >
-            <motion.h2
+            <motion.h1
               variants={itemVariants}
-              className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight tracking-tight drop-shadow-lg [text-shadow:0_2px_10px_rgba(0,0,0,0.5)]"
+              className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 leading-tight tracking-tight drop-shadow-lg [text-shadow:0_2px_10px_rgba(0,0,0,0.5)]"
             >
               Rwanda's Leading Exam Preparation & Career Development Platform
-            </motion.h2>
+            </motion.h1>
 
             <motion.p
               variants={itemVariants}
-              className="text-xl md:text-2xl font-bold text-[#6cb9cc] mb-4"
+              className="text-xl md:text-2xl font-bold text-[#6cb9cc] mb-3"
             >
               Pass Exams. Build Skills. Advance Your Career.
             </motion.p>
 
             <motion.p
               variants={itemVariants}
-              className="hidden md:block text-base md:text-lg text-gray-100 mb-6 leading-relaxed font-medium max-w-3xl mx-auto"
+              className="text-sm md:text-base lg:text-lg text-gray-100 mb-4 leading-relaxed tracking-wide font-medium max-w-5xl mx-auto"
             >
-              JobExam Rwanda empowers students, graduates, job seekers, and professionals with comprehensive exam preparation resources, practical learning materials, and career-focused training designed to improve academic performance, professional competence, and employment opportunities.
+              JobExam Rwanda empowers students, graduates, job seekers, and professionals with comprehensive exam preparation resources, practical learning materials, and career-focused training designed to improve academic performance, professional competence, and employment opportunities. Whether you are preparing for government recruitment exams, professional certification assessments, university entrance examinations, or workplace competency tests, JobExam Rwanda provides the tools, guidance, and practice you need to succeed.
             </motion.p>
 
             <motion.p
               variants={itemVariants}
-              className="hidden md:block text-base text-gray-200 mb-10 leading-relaxed max-w-3xl mx-auto"
-            >
-              Whether you are preparing for government recruitment exams, professional certification assessments, university entrance examinations, or workplace competency tests, JobExam Rwanda provides the tools, guidance, and practice you need to succeed.
-            </motion.p>
-
-            <motion.p
-              variants={itemVariants}
-              className="text-lg font-bold text-white mb-10 italic"
+              className="text-base md:text-lg font-bold text-white mb-8 italic"
             >
               One Platform. Unlimited Opportunities.
             </motion.p>
 
             <motion.div
-              className="flex flex-col sm:flex-row gap-5 font-bold justify-center"
+              className="flex flex-col sm:flex-row gap-4 font-bold justify-center"
               variants={itemVariants}
             >
               <Link to="/register">
@@ -161,8 +152,9 @@ export const HomePage: React.FC = () => {
             </motion.div>
           </motion.div>
         </div>
-      </section>
+      </header>
 
+      <main>
       {/* What We Focus On - Asymmetrical Grid */}
       <section className="py-24 bg-slate-50 relative overflow-hidden" aria-label="Featured Programs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -231,7 +223,7 @@ export const HomePage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              {t("whyChooseUs")} Smart school?
+              {t("whyChooseUs")} JobExam Rwanda?
             </motion.h2>
             <p className="text-slate-500 max-w-2xl mx-auto text-lg">Discover the pillars of our educational excellence and student support system.</p>
           </div>
@@ -327,6 +319,7 @@ export const HomePage: React.FC = () => {
           </motion.div>
         </div>
       </section>
+      </main>
     </div>
   );
 };

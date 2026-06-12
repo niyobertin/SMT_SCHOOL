@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { NotFoundError } from "../utils/errors";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
 import { sendTestResponseEmail } from "../services/testResponseEmail.service";
+import { issueCertificateForTest } from "./certificate.controller";
 
 const prisma = new PrismaClient();
 
@@ -788,7 +789,18 @@ export const submitTest = async (
       );
     }
 
-    // 6. Generate results
+    // 6. Auto-generate certificate if passed (non-student users)
+    if (isPassed && !isStudent) {
+      issueCertificateForTest(testAttempt.testId, attemptId, userId)
+        .then((result) => {
+          logger.info(`Certificate auto-generated: ${result.certificate.certificateNumber}`);
+        })
+        .catch((err) => {
+          logger.warn(`Certificate generation skipped: ${err.message}`);
+        });
+    }
+
+    // 7. Generate results
     const response: any = {
       status: "success",
       data: {

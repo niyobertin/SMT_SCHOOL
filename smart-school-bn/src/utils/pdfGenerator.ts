@@ -1,5 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { Response } from 'express';
+import path from 'path';
+import fs from 'fs';
 
 export const generateOpenEndedPDF = (
     responses: any[],
@@ -146,4 +148,82 @@ export const generateDetailedResultsPDF = (
     });
 
     doc.end();
+};
+
+export const generateCertificatePDF = (
+  fullName: string,
+  courseName: string,
+  completionDate: string,
+  certificateNumber: string,
+  score: number,
+  passingScore: number,
+): Promise<Buffer> => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      layout: 'landscape',
+      size: 'A4',
+      margins: { top: 40, bottom: 40, left: 40, right: 40 },
+    });
+
+    const chunks: Buffer[] = [];
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+
+    // Outer border
+    doc.rect(20, 20, pageWidth - 40, pageHeight - 40).lineWidth(3).strokeColor('#1a7ea5').stroke();
+    doc.rect(25, 25, pageWidth - 50, pageHeight - 50).lineWidth(1).strokeColor('#6cb9cc').stroke();
+
+    // Header bar
+    doc.rect(40, 50, pageWidth - 80, 60).fill('#1a7ea5');
+    doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold')
+      .text('CERTIFICATE OF COMPLETION', 0, 65, { align: 'center', width: pageWidth });
+
+    const centerX = pageWidth / 2;
+    let yPos = 150;
+
+    doc.fillColor('#1a7ea5').fontSize(12).font('Helvetica')
+      .text('This certifies that', centerX, yPos, { align: 'center' });
+    yPos += 30;
+
+    doc.fillColor('#1a7ea5').fontSize(28).font('Helvetica-Bold')
+      .text(fullName, centerX, yPos, { align: 'center' });
+    yPos += 40;
+
+    doc.fillColor('#333333').fontSize(12).font('Helvetica')
+      .text('has successfully completed the', centerX, yPos, { align: 'center' });
+    yPos += 22;
+
+    doc.fillColor('#1a7ea5').fontSize(18).font('Helvetica-Bold')
+      .text(courseName, centerX, yPos, { align: 'center' });
+    yPos += 35;
+
+    doc.fillColor('#333333').fontSize(11).font('Helvetica')
+      .text(`Date of Completion: ${completionDate}`, centerX, yPos, { align: 'center' });
+    yPos += 20;
+
+    doc.fillColor('#333333').fontSize(11).font('Helvetica')
+      .text(`Score: ${score.toFixed(1)}% (Passing: ${passingScore}%)`, centerX, yPos, { align: 'center' });
+    yPos += 35;
+
+    // Divider
+    doc.moveTo(pageWidth * 0.25, yPos).lineTo(pageWidth * 0.75, yPos).strokeColor('#cccccc').stroke();
+    yPos += 25;
+
+    doc.fillColor('#666666').fontSize(9).font('Helvetica')
+      .text(`Verification ID: ${certificateNumber}`, centerX, yPos, { align: 'center' });
+    yPos += 16;
+
+    doc.fillColor('#999999').fontSize(8).font('Helvetica')
+      .text(`Verify at: https://jobexam.rw/certificates/verify/${certificateNumber}`, centerX, yPos, { align: 'center' });
+
+    // Footer
+    doc.fillColor('#999999').fontSize(8).font('Helvetica')
+      .text('© JobExam Rwanda | Official Certificate', centerX, pageHeight - 55, { align: 'center' });
+
+    doc.end();
+  });
 };

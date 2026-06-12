@@ -810,7 +810,17 @@ const TestQuestionManager = () => {
                             </div>
                           </div>
 
-                          <h3 className="text-lg font-bold text-slate-900 leading-snug mb-4">{question.question}</h3>
+                          <div
+                            className="text-lg font-bold text-slate-900 leading-snug mb-4 [&_p]:mb-1"
+                            dangerouslySetInnerHTML={{ __html: question.question }}
+                          />
+
+                          {question.type === 'ESSAY' && (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl mb-4 max-w-fit">
+                              <FileText size={14} className="text-amber-600" />
+                              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Open-ended answer</span>
+                            </div>
+                          )}
 
                           {question.image && (
                             <div className="mb-4 rounded-2xl overflow-hidden border border-slate-100 max-w-sm">
@@ -988,9 +998,10 @@ const TestQuestionManager = () => {
                                 onChange={(e) => setCurrentQuestion((prev: any) => ({ ...prev, type: e.target.value }))}
                                 className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-4 focus:ring-slate-400/5 transition-all shadow-sm"
                               >
-                                <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
-                                <option value="TRUE_FALSE">TRUE / FALSE</option>
-                              </select>
+                                 <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+                                 <option value="TRUE_FALSE">TRUE / FALSE</option>
+                                 <option value="ESSAY">ESSAY / OPEN ENDED</option>
+                               </select>
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 ml-1">Points</label>
@@ -1064,7 +1075,7 @@ const TestQuestionManager = () => {
                         )}
 
                         {/* Options System for Choice-based tests */}
-                        {(selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') && (
+                        {(selectedTestType === 'PSYCHOMETRIC' || selectedTestType === 'GENERAL') && currentQuestion?.type !== 'ESSAY' && (
                           <div className="space-y-4">
                             <div className="flex items-center justify-between px-2">
                               <div className="flex items-center gap-2">

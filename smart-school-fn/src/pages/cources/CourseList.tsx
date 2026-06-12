@@ -256,32 +256,32 @@ export const CourseList = () => {
                         >
                           <div className="p-6 pb-2 flex-grow">
                             <div className="flex items-center justify-between mb-6">
-                              <div className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] ${course.type === "free" ? "bg-green-50 text-green-600 border border-green-100" : "bg-[#6cb9cc]/10 text-[#1a7ea5] border border-[#6cb9cc]/20"}`}>
+                              <div className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] ${course.type === "free" ? "bg-neutral-100 text-neutral-700 border border-neutral-200" : "bg-neutral-900 text-white border border-neutral-900"}`}>
                                 {course.type}
                               </div>
                               {isSubscribed ? (
-                                <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center">
+                                <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center">
                                   <CheckCircle size={18} />
                                 </div>
                               ) : course.type !== "free" && (
-                                <div className="w-8 h-8 bg-[#1a7ea5] text-white rounded-full flex items-center justify-center">
+                                <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center">
                                   <Crown size={16} />
                                 </div>
                               )}
                             </div>
 
-                            <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#1a7ea5] transition-colors mb-4 tracking-tight leading-tight">
+                            <h3 className="text-lg font-bold text-slate-900 group-hover:text-neutral-900 transition-colors mb-4 tracking-tight leading-tight">
                               {course.title.charAt(0).toUpperCase() + course.title.slice(1).toLowerCase()}
                             </h3>
 
                             <div className="flex flex-wrap gap-4 items-center mb-6">
-                              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
-                                <Book size={14} className="text-[#1a7ea5]" />
-                                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{course.lessons?.length || 0} Lessons</span>
+                              <div className="flex items-center gap-2 bg-neutral-100 px-3 py-1.5 rounded-full border border-neutral-200">
+                                <Book size={14} className="text-neutral-500" />
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-600">{course.lessons?.length || 0} Lessons</span>
                               </div>
-                              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
-                                <LayoutGrid size={14} className="text-[#1a7ea5]" />
-                                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-600">{course.tests?.length || 0} Tests</span>
+                              <div className="flex items-center gap-2 bg-neutral-100 px-3 py-1.5 rounded-full border border-neutral-200">
+                                <LayoutGrid size={14} className="text-neutral-500" />
+                                <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-600">{course.tests?.length || 0} Tests</span>
                               </div>
                             </div>
 
@@ -292,7 +292,7 @@ export const CourseList = () => {
 
                           <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-[#1a7ea5] rounded-xl flex items-center justify-center text-white font-bold text-xs">
+                              <div className="w-10 h-10 bg-neutral-900 rounded-xl flex items-center justify-center text-white font-bold text-xs">
                                 {course.instructor?.firstName?.charAt(0)}{course.instructor?.lastName?.charAt(0)}
                               </div>
                               <div>
@@ -300,7 +300,7 @@ export const CourseList = () => {
                                 <p className="text-xs font-semibold text-slate-700">{course.instructor?.firstName} {course.instructor?.lastName}</p>
                               </div>
                             </div>
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-[#1a7ea5]">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
                               {course.createdAt ? formatDistanceToNow(new Date(course.createdAt), { addSuffix: true }) : ''}
                             </span>
                           </div>

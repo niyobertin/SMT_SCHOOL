@@ -89,8 +89,8 @@ export const ContactPage = () => {
     {
       icon: Mail,
       title: t("emailAddress"),
-      details: "smartschoolrwanda@gmail.com",
-      link: "mailto:smartschoolrwanda@gmail.com",
+      details: "jobexamrwanda@gmail.com",
+      link: "mailto:jobexamrwanda@gmail.com",
       linkText: "Email us",
       color: "text-teal-600",
       bgColor: "bg-teal-50"

@@ -15,6 +15,7 @@ import {
     calculateQuestionStatistics,
 } from '../services/exam.service';
 import { uploadBufferToCloudinary } from '../config/cloudinary';
+import { issueCertificateForExam } from './certificate.controller';
 
 const prisma = new PrismaClient();
 
@@ -1488,7 +1489,7 @@ export const assignExamToCandidate = async (
         const { notify } = req.query;
         if (assignment.candidate.email && notify !== 'false') {
             try {
-                const examLink = `${process.env.CLIENT_URL} || 'https://smartschool.rw/exam-portal/login`;
+                const examLink = `${process.env.CLIENT_URL} || 'https://jobexam.rw/exam-portal/login`;
                 const startDate = assignment.exam.startDate
                     ? new Date(assignment.exam.startDate).toLocaleString()
                     : 'Flexible';
@@ -1595,7 +1596,7 @@ export const bulkAssignExamToCandidates = async (
 
                 // Send Email
                 if (assignment.candidate.email && notify !== 'false') {
-                    const examLink = `${process.env.CLIENT_URL || 'https://smartschool.rw'}/exam-portal/login`;
+                    const examLink = `${process.env.CLIENT_URL || 'https://jobexam.rw'}/exam-portal/login`;
                     const startDate = assignment.exam.startDate
                         ? new Date(assignment.exam.startDate).toLocaleString()
                         : 'Flexible';
@@ -2112,6 +2113,17 @@ export const submitExam = async (
                 timeSpent: timeSpentSeconds,
             },
         });
+
+        // Auto-generate certificate if passed
+        if (isPassed) {
+            issueCertificateForExam(examAttempt.examId, attemptId, candidateId)
+                .then((result) => {
+                    logger.info(`Certificate auto-generated: ${result.certificate.certificateNumber}`);
+                })
+                .catch((err) => {
+                    logger.warn(`Certificate generation skipped: ${err.message}`);
+                });
+        }
 
         res.status(200).json({
             status: 'success',

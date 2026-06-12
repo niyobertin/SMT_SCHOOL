@@ -300,7 +300,7 @@ const generateTestResponseHTML = (
             .join("")}
 
     <div class="footer">
-      <p>This is an automated email from Smart School.</p>
+      <p>This is an automated email from JobExam Rwanda.</p>
       <p>Please review the student's responses and provide feedback as needed.</p>
     </div>
   </div>

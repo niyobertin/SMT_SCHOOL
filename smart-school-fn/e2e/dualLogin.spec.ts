@@ -22,7 +22,7 @@ test.describe("Dual Login E2E Flow", () => {
     const emailInput = page.locator('input[placeholder*="email"]');
     const passwordInput = page.locator('input[placeholder*="password"]');
 
-    await emailInput.fill("admin@smartschool.com");
+    await emailInput.fill("admin@jobexam.rw");
     await passwordInput.fill("SecurePass123!");
 
     // 4. Submit login
@@ -44,7 +44,7 @@ test.describe("Dual Login E2E Flow", () => {
       return data ? JSON.parse(data) : null;
     });
     expect(userData).toBeTruthy();
-    expect(userData.email).toBe("admin@smartschool.com");
+    expect(userData.email).toBe("admin@jobexam.rw");
 
     // 8. Verify dashboard is rendered
     const dashboardTitle = page.locator("text=Dashboard");
@@ -252,7 +252,7 @@ test.describe("Dual Login E2E Flow", () => {
       const emailInput1 = page1.locator('input[placeholder*="email"]');
       const passwordInput1 = page1.locator('input[placeholder*="password"]');
 
-      await emailInput1.fill("admin@smartschool.com");
+      await emailInput1.fill("admin@jobexam.rw");
       await passwordInput1.fill("SecurePass123!");
 
       const loginButton1 = page1

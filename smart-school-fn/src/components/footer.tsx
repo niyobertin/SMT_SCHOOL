@@ -14,7 +14,7 @@ export function Footer() {
           <div className="space-y-6">
             <Link to="/" className="flex items-center gap-3">
               <img src={Logo} alt="Logo" className="w-10 h-10 rounded-lg shadow-lg" />
-              <span className="text-xl font-bold text-white tracking-tight">Smart school</span>
+              <span className="text-xl font-bold text-white tracking-tight">JobExam Rwanda</span>
             </Link>
             <p className="text-[13px] leading-relaxed text-slate-400 max-w-xs">
               Empowering the next generation of leaders in Rwanda through innovative digital education and industry-focused programs.
@@ -72,7 +72,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={14} className="text-[#6cb9cc]" />
-                <span className="text-[13px]">smartschoolrwanda@gmail.com</span>
+                <span className="text-[13px]">jobexamrwanda@gmail.com</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={14} className="text-[#6cb9cc]" />
@@ -84,7 +84,7 @@ export function Footer() {
 
         <div className="border-t border-white/5 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[11px] text-slate-500 uppercase tracking-wider">
-            &copy; {new Date().getFullYear()} Smart school Learning Platform. All rights reserved.
+            &copy; {new Date().getFullYear()} JobExam Rwanda. All rights reserved.
           </p>
           <div className="flex gap-6">
             {['Privacy', 'Terms', 'Cookies'].map((text, i) => (

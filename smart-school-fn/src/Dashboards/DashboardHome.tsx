@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, DollarSign, Activity, TrendingUp, Calendar, FileQuestion, Clock, AlertTriangle, BarChart3, PlusCircle, UserPlus, Award, FileText, Eye, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Users, DollarSign, Activity, TrendingUp, Calendar, FileQuestion, Clock, AlertTriangle, PlusCircle, UserPlus, Award, FileText, Eye, RefreshCw, type LucideIcon } from 'lucide-react';
 import { Line, Bar } from 'react-chartjs-2';
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -287,12 +287,10 @@ export const DashboardHome = () => {
       </div>
 
       {/* Summary Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatsCard title="Total Users" value={stats.users.toLocaleString()} icon={Users} color="bg-blue-500" change="+12%" />
-        <StatsCard title="Active Users" value={(stats.activeUsers || Math.round(stats.users * 0.7)).toLocaleString()} icon={Activity} color="bg-green-500" change="Online" />
-        <StatsCard title="Exams Completed" value={stats.testAttempts.toLocaleString()} icon={FileQuestion} color="bg-purple-500" change={`${passRate}% pass`} />
-        <StatsCard title="Questions" value={stats.questions.toLocaleString()} icon={BarChart3} color="bg-teal-500" change="Bank" />
-        <StatsCard title="Certificates" value={(stats.certificates || 0).toLocaleString()} icon={Award} color="bg-amber-500" change="Issued" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard title="Total Users" value={stats.users.toLocaleString()} icon={Users} color="bg-blue-500" change="Registered" />
+        <StatsCard title="Enrolled Students" value={stats.enrollments.toLocaleString()} icon={UserPlus} color="bg-indigo-500" change="Active" />
+        <StatsCard title="Active Tests" value={stats.tests.toLocaleString()} icon={FileQuestion} color="bg-purple-500" change={`${passRate}% pass`} />
         <StatsCard title="Revenue" value={`RWF ${totalRevenue.toLocaleString()}`} icon={DollarSign} color="bg-orange-500" change="+24%" />
       </div>
 

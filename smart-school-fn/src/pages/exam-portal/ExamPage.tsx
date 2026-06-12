@@ -26,6 +26,13 @@ import {
 import ExamTimer from './ExamTimer';
 
 
+const deduplicateHTML = (html: string): string => {
+  if (!html) return '';
+  const cleaned = html.replace(/(<[^>]+>)\1{2,}/gi, '$1');
+  const textDeduped = cleaned.replace(/(.{50,}?)\1{1,}/g, '$1');
+  return textDeduped;
+};
+
 const ExamPage = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -314,9 +321,10 @@ const ExamPage = () => {
                                         {currentQuestionIndex + 1}
                                     </span>
                                     <div className="flex-1">
-                                        <h2 className="text-xl font-semibold text-gray-900 leading-relaxed">
-                                            {currentQuestion.question}
-                                        </h2>
+                                        <div
+                                            className="text-xl font-semibold text-gray-900 leading-relaxed [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic"
+                                            dangerouslySetInnerHTML={{ __html: deduplicateHTML(currentQuestion.question) }}
+                                        />
                                         <p className="text-sm text-gray-500 mt-2">
                                             {currentQuestion.points} {currentQuestion.points === 1 ? 'point' : 'points'}
                                         </p>
@@ -333,7 +341,7 @@ const ExamPage = () => {
                             </div>
 
                             {/* Answer Options */}
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {currentQuestion.type === 'MULTIPLE_CHOICE' || currentQuestion.type === 'TRUE_FALSE' ? (
                                     shuffledOptions.map((option: any) => (
                                         <motion.button
@@ -341,30 +349,40 @@ const ExamPage = () => {
                                             whileHover={{ scale: 1.01 }}
                                             whileTap={{ scale: 0.99 }}
                                             onClick={() => handleOptionSelect(option.id)}
-                                            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${selectedOptions.includes(option.id)
+                                            className={`w-full text-left p-5 min-h-[60px] rounded-xl border-2 transition-all duration-200 ${selectedOptions.includes(option.id)
                                                 ? 'border-blue-500 bg-blue-50'
                                                 : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                                                 }`}
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-4">
                                                 <div className="flex-shrink-0">
                                                     {selectedOptions.includes(option.id) ? (
-                                                        <CheckCircle className="w-6 h-6 text-blue-600" />
+                                                        <CheckCircle className="w-7 h-7 text-blue-600" />
                                                     ) : (
-                                                        <Circle className="w-6 h-6 text-gray-400" />
+                                                        <Circle className="w-7 h-7 text-gray-400" />
                                                     )}
                                                 </div>
-                                                <span className="text-gray-800 font-medium">{option.option}</span>
+                                                <span className="text-gray-800 text-lg font-medium leading-relaxed">
+                                                    {option.option}
+                                                </span>
                                             </div>
                                         </motion.button>
                                     ))
+                                ) : currentQuestion.type === 'ESSAY' ? (
+                                    <textarea
+                                        value={answerText}
+                                        onChange={(e) => setAnswerText(e.target.value)}
+                                        placeholder="Write your essay answer here..."
+                                        rows={10}
+                                        className="w-full p-5 text-base leading-relaxed border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[200px]"
+                                    />
                                 ) : (
                                     <textarea
                                         value={answerText}
                                         onChange={(e) => setAnswerText(e.target.value)}
                                         placeholder="Type your answer here..."
                                         rows={6}
-                                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                        className="w-full p-5 text-base leading-relaxed border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                     />
                                 )}
                             </div>
@@ -406,13 +424,13 @@ const ExamPage = () => {
 
                 {/* Progress Sidebar */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-32">
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 lg:p-8 sticky top-32">
                         <div className="mb-6">
-                            <h3 className="text-lg font-bold text-gray-900">All questions</h3>
+                            <h3 className="text-base lg:text-lg font-bold text-gray-900">All questions</h3>
                             <p className="text-sm text-gray-500 mt-1">{answeredCount}/{questions.length} answered</p>
                         </div>
 
-                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-4 gap-2">
+                        <div className="grid grid-cols-4 gap-3">
                             {questions.map((q, idx) => {
                                 const isAnswered = answers[q.id];
                                 const isCurrent = idx === currentQuestionIndex;
@@ -424,7 +442,7 @@ const ExamPage = () => {
                                             handleSaveAnswer();
                                             dispatch(setCurrentQuestion(idx));
                                         }}
-                                        className={`h-10 w-10 rounded-lg flex items-center justify-center text-sm font-bold transition-all duration-200 ${isCurrent
+                                        className={`h-12 w-full rounded-xl flex items-center justify-center text-base font-bold transition-all duration-200 ${isCurrent
                                             ? 'ring-2 ring-blue-500 ring-offset-2 bg-blue-600 text-white shadow-md'
                                             : isAnswered
                                                 ? 'bg-green-100 text-green-700 border border-green-200 hover:bg-green-200'
@@ -438,16 +456,16 @@ const ExamPage = () => {
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-gray-100 space-y-3">
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                                <div className="w-3 h-3 bg-blue-600 rounded-sm"></div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="w-4 h-4 bg-blue-600 rounded-md"></div>
                                 <span>Current</span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                                <div className="w-3 h-3 bg-green-100 border border-green-200 rounded-sm"></div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="w-4 h-4 bg-green-100 border border-green-200 rounded-md"></div>
                                 <span>Answered</span>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                                <div className="w-3 h-3 bg-gray-50 border border-gray-100 rounded-sm"></div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="w-4 h-4 bg-gray-50 border border-gray-100 rounded-md"></div>
                                 <span>Not Answered</span>
                             </div>
                         </div>

@@ -11,7 +11,7 @@ export const AuthHeader = () => {
         >
           <img src={Logo} alt="Logo" className="w-10 h-10" />
           <h1 className="text-2xl font-bold text-[#5e6af6] bg-clip-text ">
-            Smart school
+            JobExam Rwanda
           </h1>
         </Link>
         <LanguageSwitcher />

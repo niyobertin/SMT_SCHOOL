@@ -1,23 +1,14 @@
 import { Check, Users, Award, BookOpen, TrendingUp } from "lucide-react"
 import useLanguage from "../hooks/useLanguage"
 import { useNavigate } from "react-router-dom"
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { LoginRequestModal } from "../components/RequestModal"
-import { motion, useScroll, useTransform } from "framer-motion"
-import backgroundImage from "../assets/background.jpg"
+import { motion } from "framer-motion"
 
 export default function TuitionPage() {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const ref = useRef(null);
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"]
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
 
   const handleModalOpen = (price: number, period: number, type: string, name?: string) => {
     const localToken = localStorage.getItem('accessToken');
@@ -109,112 +100,59 @@ export default function TuitionPage() {
 
   const cpaPlans = [
     {
-      id: "Technical Level",
-      type: "cpa",
-      basePrice: 30000,
-      period: 90,
-      popular: false,
-      level: "Technical Level",
+      id: "Foundation Plan",
+      level: "Foundation Plan – Technical Level",
       description: "Lays the foundation of accounting knowledge and professional values.",
-      features: [
+      tag: "Level 1",
+      modules: [
         "Financial Accounting",
         "Management Accounting",
         "Taxation",
-        "Audit and Assurance"
+        "Audit and Assurance",
       ],
     },
     {
-      id: "Operational Level",
-      type: "cpa",
-      basePrice: 35000,
-      period: 90,
-      popular: true,
-      level: "Operational Level",
+      id: "CAT Plan",
+      level: "CAT Plan – Operational Level",
       description: "Develops application skills and operational decision making.",
-      features: [
+      tag: "Level 2",
+      modules: [
         "Ethics, Law and Governance",
         "Digital Finance",
         "Financial Management",
         "Financial Reporting",
-        "Advanced Taxation"
+        "Advanced Taxation",
       ],
     },
     {
-      id: "Strategic Level",
-      type: "cpa",
-      basePrice: 45000,
-      period: 90,
-      popular: false,
-      level: "Strategic Level",
-      description: "Builds strategic insight, leadership, and sector specific expertise.",
-      features: [
+      id: "Intermediate Plan",
+      level: "Intermediate Plan – Strategic Level",
+      description: "Builds strategic insight, leadership, and sector-specific expertise.",
+      tag: "Level 3",
+      modules: [
         "Strategic Management",
         "Advanced Audit and Assurance",
         "Advanced Financial Reporting",
         "Advanced Financial Management",
         "Managing Business Performance",
         "Managing Performance in the Public Sector",
-        "Advanced Public Financial Management"
+        "Advanced Public Financial Management",
       ],
     },
     {
       id: "Professional Level",
-      type: "cpa",
-      basePrice: 50000,
-      period: 90,
-      popular: false,
       level: "Professional Level",
-      description: "Final stage focusing on integrated real-life decision making.",
-      features: [
+      description: "The final stage focuses on integrated, real-life decision-making through a Test of Professional Competence.",
+      tag: "Level 4",
+      modules: [
         "Public Sector Pathway",
-        "Private Sector Pathway"
+        "Private Sector Pathway",
       ],
     },
   ];
 
   return (
-    <div ref={ref} className="bg-white">
-      {/* Hero Section */}
-      <motion.section
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          y,
-        }}
-        className="relative py-24 lg:py-32 h-[60vh] flex items-center justify-center overflow-hidden"
-        initial={{ scale: 1.05 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-      >
-        <div className="absolute inset-0 bg-black/65" />
-        <div className="relative max-w-7xl mx-auto px-4 z-10 w-full text-center">
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-[#6cb9cc] font-black uppercase tracking-[0.3em] text-[12px] mb-4"
-          >
-            Flexible Learning
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-3xl md:text-5xl font-bold text-white mb-6 uppercase tracking-tight"
-          >
-            Pricing & Tuition
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="hidden md:block text-lg text-gray-200 max-w-2xl mx-auto font-medium"
-          >
-            Invest in your success with our transparent and flexible investment plans designed for every stage of your career.
-          </motion.p>
-        </div>
-      </motion.section>
-
+    <div className="bg-white">
       {/* Main Pricing Plans */}
       <section className="py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -276,57 +214,75 @@ export default function TuitionPage() {
         </div>
       </section>
 
-      {/* CPA Professional Accounting Certification Plans */}
+      {/* CPA Specialized Plans - Curriculum */}
       <section className="py-24 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center mb-20">
+          <div className="max-w-4xl mx-auto text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#1a7ea5]/5 rounded-full text-[#1a7ea5] text-[10px] font-bold uppercase tracking-widest mb-4 border border-[#1a7ea5]/10">
               CPA Rwanda
             </div>
-            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">Professional Accounting Certification Plans</h2>
-            <p className="text-slate-500 font-medium text-lg">Comprehensive pathways for accounting and finance professionals at every career stage.</p>
+            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-6 uppercase tracking-tight">
+              CPA Specialized Plans
+            </h2>
+            <p className="text-slate-500 font-medium text-lg leading-relaxed max-w-3xl mx-auto">
+              Professional preparation for Certified Public Accountant success. Comprehensive materials and structured roadmaps for every section.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+          {/* Card Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {cpaPlans.map((plan, i) => (
               <motion.div
                 key={plan.id}
-                className={`relative group bg-white p-8 rounded-3xl border transition-all duration-500 flex flex-col h-full ${plan.popular ? "border-[#1a7ea5] shadow-[0_30px_60px_rgba(26,126,165,0.1)] ring-1 ring-[#1a7ea5]/20" : "border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)]"}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -8 }}
+                whileHover={{ y: -6 }}
               >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#1a7ea5] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg z-10">Most Popular</div>
-                )}
-                <div className="mb-8">
-                  <div className="w-12 h-12 bg-[#6cb9cc]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-500 text-[#1a7ea5]">
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <div className="inline-block px-3 py-1 bg-[#1a7ea5]/5 text-[#1a7ea5] rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 border border-[#1a7ea5]/10">
+                      {plan.tag}
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 leading-tight">{plan.level}</h3>
+                  </div>
+                  <div className="w-12 h-12 bg-[#6cb9cc]/10 rounded-2xl flex items-center justify-center text-[#1a7ea5] flex-shrink-0 ml-4">
                     <Award size={24} />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">{plan.level}</h3>
-                  {plan.description && <p className="text-slate-500 text-[12px] font-medium leading-relaxed mb-6 min-h-[40px]">{plan.description}</p>}
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-[#1a7ea5]">{plan.basePrice.toLocaleString()}</span>
-                    <span className="text-slate-400 font-bold text-[10px] uppercase">Frw / Quarter</span>
+                </div>
+
+                <p className="text-slate-500 text-[14px] leading-relaxed mb-6">
+                  {plan.description}
+                </p>
+
+                <div className="border-t border-slate-100 pt-6 flex-1">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+                    {plan.id === "Professional Level" ? "Pathways" : "Modules"}
+                  </h4>
+                  <div className="space-y-3">
+                    {plan.modules.map((module, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-[#1a7ea5]/10 flex items-center justify-center flex-shrink-0">
+                          <Check size={12} className="text-[#1a7ea5]" />
+                        </div>
+                        <span className="text-slate-700 text-[13px] font-medium leading-snug">{module}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="space-y-3 mb-8 flex-grow">
-                  {plan.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <div className="mt-0.5 w-4 h-4 rounded-full bg-[#6cb9cc]/20 flex items-center justify-center flex-shrink-0">
-                        <Check size={10} className="text-[#1a7ea5]" />
-                      </div>
-                      <span className="text-slate-600 text-[12px] font-medium leading-relaxed">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => handleModalOpen(plan.basePrice, plan.period, plan.type, plan.level)}
-                  className={`w-full py-4 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${plan.popular ? "bg-[#1a7ea5] text-white shadow-xl hover:bg-[#156d8f]" : "bg-slate-900 text-white hover:bg-[#1a7ea5]"} shadow-lg`}
-                >
-                  Enroll in {plan.level}
-                </button>
+
+                {plan.id === "Professional Level" && (
+                  <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                    <p className="text-amber-800 text-[12px] font-medium leading-relaxed">
+                      <strong>Note:</strong> Students choose between the <strong>Public Sector Pathway</strong> or <strong>Private Sector Pathway</strong> based on career goals.
+                    </p>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
