@@ -1,4 +1,4 @@
-import { ArrowRight, Play, Star, Award, Users, Clock } from "lucide-react";
+import { ArrowRight, Play, Star, Award, Users, Clock, Book, LayoutGrid, Crown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Variants } from "framer-motion";
@@ -6,10 +6,10 @@ import type { Variants } from "framer-motion";
 import { useEffect, useRef } from "react";
 import useLanguage from "../hooks/useLanguage";
 import backgroundImage from "../assets/background.jpg";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../redux/stores";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../redux/stores";
 import { fetchCurrentUser } from "../redux/features/auth";
-import { ourPrograms } from "../constants/programs";
+import { fetchCourses } from "../redux/features/courses/courseSlice";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -53,8 +53,11 @@ const bidirectionalFadeUp: Variants = {
 export const HomePage: React.FC = () => {
   const { t } = useLanguage();
   const ref = useRef(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const { items: courses, loading } = useSelector((state: RootState) => state.courses);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -64,10 +67,33 @@ export const HomePage: React.FC = () => {
       localStorage.setItem("userRole", "STUDENT");
       dispatch(fetchCurrentUser());
       navigate("/courses");
-    } else {
-      navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    dispatch(fetchCourses({ page: 1, limit: 8 }));
+  }, [dispatch]);
+
+  const publishedCourses = Array.isArray(courses)
+    ? courses.filter((c: any) => c?.isPublished)
+    : [];
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || publishedCourses.length === 0) return;
+    let interval = setInterval(() => {
+      const cardWidth = el.querySelector(":scope > *")?.clientWidth || 300;
+      const gap = 20;
+      const scrollAmount = cardWidth + gap;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (el.scrollLeft >= maxScroll - 10) {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        el.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [publishedCourses]);
 
   return (
     <div ref={ref} className="bg-white">
@@ -155,60 +181,97 @@ export const HomePage: React.FC = () => {
       </header>
 
       <main>
-      {/* What We Focus On - Asymmetrical Grid */}
-      <section className="py-24 bg-slate-50 relative overflow-hidden" aria-label="Featured Programs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            className="text-center mb-20"
-            variants={bidirectionalFadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-          >
-            <h2 className="text-2xl md:text-4xl font-bold mb-6 uppercase tracking-tight text-slate-900">
-              {t("featuredCourses")}
+      {/* What We Focus On - Horizontal Carousel */}
+      <section className="py-24 bg-slate-50" aria-label="Featured Programs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight text-slate-900">
+              Explore Our Programs
             </h2>
-            <div className="w-16 h-1 bg-[#1a7ea5] mx-auto mb-8 rounded-full" />
-            <p className="text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed">
-              Industry-leading programs designed for the modern workforce. We bridge the gap between education and professional excellence.
-            </p>
-          </motion.div>
+            <Link
+              to="/courses/all"
+              className="hidden sm:inline-flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.2em] text-[#1a7ea5] hover:text-[#156d8f] transition-colors flex-shrink-0 ml-6"
+            >
+              View All
+              <ArrowRight size={15} />
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-            {ourPrograms.map((program, i) => {
-              const isFirstInPair = i % 2 === 0;
-              const isEvenRow = Math.floor(i / 2) % 2 === 0;
-              const colSpan = isEvenRow
-                ? (isFirstInPair ? "lg:col-span-7" : "lg:col-span-5")
-                : (isFirstInPair ? "lg:col-span-5" : "lg:col-span-7");
-
-              return (
+          <div ref={scrollRef} className="flex overflow-x-auto scrollbar-none snap-x snap-mandatory gap-5 pb-4">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-[calc(25%-15px)] snap-start p-6 rounded-3xl bg-white border border-slate-100/50 flex-shrink-0 animate-pulse">
+                  <div className="w-10 h-10 bg-slate-200 rounded-xl mb-6" />
+                  <div className="h-5 bg-slate-200 rounded w-3/4 mb-3" />
+                  <div className="h-4 bg-slate-200 rounded w-full mb-2" />
+                  <div className="h-4 bg-slate-200 rounded w-5/6 mb-2" />
+                  <div className="h-4 bg-slate-200 rounded w-2/3 mb-6" />
+                  <div className="h-3 bg-slate-200 rounded w-1/3" />
+                </div>
+              ))
+            ) : publishedCourses.length > 0 ? (
+              publishedCourses.map((course: any, i: number) => (
                 <motion.article
-                  key={program.id}
-                  className={`group relative bg-white ${colSpan} p-8 md:p-12 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100/50 flex flex-col justify-between`}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  key={course.id}
+                  className="group relative bg-white w-[calc(25%-15px)] snap-start rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100/50 flex flex-col justify-between flex-shrink-0 overflow-hidden"
+                  initial={{ opacity: 0, x: 40 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.7, delay: i * 0.1 }}
-                  whileHover={{ y: -8 }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                  whileHover={{ y: -4 }}
                 >
-                  <div>
-                    <div className="w-12 h-12 bg-[#6cb9cc]/10 text-[#1a7ea5] rounded-2xl flex items-center justify-center mb-10 group-hover:bg-[#1a7ea5] group-hover:text-white transition-all duration-500">
-                      <Star size={20} />
+                  <Link to={`/courses/${course.id}/lessons?subscribed=false`} className="flex flex-col h-full">
+                    <div className="p-5 flex-grow">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.15em] ${course.type === "free" ? "bg-neutral-100 text-neutral-700 border border-neutral-200" : "bg-neutral-900 text-white border border-neutral-900"}`}>
+                          {course.type}
+                        </div>
+                        <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center">
+                          <Crown size={14} />
+                        </div>
+                      </div>
+                      <h3 className="font-bold text-base md:text-lg mb-2 tracking-tight group-hover:text-[#1a7ea5] transition-colors leading-tight line-clamp-2">
+                        {course.title.charAt(0).toUpperCase() + course.title.slice(1).toLowerCase()}
+                      </h3>
+                      <p className="text-[13px] text-slate-500 leading-relaxed mb-4 line-clamp-3">
+                        {course.shortDescription || course.description}
+                      </p>
+                      <div className="flex flex-wrap gap-3 items-center">
+                        <div className="flex items-center gap-1.5 bg-neutral-100 px-2.5 py-1 rounded-full border border-neutral-200">
+                          <Book size={11} className="text-neutral-500" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">{course.lessons?.length || 0} Lessons</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-neutral-100 px-2.5 py-1 rounded-full border border-neutral-200">
+                          <LayoutGrid size={11} className="text-neutral-500" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">{course.tests?.length || 0} Tests</span>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="font-bold text-xl md:text-2xl mb-4 tracking-tight group-hover:text-[#1a7ea5] transition-colors leading-tight">
-                      {program.title}
-                    </h3>
-                    <p className="text-[16px] md:text-[16px] text-slate-500 leading-relaxed mb-10">
-                      {program.description}
-                    </p>
-                  </div>
-                  <Link to="/courses" className="inline-flex items-center gap-2 text-[14px] font-black uppercase tracking-[0.2em] text-[#1a7ea5] hover:gap-4 transition-all group/link" aria-label={`Explore ${program.title}`}>
-                    Explore Details <ArrowRight size={14} />
+                    <div className="px-5 py-3 border-t border-slate-100 flex items-center gap-3 bg-slate-50/50">
+                      <div className="w-8 h-8 bg-neutral-900 rounded-lg flex items-center justify-center text-white font-bold text-[10px]">
+                        {course.instructor?.firstName?.charAt(0)}{course.instructor?.lastName?.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Instructor</p>
+                        <p className="text-[11px] font-semibold text-slate-700 truncate">{course.instructor?.firstName} {course.instructor?.lastName}</p>
+                      </div>
+                    </div>
                   </Link>
                 </motion.article>
-              );
-            })}
+              ))
+            ) : (
+              <p className="text-slate-400 text-sm py-8">No courses available yet.</p>
+            )}
+          </div>
+
+          <div className="mt-6 text-center sm:hidden">
+            <Link
+              to="/courses/all"
+              className="inline-flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.2em] text-[#1a7ea5]"
+            >
+              View All Programs
+              <ArrowRight size={15} />
+            </Link>
           </div>
         </div>
       </section>
