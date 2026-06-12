@@ -29,26 +29,29 @@ export const ContactPage = () => {
       message: formData.get("message"),
     }
 
-    const scriptFormApi = import.meta.env.VITE_CONTACT_FORM_SCRIPT_ID
-    const url = `https://script.google.com/macros/s/${scriptFormApi}/exec`
-    const encoded_data = encodeURI(JSON.stringify(data))
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000"
 
     try {
       setLoading(true)
-      const response = await fetch(`${url}?data=${encoded_data}`)
+      const response = await fetch(`${apiUrl}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
       setLoading(false)
+
+      const result = await response.json()
 
       if (!response.ok) {
         toast.current?.show({
           severity: "error",
           summary: "Error",
-          detail: "Failed to submit your message. Try again",
+          detail: result.message || "Failed to submit your message. Try again",
           life: 3000,
         })
         return
       }
 
-      const result = await response.json()
       toast.current?.show({
         severity: "success",
         summary: "Success",

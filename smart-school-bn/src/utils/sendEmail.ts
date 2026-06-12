@@ -13,7 +13,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
   });
 
   const mailOptions = {
-    from: `"Smart school" <${process.env.SMTP_USER}>`, 
+    from: `"JobExam Rwanda" <${process.env.SMTP_USER}>`, 
     to: options.to,
     subject: options.subject,
     text: options.text,

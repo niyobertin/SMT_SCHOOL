@@ -17,6 +17,7 @@ import studentAuthRoutes from "./studentAuth.routes";
 import academicRoutes from "./academic.routes";
 import courseAssignmentRoutes from "./courseAssignment.routes";
 import assessmentRoutes from "./assessment.routes";
+import contactRoutes from "./contact.routes";
 
 const router = Router();
 
@@ -71,6 +72,7 @@ router.use("/academic", academicRoutes);
 router.use("/assignments", courseAssignmentRoutes);
 router.use("/", assessmentRoutes); // Note: paths in assessmentRoutes handle /assessments and /schools/:id/assessments
 router.use("/certificates", certificateRoutes);
+router.use("/", contactRoutes);
 
 // API info endpoint
 /**
