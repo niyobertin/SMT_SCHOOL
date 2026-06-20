@@ -272,6 +272,9 @@ const Exams = () => {
         setQuestionIdToEdit(question.id);
         setIsEditingQuestion(true);
         setQuestionViewMode('FORM');
+        setQuestionImageFile(null);
+        setQuestionImageClear(false);
+        setQuestionImagePreviewUrl(question.image || null);
     };
 
     const handleQuestionSubmit = async (e: React.FormEvent) => {
@@ -945,7 +948,7 @@ const Exams = () => {
                                             </div>
                                         )}
                                         <div className="flex gap-2 pt-4">
-                                            <button type="button" onClick={() => setQuestionViewMode('LIST')} className="flex-1 py-2 border rounded">Cancel</button>
+                                            <button type="button" onClick={() => { resetQuestionForm(); setQuestionViewMode('LIST'); }} className="flex-1 py-2 border rounded">Cancel</button>
                                             <button
                                                 type="submit"
                                                 disabled={loading}
