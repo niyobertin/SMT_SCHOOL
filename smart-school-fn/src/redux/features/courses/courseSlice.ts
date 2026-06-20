@@ -97,7 +97,7 @@ export const createCourse = createAsyncThunk(
       courseData.delete('categoryId');
       const response = await api.post(`/courses/${categoryId}`, courseData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': undefined,
         },
       });
 
@@ -117,7 +117,7 @@ export const updateCourse = createAsyncThunk(
     try {
       const response = await api.patch(`/courses/${courseId}`, courseData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': undefined,
         },
       });
       return response.data.data;

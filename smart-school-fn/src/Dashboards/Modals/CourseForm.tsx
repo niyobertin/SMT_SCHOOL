@@ -293,9 +293,17 @@ export const CourseForm = ({ course, onClose, onSuccess }: CourseFormProps) => {
                   <button
                     type="button"
                     onClick={() => setShowCategoryModal(true)}
-                    className="px-5 py-2.5 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+                    className="px-5 py-2.5 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20 disabled:opacity-50"
+                    disabled={categoriesLoading}
                   >
-                    New
+                    {categoriesLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />
+                        Loading...
+                      </span>
+                    ) : (
+                      'New'
+                    )}
                   </button>
                 </div>
                 {errors.categoryId && <p className="text-red-500 text-[10px] mt-1 ml-1">{errors.categoryId}</p>}
@@ -315,10 +323,17 @@ export const CourseForm = ({ course, onClose, onSuccess }: CourseFormProps) => {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all font-bold"
+                  className="px-6 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all font-bold disabled:opacity-50"
                   disabled={courseLoading}
                 >
-                  Cancel
+                  {courseLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 size={16} className="animate-spin" />
+                      Cancel
+                    </span>
+                  ) : (
+                    'Cancel'
+                  )}
                 </button>
                 <button
                   type="submit"

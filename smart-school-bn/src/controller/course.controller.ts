@@ -66,8 +66,8 @@ export const createCourse = async (
         isPublished:
           courseData.status !== "PUBLISHED"
             ? false
-            : Boolean(courseData.isPublished),
-        isFeatured: Boolean(courseData.isFeatured),
+            : courseData.isPublished === "true",
+        isFeatured: courseData.isFeatured === "true",
         tags: courseData.tags,
         requirements: courseData.requirements,
         objectives: courseData.objectives,
@@ -344,8 +344,8 @@ export const updateCourse = async (
         isPublished:
           courseData.status !== "PUBLISHED"
             ? false
-            : Boolean(courseData.isPublished),
-        isFeatured: Boolean(courseData.isFeatured),
+            : courseData.isPublished === "true",
+        isFeatured: courseData.isFeatured === "true",
         ...(thumbnail && { thumbnail }),
         school: schoolId ? { connect: { id: schoolId } } : undefined,
       },
