@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Plus, Eye, Edit, Trash2, BookOpen, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, BookOpen, Calendar, ChevronLeft, ChevronRight, Layers } from "lucide-react";
 import { LessonModal } from "../Modals/LessonModal";
 import { ConfirmDeleteModal } from "../Modals/ConfirmDeleteModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { clearLessons, createLesson, deleteLesson, fetchLessons, setPage, updateLesson } from "../../redux/features/lessons/lessonSlice";
+import { fetchLevelsByCourse } from "../../redux/features/levels/levelSlice";
 import type { AppDispatch, RootState } from "../../redux/stores";
 import { Toast } from "primereact/toast";
 
@@ -17,6 +18,7 @@ export const Lessons = () => {
   const lessons = useSelector((state: RootState) => state.lessons);
   const { pagination } = useSelector((state: RootState) => state.lessons);
   const loading = useSelector((state: RootState) => state.lessons.loading);
+  const { items: levels } = useSelector((state: RootState) => state.levels);
 
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,6 +35,7 @@ export const Lessons = () => {
         page: pagination.page,
         limit: pagination.limit
       }));
+      dispatch(fetchLevelsByCourse(courseId));
     }
 
     return () => {
@@ -144,16 +147,25 @@ export const Lessons = () => {
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight leading-none">Lessons</h1>
           <p className="text-slate-500 font-medium mt-3">Structure your course content with modular lessons.</p>
         </div>
-        <button
-          onClick={() => {
-            setEditingLesson(null);
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 px-6 py-3.5 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20 shrink-0"
-        >
-          <Plus size={16} />
-          Add Lesson
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => navigate(`/dashboard/courses/${courseId}/levels`)}
+            className="flex items-center gap-2 px-6 py-3.5 bg-white border border-[#1a7ea5]/20 text-[#1a7ea5] rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#1a7ea5]/5 transition-all"
+          >
+            <Layers size={16} />
+            Manage Levels
+          </button>
+          <button
+            onClick={() => {
+              setEditingLesson(null);
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-6 py-3.5 bg-[#1a7ea5] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-[#1a7ea5]/20"
+          >
+            <Plus size={16} />
+            Add Lesson
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-[0_30px_80px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
@@ -327,6 +339,7 @@ export const Lessons = () => {
         initialData={editingLesson}
         onSave={handleSaveLesson}
         loading={lessonLoading}
+        levels={levels}
       />
 
       <ConfirmDeleteModal

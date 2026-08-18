@@ -28,6 +28,7 @@ interface Lesson {
   courseId: string;
   content: Content[];
   userProgress: any[];
+  levelId?: string | null;
   course: {
     type: string;
     duration: string;
@@ -42,6 +43,8 @@ interface Lesson {
     status: string;
     isPublished: boolean;
     isFeatured: boolean;
+    hasLevels: boolean;
+    enforceSequentialLevels: boolean;
     tags: string[];
     requirements: string[];
     objectives: string[];

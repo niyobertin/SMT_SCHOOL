@@ -150,14 +150,37 @@ export const generateDetailedResultsPDF = (
     doc.end();
 };
 
-export const generateCertificatePDF = (
-  fullName: string,
-  courseName: string,
-  completionDate: string,
-  certificateNumber: string,
-  score: number,
-  passingScore: number,
-): Promise<Buffer> => {
+export interface CertificatePDFOptions {
+  fullName: string;
+  courseName: string;
+  completionDate: string;
+  certificateNumber: string;
+  score: number;
+  passingScore: number;
+  certTitle?: string;
+  issuingOrg?: string;
+  description?: string;
+  signatureName?: string;
+  logoBuffer?: Buffer;
+  accentColor?: string;
+}
+
+export const generateCertificatePDF = (options: CertificatePDFOptions): Promise<Buffer> => {
+  const {
+    fullName,
+    courseName,
+    completionDate,
+    certificateNumber,
+    score,
+    passingScore,
+    certTitle = 'CERTIFICATE OF COMPLETION',
+    issuingOrg = 'JobExam Rwanda',
+    description,
+    signatureName,
+    logoBuffer,
+    accentColor = '#1a7ea5',
+  } = options;
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       layout: 'landscape',
@@ -174,22 +197,30 @@ export const generateCertificatePDF = (
     const pageHeight = doc.page.height;
 
     // Outer border
-    doc.rect(20, 20, pageWidth - 40, pageHeight - 40).lineWidth(3).strokeColor('#1a7ea5').stroke();
+    doc.rect(20, 20, pageWidth - 40, pageHeight - 40).lineWidth(3).strokeColor(accentColor).stroke();
     doc.rect(25, 25, pageWidth - 50, pageHeight - 50).lineWidth(1).strokeColor('#6cb9cc').stroke();
 
+    if (logoBuffer) {
+      try {
+        doc.image(logoBuffer, 45, 30, { fit: [50, 50] });
+      } catch (err) {
+        // A corrupt/unsupported logo image must never abort certificate generation.
+      }
+    }
+
     // Header bar
-    doc.rect(40, 50, pageWidth - 80, 60).fill('#1a7ea5');
+    doc.rect(40, 50, pageWidth - 80, 60).fill(accentColor);
     doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold')
-      .text('CERTIFICATE OF COMPLETION', 0, 65, { align: 'center', width: pageWidth });
+      .text(certTitle, 0, 65, { align: 'center', width: pageWidth });
 
     const centerX = pageWidth / 2;
     let yPos = 150;
 
-    doc.fillColor('#1a7ea5').fontSize(12).font('Helvetica')
+    doc.fillColor(accentColor).fontSize(12).font('Helvetica')
       .text('This certifies that', centerX, yPos, { align: 'center' });
     yPos += 30;
 
-    doc.fillColor('#1a7ea5').fontSize(28).font('Helvetica-Bold')
+    doc.fillColor(accentColor).fontSize(28).font('Helvetica-Bold')
       .text(fullName, centerX, yPos, { align: 'center' });
     yPos += 40;
 
@@ -197,9 +228,15 @@ export const generateCertificatePDF = (
       .text('has successfully completed the', centerX, yPos, { align: 'center' });
     yPos += 22;
 
-    doc.fillColor('#1a7ea5').fontSize(18).font('Helvetica-Bold')
+    doc.fillColor(accentColor).fontSize(18).font('Helvetica-Bold')
       .text(courseName, centerX, yPos, { align: 'center' });
     yPos += 35;
+
+    if (description) {
+      doc.fillColor('#555555').fontSize(11).font('Helvetica-Oblique')
+        .text(description, centerX, yPos, { align: 'center', width: pageWidth - 160 });
+      yPos += 22;
+    }
 
     doc.fillColor('#333333').fontSize(11).font('Helvetica')
       .text(`Date of Completion: ${completionDate}`, centerX, yPos, { align: 'center' });
@@ -220,9 +257,17 @@ export const generateCertificatePDF = (
     doc.fillColor('#999999').fontSize(8).font('Helvetica')
       .text(`Verify at: https://jobexam.rw/certificates/verify/${certificateNumber}`, centerX, yPos, { align: 'center' });
 
+    if (signatureName) {
+      doc.moveTo(pageWidth - 260, pageHeight - 90).lineTo(pageWidth - 100, pageHeight - 90).strokeColor('#999999').stroke();
+      doc.fillColor('#333333').fontSize(10).font('Helvetica-Bold')
+        .text(signatureName, pageWidth - 260, pageHeight - 84, { align: 'center', width: 160 });
+      doc.fillColor('#999999').fontSize(8).font('Helvetica')
+        .text('Authorized Signature', pageWidth - 260, pageHeight - 70, { align: 'center', width: 160 });
+    }
+
     // Footer
     doc.fillColor('#999999').fontSize(8).font('Helvetica')
-      .text('© JobExam Rwanda | Official Certificate', centerX, pageHeight - 55, { align: 'center' });
+      .text(`© ${issuingOrg} | Official Certificate`, centerX, pageHeight - 55, { align: 'center' });
 
     doc.end();
   });

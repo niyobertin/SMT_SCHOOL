@@ -15,6 +15,8 @@ interface Certificate {
   pdfUrl: string | null;
   qrCode: string | null;
   status: string;
+  courseName?: string;
+  levelName?: string;
 }
 
 export const CertificatesPage: React.FC = () => {
@@ -117,6 +119,13 @@ export const CertificatesPage: React.FC = () => {
                 <div className="mt-3 text-sm text-slate-600 space-y-1">
                   <p><span className="font-medium">Issued to:</span> {verifyResult.data.fullName}</p>
                   <p><span className="font-medium">Certification:</span> {verifyResult.data.certificationName || verifyResult.data.certificationId}</p>
+                  {(verifyResult.data.courseName || verifyResult.data.levelName) && (
+                    <p>
+                      <span className="font-medium">Course / Level:</span> {verifyResult.data.courseName}
+                      {verifyResult.data.courseName && verifyResult.data.levelName ? " — " : ""}
+                      {verifyResult.data.levelName}
+                    </p>
+                  )}
                   <p><span className="font-medium">Score:</span> {verifyResult.data.score}%</p>
                   <p><span className="font-medium">Certificate #:</span> {verifyResult.data.certificateNumber}</p>
                   <p><span className="font-medium">Issued:</span> {new Date(verifyResult.data.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -166,6 +175,13 @@ export const CertificatesPage: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-bold text-slate-900">{cert.certificationName || cert.certificationId}</h3>
+                      {(cert.courseName || cert.levelName) && (
+                        <p className="text-xs font-semibold text-slate-400 mt-1">
+                          {cert.courseName}
+                          {cert.courseName && cert.levelName ? " — " : ""}
+                          {cert.levelName}
+                        </p>
+                      )}
                       <div className="flex flex-wrap items-center gap-3 mt-2">
                         <span className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
                           <Calendar size={14} />

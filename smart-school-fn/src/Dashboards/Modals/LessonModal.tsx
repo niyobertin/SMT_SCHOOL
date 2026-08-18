@@ -4,8 +4,9 @@ interface LessonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (lesson: any) => void;
-  initialData?: any; 
+  initialData?: any;
   loading: boolean;
+  levels?: Array<{ id: string; title: string }>;
 }
 
 export const LessonModal = ({
@@ -14,11 +15,13 @@ export const LessonModal = ({
   onSave,
   initialData,
   loading,
+  levels = [],
 }: LessonModalProps) => {
   const [lesson, setLesson] = useState({
     title: "",
     description: "",
     order: "",
+    levelId: "",
   });
 
   useEffect(() => {
@@ -27,9 +30,10 @@ export const LessonModal = ({
         title: initialData.title || "",
         description: initialData.description || "",
         order: initialData.order?.toString() || "",
+        levelId: initialData.levelId || "",
       });
     } else {
-      setLesson({ title: "", description: "", order: "" });
+      setLesson({ title: "", description: "", order: "", levelId: "" });
     }
   }, [initialData, isOpen]);
 
@@ -45,6 +49,7 @@ export const LessonModal = ({
     onSave({
       ...lesson,
       order: Number(lesson.order),
+      levelId: lesson.levelId || null,
     });
     onClose();
   };
@@ -91,6 +96,25 @@ export const LessonModal = ({
               className="w-full border rounded-lg px-3 py-2"
             />
           </div>
+
+          {levels.length > 0 && (
+            <div>
+              <label className="block mb-1 text-sm">Level (optional)</label>
+              <select
+                name="levelId"
+                value={lesson.levelId}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2"
+              >
+                <option value="">Not part of a level</option>
+                {levels.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"

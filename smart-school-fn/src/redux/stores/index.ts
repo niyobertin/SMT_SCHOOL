@@ -4,6 +4,7 @@ import categoriesReducer from "../features/courses/category";
 import coursesReducer from "../features/courses/courseSlice";
 import lessonsReducer from "../features/lessons/lessonSlice";
 import lessonContentReducer from "../features/lessons/lessonContentSlice";
+import levelsReducer from "../features/levels/levelSlice";
 import testReducer from "../features/test/testSlice";
 import manageTestReducer from "../features/test/manageTestslice";
 import examPortalReducer from "../features/examPortalSlice";
@@ -19,6 +20,7 @@ export const store = configureStore({
     courses: coursesReducer,
     lessons: lessonsReducer,
     lessonContent: lessonContentReducer,
+    levels: levelsReducer,
     test: testReducer,
     manageTest: manageTestReducer,
     examPortal: examPortalReducer,

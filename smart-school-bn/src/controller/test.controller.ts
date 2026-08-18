@@ -6,7 +6,8 @@ import * as XLSX from "xlsx";
 import { NotFoundError } from "../utils/errors";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
 import { sendTestResponseEmail } from "../services/testResponseEmail.service";
-import { issueCertificateForTest } from "./certificate.controller";
+import { issueCertificateForTest, issueCertificateForLevel } from "./certificate.controller";
+import { getLevelAccessStatus } from "../helper/levelAccess";
 
 const prisma = new PrismaClient();
 
@@ -53,6 +54,7 @@ export const createTest = async (
       maxAttempts,
       randomizeQuestions,
       showResults,
+      levelId,
     } = req.body;
     const { courseId } = req.params;
 
@@ -71,6 +73,19 @@ export const createTest = async (
       return;
     }
 
+    if (levelId) {
+      const level = await prisma.level.findUnique({ where: { id: levelId } });
+      if (!level || level.courseId !== courseId) {
+        res.status(404).json({ status: "error", message: "Level not found for this course" });
+        return;
+      }
+      const existingLevelTest = await prisma.test.findUnique({ where: { levelId } });
+      if (existingLevelTest) {
+        res.status(409).json({ status: "error", message: "This level already has an exam" });
+        return;
+      }
+    }
+
     // Create test
     const test = await prisma.test.create({
       data: {
@@ -87,6 +102,7 @@ export const createTest = async (
         course: {
           connect: { id: courseId },
         },
+        ...(levelId && { level: { connect: { id: levelId } } }),
       },
     });
 
@@ -316,7 +332,20 @@ export const startTestAttempt = async (
     // @ts-ignore
     const studentId = req.studentId;
 
-    const isStudent = userRole === "STUDENT";
+    const rawIsStudent = userRole === "STUDENT";
+
+    const testLevelCheck = await prisma.test.findUnique({
+      where: { id: testId },
+      select: { levelId: true },
+    });
+    if (!testLevelCheck) {
+      throw new NotFoundError("Test not found");
+    }
+
+    // Level-scoped exams always run through the marketplace User/TestAttempt
+    // flow (never the school Student/StudentTestAttempt path) — levels are a
+    // marketplace-course-only concept.
+    const isStudent = rawIsStudent && !testLevelCheck.levelId;
 
     // 1. Fetch test and verify access/enrollment
     const test = await prisma.test.findUnique({
@@ -344,8 +373,35 @@ export const startTestAttempt = async (
       throw new NotFoundError("Test not found");
     }
 
-    // For students, check if enrolled or assigned
-    if (isStudent) {
+    if (test.levelId) {
+      // Level-scoped exam: gate on level payment + sequential progression +
+      // completed content, instead of course-wide enrollment.
+      const access = await getLevelAccessStatus(userId, test.levelId);
+      if (!access.canAccess) {
+        res.status(403).json({
+          status: "error",
+          message:
+            access.reason === "sequential_locked"
+              ? "Access denied. Complete the previous level first."
+              : "Access denied. Payment required for this level.",
+          reason: access.reason,
+        });
+        return;
+      }
+
+      const levelEnrollment = await prisma.levelEnrollment.findUnique({
+        where: { userId_levelId: { userId, levelId: test.levelId } },
+      });
+      if (!levelEnrollment?.contentCompletedAt) {
+        res.status(403).json({
+          status: "error",
+          message: "Complete all lessons for this level before taking the exam.",
+          reason: "content_incomplete",
+        });
+        return;
+      }
+    } else if (isStudent) {
+      // For students, check if enrolled or assigned
       const testWithCourse = test as any;
       const isAssigned = (testWithCourse.course?.assignments?.length || 0) > 0;
       const isEnrolled = (testWithCourse.course?.studentEnrollments?.length || 0) > 0;
@@ -368,6 +424,20 @@ export const startTestAttempt = async (
           });
           return;
         }
+      }
+    }
+
+    // 1c. Enforce maxAttempts (previously unchecked for any test type)
+    if (test.maxAttempts) {
+      const priorAttempts = isStudent
+        ? await prisma.studentTestAttempt.count({ where: { testId, studentId } })
+        : await prisma.testAttempt.count({ where: { testId, userId } });
+      if (priorAttempts >= test.maxAttempts) {
+        res.status(403).json({
+          status: "error",
+          message: `Maximum attempts (${test.maxAttempts}) reached for this test.`,
+        });
+        return;
       }
     }
 
@@ -481,7 +551,21 @@ export const submitAnswer = async (
     // @ts-ignore
     const studentId = req.studentId;
 
-    const isStudent = userRole === "STUDENT";
+    const rawIsStudent = userRole === "STUDENT";
+
+    // Level-scoped exam attempts are always created as marketplace TestAttempt
+    // rows (see startTestAttempt), never StudentTestAttempt — detect that up
+    // front so this lookup uses the right model.
+    let isStudent = rawIsStudent;
+    if (rawIsStudent) {
+      const marketplaceAttemptPreview = await prisma.testAttempt.findFirst({
+        where: { id: attemptId, userId },
+        select: { id: true },
+      });
+      if (marketplaceAttemptPreview) {
+        isStudent = false;
+      }
+    }
 
     // 1. Fetch attempt and question
     let testAttempt: any;
@@ -676,7 +760,21 @@ export const submitTest = async (
     // @ts-ignore
     const studentId = req.studentId;
 
-    const isStudent = userRole === "STUDENT";
+    const rawIsStudent = userRole === "STUDENT";
+
+    // Level-scoped exam attempts are always created as marketplace TestAttempt
+    // rows (see startTestAttempt), never StudentTestAttempt — detect that up
+    // front so this lookup uses the right model.
+    let isStudent = rawIsStudent;
+    if (rawIsStudent) {
+      const marketplaceAttemptPreview = await prisma.testAttempt.findFirst({
+        where: { id: attemptId, userId },
+        select: { id: true },
+      });
+      if (marketplaceAttemptPreview) {
+        isStudent = false;
+      }
+    }
 
     // 1. Validate test attempt
     let testAttempt: any;
@@ -772,12 +870,21 @@ export const submitTest = async (
     }
 
     // 4. Update user progress
-    if (isPassed && !isStudent) {
+    if (isPassed && !isStudent && !testAttempt.test.levelId) {
       await updateUserProgress(
         userId,
         testAttempt.test.courseId,
         testAttempt.testId
       );
+    }
+
+    // 4b. Level-scoped exam: record pass on the LevelEnrollment (used by the
+    // sequential-access check for subsequent levels)
+    if (isPassed && testAttempt.test.levelId) {
+      await prisma.levelEnrollment.updateMany({
+        where: { userId, levelId: testAttempt.test.levelId },
+        data: { examPassedAt: new Date() },
+      });
     }
 
     // 5. Send email notification for INTERVIEW and OPENENDED tests
@@ -791,9 +898,17 @@ export const submitTest = async (
 
     // 6. Auto-generate certificate if passed (non-student users)
     if (isPassed && !isStudent) {
-      issueCertificateForTest(testAttempt.testId, attemptId, userId)
+      const issueCertificate = testAttempt.test.levelId
+        ? issueCertificateForLevel(testAttempt.testId, attemptId, userId)
+        : issueCertificateForTest(testAttempt.testId, attemptId, userId);
+
+      issueCertificate
         .then((result) => {
-          logger.info(`Certificate auto-generated: ${result.certificate.certificateNumber}`);
+          if (result.certificate) {
+            logger.info(`Certificate auto-generated: ${result.certificate.certificateNumber}`);
+          } else {
+            logger.info(`Certificate not issued: ${result.message}`);
+          }
         })
         .catch((err) => {
           logger.warn(`Certificate generation skipped: ${err.message}`);

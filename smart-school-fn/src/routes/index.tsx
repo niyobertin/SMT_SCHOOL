@@ -6,6 +6,7 @@ import { UsersSection } from '../Dashboards/sections/Users';
 import { SubscriptionsSection } from '../Dashboards/sections/Subscriptions';
 import { CoursesSection } from '../Dashboards/sections/Courses';
 import { Lessons } from '../Dashboards/sections/Lessons';
+import { Levels } from '../Dashboards/sections/Levels';
 import { LessonContent } from '../Dashboards/sections/Content';
 import { Tests } from '../Dashboards/sections/Tests';
 import { JobBoard } from '../Dashboards/sections/Jobs';
@@ -51,6 +52,10 @@ export const dashboardRoutes: RouteObject[] = [
               {
                 index: true,
                 element: <Lessons />,
+              },
+              {
+                path: 'levels',
+                element: <Levels />,
               },
               {
                 path: 'lessons/:lessonId',

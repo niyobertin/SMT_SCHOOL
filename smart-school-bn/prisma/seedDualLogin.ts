@@ -251,6 +251,21 @@ async function main() {
       },
     });
 
+    const superAdmin = await prisma.user.upsert({
+      where: { email: "admin@jobexam.rw" },
+      update: {},
+      create: {
+        email: "admin@jobexam.rw",
+        username: "super_admin",
+        phoneNumber: "+250700000000",
+        firstName: "Super",
+        lastName: "Admin",
+        role: UserRole.SUPER_ADMIN,
+        password: await bcrypt.hash("SecurePass123!", 10),
+        isVerified: true,
+      },
+    });
+
     await prisma.schoolStaff.upsert({
       where: {
         schoolId_userId: {
@@ -419,6 +434,7 @@ async function main() {
     console.log(`  - Courses: 3`);
     console.log(`  - Enrollments: 4`);
     console.log(`\n🔐 Credentials for Testing:`);
+    console.log(`  Admin: admin@jobexam.rw | Password: SecurePass123!`);
     console.log(`  School Code: PS-2024 | Student ID: STU-2024-001 | PIN: 1234`);
     console.log(`  School Code: PS-2024 | Student ID: STU-2024-002 | PIN: 1234`);
     console.log(`  School Code: PS-2024 | Student ID: STU-2024-003 | PIN: 1234`);

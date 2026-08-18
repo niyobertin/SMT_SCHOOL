@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AppDispatch, RootState } from '../../redux/stores';
 import { addQuestion, createTest, deleteQuestion, deleteTest, fetchQuestionsByTestId, updateQuestion, updateTest } from '../../redux/features/test/manageTestslice';
+import { fetchLevelsByCourse } from '../../redux/features/levels/levelSlice';
 import { Toast } from 'primereact/toast';
 import { ConfirmDeleteModal } from '../Modals/ConfirmDeleteModal';
 import api from '../../redux/api/api';
@@ -52,7 +53,8 @@ const TestQuestionManager = () => {
     maxAttempts: 0,
     randomizeQuestions: true,
     randomizeOptions: true,
-    showResults: "AFTER_COMPLETION"
+    showResults: "AFTER_COMPLETION",
+    levelId: ""
   }
 
   const defaultQuestion: any = {
@@ -73,6 +75,7 @@ const TestQuestionManager = () => {
   const { items: courses, loading, error } = useSelector((state: RootState) => state.courses);
   const { tests, loading: testsLoading } = useSelector((state: RootState) => state.test);
   const { questions, loading: questionsLoading } = useSelector((state: RootState) => state.manageTest);
+  const { items: levelsForCourse } = useSelector((state: RootState) => state.levels);
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
   const [imageError, setImageError] = useState<string | null>(null);
@@ -133,6 +136,7 @@ const TestQuestionManager = () => {
   useEffect(() => {
     if (selectedCourseId) {
       dispatch(fetchTestsByCourseId(selectedCourseId));
+      dispatch(fetchLevelsByCourse(selectedCourseId));
     }
   }, [dispatch, selectedCourseId]);
 
@@ -1274,6 +1278,29 @@ const TestQuestionManager = () => {
                         className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 transition-all shadow-sm"
                       />
                     </div>
+
+                    {levelsForCourse.length > 0 && (
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">
+                          <BookOpen size={12} />
+                          Level (optional)
+                        </label>
+                        <select
+                          value={currentTest.levelId || ""}
+                          onChange={(e) => setCurrentTest((prev: any) => ({ ...prev, levelId: e.target.value }))}
+                          className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-[#1a7ea5]/5 focus:bg-white transition-all cursor-pointer"
+                        >
+                          <option value="">Course-wide test</option>
+                          {levelsForCourse
+                            .filter((lvl: any) => !lvl.test || lvl.test.id === currentTest.testId || lvl.id === currentTest.levelId)
+                            .map((lvl: any) => (
+                              <option key={lvl.id} value={lvl.id}>
+                                {lvl.title}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    )}
 
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1 flex items-center gap-2">

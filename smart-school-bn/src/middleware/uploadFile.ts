@@ -13,4 +13,6 @@ export const uploadFile = upload.fields([
   { name: "file", maxCount: 1 },
   { name: "companyLogo", maxCount: 1 },
   { name: "attachments", maxCount: 1 },
+  { name: "certificateLogo", maxCount: 1 },
+  { name: "certificateSignatureImage", maxCount: 1 },
 ]);

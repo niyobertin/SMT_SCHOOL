@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import YouTubeUploader from "../helper/youtubeUploader";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
+import { getLevelAccessStatus, recomputeLevelContentProgress } from "../helper/levelAccess";
 
 const prisma = new PrismaClient();
 
@@ -123,25 +124,48 @@ export const getLessonContent = async (req: Request, res: Response, next: NextFu
     // @ts-ignore
     const userId = req.user?.id;
     if (userId) {
-      // Allow admins or instructors to bypass? Maybe. 
-      // For now, assume student access flow.
-      // Actually, we should check role. But let's strictly enforce enrollment for content access if likely student.
-      const isValid = await checkEnrollmentValidity(userId, lessonId);
-
-      // Note: If user is admin/instructor they might not have enrollment. 
-      // We should check if they are the instructor of the course or ADMIN role.
-      // Fetch user role for robustness.
+      // Fetch user role for robustness (admins/instructors bypass access checks).
       const user = await prisma.user.findUnique({ where: { id: userId } });
 
-      if (user?.role === 'STUDENT' && !isValid) {
-        return res.status(403).json({
-          status: "error",
-          message: "Access denied. Active enrollment required."
+      if (user?.role === 'STUDENT') {
+        if (lesson.levelId) {
+          // Level-scoped lesson: gate on payment + sequential progression instead
+          // of course-wide enrollment.
+          const access = await getLevelAccessStatus(userId, lesson.levelId);
+          if (!access.canAccess) {
+            return res.status(403).json({
+              status: "error",
+              message:
+                access.reason === "sequential_locked"
+                  ? "Access denied. Complete the previous level first."
+                  : "Access denied. Payment required for this level.",
+              reason: access.reason,
+            });
+          }
+        } else {
+          // Flat, non-level lesson: existing course-wide enrollment gating, unchanged.
+          const isValid = await checkEnrollmentValidity(userId, lessonId);
+          if (!isValid) {
+            return res.status(403).json({
+              status: "error",
+              message: "Access denied. Active enrollment required."
+            });
+          }
+        }
+
+        await prisma.userProgress.upsert({
+          where: { userId_lessonId: { userId, lessonId } },
+          create: { userId, lessonId, isCompleted: true, completedAt: new Date() },
+          update: { lastAccessed: new Date() },
         });
+
+        if (lesson.levelId) {
+          await recomputeLevelContentProgress(userId, lesson.levelId);
+        }
       }
     } else {
       // Unauthenticated access? authenticate middleware should handle this.
-      // If public route, this logic might block public content. 
+      // If public route, this logic might block public content.
       // Assuming secure route.
     }
     // const page = req.query.page ? Number(req.query.page) : 1;

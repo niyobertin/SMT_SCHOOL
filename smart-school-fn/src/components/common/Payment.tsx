@@ -24,6 +24,11 @@ export const PaymentFlow: React.FC = () => {
     const [searchParams] = useSearchParams();
     const type = (searchParams.get("type") || "").trim().toLowerCase();
     const name = (searchParams.get("name") || "").trim();
+    const mode = (searchParams.get("mode") || "").trim().toLowerCase();
+    const levelId = searchParams.get("levelId") || "";
+    const isLevelMode = mode === "level" && !!levelId;
+    const [levelInfo, setLevelInfo] = useState<any | null>(null);
+    const [levelLoading, setLevelLoading] = useState<boolean>(false);
     const [availableCourses, setAvailableCourses] = useState<any[]>([]);
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
@@ -64,8 +69,20 @@ export const PaymentFlow: React.FC = () => {
     }, [courses, type, name]);
 
     useEffect(() => {
-        dispatch(fetchCourses({ page: 1, q: '', limit: 1000, categoryId: null }));
-    }, [dispatch]);
+        if (!isLevelMode) {
+            dispatch(fetchCourses({ page: 1, q: '', limit: 1000, categoryId: null }));
+        }
+    }, [dispatch, isLevelMode]);
+
+    useEffect(() => {
+        if (isLevelMode) {
+            setLevelLoading(true);
+            api.get(`/levels/${levelId}`)
+                .then((res) => setLevelInfo(res.data.data))
+                .catch(() => setLevelInfo(null))
+                .finally(() => setLevelLoading(false));
+        }
+    }, [isLevelMode, levelId]);
 
     useEffect(() => {
         socket.on("transactionUpdate", (data) => {
@@ -100,13 +117,21 @@ export const PaymentFlow: React.FC = () => {
         setShowModal(true);
         setModalType('loading');
 
-        const paymentData = {
-            amount: parseInt(amount!),
-            phoneNumber,
-            channel: paymentMethod,
-            subscriptionPeriod: parseInt(period!),
-            subscribedCourseIds: selectedCourses.map(cs => cs.id),
-        };
+        const paymentData = isLevelMode
+            ? {
+                amount: parseInt(amount!),
+                phoneNumber,
+                channel: paymentMethod,
+                subscriptionPeriod: parseInt(period!),
+                subscribedLevelIds: [levelId],
+            }
+            : {
+                amount: parseInt(amount!),
+                phoneNumber,
+                channel: paymentMethod,
+                subscriptionPeriod: parseInt(period!),
+                subscribedCourseIds: selectedCourses.map(cs => cs.id),
+            };
 
         try {
             const response = await api.post('/payments/cashin', paymentData);
@@ -120,7 +145,7 @@ export const PaymentFlow: React.FC = () => {
     const closeModal = (): void => {
         setShowModal(false);
         if (modalType === 'success') {
-            navigate('/courses');
+            navigate(isLevelMode && levelInfo ? `/courses/${levelInfo.courseId}/lessons` : '/courses');
             setStep(1);
             setPaymentMethod('');
             setPhoneNumber('07');
@@ -140,7 +165,7 @@ export const PaymentFlow: React.FC = () => {
     const isFormValid: boolean =
         paymentMethod !== '' &&
         phoneNumber.length >= 10 &&
-        selectedCourses.length > 0;
+        (isLevelMode ? !!levelInfo : selectedCourses.length > 0);
     const { years, months, weeks, days } = breakdownDays(Number(period));
 
     // Main Payment Form
@@ -229,14 +254,37 @@ export const PaymentFlow: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Right Column - Course Selection */}
+                    {/* Right Column - Course/Level Selection */}
                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-semibold text-gray-800">Choose Your Courses</h3>
-                            <span className="text-sm text-gray-600">({selectedCourses.length}{type !== "cpa" && "/3"} selected)</span>
-                        </div>
+                        {isLevelMode ? (
+                            <>
+                                <h3 className="text-xl font-semibold text-gray-800 mb-4">Level</h3>
+                                {levelLoading ? (
+                                    <div className="flex items-center justify-center h-40">
+                                        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                                    </div>
+                                ) : levelInfo ? (
+                                    <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4">
+                                        <div className="flex items-center mb-2">
+                                            <Book className="w-5 h-5 text-blue-600 mr-2" />
+                                            <h4 className="font-semibold text-gray-800 text-sm">{levelInfo.title}</h4>
+                                        </div>
+                                        {levelInfo.description && (
+                                            <p className="text-xs text-gray-600">{levelInfo.description}</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-red-600 text-sm">Level not found.</p>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xl font-semibold text-gray-800">Choose Your Courses</h3>
+                                    <span className="text-sm text-gray-600">({selectedCourses.length}{type !== "cpa" && "/3"} selected)</span>
+                                </div>
 
-                        {loading ? (
+                                {loading ? (
                             <div className="flex items-center justify-center h-96">
                                 <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
                             </div>
@@ -281,6 +329,8 @@ export const PaymentFlow: React.FC = () => {
                                     );
                                 })}
                             </div>
+                        )}
+                            </>
                         )}
                     </div>
                 </div>
@@ -336,26 +386,43 @@ export const PaymentFlow: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="font-semibold text-gray-800 mb-3">Subscription Courses ({selectedCourses.length} selected)</h3>
-                        <ul className="space-y-2 text-sm">
-                            {selectedCourses.map((course: any) => (
-                                <li key={course.id} className="flex items-start">
-                                    <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                        <span className="font-medium text-gray-800">{course.title}</span>
-                                        <p className="text-xs text-gray-600">{course.shortDescription}</p>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    {isLevelMode ? (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <h3 className="font-semibold text-gray-800 mb-3">Level</h3>
+                            <div className="flex items-start">
+                                <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <span className="font-medium text-gray-800">{levelInfo?.title}</span>
+                                    {levelInfo?.description && <p className="text-xs text-gray-600">{levelInfo.description}</p>}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <h3 className="font-semibold text-gray-800 mb-3">Subscription Courses ({selectedCourses.length} selected)</h3>
+                            <ul className="space-y-2 text-sm">
+                                {selectedCourses.map((course: any) => (
+                                    <li key={course.id} className="flex items-start">
+                                        <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <span className="font-medium text-gray-800">{course.title}</span>
+                                            <p className="text-xs text-gray-600">{course.shortDescription}</p>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
 
                     <div className="bg-blue-50 p-4 rounded-lg">
                         <div className="text-center">
-                            <span className="text-lg font-bold text-blue-800">Subscription Amount</span>
+                            <span className="text-lg font-bold text-blue-800">{isLevelMode ? "Level Payment Amount" : "Subscription Amount"}</span>
                             <div className="text-2xl font-bold text-blue-800 mt-1">{totalAmount?.toLocaleString()} RWF</div>
-                            <p className="text-sm text-blue-600 mt-1">for {years} years, {months} months, {weeks} weeks, {days} days access to {selectedCourses.length} courses</p>
+                            <p className="text-sm text-blue-600 mt-1">
+                                {isLevelMode
+                                    ? `for access to ${levelInfo?.title || "this level"}`
+                                    : `for ${years} years, ${months} months, ${weeks} weeks, ${days} days access to ${selectedCourses.length} courses`}
+                            </p>
                         </div>
                     </div>
                 </div>

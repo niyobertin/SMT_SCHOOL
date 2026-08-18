@@ -30,6 +30,7 @@ model User {
   // Relations
   courses            Course[]
   enrollments        Enrollment[]
+  levelEnrollments   LevelEnrollment[]
   payments           Payment[]
   testAttempts       TestAttempt[]
   userProgress       UserProgress[]
@@ -252,6 +253,11 @@ model Course {
   publishedAt      DateTime?
   schoolId         String? // null = global, set = school-scoped
 
+  // Multi-level course progression (levels are optional; when hasLevels=false, the
+  // course behaves exactly as a flat course, i.e. all existing courses today)
+  hasLevels               Boolean @default(false)
+  enforceSequentialLevels Boolean @default(true)
+
   // Relations
   instructorId String
   instructor   User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
@@ -260,6 +266,7 @@ model Course {
   school       School?  @relation(fields: [schoolId], references: [id], onDelete: SetNull)
 
   lessons            Lesson[]
+  levels             Level[]
   enrollments        Enrollment[]
   tests              Test[]
   notifications      Notification[]
@@ -268,6 +275,7 @@ model Course {
   Payment            Payment[]
   PaymentCourse      PaymentCourse[]
   assignments        CourseAssignment[]
+  certificates       Certificate[]
 
   @@index([schoolId])
   @@map("courses")
@@ -286,6 +294,43 @@ enum CourseStatus {
   ARCHIVED
 }
 
+// A Level groups a subset of a course's lessons + one exam behind its own price
+// and progression gate. Optional: a Course only has Levels when hasLevels=true.
+model Level {
+  id          String  @id @default(cuid())
+  courseId    String
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  order       Int
+  price       Float   @default(0)
+  currency    String  @default("RWF")
+  isPublished Boolean @default(true)
+
+  // Certificate configuration — admin-configurable per level, not hardcoded
+  certificateEnabled              Boolean @default(false)
+  certificateTitle                String?
+  certificateOrgName              String?
+  certificateDescription          String?
+  certificatePassingScoreOverride Float?
+  certificateSignatureName        String?
+  certificateSignatureImageUrl    String?
+  certificateLogoUrl              String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons          Lesson[]
+  test             Test?
+  levelEnrollments LevelEnrollment[]
+  paymentLevels    PaymentLevel[]
+  certificates     Certificate[]
+
+  @@unique([courseId, order])
+  @@index([courseId])
+  @@map("levels")
+}
+
 model Lesson {
   id          String   @id @default(cuid())
   title       String
@@ -299,10 +344,14 @@ model Lesson {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  levelId String?
+  level   Level?  @relation(fields: [levelId], references: [id], onDelete: SetNull)
+
   content         LessonContent[]
   userProgress    UserProgress[]
   studentProgress StudentProgress[] @relation("StudentLessonProgress")
 
+  @@index([levelId])
   @@map("lessons")
 }
 
@@ -351,6 +400,32 @@ enum EnrollmentStatus {
   EXPIRED
 }
 
+// Per-user, per-level payment/access/progress state (parallel to Enrollment,
+// which stays course-wide for flat, non-level courses).
+model LevelEnrollment {
+  id                  String           @id @default(cuid())
+  userId              String
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  levelId             String
+  level               Level            @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  status              EnrollmentStatus @default(ACTIVE)
+  enrollmentDate      DateTime         @default(now())
+  enrollementPeriod   Int              @default(30)
+  contentCompletedAt  DateTime?
+  examPassedAt        DateTime?
+  certificateIssuedAt DateTime?
+  progress            Float            @default(0)
+  bypassSequenceCheck Boolean          @default(false)
+  grantedByAdminId    String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@unique([userId, levelId])
+  @@index([userId])
+  @@index([levelId])
+  @@map("level_enrollments")
+}
+
 model Payment {
   id                 String          @id @default(cuid())
   amount             Float
@@ -362,6 +437,7 @@ model Payment {
   remainingPeriod    Int             @default(0)
   isActive           Boolean         @default(false)
   courses            PaymentCourse[]
+  levels             PaymentLevel[]
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
@@ -380,6 +456,17 @@ model PaymentCourse {
   course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@id([paymentId, courseId])
+}
+
+// A Payment covers either courses (existing bundle flow) or levels (new), never both.
+model PaymentLevel {
+  paymentId String
+  levelId   String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  level     Level   @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@id([paymentId, levelId])
+  @@map("payment_levels")
 }
 
 enum PaymentStatus {
@@ -410,10 +497,16 @@ model Test {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  // When set, this Test is the single exam for a specific course Level rather
+  // than a course-wide test. courseId still points at the parent course.
+  levelId String? @unique
+  level   Level?  @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
   questions           Question[]
   testAttempts        TestAttempt[]
   studentTestAttempts StudentTestAttempt[] @relation("StudentTestAttempts")
   notifications       Notification[]
+  certificates        Certificate[]
 
   @@map("tests")
 }
@@ -590,6 +683,8 @@ enum NotificationType {
   COURSE_UPDATE
   NEW_COURSE
   PROMOTIONAL
+  LEVEL_UNLOCKED
+  LEVEL_CONTENT_COMPLETE
 }
 
 enum NotificationStatus {
@@ -894,7 +989,7 @@ model ExamAnswer {
 model Certificate {
   id                String   @id @default(cuid())
   userId            String
-  certificationId   String
+  certificationId   String // legacy untyped pointer: a Test.id or a standalone Exam.id
   certificateNumber String   @unique
   score             Float
   issuedAt          DateTime @default(now())
@@ -907,9 +1002,20 @@ model Certificate {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Typed references, populated going forward (nullable so legacy rows and
+  // standalone-exam-portal certificates, which have no Test, are unaffected).
+  testId   String?
+  test     Test?   @relation(fields: [testId], references: [id], onDelete: SetNull)
+  levelId  String?
+  level    Level?  @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@index([certificationId])
   @@index([certificateNumber])
+  @@index([testId])
+  @@index([levelId])
   @@map("certificates")
 }
 

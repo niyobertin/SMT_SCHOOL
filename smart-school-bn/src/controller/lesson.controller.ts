@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export const createLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const courseId = req.params.courseId;
-        const { title, description, order } = req.body;
+        const { title, description, order, levelId } = req.body;
         const course = await prisma.course.findUnique({
             where: { id: courseId },
         });
@@ -18,6 +18,16 @@ export const createLesson = async (req: Request, res: Response, next: NextFuncti
             });
             return;
         }
+        if (levelId) {
+            const level = await prisma.level.findUnique({ where: { id: levelId } });
+            if (!level || level.courseId !== courseId) {
+                res.status(404).json({
+                    status: "error",
+                    message: "Level not found for this course",
+                });
+                return;
+            }
+        }
         const lesson = await prisma.lesson.create({
             data: {
                 id: uuidv4(),
@@ -25,6 +35,7 @@ export const createLesson = async (req: Request, res: Response, next: NextFuncti
                 description,
                 courseId,
                 order,
+                ...(levelId && { levelId }),
             },
             include: {
                 course: true,
@@ -125,7 +136,7 @@ export const getSingleLesson = async (req: Request, res: Response, next: NextFun
 export const updateLesson = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const lessonId = req.params.lessonId;
-        const lessonData = req.body;
+        const { levelId, ...lessonData } = req.body;
         const lesson = await prisma.lesson.findUnique({
             where: { id: lessonId },
         });
@@ -136,9 +147,22 @@ export const updateLesson = async (req: Request, res: Response, next: NextFuncti
             });
             return;
         }
+        if (levelId) {
+            const level = await prisma.level.findUnique({ where: { id: levelId } });
+            if (!level || level.courseId !== lesson.courseId) {
+                res.status(404).json({
+                    status: "error",
+                    message: "Level not found for this course",
+                });
+                return;
+            }
+        }
         const updatedLesson = await prisma.lesson.update({
             where: { id: lessonId },
-            data: lessonData,
+            data: {
+                ...lessonData,
+                ...(levelId !== undefined && { levelId: levelId || null }),
+            },
         });
         logger.info("Lesson updated successfully", { lessonId });
         res.status(200).json({

@@ -25,6 +25,7 @@ import {
   PaymentRequestModal,
 } from "../../components/RequestModal";
 import { jwtDecode } from "jwt-decode";
+import { LevelProgressionList } from "../../components/levels/LevelProgressionList";
 
 const TEST_TYPES = {
   GENERAL: "GENERAL",
@@ -217,7 +218,15 @@ const CourseLessonsPage = () => {
         </div>
 
         {/* Lessons */}
-        {activeTab === "lessons" && (
+        {activeTab === "lessons" && course?.hasLevels && (
+          <LevelProgressionList
+            courseId={courseId!}
+            lessons={lessons}
+            onStartLesson={handleStartLearning}
+          />
+        )}
+
+        {activeTab === "lessons" && !course?.hasLevels && (
           <div className="bg-white shadow sm:rounded-lg divide-y">
             {lessonsError && (
               <div className="p-6 text-center text-red-500">{lessonsError}</div>

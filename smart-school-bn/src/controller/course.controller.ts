@@ -68,6 +68,10 @@ export const createCourse = async (
             ? false
             : courseData.isPublished === "true",
         isFeatured: courseData.isFeatured === "true",
+        ...(courseData.hasLevels !== undefined && { hasLevels: courseData.hasLevels === "true" || courseData.hasLevels === true }),
+        ...(courseData.enforceSequentialLevels !== undefined && {
+          enforceSequentialLevels: courseData.enforceSequentialLevels === "true" || courseData.enforceSequentialLevels === true,
+        }),
         tags: courseData.tags,
         requirements: courseData.requirements,
         objectives: courseData.objectives,
@@ -336,7 +340,7 @@ export const updateCourse = async (
       );
     }
 
-    const { schoolId, ...otherData } = courseData;
+    const { schoolId, hasLevels, enforceSequentialLevels, ...otherData } = courseData;
     const updatedCourse = await prisma.course.update({
       where: { id },
       data: {
@@ -346,6 +350,10 @@ export const updateCourse = async (
             ? false
             : courseData.isPublished === "true",
         isFeatured: courseData.isFeatured === "true",
+        ...(hasLevels !== undefined && { hasLevels: hasLevels === "true" || hasLevels === true }),
+        ...(enforceSequentialLevels !== undefined && {
+          enforceSequentialLevels: enforceSequentialLevels === "true" || enforceSequentialLevels === true,
+        }),
         ...(thumbnail && { thumbnail }),
         school: schoolId ? { connect: { id: schoolId } } : undefined,
       },

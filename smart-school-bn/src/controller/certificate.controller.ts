@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
 import { NotFoundError } from "../utils/errors";
 import { generateCertificatePDF } from "../utils/pdfGenerator";
 import { uploadBufferToCloudinary } from "../config/cloudinary";
@@ -162,14 +163,14 @@ export const issueCertificateForTest = async (
   const fullName = `${testAttempt.user.firstName} ${testAttempt.user.lastName}`;
 
   // Generate PDF buffer
-  const pdfBuffer = await generateCertificatePDF(
+  const pdfBuffer = await generateCertificatePDF({
     fullName,
-    testAttempt.test.title,
+    courseName: testAttempt.test.title,
     completionDate,
     certificateNumber,
-    testAttempt.score || 0,
+    score: testAttempt.score || 0,
     passingScore,
-  );
+  });
 
   // Upload to Cloudinary
   let pdfUrl: string | null = null;
@@ -187,6 +188,8 @@ export const issueCertificateForTest = async (
     data: {
       userId,
       certificationId: testId,
+      testId,
+      courseId: testAttempt.test.courseId,
       certificationName: testAttempt.test.title,
       certificateNumber,
       score: testAttempt.score || 0,
@@ -194,6 +197,122 @@ export const issueCertificateForTest = async (
       qrCode,
       status: "ACTIVE",
     },
+  });
+
+  return { certificate, message: "Certificate generated automatically", status: "created" };
+};
+
+// Level-scoped variant of issueCertificateForTest: pulls certificate
+// configuration (title/org/description/passing-score override/signature/logo)
+// from the level instead of using hardcoded defaults, and is a no-op when the
+// level creator did not enable certificates.
+export const issueCertificateForLevel = async (
+  testId: string,
+  testAttemptId: string,
+  userId: string,
+): Promise<{ certificate: any; message: string; status: string }> => {
+  const testAttempt = await prisma.testAttempt.findUnique({
+    where: { id: testAttemptId },
+    include: {
+      test: { include: { level: true } },
+      user: { select: { firstName: true, lastName: true } },
+    },
+  });
+
+  if (!testAttempt) {
+    throw new Error("Test attempt not found");
+  }
+
+  if (testAttempt.userId !== userId) {
+    throw new Error("Forbidden");
+  }
+
+  const level = testAttempt.test.level;
+  if (!level) {
+    throw new Error("Test is not associated with a level");
+  }
+
+  if (!level.certificateEnabled) {
+    return { certificate: null, message: "Certificates are not enabled for this level", status: "disabled" };
+  }
+
+  const passingScore = level.certificatePassingScoreOverride ?? testAttempt.test.passingScore ?? 70;
+  if ((testAttempt.score || 0) < passingScore) {
+    throw new Error(
+      `Score ${testAttempt.score}% does not meet the passing threshold of ${passingScore}%`
+    );
+  }
+
+  const existingCert = await prisma.certificate.findFirst({
+    where: { userId, certificationId: testId, status: "ACTIVE" },
+  });
+
+  if (existingCert) {
+    return { certificate: existingCert, message: "Certificate already exists", status: "exists" };
+  }
+
+  const certificateNumber = generateCertificateNumber();
+  const qrCode = generateQRCodeUrl(certificateNumber);
+  const completionDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+  const fullName = `${testAttempt.user.firstName} ${testAttempt.user.lastName}`;
+  const certificationName = level.certificateTitle || `${testAttempt.test.title} — ${level.title}`;
+
+  let logoBuffer: Buffer | undefined;
+  if (level.certificateLogoUrl) {
+    try {
+      const response = await axios.get(level.certificateLogoUrl, { responseType: "arraybuffer" });
+      logoBuffer = Buffer.from(response.data);
+    } catch (err) {
+      console.error("Certificate logo fetch failed, continuing without logo:", err);
+    }
+  }
+
+  const pdfBuffer = await generateCertificatePDF({
+    fullName,
+    courseName: testAttempt.test.title,
+    completionDate,
+    certificateNumber,
+    score: testAttempt.score || 0,
+    passingScore,
+    certTitle: level.certificateTitle || undefined,
+    issuingOrg: level.certificateOrgName || undefined,
+    description: level.certificateDescription || undefined,
+    signatureName: level.certificateSignatureName || undefined,
+    logoBuffer,
+  });
+
+  let pdfUrl: string | null = null;
+  try {
+    pdfUrl = await uploadBufferToCloudinary(
+      pdfBuffer,
+      "application/pdf",
+      `certificate_${certificateNumber}.pdf`,
+    );
+  } catch (uploadError) {
+    console.error("Certificate PDF upload failed:", uploadError);
+  }
+
+  const certificate = await prisma.certificate.create({
+    data: {
+      userId,
+      certificationId: testId,
+      testId,
+      levelId: level.id,
+      courseId: testAttempt.test.courseId,
+      certificationName,
+      certificateNumber,
+      score: testAttempt.score || 0,
+      pdfUrl,
+      qrCode,
+      status: "ACTIVE",
+    },
+  });
+
+  await prisma.levelEnrollment.updateMany({
+    where: { userId, levelId: level.id },
+    data: { certificateIssuedAt: new Date() },
   });
 
   return { certificate, message: "Certificate generated automatically", status: "created" };
@@ -215,11 +334,19 @@ export const getUserCertificates = async (
     const certificates = await prisma.certificate.findMany({
       where: { userId },
       orderBy: { issuedAt: "desc" },
+      include: {
+        course: { select: { title: true } },
+        level: { select: { title: true } },
+      },
     });
 
     res.status(200).json({
       status: "success",
-      data: certificates,
+      data: certificates.map(({ course, level, ...cert }) => ({
+        ...cert,
+        courseName: course?.title,
+        levelName: level?.title,
+      })),
     });
   } catch (error) {
     next(error);
@@ -237,15 +364,21 @@ export const getCertificateById = async (
 
     const certificate = await prisma.certificate.findFirst({
       where: { id, userId },
+      include: {
+        course: { select: { title: true } },
+        level: { select: { title: true } },
+      },
     });
 
     if (!certificate) {
       throw new NotFoundError("Certificate not found");
     }
 
+    const { course, level, ...cert } = certificate;
+
     res.status(200).json({
       status: "success",
-      data: certificate,
+      data: { ...cert, courseName: course?.title, levelName: level?.title },
     });
   } catch (error) {
     next(error);
@@ -291,14 +424,14 @@ export const issueCertificateForExam = async (
   });
 
   // Generate PDF
-  const pdfBuffer = await generateCertificatePDF(
-    candidateName,
-    attempt.exam.title,
+  const pdfBuffer = await generateCertificatePDF({
+    fullName: candidateName,
+    courseName: attempt.exam.title,
     completionDate,
     certificateNumber,
-    attempt.score || 0,
-    attempt.exam.passingScore,
-  );
+    score: attempt.score || 0,
+    passingScore: attempt.exam.passingScore,
+  });
 
   let pdfUrl: string | null = null;
   try {
@@ -343,6 +476,8 @@ export const verifyCertificate = async (
             email: true,
           },
         },
+        course: { select: { title: true } },
+        level: { select: { title: true } },
       },
     });
 
@@ -371,6 +506,8 @@ export const verifyCertificate = async (
         fullName: `${certificate.user.firstName} ${certificate.user.lastName}`,
         certificationId: certificate.certificationId,
         certificationName: certificate.certificationName,
+        courseName: certificate.course?.title,
+        levelName: certificate.level?.title,
         score: certificate.score,
         issuedAt: certificate.issuedAt,
         status: certificate.status,

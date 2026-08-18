@@ -47,6 +47,7 @@ async function findPaymentWithRetry(ref: string, retries = 3, delay = 2000) {
             },
             include: {
                 courses: true, // This brings PaymentCourse relation
+                levels: true, // This brings PaymentLevel relation
                 user: true
             },
         });
@@ -139,6 +140,47 @@ async function handleProcessedTransaction(payload: PaypackWebhookPayload) {
 
             await Promise.all(enrollmentPromises);
             logWebhook("Enrollments activated");
+
+            // Activate level enrollments for all levels in this payment (parallel
+            // to the course-bundle loop above; a given payment only ever
+            // populates one of `courses`/`levels`).
+            const levelEnrollmentPromises = payment.levels.map(async (pl) => {
+                return prisma.levelEnrollment.upsert({
+                    where: {
+                        userId_levelId: {
+                            userId: payment.userId,
+                            levelId: pl.levelId
+                        }
+                    },
+                    update: {
+                        status: 'ACTIVE',
+                        enrollmentDate: new Date(),
+                        enrollementPeriod: payment.subscriptionPeriod || 30,
+                    },
+                    create: {
+                        userId: payment.userId,
+                        levelId: pl.levelId,
+                        status: 'ACTIVE',
+                        enrollementPeriod: payment.subscriptionPeriod || 30,
+                        enrollmentDate: new Date(),
+                    }
+                });
+            });
+
+            await Promise.all(levelEnrollmentPromises);
+            if (payment.levels.length > 0) {
+                await Promise.all(payment.levels.map((pl) => prisma.notification.create({
+                    data: {
+                        id: uuidv4(),
+                        userId: payment.userId,
+                        type: 'LEVEL_UNLOCKED',
+                        title: 'Level unlocked',
+                        message: 'Your payment was successful. The level is now unlocked.',
+                        metadata: { levelId: pl.levelId },
+                    }
+                })));
+            }
+            logWebhook("Level enrollments activated");
         }
 
         // Emit WebSocket event
@@ -223,8 +265,35 @@ export const handlePaypackWebhook = async (req: Request, res: Response) => {
 };
 export const cashin = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.id;
-    const { amount, phoneNumber, channel, subscribedCourseIds, subscriptionPeriod, isActive } = req.body;
+    const { amount, phoneNumber, channel, subscribedCourseIds, subscribedLevelIds, subscriptionPeriod, isActive } = req.body;
     try {
+        const hasCourses = Array.isArray(subscribedCourseIds) && subscribedCourseIds.length > 0;
+        const hasLevels = Array.isArray(subscribedLevelIds) && subscribedLevelIds.length > 0;
+
+        if (hasCourses === hasLevels) {
+            res.status(400).json({
+                status: "error",
+                message: "Provide exactly one of subscribedCourseIds or subscribedLevelIds",
+            });
+            return;
+        }
+
+        if (hasLevels) {
+            const levels = await prisma.level.findMany({ where: { id: { in: subscribedLevelIds } } });
+            if (levels.length !== subscribedLevelIds.length) {
+                res.status(404).json({ status: "error", message: "One or more levels not found" });
+                return;
+            }
+            const expectedAmount = levels.reduce((sum, l) => sum + l.price, 0);
+            if (Number(amount) !== expectedAmount) {
+                res.status(400).json({
+                    status: "error",
+                    message: `Amount does not match the total price of the selected level(s) (expected ${expectedAmount})`,
+                });
+                return;
+            }
+        }
+
         // 1. Create the payment
         const payment = await prisma.payment.create({
             data: {
@@ -233,15 +302,21 @@ export const cashin = async (req: Request, res: Response, next: NextFunction) =>
                 channel,
                 userId,
                 status: "PENDING",
-                courses: {
-                    create: subscribedCourseIds.map((courseId: string) => ({
-                        courseId,
-                    })),
-                },
+                ...(hasLevels
+                    ? {
+                        levels: {
+                            create: subscribedLevelIds.map((levelId: string) => ({ levelId })),
+                        },
+                    }
+                    : {
+                        courses: {
+                            create: subscribedCourseIds.map((courseId: string) => ({ courseId })),
+                        },
+                    }),
                 subscriptionPeriod,
                 isActive,
             },
-            include: { courses: true },
+            include: { courses: true, levels: true },
         });
         const { access } = await getAccessToken();
         const webhookMode = process.env.PAYPACK_WEBHOOK_MODE || "development";
@@ -275,6 +350,7 @@ export const cashin = async (req: Request, res: Response, next: NextFunction) =>
             paymentId: payment.id,
             paypackRef: data.ref,
             courses: payment.courses,
+            levels: payment.levels,
         });
     } catch (error: any) {
         next(error);
@@ -297,6 +373,11 @@ export const getPayments = async (req: Request, res: Response, next: NextFunctio
                         lastName: true,
                         phoneNumber: true,
                     }
+                },
+                levels: {
+                    include: {
+                        level: { select: { title: true, courseId: true } },
+                    },
                 },
             },
             orderBy: {

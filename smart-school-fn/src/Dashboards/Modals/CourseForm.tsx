@@ -26,6 +26,8 @@ export const CourseForm = ({ course, onClose, onSuccess }: CourseFormProps) => {
     categoryId: course?.categoryId || '',
     isPublished: course?.isPublished || false,
     isFeatured: course?.isFeatured || false,
+    hasLevels: course?.hasLevels || false,
+    enforceSequentialLevels: course?.enforceSequentialLevels ?? true,
     thumbnail: null as File | null,
   });
 
@@ -307,6 +309,34 @@ export const CourseForm = ({ course, onClose, onSuccess }: CourseFormProps) => {
                   </button>
                 </div>
                 {errors.categoryId && <p className="text-red-500 text-[10px] mt-1 ml-1">{errors.categoryId}</p>}
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="hasLevels"
+                    checked={courseData.hasLevels}
+                    onChange={handleChange}
+                  />
+                  Enable Level Structure (paid, sequential levels — e.g. CPA Level 1, 2, 3)
+                </label>
+                {courseData.hasLevels && (
+                  <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer ml-6">
+                    <input
+                      type="checkbox"
+                      name="enforceSequentialLevels"
+                      checked={courseData.enforceSequentialLevels}
+                      onChange={handleChange}
+                    />
+                    Require levels to be completed in order (admin can still unlock a level manually)
+                  </label>
+                )}
+                {courseData.hasLevels && (
+                  <p className="text-[11px] text-slate-400 ml-6">
+                    After saving, use "Manage Levels" on the course's lessons page to add levels, pricing and certificates.
+                  </p>
+                )}
               </div>
 
               <div>

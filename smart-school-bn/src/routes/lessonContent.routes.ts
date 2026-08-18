@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createLessonContent, deleteLessonContent, getLessonContent, getLessonContentById, updateLessonContent } from "../controller/lessonContent.controller";
 import { uploadFile } from "../middleware/uploadFile";
-import { authenticate, authorize } from "../middleware/auth";
+import { authenticate, authorize, optionalAuthenticate } from "../middleware/auth";
 
 
 const lessonContentRouter = Router();
@@ -434,7 +434,7 @@ const lessonContentRouter = Router();
  *                   type: string
  */
 lessonContentRouter.post("/:lessonId",authenticate, authorize("ADMIN","INSTRUCTOR"), uploadFile, createLessonContent);
-lessonContentRouter.get("/:lessonId", getLessonContent);
+lessonContentRouter.get("/:lessonId", optionalAuthenticate, getLessonContent);
 lessonContentRouter.get("/get-lesson-content-by-id/:lessonContentId", getLessonContentById);
 lessonContentRouter.patch ("/:lessonContentId",authenticate, authorize("ADMIN","INSTRUCTOR"), uploadFile, updateLessonContent);
 lessonContentRouter.delete("/:lessonContentId",authenticate, authorize("ADMIN","INSTRUCTOR"), deleteLessonContent);
